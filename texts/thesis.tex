@@ -1,0 +1,59 @@
+%
+% thesis
+% @author Tobias Weber <tweber@ill.fr>
+% @date jan-2021
+% @license see 'LICENSE' file
+%
+
+\documentclass[english]{book}
+
+\usepackage{amsmath}
+\usepackage{tensor}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{babel}
+
+\usepackage[a4paper]{geometry}
+\geometry{tmargin=2.5cm, bmargin=2.5cm, lmargin=2cm, rmargin=2cm}
+
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue, unicode=true]{hyperref}
+
+
+
+
+\begin{document}
+
+\newcommand{\ill}{Institut Laue-Langevin (ILL), 71 avenue des Martyrs, CS 20156, 38042 Grenoble cedex 9, France}
+\newcommand{\fuh}{Fernuniversit\"at in Hagen (FUH), Universit\"atsstraße 47, 58097 Hagen, Germany}
+
+
+\title{Automatic path-finding for triple-axis spectrometers}
+\author{Tobias Weber, tweber@ill.fr}
+
+\maketitle
+\tableofcontents
+
+
+
+
+% ====================================================================================================================================
+\chapter{Abstract}
+\input{abstract.tex}
+
+\chapter{Crystal Coordinates and TAS Angles}
+\input{formulas.tex}
+% ====================================================================================================================================
+
+
+
+\section{Bibliographic information}
+
+The UB matrix formalism to convert between relative lattice units and laboratory or instrument coordinates is described in \cite{Lumsden2005}.
+
+
+
+\bibliographystyle{alpha}
+\bibliography{\jobname.bib}
+
+\end{document}

@@ -16,6 +16,11 @@
 *.a
 *.lib
 
+# LLVM intermediate files
+*.asm
+*.s
+*.bc
+
 # Executables
 *.exe
 *.out
@@ -39,9 +44,6 @@ build/**
 *.fls
 *.fdb_latexmk
 
-# LLVM intermediate files
-*.asm
-*.s
-*.bc
-
-texts/figures/**
+*.jpg
+*.png
+*.pdf
