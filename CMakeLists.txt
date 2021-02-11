@@ -46,8 +46,10 @@ include_directories("${PROJECT_SOURCE_DIR}" "${Boost_INCLUDE_DIRS}/.." "../..")
 
 # -----------------------------------------------------------------------------
 # linker settings
-add_executable(paths src/PathsDlg.cpp
-	./tlibs2/libs/glplot.cpp ./tlibs2/libs/glplot.h)
+add_executable(paths
+	src/PathsDlg.cpp
+	src/PathsRenderer.cpp src/PathsRenderer.h
+)
 
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 #	target_link_options(paths

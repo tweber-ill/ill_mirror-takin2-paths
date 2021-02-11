@@ -20,10 +20,11 @@
 #include <sstream>
 #include <string>
 
-#include "tlibs2/libs/glplot.h"
 #include "tlibs2/libs/math20.h"
 #include "tlibs2/libs/str.h"
 #include "tlibs2/libs/helper.h"
+
+#include "src/PathsRenderer.h"
 
 
 using t_real = double;
@@ -37,7 +38,7 @@ class PathsDlg : public QMainWindow
 private:
 	QSettings m_sett{"takin", "paths"};
 
-	std::shared_ptr<GlPlot> m_plot{std::make_shared<GlPlot>(this)};
+	std::shared_ptr<PathsRenderer> m_plot{std::make_shared<PathsRenderer>(this)};
 	// gl info strings
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
 
@@ -105,9 +106,9 @@ public:
 		// --------------------------------------------------------------------
 		auto plotpanel = new QWidget(this);
 
-		connect(m_plot.get(), &GlPlot::MouseDown, this, &PathsDlg::MouseDown);
-		connect(m_plot.get(), &GlPlot::MouseUp, this, &PathsDlg::MouseUp);
-		connect(m_plot.get(), &GlPlot::AfterGLInitialisation, this, &PathsDlg::AfterGLInitialisation);
+		connect(m_plot.get(), &PathsRenderer::MouseDown, this, &PathsDlg::MouseDown);
+		connect(m_plot.get(), &PathsRenderer::MouseUp, this, &PathsDlg::MouseUp);
+		connect(m_plot.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsDlg::AfterGLInitialisation);
 
 		auto pGrid = new QGridLayout(plotpanel);
 		pGrid->setSpacing(4);
