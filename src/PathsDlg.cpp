@@ -66,7 +66,7 @@ protected slots:
 	void AfterGLInitialisation()
 	{
 		// GL device info
-		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer) = m_plot->GetImpl()->GetGlDescr();
+		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer) = m_plot->GetGlDescr();
 	}
 
 

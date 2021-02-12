@@ -24,6 +24,8 @@
 #include <boost/algorithm/string/replace.hpp>
 namespace algo = boost::algorithm;
 
+#include "tlibs2/libs/file.h"
+
 
 #pragma message("Compiling for GL version " BOOST_PP_STRINGIZE(_GL_MAJ_VER) "." BOOST_PP_STRINGIZE(_GL_MIN_VER) " and GLSL version " BOOST_PP_STRINGIZE(_GLSL_MAJ_VER) BOOST_PP_STRINGIZE(_GLSL_MIN_VER) "0.")
 
@@ -55,26 +57,38 @@ void set_gl_format(bool bCore, int iMajorVer, int iMinorVer, int iSamples)
 // ----------------------------------------------------------------------------
 // GL plot implementation
 
-PathsRenderer_impl::PathsRenderer_impl(PathsRenderer *pPlot) : m_pPlot{pPlot}
+PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
+	qRegisterMetaType<std::size_t>("std::size_t");
+
 	if constexpr(m_usetimer)
 	{
 		connect(&m_timer, &QTimer::timeout,
-			this, static_cast<void (PathsRenderer_impl::*)()>(&PathsRenderer_impl::tick));
+			this, static_cast<void (PathsRenderer::*)()>(&PathsRenderer::tick));
 		m_timer.start(std::chrono::milliseconds(1000 / 60));
 	}
 
 	UpdateCam();
+
+	connect(this, &QOpenGLWidget::aboutToCompose, this, &PathsRenderer::beforeComposing);
+	connect(this, &QOpenGLWidget::frameSwapped, this, &PathsRenderer::afterComposing);
+	connect(this, &QOpenGLWidget::aboutToResize, this, &PathsRenderer::beforeResizing);
+	connect(this, &QOpenGLWidget::resized, this, &PathsRenderer::afterResizing);
+
+	//setUpdateBehavior(QOpenGLWidget::PartialUpdate);
+	setMouseTracking(true);
 }
 
 
-PathsRenderer_impl::~PathsRenderer_impl()
+PathsRenderer::~PathsRenderer()
 {
+	setMouseTracking(false);
+
 	if constexpr(m_usetimer)
 		m_timer.stop();
 
-	m_pPlot->makeCurrent();
-	BOOST_SCOPE_EXIT(m_pPlot) { m_pPlot->doneCurrent(); } BOOST_SCOPE_EXIT_END
+	makeCurrent();
+	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
 	// delete gl objects within current gl context
 	m_pShaders.reset();
@@ -93,9 +107,9 @@ PathsRenderer_impl::~PathsRenderer_impl()
 }
 
 
-qgl_funcs* PathsRenderer_impl::GetGlFunctions(QOpenGLWidget *pWidget)
+qgl_funcs* PathsRenderer::GetGlFunctions(QOpenGLWidget *pWidget)
 {
-	if(!pWidget) pWidget = (QOpenGLWidget*)m_pPlot;
+	if(!pWidget) pWidget = (QOpenGLWidget*) this;
 	qgl_funcs *pGl = nullptr;
 
 	if constexpr(std::is_same_v<qgl_funcs, QOpenGLFunctions>)
@@ -110,7 +124,7 @@ qgl_funcs* PathsRenderer_impl::GetGlFunctions(QOpenGLWidget *pWidget)
 }
 
 
-QPointF PathsRenderer_impl::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible)
+QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible)
 {
 	auto [ vecPersp, vec ] =
 		tl2::hom_to_screen_coords<t_mat_gl, t_vec_gl>
@@ -128,7 +142,7 @@ QPointF PathsRenderer_impl::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisibl
 }
 
 
-t_mat_gl PathsRenderer_impl::GetArrowMatrix(const t_vec_gl& vecTo, t_real_gl postscale, const t_vec_gl& vecPostTrans,
+t_mat_gl PathsRenderer::GetArrowMatrix(const t_vec_gl& vecTo, t_real_gl postscale, const t_vec_gl& vecPostTrans,
 	const t_vec_gl& vecFrom, t_real_gl prescale, const t_vec_gl& vecPreTrans)
 {
 	t_mat_gl mat = tl2::unit<t_mat_gl>(4);
@@ -145,13 +159,13 @@ t_mat_gl PathsRenderer_impl::GetArrowMatrix(const t_vec_gl& vecTo, t_real_gl pos
 }
 
 
-PathsRendererObj PathsRenderer_impl::CreateTriangleObject(const std::vector<t_vec3_gl>& verts,
+PathsRendererObj PathsRenderer::CreateTriangleObject(const std::vector<t_vec3_gl>& verts,
 	const std::vector<t_vec3_gl>& triagverts, const std::vector<t_vec3_gl>& norms,
 	const t_vec_gl& color, bool bUseVertsAsNorm)
 {
 	// TODO: move context to calling thread
-	m_pPlot->makeCurrent();
-	BOOST_SCOPE_EXIT(m_pPlot) { m_pPlot->doneCurrent(); } BOOST_SCOPE_EXIT_END
+	makeCurrent();
+	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
 
 	qgl_funcs* pGl = GetGlFunctions();
@@ -241,11 +255,11 @@ PathsRendererObj PathsRenderer_impl::CreateTriangleObject(const std::vector<t_ve
 }
 
 
-PathsRendererObj PathsRenderer_impl::CreateLineObject(const std::vector<t_vec3_gl>& verts, const t_vec_gl& color)
+PathsRendererObj PathsRenderer::CreateLineObject(const std::vector<t_vec3_gl>& verts, const t_vec_gl& color)
 {
 	// TODO: move context to calling thread
-	m_pPlot->makeCurrent();
-	BOOST_SCOPE_EXIT(m_pPlot) { m_pPlot->doneCurrent(); } BOOST_SCOPE_EXIT_END
+	makeCurrent();
+	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
 
 	qgl_funcs* pGl = GetGlFunctions();
@@ -314,27 +328,27 @@ PathsRendererObj PathsRenderer_impl::CreateLineObject(const std::vector<t_vec3_g
 }
 
 
-void PathsRenderer_impl::SetObjectMatrix(std::size_t idx, const t_mat_gl& mat)
+void PathsRenderer::SetObjectMatrix(std::size_t idx, const t_mat_gl& mat)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_mat = mat;
 }
 
 
-void PathsRenderer_impl::SetObjectCol(std::size_t idx, t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
+void PathsRenderer::SetObjectCol(std::size_t idx, t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_color = tl2::create<t_vec_gl>({r,g,b,a});
 }
 
 
-void PathsRenderer_impl::SetObjectLabel(std::size_t idx, const std::string& label)
+void PathsRenderer::SetObjectLabel(std::size_t idx, const std::string& label)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_label = label;
 }
 
-const std::string& PathsRenderer_impl::GetObjectLabel(std::size_t idx) const
+const std::string& PathsRenderer::GetObjectLabel(std::size_t idx) const
 {
 	static const std::string empty{};
 	if(idx >= m_objs.size()) return empty;
@@ -343,13 +357,13 @@ const std::string& PathsRenderer_impl::GetObjectLabel(std::size_t idx) const
 }
 
 
-void PathsRenderer_impl::SetObjectDataString(std::size_t idx, const std::string& data)
+void PathsRenderer::SetObjectDataString(std::size_t idx, const std::string& data)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_datastr = data;
 }
 
-const std::string& PathsRenderer_impl::GetObjectDataString(std::size_t idx) const
+const std::string& PathsRenderer::GetObjectDataString(std::size_t idx) const
 {
 	static const std::string empty{};
 	if(idx >= m_objs.size()) return empty;
@@ -358,28 +372,28 @@ const std::string& PathsRenderer_impl::GetObjectDataString(std::size_t idx) cons
 }
 
 
-void PathsRenderer_impl::SetObjectVisible(std::size_t idx, bool visible)
+void PathsRenderer::SetObjectVisible(std::size_t idx, bool visible)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_visible = visible;
 }
 
 
-void PathsRenderer_impl::SetObjectHighlight(std::size_t idx, bool highlight)
+void PathsRenderer::SetObjectHighlight(std::size_t idx, bool highlight)
 {
 	if(idx >= m_objs.size()) return;
 	m_objs[idx].m_highlighted = highlight;
 }
 
 
-bool PathsRenderer_impl::GetObjectHighlight(std::size_t idx) const
+bool PathsRenderer::GetObjectHighlight(std::size_t idx) const
 {
 	if(idx >= m_objs.size()) return 0;
 	return m_objs[idx].m_highlighted;
 }
 
 
-void PathsRenderer_impl::RemoveObject(std::size_t idx)
+void PathsRenderer::RemoveObject(std::size_t idx)
 {
 	m_objs[idx].m_valid = false;
 
@@ -394,7 +408,7 @@ void PathsRenderer_impl::RemoveObject(std::size_t idx)
 }
 
 
-std::size_t PathsRenderer_impl::AddLinkedObject(std::size_t linkTo,
+std::size_t PathsRenderer::AddLinkedObject(std::size_t linkTo,
 	t_real_gl x, t_real_gl y, t_real_gl z,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -410,7 +424,7 @@ std::size_t PathsRenderer_impl::AddLinkedObject(std::size_t linkTo,
 }
 
 
-std::size_t PathsRenderer_impl::AddSphere(t_real_gl rad, t_real_gl x, t_real_gl y, t_real_gl z,
+std::size_t PathsRenderer::AddSphere(t_real_gl rad, t_real_gl x, t_real_gl y, t_real_gl z,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
 	constexpr int numsubdivs = 2;
@@ -434,7 +448,7 @@ std::size_t PathsRenderer_impl::AddSphere(t_real_gl rad, t_real_gl x, t_real_gl 
 }
 
 
-std::size_t PathsRenderer_impl::AddCylinder(t_real_gl rad, t_real_gl h,
+std::size_t PathsRenderer::AddCylinder(t_real_gl rad, t_real_gl h,
 	t_real_gl x, t_real_gl y, t_real_gl z,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -454,7 +468,7 @@ std::size_t PathsRenderer_impl::AddCylinder(t_real_gl rad, t_real_gl h,
 }
 
 
-std::size_t PathsRenderer_impl::AddCone(t_real_gl rad, t_real_gl h,
+std::size_t PathsRenderer::AddCone(t_real_gl rad, t_real_gl h,
 	t_real_gl x, t_real_gl y, t_real_gl z,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -474,7 +488,7 @@ std::size_t PathsRenderer_impl::AddCone(t_real_gl rad, t_real_gl h,
 }
 
 
-std::size_t PathsRenderer_impl::AddArrow(t_real_gl rad, t_real_gl h,
+std::size_t PathsRenderer::AddArrow(t_real_gl rad, t_real_gl h,
 	t_real_gl x, t_real_gl y, t_real_gl z,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -495,7 +509,7 @@ std::size_t PathsRenderer_impl::AddArrow(t_real_gl rad, t_real_gl h,
 }
 
 
-std::size_t PathsRenderer_impl::AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
+std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -514,7 +528,7 @@ std::size_t PathsRenderer_impl::AddTriangleObject(const std::vector<t_vec3_gl>& 
 }
 
 
-std::size_t PathsRenderer_impl::AddCoordinateCross(t_real_gl min, t_real_gl max)
+std::size_t PathsRenderer::AddCoordinateCross(t_real_gl min, t_real_gl max)
 {
 	auto col = tl2::create<t_vec_gl>({0,0,0,1});
 	auto verts = std::vector<t_vec3_gl>
@@ -535,285 +549,7 @@ std::size_t PathsRenderer_impl::AddCoordinateCross(t_real_gl min, t_real_gl max)
 
 
 
-void PathsRenderer_impl::initialiseGL()
-{
-	// --------------------------------------------------------------------
-	// shaders
-	// --------------------------------------------------------------------
-	std::string strFragShader = R"RAW(#version ${GLSL_VERSION}
-
-in vec4 fragcol;
-out vec4 outcol;
-
-
-void main()
-{
-	outcol = fragcol;
-})RAW";
-	// --------------------------------------------------------------------
-
-
-	// --------------------------------------------------------------------
-	std::string strVertexShader = R"RAW(#version ${GLSL_VERSION}
-
-in vec4 vertex;
-in vec4 normal;
-in vec4 vertexcol;
-out vec4 fragcol;
-
-
-const float pi = ${PI};
-
-
-// ----------------------------------------------------------------------------
-// transformations
-// ----------------------------------------------------------------------------
-uniform mat4 proj = mat4(1.);
-uniform mat4 cam = mat4(1.);
-uniform mat4 cam_inv = mat4(1.);
-uniform mat4 obj = mat4(1.);
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// lighting
-// ----------------------------------------------------------------------------
-uniform vec4 constcol = vec4(1, 1, 1, 1);
-uniform vec3 lightpos[] = vec3[]( vec3(5, 5, 5), vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0) );
-uniform int activelights = 1;	// how many lights to use?
-
-float g_diffuse = 1.;
-float g_specular = 0.25;
-float g_shininess = 1.;
-float g_ambient = 0.2;
-// ----------------------------------------------------------------------------
-
-
-/**
- * reflect a vector on a surface with normal n => subtract the projection vector twice: 1 - 2*|n><n|
- */
-mat3 reflect(vec3 n)
-{
-	mat3 refl = mat3(1.) - 2.*outerProduct(n, n);
-
-	// have both vectors point away from the surface
-	return -refl;
-}
-
-
-/**
- * position of the camera
- */
-vec3 get_campos()
-{
-	vec4 trans = -vec4(cam[3].xyz, 0);
-	return (cam_inv*trans).xyz;
-}
-
-
-/**
- * phong lighting model
- * @see https://en.wikipedia.org/wiki/Phong_reflection_model
- */
-float lighting(vec4 objVert, vec4 objNorm)
-{
-	float I_diff = 0.;
-	float I_spec = 0.;
-
-
-	vec3 dirToCam;
-	// only used for specular lighting
-	if(g_specular > 0.) dirToCam = normalize(get_campos() - objVert.xyz);
-
-
-	// iterate (active) light sources
-	for(int lightidx=0; lightidx<min(lightpos.length(), activelights); ++lightidx)
-	{
-		// diffuse lighting
-		vec3 dirLight = normalize(lightpos[lightidx]-objVert.xyz);
-
-		if(g_diffuse > 0.)
-		{
-			float I_diff_inc = g_diffuse * dot(objNorm.xyz, dirLight);
-			if(I_diff_inc < 0.) I_diff_inc = 0.;
-			I_diff += I_diff_inc;
-		}
-
-
-		// specular lighting
-		if(g_specular > 0.)
-		{
-			if(dot(dirToCam, objNorm.xyz) > 0.)
-			{
-				vec3 dirLightRefl = reflect(objNorm.xyz) * dirLight;
-
-				float val = dot(dirToCam, dirLightRefl);
-				if(val > 0.)
-				{
-					float I_spec_inc = g_specular * pow(val, g_shininess);
-					if(I_spec_inc < 0.) I_spec_inc = 0.;
-					I_spec += I_spec_inc;
-				}
-			}
-		}
-	}
-
-
-	// ambient lighting
-	float I_amb = g_ambient;
-
-
-	// total intensity
-	return I_diff + I_spec + I_amb;
-}
-
-
-void main()
-{
-	vec4 objPos = obj * vertex;
-	vec4 objNorm = normalize(obj * normal);
-	gl_Position = proj * cam * objPos;
-
-	float I = lighting(objPos, objNorm);
-	fragcol.rgb = vertexcol.rgb * I;
-	fragcol *= constcol;
-})RAW";
-// --------------------------------------------------------------------
-
-
-	// set glsl version and constants
-	const std::string strGlsl = std::to_string(_GLSL_MAJ_VER*100 + _GLSL_MIN_VER*10);
-	std::string strPi = std::to_string(tl2::pi<t_real_gl>);	// locale-dependent !
-	algo::replace_all(strPi, std::string(","), std::string("."));	// ensure decimal point
-
-	for(std::string* strSrc : { &strFragShader, &strVertexShader })
-	{
-		algo::replace_all(*strSrc, std::string("${GLSL_VERSION}"), strGlsl);
-		algo::replace_all(*strSrc, std::string("${PI}"), strPi);
-	}
-
-
-	// GL functions
-	auto *pGl = GetGlFunctions();
-	if(!pGl) return;
-
-	m_strGlVer = (char*)pGl->glGetString(GL_VERSION);
-	m_strGlShaderVer = (char*)pGl->glGetString(GL_SHADING_LANGUAGE_VERSION);
-	m_strGlVendor = (char*)pGl->glGetString(GL_VENDOR);
-	m_strGlRenderer = (char*)pGl->glGetString(GL_RENDERER);
-	LOGGLERR(pGl);
-
-
-	// shaders
-	{
-		static QMutex shadermutex;
-		shadermutex.lock();
-		BOOST_SCOPE_EXIT(&shadermutex) { shadermutex.unlock(); } BOOST_SCOPE_EXIT_END
-
-		// shader compiler/linker error handler
-		auto shader_err = [this](const char* err) -> void
-		{
-			std::cerr << err << std::endl;
-
-			std::string strLog = m_pShaders->log().toStdString();
-			if(strLog.size())
-				std::cerr << "Shader log: " << strLog << std::endl;
-
-			std::exit(-1);
-		};
-
-		// compile & link shaders
-		m_pShaders = std::make_shared<QOpenGLShaderProgram>(this);
-
-		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
-			shader_err("Cannot compile fragment shader.");
-		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
-			shader_err("Cannot compile vertex shader.");
-
-		if(!m_pShaders->link())
-			shader_err("Cannot link shaders.");
-
-		m_uniMatrixCam = m_pShaders->uniformLocation("cam");
-		m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
-		m_uniMatrixProj = m_pShaders->uniformLocation("proj");
-		m_uniMatrixObj = m_pShaders->uniformLocation("obj");
-		m_uniConstCol = m_pShaders->uniformLocation("constcol");
-		m_uniLightPos = m_pShaders->uniformLocation("lightpos");
-		m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
-		m_attrVertex = m_pShaders->attributeLocation("vertex");
-		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
-		m_attrVertexCol = m_pShaders->attributeLocation("vertexcol");
-	}
-	LOGGLERR(pGl);
-
-
-	// 3d objects
-	AddCoordinateCross(-m_CoordMax, m_CoordMax);
-
-
-	// options
-	pGl->glCullFace(GL_BACK);
-	pGl->glEnable(GL_CULL_FACE);
-
-	pGl->glEnable(GL_BLEND);
-	pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	pGl->glEnable(GL_MULTISAMPLE);
-	pGl->glEnable(GL_LINE_SMOOTH);
-	pGl->glEnable(GL_POLYGON_SMOOTH);
-	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-
-	m_bInitialised = true;
-}
-
-
-void PathsRenderer_impl::SetScreenDims(int w, int h)
-{
-	m_iScreenDims[0] = w;
-	m_iScreenDims[1] = h;
-	m_bWantsResize = true;
-}
-
-
-void PathsRenderer_impl::resizeGL()
-{
-	if(!m_bPlatformSupported || !m_bInitialised) return;
-
-	const int w = m_iScreenDims[0];
-	const int h = m_iScreenDims[1];
-
-	if(auto *pContext = ((QOpenGLWidget*)m_pPlot)->context(); !pContext)
-		return;
-	auto *pGl = GetGlFunctions();
-	if(!pGl)
-		return;
-
-	m_matViewport = tl2::hom_viewport<t_mat_gl>(w, h, 0., 1.);
-	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
-
-	m_matPerspective = tl2::hom_perspective<t_mat_gl>(0.01, 100., tl2::pi<t_real_gl>*0.5, t_real_gl(h)/t_real_gl(w));
-	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
-
-	pGl->glViewport(0, 0, w, h);
-	pGl->glDepthRange(0, 1);
-
-	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
-	LOGGLERR(pGl);
-
-	// set matrices
-	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
-	m_pShaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
-	LOGGLERR(pGl);
-
-	m_bWantsResize = false;
-}
-
-
-void PathsRenderer_impl::UpdateCam()
+void PathsRenderer::UpdateCam()
 {
 	m_matCam = m_matCamBase;
 	m_matCam(2,3) /= m_zoom;
@@ -828,15 +564,15 @@ void PathsRenderer_impl::UpdateCam()
 /**
  * request a plot update
  */
-void PathsRenderer_impl::RequestPlotUpdate()
+void PathsRenderer::RequestPlotUpdate()
 {
-	QMetaObject::invokeMethod((QOpenGLWidget*)m_pPlot,
+	QMetaObject::invokeMethod((QOpenGLWidget*)this,
 		static_cast<void (QOpenGLWidget::*)()>(&QOpenGLWidget::update),
 		Qt::ConnectionType::QueuedConnection);
 }
 
 
-void PathsRenderer_impl::SetLight(std::size_t idx, const t_vec3_gl& pos)
+void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 {
 	if(m_lights.size() < idx+1)
 		m_lights.resize(idx+1);
@@ -846,7 +582,7 @@ void PathsRenderer_impl::SetLight(std::size_t idx, const t_vec3_gl& pos)
 }
 
 
-void PathsRenderer_impl::UpdateLights()
+void PathsRenderer::UpdateLights()
 {
 	constexpr int MAX_LIGHTS = 4;	// max. number allowed in shader
 
@@ -867,13 +603,13 @@ void PathsRenderer_impl::UpdateLights()
 }
 
 
-void PathsRenderer_impl::EnablePicker(bool b)
+void PathsRenderer::EnablePicker(bool b)
 {
 	m_bPickerEnabled = b;
 }
 
 
-void PathsRenderer_impl::UpdatePicker()
+void PathsRenderer::UpdatePicker()
 {
 	if(!m_bInitialised || !m_bPlatformSupported || !m_bPickerEnabled) return;
 
@@ -990,74 +726,14 @@ void PathsRenderer_impl::UpdatePicker()
 }
 
 
-void PathsRenderer_impl::mouseMoveEvent(const QPointF& pos)
-{
-	m_posMouse = pos;
 
-	if(m_bInRotation)
-	{
-		auto diff = (m_posMouse - m_posMouseRotationStart);
-		t_real_gl phi = diff.x() + m_phi_saved;
-		t_real_gl theta = diff.y() + m_theta_saved;
-
-		m_matCamRot = tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamX, theta/180.*tl2::pi<t_real_gl>, 0);
-		m_matCamRot *= tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamY, phi/180.*tl2::pi<t_real_gl>, 0);
-
-		UpdateCam();
-	}
-	else
-	{
-		// also automatically done in UpdateCam
-		m_bPickerNeedsUpdate = true;
-		RequestPlotUpdate();
-	}
-}
-
-
-void PathsRenderer_impl::zoom(t_real_gl val)
-{
-	m_zoom *= std::pow(2., val/64.);
-	UpdateCam();
-}
-
-
-void PathsRenderer_impl::ResetZoom()
-{
-	m_zoom = 1;
-	UpdateCam();
-}
-
-
-void PathsRenderer_impl::BeginRotation()
-{
-	if(!m_bInRotation)
-	{
-		m_posMouseRotationStart = m_posMouse;
-		m_bInRotation = true;
-	}
-}
-
-
-void PathsRenderer_impl::EndRotation()
-{
-	if(m_bInRotation)
-	{
-		auto diff = (m_posMouse - m_posMouseRotationStart);
-		m_phi_saved += diff.x();
-		m_theta_saved += diff.y();
-
-		m_bInRotation = false;
-	}
-}
-
-
-void PathsRenderer_impl::tick()
+void PathsRenderer::tick()
 {
 	tick(std::chrono::milliseconds(1000 / 60));
 }
 
 
-void PathsRenderer_impl::tick(const std::chrono::milliseconds& ms)
+void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
 	// TODO
 	UpdateCam();
@@ -1067,7 +743,7 @@ void PathsRenderer_impl::tick(const std::chrono::milliseconds& ms)
 /**
  * pure gl drawing
  */
-void PathsRenderer_impl::DoPaintGL(qgl_funcs *pGl)
+void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
 	if(!pGl)
 		return;
@@ -1153,7 +829,7 @@ void PathsRenderer_impl::DoPaintGL(qgl_funcs *pGl)
 /**
  * directly draw on a qpainter
  */
-void PathsRenderer_impl::DoPaintNonGL(QPainter &painter)
+void PathsRenderer::DoPaintNonGL(QPainter &painter)
 {
 	QFont fontOrig = painter.font();
 	QPen penOrig = painter.pen();
@@ -1216,13 +892,164 @@ void PathsRenderer_impl::DoPaintNonGL(QPainter &painter)
 }
 
 
-void PathsRenderer_impl::paintGL()
+
+
+void PathsRenderer::initializeGL()
 {
-	if(!m_bPlatformSupported) return;
+	m_bInitialised = false;
+
+	// --------------------------------------------------------------------
+	// shaders
+	// --------------------------------------------------------------------
+	auto [frag_ok, strFragShader] = tl2::load_file("res/frag.shader");
+	auto [vertex_ok, strVertexShader] = tl2::load_file("res/vertex.shader");
+
+	if(!frag_ok || !vertex_ok)
+	{
+		std::cerr << "Fragment or vertex shader could not be loaded." << std::endl;
+		return;
+	}
+	// --------------------------------------------------------------------
+
+
+	// set glsl version and constants
+	const std::string strGlsl = std::to_string(_GLSL_MAJ_VER*100 + _GLSL_MIN_VER*10);
+	std::string strPi = std::to_string(tl2::pi<t_real_gl>);			// locale-dependent !
+	algo::replace_all(strPi, std::string(","), std::string("."));	// ensure decimal point
+
+	for(std::string* strSrc : { &strFragShader, &strVertexShader })
+	{
+		algo::replace_all(*strSrc, std::string("${GLSL_VERSION}"), strGlsl);
+		algo::replace_all(*strSrc, std::string("${PI}"), strPi);
+	}
+
+
+	// GL functions
+	auto *pGl = GetGlFunctions();
+	if(!pGl) return;
+
+	m_strGlVer = (char*)pGl->glGetString(GL_VERSION);
+	m_strGlShaderVer = (char*)pGl->glGetString(GL_SHADING_LANGUAGE_VERSION);
+	m_strGlVendor = (char*)pGl->glGetString(GL_VENDOR);
+	m_strGlRenderer = (char*)pGl->glGetString(GL_RENDERER);
+	LOGGLERR(pGl);
+
+
+	// shaders
+	{
+		static QMutex shadermutex;
+		shadermutex.lock();
+		BOOST_SCOPE_EXIT(&shadermutex) { shadermutex.unlock(); } BOOST_SCOPE_EXIT_END
+
+		// shader compiler/linker error handler
+		auto shader_err = [this](const char* err) -> void
+		{
+			std::cerr << err << std::endl;
+
+			std::string strLog = m_pShaders->log().toStdString();
+			if(strLog.size())
+				std::cerr << "Shader log: " << strLog << std::endl;
+
+			std::exit(-1);
+		};
+
+		// compile & link shaders
+		m_pShaders = std::make_shared<QOpenGLShaderProgram>(this);
+
+		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
+			shader_err("Cannot compile fragment shader.");
+		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
+			shader_err("Cannot compile vertex shader.");
+
+		if(!m_pShaders->link())
+			shader_err("Cannot link shaders.");
+
+		m_uniMatrixCam = m_pShaders->uniformLocation("cam");
+		m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
+		m_uniMatrixProj = m_pShaders->uniformLocation("proj");
+		m_uniMatrixObj = m_pShaders->uniformLocation("obj");
+		m_uniConstCol = m_pShaders->uniformLocation("constcol");
+		m_uniLightPos = m_pShaders->uniformLocation("lightpos");
+		m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
+		m_attrVertex = m_pShaders->attributeLocation("vertex");
+		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
+		m_attrVertexCol = m_pShaders->attributeLocation("vertexcol");
+	}
+	LOGGLERR(pGl);
+
+
+	// 3d objects
+	AddCoordinateCross(-m_CoordMax, m_CoordMax);
+
+
+	// options
+	pGl->glCullFace(GL_BACK);
+	pGl->glEnable(GL_CULL_FACE);
+
+	pGl->glEnable(GL_BLEND);
+	pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	pGl->glEnable(GL_MULTISAMPLE);
+	pGl->glEnable(GL_LINE_SMOOTH);
+	pGl->glEnable(GL_POLYGON_SMOOTH);
+	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+
+	m_bInitialised = true;
+
+
+	if(IsInitialised())
+		emit AfterGLInitialisation();
+	else
+		emit GLInitialisationFailed();
+}
+
+
+void PathsRenderer::resizeGL(int w, int h)
+{
+	m_iScreenDims[0] = w;
+	m_iScreenDims[1] = h;
+	m_bWantsResize = true;
+
+	if(!m_bPlatformSupported || !m_bInitialised) return;
+
+	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
+		return;
+	auto *pGl = GetGlFunctions();
+	if(!pGl)
+		return;
+
+	m_matViewport = tl2::hom_viewport<t_mat_gl>(w, h, 0., 1.);
+	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
+
+	m_matPerspective = tl2::hom_perspective<t_mat_gl>(0.01, 100., tl2::pi<t_real_gl>*0.5, t_real_gl(h)/t_real_gl(w));
+	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
+
+	pGl->glViewport(0, 0, w, h);
+	pGl->glDepthRange(0, 1);
+
+	// bind shaders
+	m_pShaders->bind();
+	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	LOGGLERR(pGl);
+
+	// set matrices
+	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
+	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+	m_pShaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
+	LOGGLERR(pGl);
+
+	m_bWantsResize = false;
+}
+
+
+void PathsRenderer::paintGL()
+{
+	if(!m_bPlatformSupported || !m_bInitialised) return;
 	QMutexLocker _locker{&m_mutexObj};
 
-	if(auto *pContext = m_pPlot->context(); !pContext) return;
-	QPainter painter(m_pPlot);
+	if(auto *pContext = context(); !pContext) return;
+	QPainter painter(this);
 	painter.setRenderHint(QPainter::Antialiasing);
 
 	// gl painting
@@ -1239,61 +1066,30 @@ void PathsRenderer_impl::paintGL()
 	// qt painting
 	DoPaintNonGL(painter);
 }
-// ----------------------------------------------------------------------------
-
-
-
-
-// ----------------------------------------------------------------------------
-// PathsRenderer wrapper class
-
-PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent),
-	m_impl(std::make_unique<PathsRenderer_impl>(this))
-{
-	qRegisterMetaType<std::size_t>("std::size_t");
-
-	connect(this, &QOpenGLWidget::aboutToCompose, this, &PathsRenderer::beforeComposing);
-	connect(this, &QOpenGLWidget::frameSwapped, this, &PathsRenderer::afterComposing);
-	connect(this, &QOpenGLWidget::aboutToResize, this, &PathsRenderer::beforeResizing);
-	connect(this, &QOpenGLWidget::resized, this, &PathsRenderer::afterResizing);
-
-	//setUpdateBehavior(QOpenGLWidget::PartialUpdate);
-	setMouseTracking(true);
-}
-
-
-PathsRenderer::~PathsRenderer()
-{
-	setMouseTracking(false);
-}
-
-
-void PathsRenderer::initializeGL()
-{
-	m_impl->initialiseGL();
-	if(m_impl->IsInitialised())
-		emit AfterGLInitialisation();
-	else
-		emit GLInitialisationFailed();
-}
-
-
-void PathsRenderer::resizeGL(int w, int h)
-{
-	m_impl->SetScreenDims(w, h);
-	m_impl->resizeGL();
-}
-
-
-void PathsRenderer::paintGL()
-{
-	m_impl->paintGL();
-}
 
 
 void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 {
-	m_impl->mouseMoveEvent(pEvt->localPos());
+	m_posMouse = pEvt->localPos();
+
+	if(m_bInRotation)
+	{
+		auto diff = (m_posMouse - m_posMouseRotationStart);
+		t_real_gl phi = diff.x() + m_phi_saved;
+		t_real_gl theta = diff.y() + m_theta_saved;
+
+		m_matCamRot = tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamX, theta/180.*tl2::pi<t_real_gl>, 0);
+		m_matCamRot *= tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamY, phi/180.*tl2::pi<t_real_gl>, 0);
+
+		UpdateCam();
+	}
+	else
+	{
+		// also automatically done in UpdateCam
+		m_bPickerNeedsUpdate = true;
+		RequestPlotUpdate();
+	}
+
 	m_mouseMovedBetweenDownAndUp = 1;
 	pEvt->accept();
 }
@@ -1308,9 +1104,20 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 	if(pEvt->buttons() & Qt::RightButton) m_mouseDown[2] = 1;
 
 	if(m_mouseDown[1])
-		m_impl->ResetZoom();
+	{
+		// reset zoom
+		m_zoom = 1;
+		UpdateCam();
+	}
 	if(m_mouseDown[2])
-		m_impl->BeginRotation();
+	{
+		// begin rotation
+		if(!m_bInRotation)
+		{
+			m_posMouseRotationStart = m_posMouse;
+			m_bInRotation = true;
+		}
+	}
 
 	pEvt->accept();
 	emit MouseDown(m_mouseDown[0], m_mouseDown[1], m_mouseDown[2]);
@@ -1326,7 +1133,17 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 	if((pEvt->buttons() & Qt::RightButton) == 0) m_mouseDown[2] = 0;
 
 	if(!m_mouseDown[2])
-		m_impl->EndRotation();
+	{
+		// end rotation
+		if(m_bInRotation)
+		{
+			auto diff = (m_posMouse - m_posMouseRotationStart);
+			m_phi_saved += diff.x();
+			m_theta_saved += diff.y();
+
+			m_bInRotation = false;
+		}
+	}
 
 	pEvt->accept();
 	emit MouseUp(!m_mouseDown[0], !m_mouseDown[1], !m_mouseDown[2]);
@@ -1346,7 +1163,10 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 {
 	const t_real_gl degrees = pEvt->angleDelta().y() / 8.;
-	m_impl->zoom(degrees);
+
+	// zoom
+	m_zoom *= std::pow(2., degrees/64.);
+	UpdateCam();
 
 	pEvt->accept();
 }

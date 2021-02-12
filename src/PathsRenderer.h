@@ -104,7 +104,6 @@ using t_vec_gl = tl2::qvecN_adapter<int, 4, t_real_gl, QVector4D>;
 using t_mat_gl = tl2::qmatNN_adapter<int, 4, 4, t_real_gl, QMatrix4x4>;
 
 // forward declarations
-class PathsRenderer_impl;
 class PathsRenderer;
 // ----------------------------------------------------------------------------
 
@@ -155,16 +154,61 @@ struct PathsRendererObj
 
 // ----------------------------------------------------------------------------
 /**
- * GL plotter implementation
+ * rendering widget
  */
-class PathsRenderer_impl : public QObject
+class PathsRenderer : public QOpenGLWidget
 { Q_OBJECT
-private:
-	QMutex m_mutexObj{QMutex::Recursive};
+
+public:
+	PathsRenderer(QWidget *pParent = nullptr);
+	virtual ~PathsRenderer();
 
 
 protected:
-	PathsRenderer *m_pPlot = nullptr;
+	virtual void paintEvent(QPaintEvent*) override;
+	virtual void initializeGL() override;
+	virtual void paintGL() override;
+	virtual void resizeGL(int w, int h) override;
+
+	virtual void mouseMoveEvent(QMouseEvent *pEvt) override;
+	virtual void mousePressEvent(QMouseEvent *Evt) override;
+	virtual void mouseReleaseEvent(QMouseEvent *Evt) override;
+	virtual void wheelEvent(QWheelEvent *pEvt) override;
+
+
+private:
+	mutable QMutex m_mutex{QMutex::Recursive};
+	QMutex m_mutexObj{QMutex::Recursive};
+
+	bool m_mouseMovedBetweenDownAndUp = 0;
+	bool m_mouseDown[3] = {0,0,0};
+
+
+protected slots:
+	void beforeComposing();
+	void afterComposing();
+	void beforeResizing();
+	void afterResizing();
+
+	void tick();
+
+
+public slots:
+	void EnablePicker(bool b);
+
+
+signals:
+	void AfterGLInitialisation();
+	void GLInitialisationFailed();
+
+	void MouseDown(bool left, bool mid, bool right);
+	void MouseUp(bool left, bool mid, bool right);
+	void MouseClick(bool left, bool mid, bool right);
+
+	void PickerIntersection(const t_vec3_gl* pos, std::size_t objIdx, const t_vec3_gl* posSphere);
+
+
+protected:
 	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
 
 	std::shared_ptr<QOpenGLShaderProgram> m_pShaders;
@@ -228,9 +272,6 @@ protected:
 
 
 public:
-	PathsRenderer_impl(PathsRenderer *pPlot = nullptr);
-	virtual ~PathsRenderer_impl();
-
 	static constexpr bool m_usetimer = false;
 
 	std::tuple<std::string, std::string, std::string, std::string>
@@ -284,81 +325,11 @@ public:
 	const std::string& GetObjectDataString(std::size_t idx) const;
 	bool GetObjectHighlight(std::size_t idx) const;
 
-	void SetScreenDims(int w, int h);
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 
 	bool IsInitialised() const { return m_bInitialised; }
-
-
-public slots:
-	void paintGL();
-
-	void initialiseGL();
-	void resizeGL();
-
-	void mouseMoveEvent(const QPointF& pos);
-	void zoom(t_real_gl val);
-	void ResetZoom();
-
-	void BeginRotation();
-	void EndRotation();
-
-	void EnablePicker(bool b);
-
-
-protected slots:
-	void tick();
-
-signals:
-	void PickerIntersection(const t_vec3_gl* pos, std::size_t objIdx, const t_vec3_gl* posSphere);
-};
-
-
-
-/**
- * GL plotter widget
- */
-class PathsRenderer : public QOpenGLWidget
-{ Q_OBJECT
-public:
-	PathsRenderer(QWidget *pParent = nullptr);
-	virtual ~PathsRenderer();
-
-	PathsRenderer_impl* GetImpl() { return m_impl.get(); }
-
-protected:
-	virtual void paintEvent(QPaintEvent*) override;
-	virtual void initializeGL() override;
-	virtual void paintGL() override;
-	virtual void resizeGL(int w, int h) override;
-
-	virtual void mouseMoveEvent(QMouseEvent *pEvt) override;
-	virtual void mousePressEvent(QMouseEvent *Evt) override;
-	virtual void mouseReleaseEvent(QMouseEvent *Evt) override;
-	virtual void wheelEvent(QWheelEvent *pEvt) override;
-
-private:
-	mutable QMutex m_mutex{QMutex::Recursive};
-	std::unique_ptr<PathsRenderer_impl> m_impl;
-
-	bool m_mouseMovedBetweenDownAndUp = 0;
-	bool m_mouseDown[3] = {0,0,0};
-
-protected slots:
-	void beforeComposing();
-	void afterComposing();
-	void beforeResizing();
-	void afterResizing();
-
-signals:
-	void AfterGLInitialisation();
-	void GLInitialisationFailed();
-
-	void MouseDown(bool left, bool mid, bool right);
-	void MouseUp(bool left, bool mid, bool right);
-	void MouseClick(bool left, bool mid, bool right);
 };
 // ----------------------------------------------------------------------------
 

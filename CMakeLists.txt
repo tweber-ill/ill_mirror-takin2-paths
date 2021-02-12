@@ -60,4 +60,12 @@ add_executable(paths
 
 target_link_libraries(paths ${Boost_LIBRARIES})
 qt5_use_modules(paths Core Gui Widgets OpenGL)
+
+
+# link resource directory
+add_custom_command(
+	TARGET paths PRE_BUILD
+	COMMAND if [ ! -d res ]\; then ln -sf ../res\; fi
+)
+
 # -----------------------------------------------------------------------------
