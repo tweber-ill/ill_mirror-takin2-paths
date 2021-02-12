@@ -11,6 +11,7 @@
 
 #version ${GLSL_VERSION}
 
+
 in vec4 vertex;
 in vec4 normal;
 in vec4 vertexcol;
