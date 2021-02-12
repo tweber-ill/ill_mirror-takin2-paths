@@ -901,8 +901,8 @@ void PathsRenderer::initializeGL()
 	// --------------------------------------------------------------------
 	// shaders
 	// --------------------------------------------------------------------
-	auto [frag_ok, strFragShader] = tl2::load_file("res/frag.shader");
-	auto [vertex_ok, strVertexShader] = tl2::load_file("res/vertex.shader");
+	auto [frag_ok, strFragShader] = tl2::load_file<std::string>("res/frag.shader");
+	auto [vertex_ok, strVertexShader] = tl2::load_file<std::string>("res/vertex.shader");
 
 	if(!frag_ok || !vertex_ok)
 	{
