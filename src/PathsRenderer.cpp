@@ -7,6 +7,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
+ *   - http://doc.qt.io/qt-5/qopengltexture.html
  */
 
 #include "PathsRenderer.h"
@@ -65,6 +66,7 @@ PathsRenderer::~PathsRenderer()
 		obj.m_pvertexbuf.reset();
 		obj.m_pnormalsbuf.reset();
 		obj.m_pcolorbuf.reset();
+		obj.m_puvbuf.reset();
 		if(pGl) pGl->glDeleteVertexArrays(1, &obj.m_vertexarr);
 	}
 
@@ -91,25 +93,8 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible)
 }
 
 
-t_mat_gl PathsRenderer::GetArrowMatrix(const t_vec_gl& vecTo, t_real_gl postscale, const t_vec_gl& vecPostTrans,
-	const t_vec_gl& vecFrom, t_real_gl prescale, const t_vec_gl& vecPreTrans)
-{
-	t_mat_gl mat = tl2::unit<t_mat_gl>(4);
-
-	mat *= tl2::hom_translation<t_mat_gl>(vecPreTrans[0], vecPreTrans[1], vecPreTrans[2]);
-	mat *= tl2::hom_scaling<t_mat_gl>(prescale, prescale, prescale);
-
-	mat *= tl2::rotation<t_mat_gl, t_vec_gl>(vecFrom, vecTo);
-
-	mat *= tl2::hom_scaling<t_mat_gl>(postscale, postscale, postscale);
-	mat *= tl2::hom_translation<t_mat_gl>(vecPostTrans[0], vecPostTrans[1], vecPostTrans[2]);
-
-	return mat;
-}
-
-
 std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
-	const std::vector<t_vec3_gl>& triag_norms,
+	const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
 	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triag_verts);
@@ -118,8 +103,9 @@ std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag
 	QMutexLocker _locker{&m_mutexObj};
 
 	PathsObj obj;
-	create_triangle_object(this, obj, triag_verts, triag_verts, triag_norms, col, 
-		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol);
+	create_triangle_object(this, obj, 
+		triag_verts, triag_verts, triag_norms, triag_uvs, col, 
+		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol, m_attrTexCoords);
 
 	obj.m_mat = tl2::hom_translation<t_mat_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
@@ -131,8 +117,21 @@ std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag
 }
 
 
-std::size_t PathsRenderer::AddCoordinateCross(t_real_gl min, t_real_gl max)
+std::size_t PathsRenderer::AddBasePlane()
 {
+	auto norm = tl2::create<t_vec3_gl>({0, 1, 0});
+	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm);
+	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
+
+	return AddTriangleObject(verts, norms, uvs, 0,0,1,1);
+}
+
+
+std::size_t PathsRenderer::AddCoordinateCross()
+{
+	t_real_gl min = -m_CoordMax;
+	t_real_gl max = m_CoordMax;
+
 	auto col = tl2::create<t_vec_gl>({0,0,0,1});
 	auto verts = std::vector<t_vec3_gl>
 	{{
@@ -374,10 +373,14 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		pGl->glEnableVertexAttribArray(m_attrVertex);
 		if(obj.m_type == GlRenderObjType::TRIANGLES)
-			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
-		pGl->glEnableVertexAttribArray(m_attrVertexCol);
-		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol)
 		{
+			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
+			pGl->glEnableVertexAttribArray(m_attrTexCoords);
+		}
+		pGl->glEnableVertexAttribArray(m_attrVertexCol);
+		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
+		{
+			pGl->glDisableVertexAttribArray(m_attrTexCoords);
 			pGl->glDisableVertexAttribArray(m_attrVertexCol);
 			pGl->glDisableVertexAttribArray(m_attrVertexNorm);
 			pGl->glDisableVertexAttribArray(m_attrVertex);
@@ -536,22 +539,30 @@ void PathsRenderer::initializeGL()
 		if(!m_pShaders->link())
 			shader_err("Cannot link shaders.");
 
+
+		m_attrVertex = m_pShaders->attributeLocation("vertex");
+		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
+		m_attrVertexCol = m_pShaders->attributeLocation("vertex_col");
+		m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
+
 		m_uniMatrixCam = m_pShaders->uniformLocation("cam");
 		m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
 		m_uniMatrixProj = m_pShaders->uniformLocation("proj");
 		m_uniMatrixObj = m_pShaders->uniformLocation("obj");
-		m_uniConstCol = m_pShaders->uniformLocation("constcol");
+
+		m_uniConstCol = m_pShaders->uniformLocation("const_col");
 		m_uniLightPos = m_pShaders->uniformLocation("lightpos");
 		m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
-		m_attrVertex = m_pShaders->attributeLocation("vertex");
-		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
-		m_attrVertexCol = m_pShaders->attributeLocation("vertexcol");
+
+		m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
+		m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
 	}
 	LOGGLERR(pGl);
 
 
 	// 3d objects
-	AddCoordinateCross(-m_CoordMax, m_CoordMax);
+	AddCoordinateCross();
+	AddBasePlane();
 
 
 	// options

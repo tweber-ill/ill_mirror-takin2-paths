@@ -12,13 +12,15 @@
 #version ${GLSL_VERSION}
 
 
+const float pi = ${PI};
+
 in vec4 vertex;
 in vec4 normal;
-in vec4 vertexcol;
-out vec4 fragcol;
+in vec4 vertex_col;
+in vec2 tex_coords;
 
-
-const float pi = ${PI};
+out vec4 frag_col;
+out vec2 frag_coords;
 
 
 // ----------------------------------------------------------------------------
@@ -34,7 +36,7 @@ uniform mat4 obj = mat4(1.);
 // ----------------------------------------------------------------------------
 // lighting
 // ----------------------------------------------------------------------------
-uniform vec4 constcol = vec4(1, 1, 1, 1);
+uniform vec4 const_col = vec4(1, 1, 1, 1);
 uniform vec3 lightpos[] = vec3[]( vec3(5, 5, 5), vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0) );
 uniform int activelights = 1;	// how many lights to use?
 
@@ -131,6 +133,9 @@ void main()
 	gl_Position = proj * cam * objPos;
 
 	float I = lighting(objPos, objNorm);
-	fragcol.rgb = vertexcol.rgb * I;
-	fragcol *= constcol;
+	frag_col.rgb = vertex_col.rgb * I;
+	//frag_col.a = 1;
+	frag_col *= const_col;
+
+	frag_coords = tex_coords;
 }

@@ -11,12 +11,22 @@
 
 #version ${GLSL_VERSION}
 
+// colour
+in vec4 frag_col;
+out vec4 out_col;
 
-in vec4 fragcol;
-out vec4 outcol;
+// fragment coordinates
+in vec2 frag_coords;
+
+// current cursor position
+uniform bool cursor_active = true;
+uniform vec2 cursor_coords = vec2(0.5, 0.5);
 
 
 void main()
 {
-	outcol = fragcol;
+	out_col = frag_col;
+
+	if(cursor_active && length(frag_coords - cursor_coords) < 0.01)
+		out_col = vec4(1, 0, 0, 1);
 }

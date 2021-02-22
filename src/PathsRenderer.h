@@ -112,16 +112,23 @@ protected:
 
 	std::shared_ptr<QOpenGLShaderProgram> m_pShaders;
 
+	// attributes
 	GLint m_attrVertex = -1;
 	GLint m_attrVertexNorm = -1;
 	GLint m_attrVertexCol = -1;
+	GLint m_attrTexCoords = -1;
+
 	GLint m_uniConstCol = -1;
 	GLint m_uniLightPos = -1;
 	GLint m_uniNumActiveLights = -1;
+
 	GLint m_uniMatrixProj = -1;
 	GLint m_uniMatrixCam = -1;
 	GLint m_uniMatrixCamInv = -1;
 	GLint m_uniMatrixObj = -1;
+
+	GLint m_uniCursorActive = -1;
+	GLint m_uniCursorCoords = -1;
 
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
@@ -174,20 +181,17 @@ public:
 		GetGlDescr() const { return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer); }
 
 	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr);
-	static t_mat_gl GetArrowMatrix(const t_vec_gl& vecTo,
-		t_real_gl postscale = 1,  const t_vec_gl& vecPostTrans = tl2::create<t_vec_gl>({0,0,0.5}),
-		const t_vec_gl& vecFrom = tl2::create<t_vec_gl>({0,0,1}),
-		t_real_gl prescale = 1,  const t_vec_gl& vecPreTrans = tl2::create<t_vec_gl>({0,0,0}));
 
 	void SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY)
 	{ m_matCamBase = mat; m_vecCamX = vecX; m_vecCamY = vecY; UpdateCam(); }
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
 	std::size_t AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
-		const std::vector<t_vec3_gl>& triag_norms,
+		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	std::size_t AddCoordinateCross(t_real_gl min, t_real_gl max);
+	std::size_t AddBasePlane();
+	std::size_t AddCoordinateCross();
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 
