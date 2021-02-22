@@ -1,7 +1,7 @@
 /**
  * paths rendering widget
  * @author Tobias Weber <tweber@ill.fr>
- * @date 2021
+ * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
  *
  * References:
@@ -27,40 +27,11 @@ namespace algo = boost::algorithm;
 #include "tlibs2/libs/file.h"
 
 
-#pragma message("Compiling for GL version " BOOST_PP_STRINGIZE(_GL_MAJ_VER) "." BOOST_PP_STRINGIZE(_GL_MIN_VER) " and GLSL version " BOOST_PP_STRINGIZE(_GLSL_MAJ_VER) BOOST_PP_STRINGIZE(_GLSL_MIN_VER) "0.")
-
-
-// ----------------------------------------------------------------------------
-void set_gl_format(bool bCore, int iMajorVer, int iMinorVer, int iSamples)
-{
-	QSurfaceFormat surf = QSurfaceFormat::defaultFormat();
-
-	surf.setRenderableType(QSurfaceFormat::OpenGL);
-	if(bCore)
-		surf.setProfile(QSurfaceFormat::CoreProfile);
-	else
-		surf.setProfile(QSurfaceFormat::CompatibilityProfile);
-
-	if(iMajorVer > 0 && iMinorVer > 0)
-		surf.setVersion(iMajorVer, iMinorVer);
-
-	surf.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-	if(iSamples > 0)
-		surf.setSamples(iSamples);	// multisampling
-
-	QSurfaceFormat::setDefaultFormat(surf);
-}
-// ----------------------------------------------------------------------------
-
-
-
 // ----------------------------------------------------------------------------
 // GL plot implementation
 
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
-	qRegisterMetaType<std::size_t>("std::size_t");
-
 	if constexpr(m_usetimer)
 	{
 		connect(&m_timer, &QTimer::timeout,
@@ -69,11 +40,6 @@ PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 	}
 
 	UpdateCam();
-
-	connect(this, &QOpenGLWidget::aboutToCompose, this, &PathsRenderer::beforeComposing);
-	connect(this, &QOpenGLWidget::frameSwapped, this, &PathsRenderer::afterComposing);
-	connect(this, &QOpenGLWidget::aboutToResize, this, &PathsRenderer::beforeResizing);
-	connect(this, &QOpenGLWidget::resized, this, &PathsRenderer::afterResizing);
 
 	//setUpdateBehavior(QOpenGLWidget::PartialUpdate);
 	setMouseTracking(true);
@@ -93,7 +59,7 @@ PathsRenderer::~PathsRenderer()
 	// delete gl objects within current gl context
 	m_pShaders.reset();
 
-	qgl_funcs* pGl = GetGlFunctions();
+	qgl_funcs* pGl = get_gl_functions(this);
 	for(auto &obj : m_objs)
 	{
 		obj.m_pvertexbuf.reset();
@@ -104,23 +70,6 @@ PathsRenderer::~PathsRenderer()
 
 	m_objs.clear();
 	LOGGLERR(pGl)
-}
-
-
-qgl_funcs* PathsRenderer::GetGlFunctions(QOpenGLWidget *pWidget)
-{
-	if(!pWidget) pWidget = (QOpenGLWidget*) this;
-	qgl_funcs *pGl = nullptr;
-
-	if constexpr(std::is_same_v<qgl_funcs, QOpenGLFunctions>)
-		pGl = (qgl_funcs*)pWidget->context()->functions();
-	else
-		pGl = (qgl_funcs*)pWidget->context()->versionFunctions<qgl_funcs>();
-
-	if(!pGl)
-		std::cerr << "No suitable GL interface found." << std::endl;
-
-	return pGl;
 }
 
 
@@ -159,365 +108,19 @@ t_mat_gl PathsRenderer::GetArrowMatrix(const t_vec_gl& vecTo, t_real_gl postscal
 }
 
 
-PathsRendererObj PathsRenderer::CreateTriangleObject(const std::vector<t_vec3_gl>& verts,
-	const std::vector<t_vec3_gl>& triagverts, const std::vector<t_vec3_gl>& norms,
-	const t_vec_gl& color, bool bUseVertsAsNorm)
-{
-	// TODO: move context to calling thread
-	makeCurrent();
-	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
-
-
-	qgl_funcs* pGl = GetGlFunctions();
-
-	GLint attrVertex = m_attrVertex;
-	GLint attrVertexNormal = m_attrVertexNorm;
-	GLint attrVertexColor = m_attrVertexCol;
-
-	PathsRendererObj obj;
-	obj.m_type = PathsRendererObjType::TRIANGLES;
-	obj.m_color = color;
-
-	// flatten vertex array into raw float array
-	auto to_float_array = [](const std::vector<t_vec3_gl>& verts, int iRepeat=1, int iElems=3, bool bNorm=false)
-		-> std::vector<t_real_gl>
-	{
-		std::vector<t_real_gl> vecRet;
-		vecRet.reserve(iRepeat*verts.size()*iElems);
-
-		for(const t_vec3_gl& vert : verts)
-		{
-			t_real_gl norm = bNorm ? tl2::norm<t_vec3_gl>(vert) : 1;
-
-			for(int i=0; i<iRepeat; ++i)
-				for(int iElem=0; iElem<iElems; ++iElem)
-					vecRet.push_back(vert[iElem] / norm);
-		}
-
-		return vecRet;
-	};
-
-	// main vertex array object
-	pGl->glGenVertexArrays(1, &obj.m_vertexarr);
-	pGl->glBindVertexArray(obj.m_vertexarr);
-
-	{	// vertices
-		obj.m_pvertexbuf = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
-
-		if(!obj.m_pvertexbuf->create())
-			std::cerr << "Cannot create vertex buffer." << std::endl;
-		if(!obj.m_pvertexbuf->bind())
-			std::cerr << "Cannot bind vertex buffer." << std::endl;
-		BOOST_SCOPE_EXIT(&obj) { obj.m_pvertexbuf->release(); } BOOST_SCOPE_EXIT_END
-
-		auto vecVerts = to_float_array(triagverts, 1,3, false);
-		obj.m_pvertexbuf->allocate(vecVerts.data(), vecVerts.size()*sizeof(typename decltype(vecVerts)::value_type));
-		pGl->glVertexAttribPointer(attrVertex, 3, GL_FLOAT, 0, 0, nullptr);
-	}
-
-	{	// normals
-		obj.m_pnormalsbuf = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
-
-		obj.m_pnormalsbuf->create();
-		obj.m_pnormalsbuf->bind();
-		BOOST_SCOPE_EXIT(&obj) { obj.m_pnormalsbuf->release(); } BOOST_SCOPE_EXIT_END
-
-		auto vecNorms = bUseVertsAsNorm ? to_float_array(triagverts, 1,3, true) : to_float_array(norms, 3,3, false);
-		obj.m_pnormalsbuf->allocate(vecNorms.data(), vecNorms.size()*sizeof(typename decltype(vecNorms)::value_type));
-		pGl->glVertexAttribPointer(attrVertexNormal, 3, GL_FLOAT, 0, 0, nullptr);
-	}
-
-	{	// colors
-		obj.m_pcolorbuf = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
-
-		obj.m_pcolorbuf->create();
-		obj.m_pcolorbuf->bind();
-		BOOST_SCOPE_EXIT(&obj) { obj.m_pcolorbuf->release(); } BOOST_SCOPE_EXIT_END
-
-		std::vector<t_real_gl> vecCols;
-		vecCols.reserve(4*triagverts.size());
-		for(std::size_t iVert=0; iVert<triagverts.size(); ++iVert)
-		{
-			for(int icol=0; icol<obj.m_color.size(); ++icol)
-				vecCols.push_back(obj.m_color[icol]);
-		}
-
-		obj.m_pcolorbuf->allocate(vecCols.data(), vecCols.size()*sizeof(typename decltype(vecCols)::value_type));
-		pGl->glVertexAttribPointer(attrVertexColor, 4, GL_FLOAT, 0, 0, nullptr);
-	}
-
-
-	obj.m_vertices = std::move(verts);
-	obj.m_triangles = std::move(triagverts);
-	LOGGLERR(pGl)
-
-	return obj;
-}
-
-
-PathsRendererObj PathsRenderer::CreateLineObject(const std::vector<t_vec3_gl>& verts, const t_vec_gl& color)
-{
-	// TODO: move context to calling thread
-	makeCurrent();
-	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
-
-
-	qgl_funcs* pGl = GetGlFunctions();
-	GLint attrVertex = m_attrVertex;
-	GLint attrVertexColor = m_attrVertexCol;
-
-	PathsRendererObj obj;
-	obj.m_type = PathsRendererObjType::LINES;
-	obj.m_color = color;
-
-	// flatten vertex array into raw float array
-	auto to_float_array = [](const std::vector<t_vec3_gl>& verts, int iElems=3) -> std::vector<t_real_gl>
-	{
-		std::vector<t_real_gl> vecRet;
-		vecRet.reserve(verts.size()*iElems);
-
-		for(const t_vec3_gl& vert : verts)
-		{
-			for(int iElem=0; iElem<iElems; ++iElem)
-				vecRet.push_back(vert[iElem]);
-		}
-
-		return vecRet;
-	};
-
-	// main vertex array object
-	pGl->glGenVertexArrays(1, &obj.m_vertexarr);
-	pGl->glBindVertexArray(obj.m_vertexarr);
-
-	{	// vertices
-		obj.m_pvertexbuf = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
-
-		obj.m_pvertexbuf->create();
-		obj.m_pvertexbuf->bind();
-		BOOST_SCOPE_EXIT(&obj) { obj.m_pvertexbuf->release(); } BOOST_SCOPE_EXIT_END
-
-		auto vecVerts = to_float_array(verts, 3);
-		obj.m_pvertexbuf->allocate(vecVerts.data(), vecVerts.size()*sizeof(typename decltype(vecVerts)::value_type));
-		pGl->glVertexAttribPointer(attrVertex, 3, GL_FLOAT, 0, 0, nullptr);
-	}
-
-	{	// colors
-		obj.m_pcolorbuf = std::make_shared<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
-
-		obj.m_pcolorbuf->create();
-		obj.m_pcolorbuf->bind();
-		BOOST_SCOPE_EXIT(&obj) { obj.m_pcolorbuf->release(); } BOOST_SCOPE_EXIT_END
-
-		std::vector<t_real_gl> vecCols;
-		vecCols.reserve(4*verts.size());
-		for(std::size_t iVert=0; iVert<verts.size(); ++iVert)
-		{
-			for(int icol=0; icol<obj.m_color.size(); ++icol)
-				vecCols.push_back(obj.m_color[icol]);
-		}
-
-		obj.m_pcolorbuf->allocate(vecCols.data(), vecCols.size()*sizeof(typename decltype(vecCols)::value_type));
-		pGl->glVertexAttribPointer(attrVertexColor, 4, GL_FLOAT, 0, 0, nullptr);
-	}
-
-
-	obj.m_vertices = std::move(verts);
-	LOGGLERR(pGl)
-
-	return obj;
-}
-
-
-void PathsRenderer::SetObjectMatrix(std::size_t idx, const t_mat_gl& mat)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_mat = mat;
-}
-
-
-void PathsRenderer::SetObjectCol(std::size_t idx, t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_color = tl2::create<t_vec_gl>({r,g,b,a});
-}
-
-
-void PathsRenderer::SetObjectLabel(std::size_t idx, const std::string& label)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_label = label;
-}
-
-const std::string& PathsRenderer::GetObjectLabel(std::size_t idx) const
-{
-	static const std::string empty{};
-	if(idx >= m_objs.size()) return empty;
-
-	return m_objs[idx].m_label;
-}
-
-
-void PathsRenderer::SetObjectDataString(std::size_t idx, const std::string& data)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_datastr = data;
-}
-
-const std::string& PathsRenderer::GetObjectDataString(std::size_t idx) const
-{
-	static const std::string empty{};
-	if(idx >= m_objs.size()) return empty;
-
-	return m_objs[idx].m_datastr;
-}
-
-
-void PathsRenderer::SetObjectVisible(std::size_t idx, bool visible)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_visible = visible;
-}
-
-
-void PathsRenderer::SetObjectHighlight(std::size_t idx, bool highlight)
-{
-	if(idx >= m_objs.size()) return;
-	m_objs[idx].m_highlighted = highlight;
-}
-
-
-bool PathsRenderer::GetObjectHighlight(std::size_t idx) const
-{
-	if(idx >= m_objs.size()) return 0;
-	return m_objs[idx].m_highlighted;
-}
-
-
-void PathsRenderer::RemoveObject(std::size_t idx)
-{
-	m_objs[idx].m_valid = false;
-
-	m_objs[idx].m_pvertexbuf.reset();
-	m_objs[idx].m_pnormalsbuf.reset();
-	m_objs[idx].m_pcolorbuf.reset();
-
-	m_objs[idx].m_vertices.clear();
-	m_objs[idx].m_triangles.clear();
-
-	// TODO: remove if object has no follow-up indices
-}
-
-
-std::size_t PathsRenderer::AddLinkedObject(std::size_t linkTo,
-	t_real_gl x, t_real_gl y, t_real_gl z,
-	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	PathsRendererObj obj;
-	obj.linkedObj = linkTo;
-	obj.m_mat = tl2::hom_translation<t_mat_gl>(x, y, z);
-	obj.m_color = tl2::create<t_vec_gl>({r, g, b, a});
-
-	QMutexLocker _locker{&m_mutexObj};
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
-}
-
-
-std::size_t PathsRenderer::AddSphere(t_real_gl rad, t_real_gl x, t_real_gl y, t_real_gl z,
-	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	constexpr int numsubdivs = 2;
-
-	auto solid = tl2::create_icosahedron<t_vec3_gl>(1);
-	auto [triagverts, norms, uvs] = tl2::spherify<t_vec3_gl>(
-		tl2::subdivide_triangles<t_vec3_gl>(
-			tl2::create_triangles<t_vec3_gl>(solid), numsubdivs), rad);
-	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triagverts);
-
-	QMutexLocker _locker{&m_mutexObj};
-
-	auto obj = CreateTriangleObject(std::get<0>(solid), triagverts, norms, tl2::create<t_vec_gl>({r,g,b,a}), true);
-	obj.m_mat = tl2::hom_translation<t_mat_gl>(x, y, z);
-	obj.m_boundingSpherePos = std::move(boundingSpherePos);
-	obj.m_boundingSphereRad = boundingSphereRad;
-	//obj.m_boundingSphereRad = rad;
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
-}
-
-
-std::size_t PathsRenderer::AddCylinder(t_real_gl rad, t_real_gl h,
-	t_real_gl x, t_real_gl y, t_real_gl z,
-	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	auto solid = tl2::create_cylinder<t_vec3_gl>(rad, h, true);
-	auto [triagverts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
-	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triagverts);
-
-	QMutexLocker _locker{&m_mutexObj};
-
-	auto obj = CreateTriangleObject(std::get<0>(solid), triagverts, norms, tl2::create<t_vec_gl>({r,g,b,a}), false);
-	obj.m_mat = tl2::hom_translation<t_mat_gl>(x, y, z);
-	obj.m_boundingSpherePos = std::move(boundingSpherePos);
-	obj.m_boundingSphereRad = boundingSphereRad;
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
-}
-
-
-std::size_t PathsRenderer::AddCone(t_real_gl rad, t_real_gl h,
-	t_real_gl x, t_real_gl y, t_real_gl z,
-	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	auto solid = tl2::create_cone<t_vec3_gl>(rad, h);
-	auto [triagverts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
-	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triagverts);
-
-	QMutexLocker _locker{&m_mutexObj};
-
-	auto obj = CreateTriangleObject(std::get<0>(solid), triagverts, norms, tl2::create<t_vec_gl>({r,g,b,a}), false);
-	obj.m_mat = tl2::hom_translation<t_mat_gl>(x, y, z);
-	obj.m_boundingSpherePos = std::move(boundingSpherePos);
-	obj.m_boundingSphereRad = boundingSphereRad;
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
-}
-
-
-std::size_t PathsRenderer::AddArrow(t_real_gl rad, t_real_gl h,
-	t_real_gl x, t_real_gl y, t_real_gl z,
-	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
-{
-	auto solid = tl2::create_cylinder<t_vec3_gl>(rad, h, 2, 32, rad, rad*1.5);
-	auto [triagverts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
-	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triagverts);
-
-	QMutexLocker _locker{&m_mutexObj};
-
-	auto obj = CreateTriangleObject(std::get<0>(solid), triagverts, norms, tl2::create<t_vec_gl>({r,g,b,a}), false);
-	obj.m_mat = GetArrowMatrix(tl2::create<t_vec_gl>({1,0,0}), 1., tl2::create<t_vec_gl>({x,y,z}), tl2::create<t_vec_gl>({0,0,1}));
-	obj.m_boundingSpherePos = std::move(boundingSpherePos);
-	obj.m_boundingSphereRad = boundingSphereRad;
-	obj.m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.75});
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
-}
-
-
 std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
 	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triag_verts);
+	auto col = tl2::create<t_vec_gl>({r,g,b,a});
 
 	QMutexLocker _locker{&m_mutexObj};
 
-	auto obj = CreateTriangleObject(triag_verts, triag_verts, triag_norms, tl2::create<t_vec_gl>({r,g,b,a}), false);
+	PathsObj obj;
+	create_triangle_object(this, obj, triag_verts, triag_verts, triag_norms, col, 
+		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol);
+
 	obj.m_mat = tl2::hom_translation<t_mat_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
@@ -540,8 +143,9 @@ std::size_t PathsRenderer::AddCoordinateCross(t_real_gl min, t_real_gl max)
 
 	QMutexLocker _locker{&m_mutexObj};
 
-	auto obj = CreateLineObject(verts, col);
-	obj.m_invariant = true;
+	PathsObj obj;
+	create_line_object(this, obj, verts, col, m_attrVertex, m_attrVertexCol);
+
 	m_objs.emplace_back(std::move(obj));
 
 	return m_objs.size()-1;		// object handle
@@ -557,18 +161,7 @@ void PathsRenderer::UpdateCam()
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
 
 	m_bPickerNeedsUpdate = true;
-	RequestPlotUpdate();
-}
-
-
-/**
- * request a plot update
- */
-void PathsRenderer::RequestPlotUpdate()
-{
-	QMetaObject::invokeMethod((QOpenGLWidget*)this,
-		static_cast<void (QOpenGLWidget::*)()>(&QOpenGLWidget::update),
-		Qt::ConnectionType::QueuedConnection);
+	update();
 }
 
 
@@ -660,11 +253,8 @@ void PathsRenderer::UpdatePicker()
 	for(std::size_t curObj=0; curObj<m_objs.size(); ++curObj)
 	{
 		const auto& obj = m_objs[curObj];
-		const PathsRendererObj *linkedObj = &obj;
-		if(obj.linkedObj)
-			linkedObj = &m_objs[*obj.linkedObj];
 
-		if(linkedObj->m_type != PathsRendererObjType::TRIANGLES || !obj.m_visible || !obj.m_valid)
+		if(obj.m_type != GlRenderObjType::TRIANGLES || !obj.m_visible || !obj.m_valid)
 			continue;
 
 
@@ -676,18 +266,18 @@ void PathsRenderer::UpdatePicker()
 		// intersection with bounding sphere?
 		auto boundingInters =
 			tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
-				matTrafo * linkedObj->m_boundingSpherePos, scale*linkedObj->m_boundingSphereRad);
+				matTrafo * obj.m_boundingSpherePos, scale*obj.m_boundingSphereRad);
 		if(boundingInters.size() == 0)
 			continue;
 
 
 		// test actual polygons for intersection
-		for(std::size_t startidx=0; startidx+2<linkedObj->m_triangles.size(); startidx+=3)
+		for(std::size_t startidx=0; startidx+2<obj.m_triangles.size(); startidx+=3)
 		{
 			std::vector<t_vec3_gl> poly{ {
-				linkedObj->m_triangles[startidx+0],
-				linkedObj->m_triangles[startidx+1],
-				linkedObj->m_triangles[startidx+2]
+				obj.m_triangles[startidx+0],
+				obj.m_triangles[startidx+1],
+				obj.m_triangles[startidx+2]
 			} };
 
 			auto [vecInters, bInters, lamInters] =
@@ -721,8 +311,8 @@ void PathsRenderer::UpdatePicker()
 	m_bPickerNeedsUpdate = false;
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
-	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, objInters,
-		hasSphereInters ? &vecClosestSphereInters3 : nullptr);
+
+	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, objInters, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
 
 
@@ -767,39 +357,23 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
-	auto colHighlight = tl2::create<t_vec_gl>({1,1,1,1});
 
 	// render triangle geometry
 	for(const auto& obj : m_objs)
 	{
-		const PathsRendererObj *linkedObj = &obj;
-		if(obj.linkedObj)
-		{
-			// get linked object
-			linkedObj = &m_objs[*obj.linkedObj];
-
-			// override constant color for linked object
-			if(obj.m_highlighted)
-				m_pShaders->setUniformValue(m_uniConstCol, colHighlight);
-			else
-				m_pShaders->setUniformValue(m_uniConstCol, obj.m_color);
-		}
-		else
-		{
-			// set override color to white for non-linked objects
-			m_pShaders->setUniformValue(m_uniConstCol, colOverride);
-		}
+		// set override color to white
+		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
 
 		if(!obj.m_visible || !obj.m_valid) continue;
 
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
-		pGl->glBindVertexArray(linkedObj->m_vertexarr);
+		pGl->glBindVertexArray(obj.m_vertexarr);
 
 
 		pGl->glEnableVertexAttribArray(m_attrVertex);
-		if(linkedObj->m_type == PathsRendererObjType::TRIANGLES)
+		if(obj.m_type == GlRenderObjType::TRIANGLES)
 			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
 		pGl->glEnableVertexAttribArray(m_attrVertexCol);
 		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol)
@@ -812,10 +386,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		LOGGLERR(pGl);
 
 
-		if(linkedObj->m_type == PathsRendererObjType::TRIANGLES)
-			pGl->glDrawArrays(GL_TRIANGLES, 0, linkedObj->m_triangles.size());
-		else if(linkedObj->m_type == PathsRendererObjType::LINES)
-			pGl->glDrawArrays(GL_LINES, 0, linkedObj->m_vertices.size());
+		if(obj.m_type == GlRenderObjType::TRIANGLES)
+			pGl->glDrawArrays(GL_TRIANGLES, 0, obj.m_triangles.size());
+		else if(obj.m_type == GlRenderObjType::LINES)
+			pGl->glDrawArrays(GL_LINES, 0, obj.m_vertices.size());
 		else
 			std::cerr << "Unknown plot object type." << std::endl;
 
@@ -892,8 +466,6 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 }
 
 
-
-
 void PathsRenderer::initializeGL()
 {
 	m_bInitialised = false;
@@ -925,7 +497,7 @@ void PathsRenderer::initializeGL()
 
 
 	// GL functions
-	auto *pGl = GetGlFunctions();
+	auto *pGl = get_gl_functions(this);
 	if(!pGl) return;
 
 	m_strGlVer = (char*)pGl->glGetString(GL_VERSION);
@@ -1015,7 +587,7 @@ void PathsRenderer::resizeGL(int w, int h)
 
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
 		return;
-	auto *pGl = GetGlFunctions();
+	auto *pGl = get_gl_functions(this);
 	if(!pGl)
 		return;
 
@@ -1058,7 +630,7 @@ void PathsRenderer::paintGL()
 
 		if(m_bPickerNeedsUpdate) UpdatePicker();
 
-		auto *pGl = GetGlFunctions();
+		auto *pGl = get_gl_functions(this);
 		painter.beginNativePainting();
 		DoPaintGL(pGl);
 	}
@@ -1087,7 +659,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	{
 		// also automatically done in UpdateCam
 		m_bPickerNeedsUpdate = true;
-		RequestPlotUpdate();
+		update();
 	}
 
 	m_mouseMovedBetweenDownAndUp = 1;
@@ -1175,38 +747,6 @@ void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 void PathsRenderer::paintEvent(QPaintEvent* pEvt)
 {
 	QOpenGLWidget::paintEvent(pEvt);
-}
-
-
-/**
- * main thread wants to compose -> wait for sub-threads to be finished
- */
-void PathsRenderer::beforeComposing()
-{
-}
-
-
-/**
- * main thread has composed -> sub-threads can be unblocked
- */
-void PathsRenderer::afterComposing()
-{
-}
-
-
-/**
- * main thread wants to resize -> wait for sub-threads to be finished
- */
-void PathsRenderer::beforeResizing()
-{
-}
-
-
-/**
- * main thread has resized -> sub-threads can be unblocked
- */
-void PathsRenderer::afterResizing()
-{
 }
 
 // ----------------------------------------------------------------------------

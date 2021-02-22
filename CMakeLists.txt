@@ -49,6 +49,7 @@ include_directories("${PROJECT_SOURCE_DIR}" "${Boost_INCLUDE_DIRS}/.." "../..")
 add_executable(paths
 	src/PathsDlg.cpp
 	src/PathsRenderer.cpp src/PathsRenderer.h
+	tlibs2/libs/glplot.cpp tlibs2/libs/glplot.h
 )
 
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")

@@ -1,7 +1,7 @@
 /**
  * paths rendering widget
  * @author Tobias Weber <tweber@ill.fr>
- * @date 2021
+ * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
  *
  * References:
@@ -30,112 +30,14 @@
 #include <atomic>
 
 #include "tlibs2/libs/math20.h"
+#include "tlibs2/libs/glplot.h"
 
 
 
-// ----------------------------------------------------------------------------
-// GL versions
-#if !defined(_GL_MAJ_VER) || !defined(_GL_MIN_VER)
-	#define _GL_MAJ_VER 3
-	#define _GL_MIN_VER 3
-#endif
-
-#if _GL_MAJ_VER<=3 && _GL_MIN_VER<2
-	#if !defined(_GL_SUFFIX)
-		#define _GL_SUFFIX
-	#endif
-
-	#if _GL_MAJ_VER==3 && _GL_MIN_VER==1
-		#define _GLSL_MAJ_VER 1
-		#define _GLSL_MIN_VER 4
-	#elif _GL_MAJ_VER==3 && _GL_MIN_VER==0
-		#define _GLSL_MAJ_VER 1
-		#define _GLSL_MIN_VER 3
-	#elif _GL_MAJ_VER==2 && _GL_MIN_VER==1
-		#define _GLSL_MAJ_VER 1
-		#define _GLSL_MIN_VER 2
-	#elif _GL_MAJ_VER==2 && _GL_MIN_VER==0
-		#define _GLSL_MAJ_VER 1
-		#define _GLSL_MIN_VER 1
-	#endif
-#else
-	#if !defined(_GL_SUFFIX)
-		#define _GL_SUFFIX _Core
-	#endif
-
-	#if _GL_MAJ_VER==3 && _GL_MIN_VER==2
-		#define _GLSL_MAJ_VER 1
-		#define _GLSL_MIN_VER 5
-	#else
-		#define _GLSL_MAJ_VER _GL_MAJ_VER
-		#define _GLSL_MIN_VER _GL_MIN_VER
-	#endif
-#endif
-
-// GL functions include
-#define _GL_INC_IMPL(MAJ, MIN, SUFF) <QtGui/QOpenGLFunctions_ ## MAJ ## _ ## MIN ## SUFF>
-#define _GL_INC(MAJ, MIN, SUFF) _GL_INC_IMPL(MAJ, MIN, SUFF)
-#include _GL_INC(_GL_MAJ_VER, _GL_MIN_VER, _GL_SUFFIX)
-
-// GL functions typedef
-#define _GL_FUNC_IMPL(MAJ, MIN, SUFF) QOpenGLFunctions_ ## MAJ ## _ ## MIN ## SUFF
-#define _GL_FUNC(MAJ, MIN, SUFF) _GL_FUNC_IMPL(MAJ, MIN, SUFF)
-using qgl_funcs = _GL_FUNC(_GL_MAJ_VER, _GL_MIN_VER, _GL_SUFFIX);
-
-// GL surface format
-extern void set_gl_format(bool bCore=true, int iMajorVer=3, int iMinorVer=3, int iSamples=8);
-
-// GL error codes: https://www.khronos.org/opengl/wiki/OpenGL_Error
-#define LOGGLERR(pGl) { while(true) {	\
-		auto err = pGl->glGetError();	\
-		if(err == GL_NO_ERROR) break;	\
-		std::cerr << "gl error in " << __func__ << " line " << std::dec <<  __LINE__  << ": " << std::hex << err << std::endl; \
-	}}
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// types
-using t_real_gl = GLfloat;
-//using t_real_gl = GLdouble;
-using t_vec3_gl = tl2::qvecN_adapter<int, 3, t_real_gl, QVector3D>;
-using t_vec_gl = tl2::qvecN_adapter<int, 4, t_real_gl, QVector4D>;
-using t_mat_gl = tl2::qmatNN_adapter<int, 4, 4, t_real_gl, QMatrix4x4>;
-
-// forward declarations
-class PathsRenderer;
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// plotter objects
-enum class PathsRendererObjType
+struct PathsObj : public GlRenderObj
 {
-	TRIANGLES,
-	LINES
-};
-
-
-struct PathsRendererObj
-{
-	// does not define a geometry itself, but just links to another object
-	std::optional<std::size_t> linkedObj;
-
-	PathsRendererObjType m_type = PathsRendererObjType::TRIANGLES;
-	GLuint m_vertexarr = 0;
-
-	std::shared_ptr<QOpenGLBuffer> m_pvertexbuf;
-	std::shared_ptr<QOpenGLBuffer> m_pnormalsbuf;
-	std::shared_ptr<QOpenGLBuffer> m_pcolorbuf;
-
-	std::vector<t_vec3_gl> m_vertices, m_triangles;
-	t_vec_gl m_color = tl2::create<t_vec_gl>({ 0., 0., 1., 1. });	// rgba
-
 	t_mat_gl m_mat = tl2::unit<t_mat_gl>();
 
-	bool m_invariant = false;	// invariant to A, B matrices
 	bool m_visible = true;		// object shown?
 	bool m_highlighted = false;	// object highlighted?
 	bool m_valid = true;		// object deleted?
@@ -147,8 +49,11 @@ struct PathsRendererObj
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
 };
-// ----------------------------------------------------------------------------
 
+
+
+// forward declarations
+class PathsRenderer;
 
 
 
@@ -177,7 +82,6 @@ protected:
 
 
 private:
-	mutable QMutex m_mutex{QMutex::Recursive};
 	QMutex m_mutexObj{QMutex::Recursive};
 
 	bool m_mouseMovedBetweenDownAndUp = 0;
@@ -185,11 +89,6 @@ private:
 
 
 protected slots:
-	void beforeComposing();
-	void afterComposing();
-	void beforeResizing();
-	void afterResizing();
-
 	void tick();
 
 
@@ -248,7 +147,7 @@ protected:
 	t_real_gl m_pickerSphereRadius = 1;
 
 	std::vector<t_vec3_gl> m_lights;
-	std::vector<PathsRendererObj> m_objs;
+	std::vector<PathsObj> m_objs;
 
 	QPointF m_posMouse;
 	QPointF m_posMouseRotationStart, m_posMouseRotationEnd;
@@ -258,10 +157,7 @@ protected:
 
 
 protected:
-	qgl_funcs* GetGlFunctions(QOpenGLWidget *pWidget = nullptr);
-
 	void UpdateCam();
-	void RequestPlotUpdate();
 	void UpdatePicker();
 	void UpdateLights();
 
@@ -287,43 +183,11 @@ public:
 	{ m_matCamBase = mat; m_vecCamX = vecX; m_vecCamY = vecY; UpdateCam(); }
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
-	PathsRendererObj CreateTriangleObject(const std::vector<t_vec3_gl>& verts,
-		const std::vector<t_vec3_gl>& triag_verts, const std::vector<t_vec3_gl>& norms,
-		const t_vec_gl& color, bool bUseVertsAsNorm=false);
-	PathsRendererObj CreateLineObject(const std::vector<t_vec3_gl>& verts, const t_vec_gl& color);
-
-	std::size_t GetNumObjects() const { return m_objs.size(); }
-	void RemoveObject(std::size_t obj);
-	std::size_t AddLinkedObject(std::size_t linkTo,
-		t_real_gl x=0, t_real_gl y=0, t_real_gl z=0,
-		t_real_gl r=1, t_real_gl g=1, t_real_gl b=1, t_real_gl a=1);
-	std::size_t AddSphere(t_real_gl rad=1,
-		t_real_gl x=0, t_real_gl y=0, t_real_gl z=0,
-		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
-	std::size_t AddCylinder(t_real_gl rad=1, t_real_gl h=1,
-		t_real_gl x=0, t_real_gl y=0, t_real_gl z=0,
-		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
-	std::size_t AddCone(t_real_gl rad=1, t_real_gl h=1,
-		t_real_gl x=0, t_real_gl y=0, t_real_gl z=0,
-		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
-	std::size_t AddArrow(t_real_gl rad=1, t_real_gl h=1,
-		t_real_gl x=0, t_real_gl y=0, t_real_gl z=0,
-		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 	std::size_t AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
 		const std::vector<t_vec3_gl>& triag_norms,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
+
 	std::size_t AddCoordinateCross(t_real_gl min, t_real_gl max);
-
-	void SetObjectMatrix(std::size_t idx, const t_mat_gl& mat);
-	void SetObjectCol(std::size_t idx, t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a=1);
-	void SetObjectLabel(std::size_t idx, const std::string& label);
-	void SetObjectDataString(std::size_t idx, const std::string& data);
-	void SetObjectVisible(std::size_t idx, bool visible);
-	void SetObjectHighlight(std::size_t idx, bool highlight);
-
-	const std::string& GetObjectLabel(std::size_t idx) const;
-	const std::string& GetObjectDataString(std::size_t idx) const;
-	bool GetObjectHighlight(std::size_t idx) const;
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 

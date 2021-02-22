@@ -208,6 +208,8 @@ public:
  */
 int main(int argc, char** argv)
 {
+	qRegisterMetaType<std::size_t>("std::size_t");
+
 	set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
 	tl2::set_locales();
 
