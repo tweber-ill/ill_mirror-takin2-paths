@@ -123,7 +123,9 @@ std::size_t PathsRenderer::AddBasePlane()
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
 
-	return AddTriangleObject(verts, norms, uvs, 0,0,1,1);
+	auto objidx = AddTriangleObject(verts, norms, uvs, 0,0,1,1);
+	m_objs[objidx].m_cull = false;
+	return objidx;
 }
 
 
@@ -258,7 +260,7 @@ void PathsRenderer::UpdatePicker()
 			continue;
 
 
-		t_mat_gl matTrafo = obj.m_mat;
+		const t_mat_gl& matTrafo = obj.m_mat;
 
 		// scaling factor, TODO: maximum factor for non-uniform scaling
 		auto scale = std::cbrt(std::abs(tl2::det(matTrafo)));
@@ -311,9 +313,15 @@ void PathsRenderer::UpdatePicker()
 					}
 				}
 
-				auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
-				m_curCursorCoords[0] = uv[0];
-				m_curCursorCoords[1] = uv[1];
+				auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
+					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
+
+				// save intersections with base plane for drawing walls
+				if(curObj == m_objBasePlane)
+				{
+					m_curCursorCoords[0] = uv[0];
+					m_curCursorCoords[1] = uv[1];
+				}
 			}
 		}
 	}
@@ -348,6 +356,20 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	if(!pGl)
 		return;
 
+	// default options
+	pGl->glCullFace(GL_BACK);
+	pGl->glFrontFace(GL_CCW);
+	pGl->glEnable(GL_CULL_FACE);
+
+	pGl->glDisable(GL_BLEND);
+	//pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	pGl->glEnable(GL_MULTISAMPLE);
+	pGl->glEnable(GL_LINE_SMOOTH);
+	pGl->glEnable(GL_POLYGON_SMOOTH);
+	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+
 	// clear
 	pGl->glClearColor(1., 1., 1., 1.);
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -372,13 +394,20 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
 	// render triangle geometry
-	for(const auto& obj : m_objs)
+	for(std::size_t objidx=0; objidx<m_objs.size(); ++objidx)
 	{
+		const auto& obj = m_objs[objidx];
+
 		// set override color to white
 		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
 
 		if(!obj.m_visible || !obj.m_valid) continue;
 
+		if(!obj.m_cull)
+			pGl->glDisable(GL_CULL_FACE);
+
+		// cursor only active on base plane
+		m_pShaders->setUniformValue(m_uniCursorActive, objidx == m_objBasePlane);
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
@@ -430,7 +459,7 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 
 
 	// coordinate labels
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
+	/*painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
 	for(t_real_gl f=-std::floor(m_CoordMax); f<=std::floor(m_CoordMax); f+=0.5)
 	{
 		if(tl2::equals<t_real_gl>(f, 0))
@@ -445,7 +474,7 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 
 	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({m_CoordMax*t_real_gl(1.2), 0., 0., 1.})), "x");
 	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., m_CoordMax*t_real_gl(1.2), 0., 1.})), "y");
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");
+	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");*/
 
 
 	// render object labels
@@ -554,11 +583,13 @@ void PathsRenderer::initializeGL()
 			shader_err("Cannot link shaders.");
 
 
+		// get attribute handles from shaders
 		m_attrVertex = m_pShaders->attributeLocation("vertex");
 		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
 		m_attrVertexCol = m_pShaders->attributeLocation("vertex_col");
 		m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
 
+		// get uniform handles from shaders
 		m_uniMatrixCam = m_pShaders->uniformLocation("cam");
 		m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
 		m_uniMatrixProj = m_pShaders->uniformLocation("proj");
@@ -575,25 +606,11 @@ void PathsRenderer::initializeGL()
 
 
 	// 3d objects
-	AddCoordinateCross();
-	AddBasePlane();
+	//AddCoordinateCross();
+	m_objBasePlane = AddBasePlane();
 
-
-	// options
-	pGl->glCullFace(GL_BACK);
-	pGl->glEnable(GL_CULL_FACE);
-
-	pGl->glEnable(GL_BLEND);
-	pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	pGl->glEnable(GL_MULTISAMPLE);
-	pGl->glEnable(GL_LINE_SMOOTH);
-	pGl->glEnable(GL_POLYGON_SMOOTH);
-	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
 	m_bInitialised = true;
-
 
 	if(IsInitialised())
 		emit AfterGLInitialisation();
@@ -748,7 +765,8 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 	// only emit click if moving the mouse (i.e. rotationg the scene) was not the primary intent
 	if(!m_mouseMovedBetweenDownAndUp)
 	{
-		bool mouseClicked[] = { !m_mouseDown[0] && mouseDownOld[0],
+		bool mouseClicked[] = { 
+			!m_mouseDown[0] && mouseDownOld[0],
 			!m_mouseDown[1] && mouseDownOld[1],
 			!m_mouseDown[2] && mouseDownOld[2] };
 		if(mouseClicked[0] || mouseClicked[1] || mouseClicked[2])

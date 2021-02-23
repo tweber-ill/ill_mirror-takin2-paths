@@ -41,6 +41,7 @@ struct PathsObj : public GlRenderObj
 	bool m_visible = true;		// object shown?
 	bool m_highlighted = false;	// object highlighted?
 	bool m_valid = true;		// object deleted?
+	bool m_cull = true;			// object culled?
 
 	t_vec3_gl m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.});
 	std::string m_label;
@@ -148,7 +149,6 @@ protected:
 	t_real_gl m_zoom = 1.;
 	t_real_gl m_CoordMax = 2.5;		// extent of coordinate axes
 
-
 	std::atomic<bool> m_bPlatformSupported = true;
 	std::atomic<bool> m_bInitialised = false;
 	std::atomic<bool> m_bWantsResize = false;
@@ -160,6 +160,8 @@ protected:
 
 	std::vector<t_vec3_gl> m_lights;
 	std::vector<PathsObj> m_objs;
+
+	std::size_t m_objBasePlane = 0;
 
 	QPointF m_posMouse;
 	QPointF m_posMouseRotationStart, m_posMouseRotationEnd;
