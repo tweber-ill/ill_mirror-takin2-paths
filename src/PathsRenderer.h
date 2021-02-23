@@ -130,6 +130,8 @@ protected:
 	GLint m_uniCursorActive = -1;
 	GLint m_uniCursorCoords = -1;
 
+	GLfloat m_curCursorCoords[2] = {0., 0.};
+
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
@@ -138,11 +140,14 @@ protected:
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
+
 	t_vec_gl m_vecCamX = tl2::create<t_vec_gl>({1.,0.,0.,0.});
 	t_vec_gl m_vecCamY = tl2::create<t_vec_gl>({0.,1.,0.,0.});
+
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
 	t_real_gl m_CoordMax = 2.5;		// extent of coordinate axes
+
 
 	std::atomic<bool> m_bPlatformSupported = true;
 	std::atomic<bool> m_bInitialised = false;

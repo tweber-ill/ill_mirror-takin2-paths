@@ -203,7 +203,8 @@ void PathsRenderer::EnablePicker(bool b)
 
 void PathsRenderer::UpdatePicker()
 {
-	if(!m_bInitialised || !m_bPlatformSupported || !m_bPickerEnabled) return;
+	if(!m_bInitialised || !m_bPlatformSupported || !m_bPickerEnabled)
+		return;
 
 	// picker ray
 	auto [org, dir] = tl2::hom_line_from_screen_coords<t_mat_gl, t_vec_gl>(
@@ -279,6 +280,12 @@ void PathsRenderer::UpdatePicker()
 				obj.m_triangles[startidx+2]
 			} };
 
+			std::vector<t_vec3_gl> polyuv{ { 
+				obj.m_uvs[startidx+0], 
+				obj.m_uvs[startidx+1], 
+				obj.m_uvs[startidx+2]
+			} };
+
 			auto [vecInters, bInters, lamInters] =
 				tl2::intersect_line_poly<t_vec3_gl, t_mat_gl>(org3, dir3, poly, matTrafo);
 
@@ -303,6 +310,10 @@ void PathsRenderer::UpdatePicker()
 						objInters = curObj;
 					}
 				}
+
+				auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
+				m_curCursorCoords[0] = uv[0];
+				m_curCursorCoords[1] = uv[1];
 			}
 		}
 	}
@@ -353,6 +364,9 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	// set cam matrix
 	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
 	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+
+	// cursor
+	m_pShaders->setUniformValue(m_uniCursorCoords, m_curCursorCoords[0], m_curCursorCoords[1]);
 
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
