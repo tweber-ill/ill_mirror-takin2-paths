@@ -1,7 +1,7 @@
 /**
  * paths rendering widget, vertex shader
  * @author Tobias Weber <tweber@ill.fr>
- * @date 2021
+ * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
  *
  * References:

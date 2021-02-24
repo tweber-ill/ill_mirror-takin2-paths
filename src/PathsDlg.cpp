@@ -93,6 +93,15 @@ protected slots:
 	}
 
 
+	void MouseCoordsChanged(t_real_gl x, t_real_gl y)
+	{
+		std::ostringstream ostr;
+		ostr.precision(4);
+		ostr << "x = " << x << ", y = " << y;
+		m_labelStatus->setText(ostr.str().c_str());
+	}
+
+
 public:
 	/**
 	 * create UI
@@ -109,6 +118,7 @@ public:
 
 		connect(m_plot.get(), &PathsRenderer::MouseDown, this, &PathsDlg::MouseDown);
 		connect(m_plot.get(), &PathsRenderer::MouseUp, this, &PathsDlg::MouseUp);
+		connect(m_plot.get(), &PathsRenderer::BasePlaneCoordsChanged, this, &PathsDlg::MouseCoordsChanged);
 		connect(m_plot.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsDlg::AfterGLInitialisation);
 
 		auto pGrid = new QGridLayout(plotpanel);

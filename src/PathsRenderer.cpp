@@ -41,8 +41,6 @@ PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 	}
 
 	UpdateCam();
-
-	//setUpdateBehavior(QOpenGLWidget::PartialUpdate);
 	setMouseTracking(true);
 }
 
@@ -119,8 +117,8 @@ std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag
 
 std::size_t PathsRenderer::AddBasePlane()
 {
-	auto norm = tl2::create<t_vec3_gl>({0, 1, 0});
-	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm);
+	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
+	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 10.);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
 
 	auto objidx = AddTriangleObject(verts, norms, uvs, 0,0,1,1);
@@ -319,8 +317,10 @@ void PathsRenderer::UpdatePicker()
 				// save intersections with base plane for drawing walls
 				if(curObj == m_objBasePlane)
 				{
-					m_curCursorCoords[0] = uv[0];
-					m_curCursorCoords[1] = uv[1];
+					m_curCursorUV[0] = uv[0];
+					m_curCursorUV[1] = uv[1];
+
+					emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
 				}
 			}
 		}
@@ -345,170 +345,6 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
 	// TODO
 	UpdateCam();
-}
-
-
-/**
- * pure gl drawing
- */
-void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
-{
-	if(!pGl)
-		return;
-
-	// default options
-	pGl->glCullFace(GL_BACK);
-	pGl->glFrontFace(GL_CCW);
-	pGl->glEnable(GL_CULL_FACE);
-
-	pGl->glDisable(GL_BLEND);
-	//pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	pGl->glEnable(GL_MULTISAMPLE);
-	pGl->glEnable(GL_LINE_SMOOTH);
-	pGl->glEnable(GL_POLYGON_SMOOTH);
-	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-
-	// clear
-	pGl->glClearColor(1., 1., 1., 1.);
-	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	pGl->glEnable(GL_DEPTH_TEST);
-
-
-	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
-	LOGGLERR(pGl);
-
-	if(m_bLightsNeedUpdate) UpdateLights();
-
-	// set cam matrix
-	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
-
-	// cursor
-	m_pShaders->setUniformValue(m_uniCursorCoords, m_curCursorCoords[0], m_curCursorCoords[1]);
-
-
-	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
-
-	// render triangle geometry
-	for(std::size_t objidx=0; objidx<m_objs.size(); ++objidx)
-	{
-		const auto& obj = m_objs[objidx];
-
-		// set override color to white
-		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
-
-		if(!obj.m_visible || !obj.m_valid) continue;
-
-		if(!obj.m_cull)
-			pGl->glDisable(GL_CULL_FACE);
-
-		// cursor only active on base plane
-		m_pShaders->setUniformValue(m_uniCursorActive, objidx == m_objBasePlane);
-		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
-
-		// main vertex array object
-		pGl->glBindVertexArray(obj.m_vertexarr);
-
-
-		pGl->glEnableVertexAttribArray(m_attrVertex);
-		if(obj.m_type == GlRenderObjType::TRIANGLES)
-		{
-			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
-			pGl->glEnableVertexAttribArray(m_attrTexCoords);
-		}
-		pGl->glEnableVertexAttribArray(m_attrVertexCol);
-		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
-		{
-			pGl->glDisableVertexAttribArray(m_attrTexCoords);
-			pGl->glDisableVertexAttribArray(m_attrVertexCol);
-			pGl->glDisableVertexAttribArray(m_attrVertexNorm);
-			pGl->glDisableVertexAttribArray(m_attrVertex);
-		}
-		BOOST_SCOPE_EXIT_END
-		LOGGLERR(pGl);
-
-
-		if(obj.m_type == GlRenderObjType::TRIANGLES)
-			pGl->glDrawArrays(GL_TRIANGLES, 0, obj.m_triangles.size());
-		else if(obj.m_type == GlRenderObjType::LINES)
-			pGl->glDrawArrays(GL_LINES, 0, obj.m_vertices.size());
-		else
-			std::cerr << "Unknown plot object type." << std::endl;
-
-		LOGGLERR(pGl);
-	}
-
-	pGl->glDisable(GL_DEPTH_TEST);
-}
-
-
-/**
- * directly draw on a qpainter
- */
-void PathsRenderer::DoPaintNonGL(QPainter &painter)
-{
-	QFont fontOrig = painter.font();
-	QPen penOrig = painter.pen();
-
-	QPen penLabel(Qt::black);
-	painter.setPen(penLabel);
-
-
-	// coordinate labels
-	/*painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
-	for(t_real_gl f=-std::floor(m_CoordMax); f<=std::floor(m_CoordMax); f+=0.5)
-	{
-		if(tl2::equals<t_real_gl>(f, 0))
-			continue;
-
-		std::ostringstream ostrF;
-		ostrF << f;
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({f,0.,0.,1.})), ostrF.str().c_str());
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,f,0.,1.})), ostrF.str().c_str());
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,f,1.})), ostrF.str().c_str());
-	}
-
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({m_CoordMax*t_real_gl(1.2), 0., 0., 1.})), "x");
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., m_CoordMax*t_real_gl(1.2), 0., 1.})), "y");
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");*/
-
-
-	// render object labels
-	for(const auto& obj : m_objs)
-	{
-		if(!obj.m_visible || !obj.m_valid) continue;
-
-		if(obj.m_label != "")
-		{
-			t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
-			auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
-
-			QFont fontLabel = fontOrig;
-			QPen penLabel = penOrig;
-
-			fontLabel.setStyleStrategy(QFont::StyleStrategy(/*QFont::OpenGLCompatible |*/ QFont::PreferAntialias | QFont::PreferQuality));
-			fontLabel.setWeight(QFont::Medium);
-			//penLabel.setColor(QColor(int((1.-obj.m_color[0])*255.), int((1.-obj.m_color[1])*255.), int((1.-obj.m_color[2])*255.), int(obj.m_color[3]*255.)));
-			penLabel.setColor(QColor(0,0,0,255));
-			painter.setFont(fontLabel);
-			painter.setPen(penLabel);
-			painter.drawText(posLabel2d, obj.m_label.c_str());
-
-			fontLabel.setWeight(QFont::Normal);
-			penLabel.setColor(QColor(int(obj.m_color[0]*255.), int(obj.m_color[1]*255.), int(obj.m_color[2]*255.), int(obj.m_color[3]*255.)));
-			painter.setFont(fontLabel);
-			painter.setPen(penLabel);
-			painter.drawText(posLabel2d, obj.m_label.c_str());
-		}
-	}
-
-	// restore original styles
-	painter.setFont(fontOrig);
-	painter.setPen(penOrig);
 }
 
 
@@ -542,7 +378,7 @@ void PathsRenderer::initializeGL()
 	}
 
 
-	// GL functions
+	// get gl functions
 	auto *pGl = get_gl_functions(this);
 	if(!pGl) return;
 
@@ -668,10 +504,9 @@ void PathsRenderer::paintGL()
 
 	// gl painting
 	{
-		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
-
 		if(m_bPickerNeedsUpdate) UpdatePicker();
 
+		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
 		auto *pGl = get_gl_functions(this);
 		painter.beginNativePainting();
 		DoPaintGL(pGl);
@@ -679,6 +514,167 @@ void PathsRenderer::paintGL()
 
 	// qt painting
 	DoPaintNonGL(painter);
+}
+
+
+/**
+ * pure gl drawing
+ */
+void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
+{
+	// default options
+	pGl->glCullFace(GL_BACK);
+	pGl->glFrontFace(GL_CCW);
+	pGl->glEnable(GL_CULL_FACE);
+
+	pGl->glDisable(GL_BLEND);
+	//pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	pGl->glEnable(GL_MULTISAMPLE);
+	pGl->glEnable(GL_LINE_SMOOTH);
+	pGl->glEnable(GL_POLYGON_SMOOTH);
+	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+
+	// clear
+	pGl->glClearColor(1., 1., 1., 1.);
+	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	pGl->glEnable(GL_DEPTH_TEST);
+
+
+	// bind shaders
+	m_pShaders->bind();
+	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	LOGGLERR(pGl);
+
+	if(m_bLightsNeedUpdate) UpdateLights();
+
+	// set cam matrix
+	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
+	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+
+	// cursor
+	m_pShaders->setUniformValue(m_uniCursorCoords, m_curCursorUV[0], m_curCursorUV[1]);
+
+
+	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
+
+	// render triangle geometry
+	for(std::size_t objidx=0; objidx<m_objs.size(); ++objidx)
+	{
+		const auto& obj = m_objs[objidx];
+
+		// set override color to white
+		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
+
+		if(!obj.m_visible || !obj.m_valid) continue;
+
+		if(!obj.m_cull)
+			pGl->glDisable(GL_CULL_FACE);
+
+		// cursor only active on base plane
+		m_pShaders->setUniformValue(m_uniCursorActive, objidx == m_objBasePlane);
+		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
+
+		// main vertex array object
+		pGl->glBindVertexArray(obj.m_vertexarr);
+
+
+		pGl->glEnableVertexAttribArray(m_attrVertex);
+		if(obj.m_type == GlRenderObjType::TRIANGLES)
+		{
+			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
+			pGl->glEnableVertexAttribArray(m_attrTexCoords);
+		}
+		pGl->glEnableVertexAttribArray(m_attrVertexCol);
+		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
+		{
+			pGl->glDisableVertexAttribArray(m_attrTexCoords);
+			pGl->glDisableVertexAttribArray(m_attrVertexCol);
+			pGl->glDisableVertexAttribArray(m_attrVertexNorm);
+			pGl->glDisableVertexAttribArray(m_attrVertex);
+		}
+		BOOST_SCOPE_EXIT_END
+		LOGGLERR(pGl);
+
+
+		if(obj.m_type == GlRenderObjType::TRIANGLES)
+			pGl->glDrawArrays(GL_TRIANGLES, 0, obj.m_triangles.size());
+		else if(obj.m_type == GlRenderObjType::LINES)
+			pGl->glDrawArrays(GL_LINES, 0, obj.m_vertices.size());
+		else
+			std::cerr << "Unknown plot object type." << std::endl;
+
+		LOGGLERR(pGl);
+	}
+
+	pGl->glDisable(GL_DEPTH_TEST);
+}
+
+
+/**
+ * directly draw on a qpainter
+ */
+void PathsRenderer::DoPaintNonGL(QPainter &painter)
+{
+	QFont fontOrig = painter.font();
+	QPen penOrig = painter.pen();
+
+	QPen penLabel(Qt::black);
+	painter.setPen(penLabel);
+
+
+	// coordinate labels
+	/*painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
+	for(t_real_gl f=-std::floor(m_CoordMax); f<=std::floor(m_CoordMax); f+=0.5)
+	{
+		if(tl2::equals<t_real_gl>(f, 0))
+			continue;
+
+		std::ostringstream ostrF;
+		ostrF << f;
+		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({f,0.,0.,1.})), ostrF.str().c_str());
+		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,f,0.,1.})), ostrF.str().c_str());
+		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,f,1.})), ostrF.str().c_str());
+	}
+
+	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({m_CoordMax*t_real_gl(1.2), 0., 0., 1.})), "x");
+	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., m_CoordMax*t_real_gl(1.2), 0., 1.})), "y");
+	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");*/
+
+
+	// render object labels
+	for(const auto& obj : m_objs)
+	{
+		if(!obj.m_visible || !obj.m_valid) continue;
+
+		if(obj.m_label != "")
+		{
+			t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
+			auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
+
+			QFont fontLabel = fontOrig;
+			QPen penLabel = penOrig;
+
+			fontLabel.setStyleStrategy(QFont::StyleStrategy(/*QFont::OpenGLCompatible |*/ QFont::PreferAntialias | QFont::PreferQuality));
+			fontLabel.setWeight(QFont::Medium);
+			//penLabel.setColor(QColor(int((1.-obj.m_color[0])*255.), int((1.-obj.m_color[1])*255.), int((1.-obj.m_color[2])*255.), int(obj.m_color[3]*255.)));
+			penLabel.setColor(QColor(0,0,0,255));
+			painter.setFont(fontLabel);
+			painter.setPen(penLabel);
+			painter.drawText(posLabel2d, obj.m_label.c_str());
+
+			fontLabel.setWeight(QFont::Normal);
+			penLabel.setColor(QColor(int(obj.m_color[0]*255.), int(obj.m_color[1]*255.), int(obj.m_color[2]*255.), int(obj.m_color[3]*255.)));
+			painter.setFont(fontLabel);
+			painter.setPen(penLabel);
+			painter.drawText(posLabel2d, obj.m_label.c_str());
+		}
+	}
+
+	// restore original styles
+	painter.setFont(fontOrig);
+	painter.setPen(penOrig);
 }
 
 

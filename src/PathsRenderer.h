@@ -105,34 +105,45 @@ signals:
 	void MouseUp(bool left, bool mid, bool right);
 	void MouseClick(bool left, bool mid, bool right);
 
+	void BasePlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::size_t objIdx, const t_vec3_gl* posSphere);
 
 
 protected:
+	// version identifier
 	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
 
+	// ------------------------------------------------------------------------
+	// shader interface
+	// ------------------------------------------------------------------------
 	std::shared_ptr<QOpenGLShaderProgram> m_pShaders;
 
-	// attributes
+	// vertex attributes
 	GLint m_attrVertex = -1;
 	GLint m_attrVertexNorm = -1;
 	GLint m_attrVertexCol = -1;
 	GLint m_attrTexCoords = -1;
 
+	// lighting
 	GLint m_uniConstCol = -1;
 	GLint m_uniLightPos = -1;
 	GLint m_uniNumActiveLights = -1;
 
+	// matrices
 	GLint m_uniMatrixProj = -1;
 	GLint m_uniMatrixCam = -1;
 	GLint m_uniMatrixCamInv = -1;
 	GLint m_uniMatrixObj = -1;
 
+	// cursor
 	GLint m_uniCursorActive = -1;
 	GLint m_uniCursorCoords = -1;
+	// ------------------------------------------------------------------------
 
-	GLfloat m_curCursorCoords[2] = {0., 0.};
+	// cursor uv coordinates
+	GLfloat m_curCursorUV[2] = {0., 0.};
 
+	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
