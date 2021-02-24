@@ -28,6 +28,10 @@ namespace algo = boost::algorithm;
 #include "tlibs2/libs/file.h"
 
 
+#define OBJNAME_COORD_CROSS "__coord_cross"
+#define OBJNAME_BASE_PLANE "__base_plane"
+
+
 // ----------------------------------------------------------------------------
 // GL plot implementation
 
@@ -58,18 +62,10 @@ PathsRenderer::~PathsRenderer()
 	// delete gl objects within current gl context
 	m_pShaders.reset();
 
-	qgl_funcs* pGl = get_gl_functions(this);
-	for(auto &obj : m_objs)
-	{
-		obj.m_pvertexbuf.reset();
-		obj.m_pnormalsbuf.reset();
-		obj.m_pcolorbuf.reset();
-		obj.m_puvbuf.reset();
-		if(pGl) pGl->glDeleteVertexArrays(1, &obj.m_vertexarr);
-	}
+	for(auto &[obj_name, obj] : m_objs)
+		DeleteObject(obj);
 
 	m_objs.clear();
-	LOGGLERR(pGl)
 }
 
 
@@ -91,7 +87,42 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible)
 }
 
 
-std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
+/**
+ * delete an object
+ */
+void PathsRenderer::DeleteObject(PathsObj& obj)
+{
+	obj.m_pvertexbuf.reset();
+	obj.m_pnormalsbuf.reset();
+	obj.m_pcolorbuf.reset();
+	obj.m_puvbuf.reset();
+
+	if(qgl_funcs* pGl = get_gl_functions(this); pGl)
+	{
+		pGl->glDeleteVertexArrays(1, &obj.m_vertexarr);
+		LOGGLERR(pGl)
+	}
+}
+
+
+/**
+ * delete an object by name
+ */
+void PathsRenderer::DeleteObject(const std::string& obj_name)
+{
+	QMutexLocker _locker{&m_mutexObj};
+	auto iter = m_objs.find(obj_name);
+
+	if(iter != m_objs.end())
+	{
+		DeleteObject(iter->second);
+		m_objs.erase(iter);
+	}
+}
+
+
+void PathsRenderer::AddTriangleObject(const std::string& obj_name,
+	const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
@@ -109,25 +140,23 @@ std::size_t PathsRenderer::AddTriangleObject(const std::vector<t_vec3_gl>& triag
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
 	obj.m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.75});
-	m_objs.emplace_back(std::move(obj));
 
-	return m_objs.size()-1;		// object handle
+	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
 }
 
 
-std::size_t PathsRenderer::AddBasePlane()
+void PathsRenderer::AddBasePlane(const std::string& obj_name)
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 10.);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
 
-	auto objidx = AddTriangleObject(verts, norms, uvs, 0,0,1,1);
-	m_objs[objidx].m_cull = false;
-	return objidx;
+	AddTriangleObject(obj_name, verts, norms, uvs, 0,0,1,1);
+	m_objs[obj_name].m_cull = false;
 }
 
 
-std::size_t PathsRenderer::AddCoordinateCross()
+void PathsRenderer::AddCoordinateCross(const std::string& obj_name)
 {
 	t_real_gl min = -m_CoordMax;
 	t_real_gl max = m_CoordMax;
@@ -145,9 +174,7 @@ std::size_t PathsRenderer::AddCoordinateCross()
 	PathsObj obj;
 	create_line_object(this, obj, verts, col, m_attrVertex, m_attrVertexCol);
 
-	m_objs.emplace_back(std::move(obj));
-
-	return m_objs.size()-1;		// object handle
+	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
 }
 
 
@@ -244,17 +271,14 @@ void PathsRenderer::UpdatePicker()
 
 	// intersection with geometry
 	bool hasInters = false;
+	std::string objInters;
 	t_vec_gl vecClosestInters = tl2::create<t_vec_gl>({0,0,0,0});
-	std::size_t objInters = 0xffffffff;
-
 
 	QMutexLocker _locker{&m_mutexObj};
 
-	for(std::size_t curObj=0; curObj<m_objs.size(); ++curObj)
+	for(const auto& [obj_name, obj] : m_objs)
 	{
-		const auto& obj = m_objs[curObj];
-
-		if(obj.m_type != GlRenderObjType::TRIANGLES || !obj.m_visible || !obj.m_valid)
+		if(obj.m_type != GlRenderObjType::TRIANGLES || !obj.m_visible)
 			continue;
 
 
@@ -296,7 +320,7 @@ void PathsRenderer::UpdatePicker()
 				if(!hasInters)
 				{	// first intersection
 					vecClosestInters = vecInters4;
-					objInters = curObj;
+					objInters = obj_name;
 					hasInters = true;
 				}
 				else
@@ -307,7 +331,7 @@ void PathsRenderer::UpdatePicker()
 					if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
 					{	// ...it is closer
 						vecClosestInters = vecInters4;
-						objInters = curObj;
+						objInters = obj_name;
 					}
 				}
 
@@ -315,7 +339,7 @@ void PathsRenderer::UpdatePicker()
 					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
 
 				// save intersections with base plane for drawing walls
-				if(curObj == m_objBasePlane)
+				if(objInters == OBJNAME_BASE_PLANE)
 				{
 					m_curCursorUV[0] = uv[0];
 					m_curCursorUV[1] = uv[1];
@@ -442,8 +466,8 @@ void PathsRenderer::initializeGL()
 
 
 	// 3d objects
-	//AddCoordinateCross();
-	m_objBasePlane = AddBasePlane();
+	//AddCoordinateCross(OBJNAME_COORD_CROSS);
+	AddBasePlane(OBJNAME_BASE_PLANE);
 
 
 	m_bInitialised = true;
@@ -560,20 +584,18 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
 	// render triangle geometry
-	for(std::size_t objidx=0; objidx<m_objs.size(); ++objidx)
+	for(const auto& [obj_name, obj] : m_objs)
 	{
-		const auto& obj = m_objs[objidx];
-
 		// set override color to white
 		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
 
-		if(!obj.m_visible || !obj.m_valid) continue;
+		if(!obj.m_visible) continue;
 
 		if(!obj.m_cull)
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
-		m_pShaders->setUniformValue(m_uniCursorActive, objidx == m_objBasePlane);
+		m_pShaders->setUniformValue(m_uniCursorActive, obj_name == OBJNAME_BASE_PLANE);
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
@@ -644,9 +666,9 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 
 
 	// render object labels
-	for(const auto& obj : m_objs)
+	for(const auto& [obj_name, obj] : m_objs)
 	{
-		if(!obj.m_visible || !obj.m_valid) continue;
+		if(!obj.m_visible) continue;
 
 		if(obj.m_label != "")
 		{

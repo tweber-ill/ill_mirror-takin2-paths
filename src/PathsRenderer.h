@@ -28,6 +28,7 @@
 #include <memory>
 #include <chrono>
 #include <atomic>
+#include <unordered_map>
 
 #include "tlibs2/libs/math20.h"
 #include "tlibs2/libs/glplot.h"
@@ -40,8 +41,7 @@ struct PathsObj : public GlRenderObj
 
 	bool m_visible = true;		// object shown?
 	bool m_highlighted = false;	// object highlighted?
-	bool m_valid = true;		// object deleted?
-	bool m_cull = true;			// object culled?
+	bool m_cull = true;			// object faces culled?
 
 	t_vec3_gl m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.});
 	std::string m_label;
@@ -106,13 +106,10 @@ signals:
 	void MouseClick(bool left, bool mid, bool right);
 
 	void BasePlaneCoordsChanged(t_real_gl x, t_real_gl y);
-	void PickerIntersection(const t_vec3_gl* pos, std::size_t objIdx, const t_vec3_gl* posSphere);
+	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 
 
 protected:
-	// version identifier
-	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
-
 	// ------------------------------------------------------------------------
 	// shader interface
 	// ------------------------------------------------------------------------
@@ -140,6 +137,9 @@ protected:
 	GLint m_uniCursorCoords = -1;
 	// ------------------------------------------------------------------------
 
+	// version identifiers
+	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
+
 	// cursor uv coordinates
 	GLfloat m_curCursorUV[2] = {0., 0.};
 
@@ -154,7 +154,7 @@ protected:
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
 
 	t_vec_gl m_vecCamX = tl2::create<t_vec_gl>({1.,0.,0.,0.});
-	t_vec_gl m_vecCamY = tl2::create<t_vec_gl>({0.,1.,0.,0.});
+	t_vec_gl m_vecCamY = tl2::create<t_vec_gl>({0.,0.,1.,0.});
 
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
@@ -170,9 +170,7 @@ protected:
 	t_real_gl m_pickerSphereRadius = 1;
 
 	std::vector<t_vec3_gl> m_lights;
-	std::vector<PathsObj> m_objs;
-
-	std::size_t m_objBasePlane = 0;
+	std::unordered_map<std::string, PathsObj> m_objs;
 
 	QPointF m_posMouse;
 	QPointF m_posMouseRotationStart, m_posMouseRotationEnd;
@@ -204,12 +202,16 @@ public:
 	{ m_matCamBase = mat; m_vecCamX = vecX; m_vecCamY = vecY; UpdateCam(); }
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
-	std::size_t AddTriangleObject(const std::vector<t_vec3_gl>& triag_verts,
+	void DeleteObject(PathsObj& obj);
+	void DeleteObject(const std::string& obj_name);
+
+	void AddTriangleObject(const std::string& obj_name,
+		const std::vector<t_vec3_gl>& triag_verts,
 		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	std::size_t AddBasePlane();
-	std::size_t AddCoordinateCross();
+	void AddBasePlane(const std::string& obj_name);
+	void AddCoordinateCross(const std::string& obj_name);
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 
