@@ -21,9 +21,6 @@
 
 #include <iostream>
 #include <boost/scope_exit.hpp>
-#include <boost/preprocessor/stringize.hpp>
-#include <boost/algorithm/string/replace.hpp>
-namespace algo = boost::algorithm;
 
 #include "tlibs2/libs/file.h"
 
@@ -37,12 +34,9 @@ namespace algo = boost::algorithm;
 
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
-	if constexpr(m_usetimer)
-	{
-		connect(&m_timer, &QTimer::timeout,
-			this, static_cast<void (PathsRenderer::*)()>(&PathsRenderer::tick));
-		m_timer.start(std::chrono::milliseconds(1000 / 60));
-	}
+	connect(&m_timer, &QTimer::timeout,
+		this, static_cast<void (PathsRenderer::*)()>(&PathsRenderer::tick));
+	m_timer.start(std::chrono::milliseconds(1000 / 60));
 
 	UpdateCam();
 	setMouseTracking(true);
@@ -52,9 +46,7 @@ PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 PathsRenderer::~PathsRenderer()
 {
 	setMouseTracking(false);
-
-	if constexpr(m_usetimer)
-		m_timer.stop();
+	m_timer.stop();
 
 	makeCurrent();
 	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END

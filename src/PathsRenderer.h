@@ -191,8 +191,6 @@ protected:
 
 
 public:
-	static constexpr bool m_usetimer = false;
-
 	std::tuple<std::string, std::string, std::string, std::string>
 		GetGlDescr() const { return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer); }
 
