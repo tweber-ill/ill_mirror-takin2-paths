@@ -8,27 +8,28 @@
 #ifndef __INSTR_H__
 #define __INSTR_H__
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
-#include "tlibs2/libs/file.h"
 #include "globals.h"
 
 
 class Instrument
 {
 public:
-    Instrument();
-    ~Instrument();
+	Instrument();
+	~Instrument();
 
-    void Clear();
-    bool Load(const tl2::Prop<std::string>& prop, const std::string& basePath);
+	void Clear();
+	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
 
 
-    t_real GetFloorLenX() const { return m_floorlen[0]; }
-    t_real GetFloorLenY() const { return m_floorlen[1]; }
+	t_real GetFloorLenX() const { return m_floorlen[0]; }
+	t_real GetFloorLenY() const { return m_floorlen[1]; }
 
 
 private:
-    t_real m_floorlen[2] = { 10., 10. };
+	t_real m_floorlen[2] = { 10., 10. };
 };
 
 

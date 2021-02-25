@@ -18,6 +18,10 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+namespace pt = boost::property_tree;
+
 #include <string>
 
 #include "tlibs2/libs/math20.h"
@@ -34,7 +38,7 @@
 #define MAX_RECENT_FILES 16
 #define PROG_TITLE "TAS Paths"
 #define PROG_IDENT "takin_paths"
-#define FILE_BASENAME "paths/"
+#define FILE_BASENAME "paths."
 
 
 
@@ -146,28 +150,30 @@ protected:
 
 
 		// load xml
-		tl2::Prop<std::string> prop;
-		prop.SetSeparator('/');
-		if(!prop.Load(file.toStdString(), tl2::PropType::XML))
+		pt::ptree prop;
+		std::ifstream ifstr{file.toStdString()};
+
+		if(!ifstr)
 		{
 			QMessageBox::critical(this, "Error", "Could not load file.");
 			return false;
 		}
 
 		// check format and version
-		auto optIdent = prop.QueryOpt<std::string>(FILE_BASENAME "ident");
-		auto optTime = prop.QueryOpt<t_real>(FILE_BASENAME "timestamp");
-		if(!optIdent || *optIdent != PROG_IDENT)
+		pt::read_xml(ifstr, prop);
+		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+			!opt || *opt != PROG_IDENT)
 		{
 			QMessageBox::critical(this, "Error", "Not a recognised file format. Ignoring.");
 			return false;
 		}
 
-		std::cout << "Loading file \"" << file.toStdString()
-			<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
+		if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
+			std::cout << "Loading file \"" << file.toStdString()
+				<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
 
 
-		if(!m_instr.Load(prop, FILE_BASENAME "instrument/"))
+		if(!m_instr.Load(prop, FILE_BASENAME "instrument."))
 		{
 			QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
 			return false;
@@ -189,22 +195,21 @@ protected:
 		if(file=="")
 			return false;
 
-		std::unordered_map<std::string, std::string> data;
+		pt::ptree prop;
 
 		// set format and version
-		data[FILE_BASENAME "ident"] = PROG_IDENT;
-		data[FILE_BASENAME "timestamp"] = tl2::var_to_str(tl2::epoch<t_real>());
+		prop.put(FILE_BASENAME "ident", PROG_IDENT);
+		prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
 
-
-		tl2::Prop<std::string> prop;
-		prop.SetSeparator('/');
-		prop.Add(data);
-
-		if(!prop.Save(file.toStdString(), tl2::PropType::XML))
+		std::ofstream ofstr{file.toStdString()};
+		if(!ofstr)
 		{
-			QMessageBox::critical(this, "Error", "Could not save file.");
+			QMessageBox::critical(this, "Error", "Cannot open file for writing.");
 			return false;
 		}
+
+		ofstr.precision(6);
+		pt::write_xml(ofstr, prop, pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
 
 		SetCurrentFile(file);
 		AddRecentFile(file);
@@ -283,7 +288,7 @@ protected slots:
 	void AfterGLInitialisation()
 	{
 		// GL device info
-		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer) 
+		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
 			= m_renderer->GetGlDescr();
 
 		m_renderer->LoadInstrument(m_instr);
@@ -397,10 +402,10 @@ public:
 		QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
 		QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
 		QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", menuHelp);
-	
+
 		actionAboutQt->setMenuRole(QAction::AboutQtRole);
 		actionAbout->setMenuRole(QAction::AboutRole);
-	
+
 		connect(actionAboutQt, &QAction::triggered, this, []() { qApp->aboutQt(); });
 
 		connect(actionAboutGl, &QAction::triggered, this, [this]()
@@ -418,7 +423,7 @@ public:
 		{
 
 		});
-	
+
 		menuHelp->addAction(actionAboutQt);
 		menuHelp->addAction(actionAboutGl);
 		menuHelp->addAction(actionAbout);

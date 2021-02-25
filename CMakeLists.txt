@@ -60,9 +60,7 @@ add_executable(paths
 #	)
 #endif()
 
-target_link_libraries(paths ${Boost_LIBRARIES})
-qt5_use_modules(paths Core Gui Widgets OpenGL)
-
+target_link_libraries(paths ${Boost_LIBRARIES} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
 # link resource directory
 add_custom_command(
