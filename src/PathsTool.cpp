@@ -204,7 +204,7 @@ protected:
 		std::ofstream ofstr{file.toStdString()};
 		if(!ofstr)
 		{
-			QMessageBox::critical(this, "Error", "Cannot open file for writing.");
+			QMessageBox::critical(this, "Error", "Could not save file.");
 			return false;
 		}
 
