@@ -30,6 +30,7 @@
 
 
 #define MAX_RECENT_FILES 16
+#define PROG_TITLE "TAS Paths"
 #define PROG_IDENT "takin_paths"
 #define FILE_BASENAME "paths/"
 
@@ -155,7 +156,7 @@ protected:
 			return false;
 		}
 
-		std::cout << "Loading file \"" << file.toStdString() 
+		std::cout << "Loading file \"" << file.toStdString()
 			<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
 
 
@@ -218,7 +219,7 @@ protected:
 	 */
 	void SetCurrentFile(const QString &file)
 	{
-		static const QString title("Paths");
+		static const QString title(PROG_TITLE);
 		m_curFile = file;
 
 		if(m_curFile == "")
@@ -312,7 +313,7 @@ public:
 	 */
 	PathsDlg(QWidget* pParent=nullptr) : QMainWindow{pParent}
 	{
-		setWindowTitle("TAS Paths");
+		setWindowTitle(PROG_TITLE);
 
 
 		// --------------------------------------------------------------------
