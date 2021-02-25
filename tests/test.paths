@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+	<timestamp>1614257982.440783</timestamp>
+	<ident>takin_paths</ident>
+
+	<instrument>
+		<floor_len_x> 20 </floor_len_x>
+		<floor_len_y> 20 </floor_len_y>
+	</instrument>
+</paths>

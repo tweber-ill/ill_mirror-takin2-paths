@@ -47,8 +47,9 @@ include_directories("${PROJECT_SOURCE_DIR}" "${Boost_INCLUDE_DIRS}/.." "../..")
 # -----------------------------------------------------------------------------
 # linker settings
 add_executable(paths
-	src/PathsDlg.cpp
+	src/PathsTool.cpp src/globals.h
 	src/PathsRenderer.cpp src/PathsRenderer.h
+	src/Instrument.cpp src/Instrument.h
 	tlibs2/libs/glplot.cpp tlibs2/libs/glplot.h
 )
 

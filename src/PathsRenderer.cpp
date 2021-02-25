@@ -48,16 +48,48 @@ PathsRenderer::~PathsRenderer()
 	setMouseTracking(false);
 	m_timer.stop();
 
-	makeCurrent();
-	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
+	Clear();
 
 	// delete gl objects within current gl context
 	m_pShaders.reset();
+}
 
+
+/**
+ * renderer versions and driver descriptions
+ */
+std::tuple<std::string, std::string, std::string, std::string> PathsRenderer::GetGlDescr() const 
+{
+	return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer);
+}
+
+
+/**
+ * clear instrument scene
+ */
+void PathsRenderer::Clear()
+{
+	makeCurrent();
+	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
+
+	QMutexLocker _locker{&m_mutexObj};
 	for(auto &[obj_name, obj] : m_objs)
 		DeleteObject(obj);
 
 	m_objs.clear();
+}
+
+
+/**
+ * create a 3d representation of the instrument and walls
+ */
+void PathsRenderer::LoadInstrument(const Instrument& instr)
+{
+	Clear();
+
+	// 3d objects
+	//AddCoordinateCross(OBJNAME_COORD_CROSS);
+	AddBasePlane(OBJNAME_BASE_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
 }
 
 
@@ -113,6 +145,9 @@ void PathsRenderer::DeleteObject(const std::string& obj_name)
 }
 
 
+/**
+ * add a polygon-based object
+ */
 void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
@@ -137,10 +172,13 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 }
 
 
-void PathsRenderer::AddBasePlane(const std::string& obj_name)
+/**
+ * add the floor plane
+ */
+void PathsRenderer::AddBasePlane(const std::string& obj_name, t_real_gl len_x, t_real_gl len_y)
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
-	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 10.);
+	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
 
 	AddTriangleObject(obj_name, verts, norms, uvs, 0,0,1,1);
@@ -168,7 +206,6 @@ void PathsRenderer::AddCoordinateCross(const std::string& obj_name)
 
 	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
 }
-
 
 
 void PathsRenderer::UpdateCam()
@@ -456,18 +493,8 @@ void PathsRenderer::initializeGL()
 	}
 	LOGGLERR(pGl);
 
-
-	// 3d objects
-	//AddCoordinateCross(OBJNAME_COORD_CROSS);
-	AddBasePlane(OBJNAME_BASE_PLANE);
-
-
 	m_bInitialised = true;
-
-	if(IsInitialised())
-		emit AfterGLInitialisation();
-	else
-		emit GLInitialisationFailed();
+	emit AfterGLInitialisation();
 }
 
 

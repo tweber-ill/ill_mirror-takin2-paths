@@ -26,7 +26,9 @@
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
 
-#include "src/PathsRenderer.h"
+#include "PathsRenderer.h"
+#include "Instrument.h"
+#include "globals.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -34,17 +36,16 @@
 #define PROG_IDENT "takin_paths"
 #define FILE_BASENAME "paths/"
 
-using t_real = double;
 
 
 // ----------------------------------------------------------------------------
-class PathsDlg : public QMainWindow
+class PathsTool : public QMainWindow
 { /*Q_OBJECT*/
 private:
 	QSettings m_sett{"takin", "paths"};
 
 	// renderer
-	std::shared_ptr<PathsRenderer> m_plot{std::make_shared<PathsRenderer>(this)};
+	std::shared_ptr<PathsRenderer> m_renderer{std::make_shared<PathsRenderer>(this)};
 
 	// gl info strings
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
@@ -60,6 +61,9 @@ private:
 	// recent file list and currently active file
 	QStringList m_recentFiles;
 	QString m_curFile;
+
+	// instrument configuration
+	Instrument m_instr;
 
 
 protected:
@@ -82,6 +86,9 @@ protected:
 	void NewFile()
 	{
 		SetCurrentFile("");
+
+		m_instr.Clear();
+		m_renderer->LoadInstrument(m_instr);
 	}
 
 
@@ -160,8 +167,16 @@ protected:
 			<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
 
 
+		if(!m_instr.Load(prop, FILE_BASENAME "instrument/"))
+		{
+			QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
+			return false;
+		}
+
 		SetCurrentFile(file);
 		AddRecentFile(file);
+
+		m_renderer->LoadInstrument(m_instr);
 		return true;
 	}
 
@@ -269,7 +284,9 @@ protected slots:
 	{
 		// GL device info
 		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer) 
-			= m_plot->GetGlDescr();
+			= m_renderer->GetGlDescr();
+
+		m_renderer->LoadInstrument(m_instr);
 	}
 
 
@@ -311,7 +328,7 @@ public:
 	/**
 	 * create UI
 	 */
-	PathsDlg(QWidget* pParent=nullptr) : QMainWindow{pParent}
+	PathsTool(QWidget* pParent=nullptr) : QMainWindow{pParent}
 	{
 		setWindowTitle(PROG_TITLE);
 
@@ -321,16 +338,16 @@ public:
 		// --------------------------------------------------------------------
 		auto plotpanel = new QWidget(this);
 
-		connect(m_plot.get(), &PathsRenderer::MouseDown, this, &PathsDlg::MouseDown);
-		connect(m_plot.get(), &PathsRenderer::MouseUp, this, &PathsDlg::MouseUp);
-		connect(m_plot.get(), &PathsRenderer::BasePlaneCoordsChanged, this, &PathsDlg::MouseCoordsChanged);
-		connect(m_plot.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsDlg::AfterGLInitialisation);
+		connect(m_renderer.get(), &PathsRenderer::MouseDown, this, &PathsTool::MouseDown);
+		connect(m_renderer.get(), &PathsRenderer::MouseUp, this, &PathsTool::MouseUp);
+		connect(m_renderer.get(), &PathsRenderer::BasePlaneCoordsChanged, this, &PathsTool::MouseCoordsChanged);
+		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
 
 		auto pGrid = new QGridLayout(plotpanel);
 		pGrid->setSpacing(4);
 		pGrid->setContentsMargins(4,4,4,4);
 
-		pGrid->addWidget(m_plot.get(), 0,0,1,4);
+		pGrid->addWidget(m_renderer.get(), 0,0,1,4);
 
 		setCentralWidget(plotpanel);
 		// --------------------------------------------------------------------
@@ -361,7 +378,7 @@ public:
 		connect(acOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
 		connect(acSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
 		connect(acSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
-		connect(actionQuit, &QAction::triggered, this, &PathsDlg::close);
+		connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
 
 		menuFile->addAction(acNew);
 		menuFile->addSeparator();
@@ -450,7 +467,6 @@ public:
 
 
 // ----------------------------------------------------------------------------
-
 /**
  * main
  */
@@ -463,10 +479,9 @@ int main(int argc, char** argv)
 
 	QApplication::addLibraryPath(QString(".") + QDir::separator() + "qtplugins");
 	auto app = std::make_unique<QApplication>(argc, argv);
-	auto dlg = std::make_unique<PathsDlg>(nullptr);
+	auto dlg = std::make_unique<PathsTool>(nullptr);
 	dlg->show();
 
 	return app->exec();
 }
-
 // ----------------------------------------------------------------------------

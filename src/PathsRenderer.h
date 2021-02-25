@@ -33,6 +33,8 @@
 #include "tlibs2/libs/math20.h"
 #include "tlibs2/libs/glplot.h"
 
+#include "Instrument.h"
+
 
 
 struct PathsObj : public GlRenderObj
@@ -69,6 +71,9 @@ public:
 	PathsRenderer(QWidget *pParent = nullptr);
 	virtual ~PathsRenderer();
 
+	void Clear();
+	void LoadInstrument(const Instrument& instr);
+
 
 protected:
 	virtual void paintEvent(QPaintEvent*) override;
@@ -99,7 +104,6 @@ public slots:
 
 signals:
 	void AfterGLInitialisation();
-	void GLInitialisationFailed();
 
 	void MouseDown(bool left, bool mid, bool right);
 	void MouseUp(bool left, bool mid, bool right);
@@ -191,8 +195,8 @@ protected:
 
 
 public:
-	std::tuple<std::string, std::string, std::string, std::string>
-		GetGlDescr() const { return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer); }
+	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
+	bool IsInitialised() const { return m_bInitialised; }
 
 	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr);
 
@@ -208,14 +212,12 @@ public:
 		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	void AddBasePlane(const std::string& obj_name);
+	void AddBasePlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
 	void AddCoordinateCross(const std::string& obj_name);
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
-
-	bool IsInitialised() const { return m_bInitialised; }
 };
 // ----------------------------------------------------------------------------
 
