@@ -457,6 +457,7 @@ public:
 		// menu bar
 		m_menubar->addMenu(menuFile);
 		m_menubar->addMenu(menuHelp);
+		m_menubar->setNativeMenuBar(1);
 		setMenuBar(m_menubar);
 		// --------------------------------------------------------------------
 
