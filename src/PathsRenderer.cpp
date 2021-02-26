@@ -406,7 +406,7 @@ void PathsRenderer::UpdatePicker()
 
 						emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
 
-						SetLight(0, tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], 5}));
+						SetLight(0, tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], 10}));
 					}
 				}
 			}
@@ -417,7 +417,8 @@ void PathsRenderer::UpdatePicker()
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
-	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, objInters, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
+	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, 
+		objInters, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
 
 

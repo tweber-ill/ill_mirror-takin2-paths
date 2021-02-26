@@ -48,7 +48,8 @@ float g_ambient = 0.2;
 
 
 /**
- * reflect a vector on a surface with normal n => subtract the projection vector twice: 1 - 2*|n><n|
+ * reflect a vector on a surface with normal n 
+ *	=> subtract the projection vector twice: 1 - 2*|n><n|
  */
 mat3 reflect(vec3 n)
 {
@@ -81,7 +82,8 @@ float lighting(vec4 objVert, vec4 objNorm)
 
 	vec3 dirToCam;
 	// only used for specular lighting
-	if(g_specular > 0.) dirToCam = normalize(get_campos() - objVert.xyz);
+	if(g_specular > 0.)
+		dirToCam = normalize(get_campos() - objVert.xyz);
 
 
 	// iterate (active) light sources
