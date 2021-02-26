@@ -187,7 +187,7 @@ void PathsRenderer::AddBasePlane(const std::string& obj_name, t_real_gl len_x, t
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
 	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(plane);
 
-	AddTriangleObject(obj_name, verts, norms, uvs, 0,0,1,1);
+	AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
 	m_objs[obj_name].m_cull = false;
 }
 
@@ -202,7 +202,7 @@ void PathsRenderer::AddWall(const Wall& wall)
 	auto solid = tl2::create_cuboid<t_vec3_gl>(wall.length*0.5, wall.depth*0.5, wall.height*0.5);
 	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
 
-	AddTriangleObject(wall.id, verts, norms, uvs, 0,0,1,1);
+	AddTriangleObject(wall.id, verts, norms, uvs, 1,0,0,1);
 
 	m_objs[wall.id].m_mat = tl2::get_arrow_matrix<t_vec_gl, t_mat_gl, t_real_gl>(
 		tl2::convert_vec<t_vec_gl>(wall.pos2 - wall.pos1), 	// to
@@ -405,6 +405,8 @@ void PathsRenderer::UpdatePicker()
 						m_curCursorUV[1] = uv[1];
 
 						emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
+
+						SetLight(0, tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], 5}));
 					}
 				}
 			}
@@ -622,7 +624,8 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	if(m_bLightsNeedUpdate) UpdateLights();
+	if(m_bLightsNeedUpdate)
+		UpdateLights();
 
 	// set cam matrix
 	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
@@ -630,7 +633,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	// cursor
 	m_pShaders->setUniformValue(m_uniCursorCoords, m_curCursorUV[0], m_curCursorUV[1]);
-
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
