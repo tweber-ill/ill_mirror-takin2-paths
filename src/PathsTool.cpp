@@ -69,6 +69,10 @@ private:
 	// instrument configuration
 	Instrument m_instr;
 
+	// mouse picker
+	t_real m_mouseX, m_mouseY;
+	std::string m_curObj;
+
 
 protected:
 	virtual void closeEvent(QCloseEvent *) override
@@ -322,9 +326,29 @@ protected slots:
 	 */
 	void MouseCoordsChanged(t_real_gl x, t_real_gl y)
 	{
+		m_mouseX = x;
+		m_mouseY = y;
+		UpdateStatusLabel();
+	}
+
+
+	/**
+	 * mouse is over an object
+	 */
+	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere)
+	{
+		m_curObj = obj_name;
+		UpdateStatusLabel();
+	}
+
+
+	void UpdateStatusLabel()
+	{
 		std::ostringstream ostr;
 		ostr.precision(4);
-		ostr << "x = " << x << " m, y = " << y << " m";
+		ostr << "x = " << m_mouseX << " m, y = " << m_mouseY << " m";
+		if(m_curObj != "")
+			ostr << ", object: " << m_curObj;
 		m_labelStatus->setText(ostr.str().c_str());
 	}
 
@@ -346,6 +370,7 @@ public:
 		connect(m_renderer.get(), &PathsRenderer::MouseDown, this, &PathsTool::MouseDown);
 		connect(m_renderer.get(), &PathsRenderer::MouseUp, this, &PathsTool::MouseUp);
 		connect(m_renderer.get(), &PathsRenderer::BasePlaneCoordsChanged, this, &PathsTool::MouseCoordsChanged);
+		connect(m_renderer.get(), &PathsRenderer::PickerIntersection, this, &PathsTool::PickerIntersection);
 		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
 
 		auto pGrid = new QGridLayout(plotpanel);

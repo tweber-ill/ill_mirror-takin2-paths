@@ -23,6 +23,9 @@ void Instrument::Clear()
 {
 	// reset to defaults
 	m_floorlen[0] = m_floorlen[1] = 10.;
+
+	// clear
+	m_walls.clear();
 }
 
 
@@ -52,6 +55,28 @@ bool Instrument::Load(const pt::ptree& prop, const std::string& basePath)
 			auto optY1 = wall.second.get_optional<t_real>("y1");
 			auto optY2 = wall.second.get_optional<t_real>("y2");
 			auto height = wall.second.get<t_real>("height", 1.);
+			auto depth = wall.second.get<t_real>("depth", 0.1);
+
+			if(!optX1 || !optX2 || !optY1 || !optY2)
+			{
+				std::cerr << "Wall \"" << id << "\" definition is incomplete, ignoring." << std::endl;
+				continue;
+			}
+
+			t_vec pos1 = tl2::create<t_vec>({ *optX1, *optY1 });
+			t_vec pos2 = tl2::create<t_vec>({ *optX2, *optY2 });
+
+			Wall thewall
+			{
+				.id = id,
+				.pos1 = pos1,
+				.pos2 = pos2,
+				.height = height,
+				.depth = depth,
+				.length = tl2::norm<t_vec>(pos1 - pos2)
+			};
+
+			m_walls.emplace_back(std::move(thewall));
 		}
 	}
 

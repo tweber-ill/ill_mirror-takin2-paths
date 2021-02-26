@@ -14,6 +14,17 @@
 #include "globals.h"
 
 
+/**
+ * wall segment
+ */
+struct Wall
+{
+	std::string id;
+	t_vec pos1, pos2;
+	t_real height, depth, length;
+};
+
+
 class Instrument
 {
 public:
@@ -27,9 +38,13 @@ public:
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
 	t_real GetFloorLenY() const { return m_floorlen[1]; }
 
+	const std::vector<Wall>& GetWalls() const { return m_walls; }
+
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };
+
+	std::vector<Wall> m_walls;
 };
 
 

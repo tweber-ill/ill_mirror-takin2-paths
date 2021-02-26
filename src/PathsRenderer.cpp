@@ -26,7 +26,8 @@
 
 
 #define OBJNAME_COORD_CROSS "__coord_cross"
-#define OBJNAME_BASE_PLANE "__base_plane"
+#define OBJNAME_BASE_PLANE "__floor"
+#define MAX_LIGHTS 4	// max. number allowed in shader
 
 
 // ----------------------------------------------------------------------------
@@ -58,7 +59,7 @@ PathsRenderer::~PathsRenderer()
 /**
  * renderer versions and driver descriptions
  */
-std::tuple<std::string, std::string, std::string, std::string> PathsRenderer::GetGlDescr() const 
+std::tuple<std::string, std::string, std::string, std::string> PathsRenderer::GetGlDescr() const
 {
 	return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer);
 }
@@ -87,9 +88,14 @@ void PathsRenderer::LoadInstrument(const Instrument& instr)
 {
 	Clear();
 
-	// 3d objects
 	//AddCoordinateCross(OBJNAME_COORD_CROSS);
+
+	// base plane
 	AddBasePlane(OBJNAME_BASE_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
+
+	// walls
+	for(const Wall& wall : instr.GetWalls())
+		AddWall(wall);
 }
 
 
@@ -159,8 +165,8 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	QMutexLocker _locker{&m_mutexObj};
 
 	PathsObj obj;
-	create_triangle_object(this, obj, 
-		triag_verts, triag_verts, triag_norms, triag_uvs, col, 
+	create_triangle_object(this, obj,
+		triag_verts, triag_verts, triag_norms, triag_uvs, col,
 		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol, m_attrTexCoords);
 
 	obj.m_mat = tl2::hom_translation<t_mat_gl>(0., 0., 0.);
@@ -179,10 +185,30 @@ void PathsRenderer::AddBasePlane(const std::string& obj_name, t_real_gl len_x, t
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
-	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(tl2::create_triangles<t_vec3_gl>(plane), 2);
+	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(plane);
 
 	AddTriangleObject(obj_name, verts, norms, uvs, 0,0,1,1);
 	m_objs[obj_name].m_cull = false;
+}
+
+
+/**
+ * add a wall
+ */
+void PathsRenderer::AddWall(const Wall& wall)
+{
+	using namespace tl2_ops;
+
+	auto solid = tl2::create_cuboid<t_vec3_gl>(wall.length*0.5, wall.depth*0.5, wall.height*0.5);
+	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
+
+	AddTriangleObject(wall.id, verts, norms, uvs, 0,0,1,1);
+
+	m_objs[wall.id].m_mat = tl2::get_arrow_matrix<t_vec_gl, t_mat_gl, t_real_gl>(
+		tl2::convert_vec<t_vec_gl>(wall.pos2 - wall.pos1), 	// to
+		1., tl2::create<t_vec_gl>({0, 0, wall.height*0.5}), // post scale and translate
+		tl2::create<t_vec_gl>({1, 0, 0}),	// from
+		1., tl2::convert_vec<t_vec_gl>(0.5*(wall.pos1 + wall.pos2)));		// pre scale and translate
 }
 
 
@@ -232,8 +258,6 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 
 void PathsRenderer::UpdateLights()
 {
-	constexpr int MAX_LIGHTS = 4;	// max. number allowed in shader
-
 	int num_lights = std::min(MAX_LIGHTS, static_cast<int>(m_lights.size()));
 	t_real_gl pos[num_lights * 3];
 
@@ -333,9 +357,9 @@ void PathsRenderer::UpdatePicker()
 				obj.m_triangles[startidx+2]
 			} };
 
-			std::vector<t_vec3_gl> polyuv{ { 
-				obj.m_uvs[startidx+0], 
-				obj.m_uvs[startidx+1], 
+			std::vector<t_vec3_gl> polyuv{ {
+				obj.m_uvs[startidx+0],
+				obj.m_uvs[startidx+1],
 				obj.m_uvs[startidx+2]
 			} };
 
@@ -345,12 +369,14 @@ void PathsRenderer::UpdatePicker()
 			if(bInters)
 			{
 				t_vec_gl vecInters4 = tl2::create<t_vec_gl>({vecInters[0], vecInters[1], vecInters[2], 1});
+				bool updateUV = false;
 
 				if(!hasInters)
 				{	// first intersection
 					vecClosestInters = vecInters4;
 					objInters = obj_name;
 					hasInters = true;
+					updateUV = true;
 				}
 				else
 				{	// test if next intersection is closer...
@@ -361,19 +387,25 @@ void PathsRenderer::UpdatePicker()
 					{	// ...it is closer
 						vecClosestInters = vecInters4;
 						objInters = obj_name;
+
+						updateUV = true;
 					}
 				}
 
-				auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
-					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
 
-				// save intersections with base plane for drawing walls
-				if(objInters == OBJNAME_BASE_PLANE)
+				if(updateUV)
 				{
-					m_curCursorUV[0] = uv[0];
-					m_curCursorUV[1] = uv[1];
+					auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
+						(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
 
-					emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
+					// save intersections with base plane for drawing walls
+					if(objInters == OBJNAME_BASE_PLANE)
+					{
+						m_curCursorUV[0] = uv[0];
+						m_curCursorUV[1] = uv[1];
+
+						emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
+					}
 				}
 			}
 		}
@@ -615,6 +647,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		// cursor only active on base plane
 		m_pShaders->setUniformValue(m_uniCursorActive, obj_name == OBJNAME_BASE_PLANE);
+
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
@@ -802,7 +835,7 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 	// only emit click if moving the mouse (i.e. rotationg the scene) was not the primary intent
 	if(!m_mouseMovedBetweenDownAndUp)
 	{
-		bool mouseClicked[] = { 
+		bool mouseClicked[] = {
 			!m_mouseDown[0] && mouseDownOld[0],
 			!m_mouseDown[1] && mouseDownOld[1],
 			!m_mouseDown[2] && mouseDownOld[2] };

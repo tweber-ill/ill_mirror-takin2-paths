@@ -213,6 +213,7 @@ public:
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
 	void AddBasePlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
+	void AddWall(const Wall& wall);
 	void AddCoordinateCross(const std::string& obj_name);
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
