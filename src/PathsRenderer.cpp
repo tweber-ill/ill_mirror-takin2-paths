@@ -202,13 +202,14 @@ void PathsRenderer::AddWall(const Wall& wall)
 	auto solid = tl2::create_cuboid<t_vec3_gl>(wall.length*0.5, wall.depth*0.5, wall.height*0.5);
 	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
 
-	AddTriangleObject(wall.id, verts, norms, uvs, 1,0,0,1);
-
-	m_objs[wall.id].m_mat = tl2::get_arrow_matrix<t_vec_gl, t_mat_gl, t_real_gl>(
+	auto mat = tl2::get_arrow_matrix<t_vec_gl, t_mat_gl, t_real_gl>(
 		tl2::convert_vec<t_vec_gl>(wall.pos2 - wall.pos1), 	// to
 		1., tl2::create<t_vec_gl>({0, 0, static_cast<t_real_gl>(wall.height*0.5)}), // post scale and translate
 		tl2::create<t_vec_gl>({1, 0, 0}),	// from
 		1., tl2::convert_vec<t_vec_gl>(0.5*(wall.pos1 + wall.pos2)));		// pre scale and translate
+
+	tl2::transform_obj(verts, norms, mat, true);
+	AddTriangleObject(wall.id, verts, norms, uvs, 1,0,0,1);
 }
 
 

@@ -7,7 +7,7 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
-
+#include <QtCore/QLoggingCategory>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QGridLayout>
@@ -396,19 +396,26 @@ public:
 		QAction *acOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
 		QAction *acSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
 		QAction *acSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
-		QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
+		QAction *acQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
+
+		// shortcuts
+		acNew->setShortcut(QKeySequence::New);
+		acOpen->setShortcut(QKeySequence::Open);
+		acSave->setShortcut(QKeySequence::Save);
+		acSaveAs->setShortcut(QKeySequence::SaveAs);
+		acQuit->setShortcut(QKeySequence::Quit);
 
 		m_menuOpenRecent = new QMenu("Open Recent", menuFile);
 		m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
-		actionQuit->setMenuRole(QAction::QuitRole);
+		acQuit->setMenuRole(QAction::QuitRole);
 
 
 		connect(acNew, &QAction::triggered, this, [this]() { this->NewFile(); });
 		connect(acOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
 		connect(acSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
 		connect(acSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
-		connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
+		connect(acQuit, &QAction::triggered, this, &PathsTool::close);
 
 		menuFile->addAction(acNew);
 		menuFile->addSeparator();
@@ -418,7 +425,7 @@ public:
 		menuFile->addAction(acSave);
 		menuFile->addAction(acSaveAs);
 		menuFile->addSeparator();
-		menuFile->addAction(actionQuit);
+		menuFile->addAction(acQuit);
 
 
 		// help menu
@@ -503,12 +510,44 @@ public:
  */
 int main(int argc, char** argv)
 {
-	qRegisterMetaType<std::size_t>("std::size_t");
+	// qt log handler
+	QLoggingCategory::setFilterRules("*=true\n*.debug=false\n");
+	qInstallMessageHandler([](QtMsgType ty, const QMessageLogContext& ctx, const QString& log) -> void
+	{
+		auto get_msg_type = [](const QtMsgType& _ty) -> std::string
+		{
+			switch(_ty)
+			{
+				case QtDebugMsg: return "debug";
+				case QtWarningMsg: return "warning";
+				case QtCriticalMsg: return "critical error";
+				case QtFatalMsg: return "fatal error";
+				case QtInfoMsg: return "info";
+				default: return "<n/a>";
+			}
+		};
+
+		auto get_str = [](const char* pc) -> std::string
+		{
+			if(!pc) return "<n/a>";
+			return std::string{"\""} + std::string{pc} + std::string{"\""};
+		};
+
+		std::cerr << "Qt " << get_msg_type(ty);
+		if(ctx.function)
+		{
+			std::cerr << " in "
+				<< "file " << get_str(ctx.file) << ", "
+				<< "function " << get_str(ctx.function) << ", "
+				<< "line " << ctx.line;
+		}
+		std::cerr << ": " << log.toStdString() << std::endl;
+	});
 
 	set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
 	tl2::set_locales();
 
-	QApplication::addLibraryPath(QString(".") + QDir::separator() + "qtplugins");
+	QApplication::addLibraryPath(QApplication::applicationDirPath() + QDir::separator() + "qtplugins");
 	auto app = std::make_unique<QApplication>(argc, argv);
 	auto dlg = std::make_unique<PathsTool>(nullptr);
 	dlg->show();
