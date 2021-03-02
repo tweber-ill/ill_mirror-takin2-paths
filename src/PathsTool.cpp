@@ -511,7 +511,7 @@ public:
 int main(int argc, char** argv)
 {
 	// qt log handler
-	QLoggingCategory::setFilterRules("*=true\n*.debug=false\n");
+	QLoggingCategory::setFilterRules("*=true\n*.debug=false\n*.info=false\n");
 	qInstallMessageHandler([](QtMsgType ty, const QMessageLogContext& ctx, const QString& log) -> void
 	{
 		auto get_msg_type = [](const QtMsgType& _ty) -> std::string
