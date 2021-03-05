@@ -758,7 +758,8 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 
 void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 {
-	m_posMouse = pEvt->localPos();
+	//m_posMouse = pEvt->localPos();
+	m_posMouse = pEvt->position();
 
 	if(m_bInRotation)
 	{

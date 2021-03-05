@@ -464,7 +464,7 @@ public:
 		// menu bar
 		m_menubar->addMenu(menuFile);
 		m_menubar->addMenu(menuHelp);
-		m_menubar->setNativeMenuBar(1);
+		//m_menubar->setNativeMenuBar(0);
 		setMenuBar(m_menubar);
 		// --------------------------------------------------------------------
 
@@ -547,8 +547,10 @@ int main(int argc, char** argv)
 	set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
 	tl2::set_locales();
 
-	QApplication::addLibraryPath(QApplication::applicationDirPath() + QDir::separator() + "qtplugins");
+	QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "qtplugins");
 	auto app = std::make_unique<QApplication>(argc, argv);
+	app->addLibraryPath(app->applicationDirPath() + QDir::separator() + "qtplugins");
+
 	auto dlg = std::make_unique<PathsTool>(nullptr);
 	dlg->show();
 
