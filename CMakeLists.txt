@@ -18,7 +18,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# pass linker --subsystem option
 	add_compile_options(-Wl,--subsystem,windows)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	add_compile_options(-mmacosx-version-min=10.10)
+	#add_compile_options(-mmacosx-version-min=10.15)
 endif()
 # -----------------------------------------------------------------------------
 
@@ -26,10 +26,16 @@ endif()
 # -----------------------------------------------------------------------------
 # packages
 find_package(Boost REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 
 set(CMAKE_AUTOUIC TRUE)
 set(CMAKE_AUTOMOC TRUE)
+
+message("Qt Core include dirs: ${Qt6Core_INCLUDE_DIRS}")
+message("Qt Gui include dirs: ${Qt6Gui_INCLUDE_DIRS}")
+message("Qt Widgets include dirs: ${Qt6Widgets_INCLUDE_DIRS}")
+message("Qt OpenGL include dirs: ${Qt6OpenGL_INCLUDE_DIRS}")
+message("Qt OpenGLWidgets include dirs: ${Qt6OpenGLWidgets_INCLUDE_DIRS}")
 # -----------------------------------------------------------------------------
 
 
@@ -40,7 +46,14 @@ add_compile_options(-std=c++20)
 add_compile_options(${Boost_CXX_FLAGS})
 add_compile_options(-Wall -Wextra)
 
-include_directories("${PROJECT_SOURCE_DIR}" "${Boost_INCLUDE_DIRS}/.." "../..")
+add_definitions(-D_GL_MAJ_VER=3 -D_GL_MIN_VER=3)
+
+include_directories("${PROJECT_SOURCE_DIR}" 
+	"${Boost_INCLUDE_DIRS}/.." 
+	"${Qt6Core_INCLUDE_DIRS}" "${Qt6Gui_INCLUDE_DIRS}"
+	"${Qt6Widgets_INCLUDE_DIRS}" "${Qt6OpenGL_INCLUDE_DIRS}"
+	"${Qt6OpenGLWidgets_INCLUDE_DIRS}"
+	"../..")
 # -----------------------------------------------------------------------------
 
 
@@ -60,7 +73,7 @@ add_executable(paths
 #	)
 #endif()
 
-target_link_libraries(paths ${Boost_LIBRARIES} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+target_link_libraries(paths ${Boost_LIBRARIES} Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
 
 # link resource directory
 add_custom_command(

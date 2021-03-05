@@ -12,22 +12,6 @@
 #ifndef __PATHS_WIDGET_H__
 #define __PATHS_WIDGET_H__
 
-#include <QtCore/QMutex>
-#include <QtCore/QTimer>
-
-#include <QtWidgets/QOpenGLWidget>
-
-#include <QtGui/QMouseEvent>
-#include <QtGui/QOpenGLShaderProgram>
-#include <QtGui/QOpenGLBuffer>
-
-#include <QtGui/QMatrix4x4>
-#include <QtGui/QVector4D>
-#include <QtGui/QVector3D>
-
-#include <memory>
-#include <chrono>
-#include <atomic>
 #include <unordered_map>
 
 #include "tlibs2/libs/math20.h"
@@ -88,7 +72,11 @@ protected:
 
 
 private:
-	QMutex m_mutexObj{QMutex::Recursive};
+#if QT_VERSION >= 0x060000
+	t_qt_mutex m_mutexObj;
+#else
+	t_qt_mutex m_mutexObj{QMutex::Recursive};
+#endif
 
 	bool m_mouseMovedBetweenDownAndUp = 0;
 	bool m_mouseDown[3] = {0,0,0};
