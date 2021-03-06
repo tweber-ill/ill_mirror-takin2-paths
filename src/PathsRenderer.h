@@ -27,7 +27,7 @@ struct PathsObj : public GlRenderObj
 
 	bool m_visible = true;		// object shown?
 	bool m_highlighted = false;	// object highlighted?
-	bool m_cull = true;			// object faces culled?
+	bool m_cull = true;		// object faces culled?
 
 	t_vec3_gl m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.});
 	std::string m_label;

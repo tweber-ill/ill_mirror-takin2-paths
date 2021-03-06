@@ -6,10 +6,22 @@
 
 cmake_minimum_required(VERSION 3.0)
 project(paths)
+enable_language(CXX)
+
+option(USE_QT6 "use qt 6" FALSE)
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
-set(QT_VER 6)
+set(GL_MAJOR_VER 4)
+set(GL_MINOR_VER 1)
 
+if(USE_QT6)
+	set(QT_VER 6)
+else()
+	set(QT_VER 5)
+endif()
+
+message("Selected Qt version ${QT_VER}.")
+message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 
 # -----------------------------------------------------------------------------
 # system specific settings
@@ -32,6 +44,8 @@ if(QT_VER EQUAL 6)
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 elseif(QT_VER EQUAL 5)
 	find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+else()
+	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
 
 set(CMAKE_AUTOUIC TRUE)
@@ -46,19 +60,12 @@ add_compile_options(-std=c++20)
 add_compile_options(${Boost_CXX_FLAGS})
 add_compile_options(-Wall -Wextra)
 
-add_definitions(-D_GL_MAJ_VER=4 -D_GL_MIN_VER=1)
-
-include_directories("${PROJECT_SOURCE_DIR}" 
-	"${Boost_INCLUDE_DIRS}/.." 
-	"${Qt6Core_INCLUDE_DIRS}" "${Qt6Gui_INCLUDE_DIRS}"
-	"${Qt6Widgets_INCLUDE_DIRS}" "${Qt6OpenGL_INCLUDE_DIRS}"
-	"${Qt6OpenGLWidgets_INCLUDE_DIRS}"
-	"../..")
+add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 # -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
-# linker settings
+# target executable settings
 add_executable(paths
 	src/PathsTool.cpp src/globals.h
 	src/PathsRenderer.cpp src/PathsRenderer.h
@@ -74,13 +81,23 @@ add_executable(paths
 #endif()
 
 if(QT_VER EQUAL 6)
-	target_link_libraries(paths 
-		${Boost_LIBRARIES} 
+	target_include_directories(paths PUBLIC
+		"${PROJECT_SOURCE_DIR}"
+		"${Boost_INCLUDE_DIRS}/.." "${Qt6Core_INCLUDE_DIRS}/.."
+	)
+
+	target_link_libraries(paths
+		${Boost_LIBRARIES}
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
 	)
-elseif(QT_VER EQUAL 6)
-	target_link_libraries(paths 
-		${Boost_LIBRARIES} 
+elseif(QT_VER EQUAL 5)
+	target_include_directories(paths PUBLIC
+		"${PROJECT_SOURCE_DIR}"
+		"${Boost_INCLUDE_DIRS}/.." "${Qt5Core_INCLUDE_DIRS}/.."
+	)
+
+	target_link_libraries(paths
+		${Boost_LIBRARIES}
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
 	)
 endif()
