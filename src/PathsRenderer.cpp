@@ -300,8 +300,8 @@ void PathsRenderer::UpdatePicker()
 	t_vec_gl vecClosestSphereInters = tl2::create<t_vec_gl>({0,0,0,0});
 
 	auto intersUnitSphere =
-	tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
-		tl2::create<t_vec3_gl>({0,0,0}), t_real_gl(m_pickerSphereRadius));
+		tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
+			tl2::create<t_vec3_gl>({0,0,0}), t_real_gl(m_pickerSphereRadius));
 	for(const auto& result : intersUnitSphere)
 	{
 		t_vec_gl vecInters4 = tl2::create<t_vec_gl>({result[0], result[1], result[2], 1});
@@ -478,55 +478,60 @@ void PathsRenderer::initializeGL()
 	LOGGLERR(pGl);
 
 
-	// shaders
+	static QMutex shadermutex;
+	shadermutex.lock();
+	BOOST_SCOPE_EXIT(&shadermutex) { shadermutex.unlock(); } BOOST_SCOPE_EXIT_END
+
+	// shader compiler/linker error handler
+	auto shader_err = [this](const char* err) -> void
 	{
-		static QMutex shadermutex;
-		shadermutex.lock();
-		BOOST_SCOPE_EXIT(&shadermutex) { shadermutex.unlock(); } BOOST_SCOPE_EXIT_END
+		std::cerr << err << std::endl;
 
-		// shader compiler/linker error handler
-		auto shader_err = [this](const char* err) -> void
-		{
-			std::cerr << err << std::endl;
+		std::string strLog = m_pShaders->log().toStdString();
+		if(strLog.size())
+			std::cerr << "Shader log: " << strLog << std::endl;
+	};
 
-			std::string strLog = m_pShaders->log().toStdString();
-			if(strLog.size())
-				std::cerr << "Shader log: " << strLog << std::endl;
+	// compile & link shaders
+	m_pShaders = std::make_shared<QOpenGLShaderProgram>(this);
 
-			std::exit(-1);
-		};
-
-		// compile & link shaders
-		m_pShaders = std::make_shared<QOpenGLShaderProgram>(this);
-
-		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
-			shader_err("Cannot compile fragment shader.");
-		if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
-			shader_err("Cannot compile vertex shader.");
-
-		if(!m_pShaders->link())
-			shader_err("Cannot link shaders.");
-
-
-		// get attribute handles from shaders
-		m_attrVertex = m_pShaders->attributeLocation("vertex");
-		m_attrVertexNorm = m_pShaders->attributeLocation("normal");
-		m_attrVertexCol = m_pShaders->attributeLocation("vertex_col");
-		m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
-
-		// get uniform handles from shaders
-		m_uniMatrixCam = m_pShaders->uniformLocation("cam");
-		m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
-		m_uniMatrixProj = m_pShaders->uniformLocation("proj");
-		m_uniMatrixObj = m_pShaders->uniformLocation("obj");
-
-		m_uniConstCol = m_pShaders->uniformLocation("const_col");
-		m_uniLightPos = m_pShaders->uniformLocation("lightpos");
-		m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
-
-		m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
-		m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
+	if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
+	{
+		shader_err("Cannot compile fragment shader.");
+		return;
 	}
+
+	if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
+	{
+		shader_err("Cannot compile vertex shader.");
+		return;
+	}
+
+	if(!m_pShaders->link())
+	{
+		shader_err("Cannot link shaders.");
+		return;
+	}
+
+
+	// get attribute handles from shaders
+	m_attrVertex = m_pShaders->attributeLocation("vertex");
+	m_attrVertexNorm = m_pShaders->attributeLocation("normal");
+	m_attrVertexCol = m_pShaders->attributeLocation("vertex_col");
+	m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
+
+	// get uniform handles from shaders
+	m_uniMatrixCam = m_pShaders->uniformLocation("cam");
+	m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
+	m_uniMatrixProj = m_pShaders->uniformLocation("proj");
+	m_uniMatrixObj = m_pShaders->uniformLocation("obj");
+
+	m_uniConstCol = m_pShaders->uniformLocation("const_col");
+	m_uniLightPos = m_pShaders->uniformLocation("lightpos");
+	m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
+
+	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
+	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
 	LOGGLERR(pGl);
 
 	m_bInitialised = true;
