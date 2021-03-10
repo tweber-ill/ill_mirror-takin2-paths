@@ -169,7 +169,7 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 		triag_verts, triag_verts, triag_norms, triag_uvs, col,
 		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol, m_attrTexCoords);
 
-	obj.m_mat = tl2::hom_translation<t_mat_gl>(0., 0., 0.);
+	obj.m_mat = tl2::hom_translation<t_mat_gl, t_real_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
 	obj.m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.75});
@@ -553,11 +553,10 @@ void PathsRenderer::resizeGL(int w, int h)
 	if(!pGl)
 		return;
 
-	m_matViewport = tl2::hom_viewport<t_mat_gl>(w, h, 0., 1.);
-	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
+	UpdateProjection();
 
-	m_matPerspective = tl2::hom_perspective<t_mat_gl>(0.01, 100., tl2::pi<t_real_gl>*0.5, t_real_gl(h)/t_real_gl(w));
-	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
+	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(w, h, 0., 1.);
+	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
 
 	pGl->glViewport(0, 0, w, h);
 	pGl->glDepthRange(0, 1);
@@ -574,6 +573,22 @@ void PathsRenderer::resizeGL(int w, int h)
 	LOGGLERR(pGl);
 
 	m_bWantsResize = false;
+}
+
+
+void PathsRenderer::UpdateProjection()
+{
+	if(m_perspectiveProjection)
+	{
+		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
+			0.01, 100., tl2::pi<t_real_gl>*0.5, t_real_gl(m_iScreenDims[1])/t_real_gl(m_iScreenDims[0]));
+		std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
+	}
+	else
+	{
+		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(0.01, 100., -5., 5. -5., 5.);
+		std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
+	}
 }
 
 

@@ -9,7 +9,7 @@
 #define __PATHS_GLOBALS_H__
 
 
-#include "tlibs2/libs/math20.h"
+#include "tlibs2/libs/maths.h"
 
 
 using t_real = double;

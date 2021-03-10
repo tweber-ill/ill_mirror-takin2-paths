@@ -14,7 +14,7 @@
 
 #include <unordered_map>
 
-#include "tlibs2/libs/math20.h"
+#include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/glplot.h"
 
 #include "Instrument.h"
@@ -58,6 +58,8 @@ public:
 	void Clear();
 	void LoadInstrument(const Instrument& instr);
 
+	void UpdateProjection();
+
 
 protected:
 	virtual void paintEvent(QPaintEvent*) override;
@@ -78,8 +80,9 @@ private:
 	t_qt_mutex m_mutexObj{QMutex::Recursive};
 #endif
 
-	bool m_mouseMovedBetweenDownAndUp = 0;
-	bool m_mouseDown[3] = {0,0,0};
+	bool m_mouseMovedBetweenDownAndUp = false;
+	bool m_mouseDown[3] = { 0, 0, 0 };
+	bool m_perspectiveProjection = true;
 
 
 protected slots:

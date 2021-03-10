@@ -24,7 +24,7 @@ namespace pt = boost::property_tree;
 
 #include <string>
 
-#include "tlibs2/libs/math20.h"
+#include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
