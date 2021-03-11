@@ -71,6 +71,8 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *Evt) override;
 	virtual void mouseReleaseEvent(QMouseEvent *Evt) override;
 	virtual void wheelEvent(QWheelEvent *pEvt) override;
+	virtual void keyPressEvent(QKeyEvent *pEvt) override;
+	virtual void keyReleaseEvent(QKeyEvent *pEvt) override;
 
 
 private:
@@ -83,7 +85,8 @@ private:
 	bool m_mouseMovedBetweenDownAndUp = false;
 	bool m_mouseDown[3] = { 0, 0, 0 };
 	bool m_perspectiveProjection = true;
-
+	bool m_arrowDown[4] = { 0, 0, 0, 0 };	// l, r, u, d
+	bool m_pageDown[2] = { 0, 0 };
 
 protected slots:
 	void tick();
@@ -144,12 +147,18 @@ protected:
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamBase = tl2::create<t_mat_gl>({1,0,0,0,  0,1,0,0,  0,0,1,-5,  0,0,0,1});
+	t_mat_gl m_matCamTrans = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
 
-	t_vec_gl m_vecCamX = tl2::create<t_vec_gl>({1.,0.,0.,0.});
-	t_vec_gl m_vecCamY = tl2::create<t_vec_gl>({0.,0.,1.,0.});
+	t_vec_gl m_vecCamPos = tl2::create<t_vec_gl>({0.,0.,0.,1.});
+
+	t_vec_gl m_vecCamDir[2] =
+	{
+		tl2::create<t_vec_gl>({1.,0.,0.,0.}),
+		tl2::create<t_vec_gl>({0.,0.,1.,0.})
+	};
 
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
@@ -191,8 +200,7 @@ public:
 
 	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr);
 
-	void SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY)
-	{ m_matCamBase = mat; m_vecCamX = vecX; m_vecCamY = vecY; UpdateCam(); }
+	void SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY);
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
 	void DeleteObject(PathsObj& obj);

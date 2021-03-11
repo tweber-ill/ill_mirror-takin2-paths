@@ -41,6 +41,7 @@ PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 
 	UpdateCam();
 	setMouseTracking(true);
+	setFocusPolicy(Qt::StrongFocus);
 }
 
 
@@ -235,9 +236,24 @@ void PathsRenderer::AddCoordinateCross(const std::string& obj_name)
 }
 
 
+void PathsRenderer::SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY)
+{
+	m_matCamBase = mat;
+	m_vecCamDir[0] = vecX;
+	m_vecCamDir[1] = vecY;
+
+	UpdateCam();
+}
+
+
 void PathsRenderer::UpdateCam()
 {
+	m_matCamTrans(0,3) = m_vecCamPos[0];
+	m_matCamTrans(1,3) = m_vecCamPos[1];
+	m_matCamTrans(2,3) = m_vecCamPos[2];
+
 	m_matCam = m_matCamBase;
+	m_matCam *= m_matCamTrans;
 	m_matCam(2,3) /= m_zoom;
 	m_matCam *= m_matCamRot;
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
@@ -432,7 +448,15 @@ void PathsRenderer::tick()
 
 void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
-	// TODO
+	t_real_gl move_scale = t_real_gl(ms.count()) / t_real_gl(75);
+
+	m_vecCamPos[0] += move_scale * t_real_gl(m_arrowDown[0]);
+	m_vecCamPos[0] -= move_scale * t_real_gl(m_arrowDown[1]);
+	m_vecCamPos[2] += move_scale * t_real_gl(m_arrowDown[2]);
+	m_vecCamPos[2] -= move_scale * t_real_gl(m_arrowDown[3]);
+	m_vecCamPos[1] -= move_scale * t_real_gl(m_pageDown[0]);
+	m_vecCamPos[1] += move_scale * t_real_gl(m_pageDown[1]);
+
 	UpdateCam();
 }
 
@@ -776,6 +800,76 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 }
 
 
+void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
+{
+	switch(pEvt->key())
+	{
+		case Qt::Key_Left:
+			m_arrowDown[0] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_Right:
+			m_arrowDown[1] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_Up:
+			m_arrowDown[2] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_Down:
+			m_arrowDown[3] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_PageUp:
+			m_pageDown[0] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_PageDown:
+			m_pageDown[1] = 1;
+			pEvt->accept();
+			break;
+		default:
+			QOpenGLWidget::keyPressEvent(pEvt);
+			break;
+	}
+}
+
+
+void PathsRenderer::keyReleaseEvent(QKeyEvent *pEvt)
+{
+	switch(pEvt->key())
+	{
+		case Qt::Key_Left:
+			m_arrowDown[0] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_Right:
+			m_arrowDown[1] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_Up:
+			m_arrowDown[2] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_Down:
+			m_arrowDown[3] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_PageUp:
+			m_pageDown[0] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_PageDown:
+			m_pageDown[1] = 0;
+			pEvt->accept();
+			break;
+		default:
+			QOpenGLWidget::keyReleaseEvent(pEvt);
+			break;
+	}
+}
+
+
 void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 {
 #if QT_VERSION >= 0x060000
@@ -790,8 +884,8 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 		t_real_gl phi = diff.x() + m_phi_saved;
 		t_real_gl theta = diff.y() + m_theta_saved;
 
-		m_matCamRot = tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamX, theta/180.*tl2::pi<t_real_gl>, 0);
-		m_matCamRot *= tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamY, phi/180.*tl2::pi<t_real_gl>, 0);
+		m_matCamRot = tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamDir[0], theta/180.*tl2::pi<t_real_gl>, 0);
+		m_matCamRot *= tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamDir[1], phi/180.*tl2::pi<t_real_gl>, 0);
 
 		UpdateCam();
 	}
