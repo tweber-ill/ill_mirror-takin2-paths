@@ -8,6 +8,8 @@ cmake_minimum_required(VERSION 3.0)
 project(paths)
 enable_language(CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake")
+
 option(USE_QT6 "use qt 6" FALSE)
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -39,6 +41,14 @@ endif()
 # -----------------------------------------------------------------------------
 # packages
 find_package(Boost REQUIRED)
+
+find_package(Lapacke)
+if(Lapacke_FOUND)
+	message("Lapacke enabled.")
+	add_definitions(-DUSE_LAPACK)
+else()
+	message("Lapacke disabled.")
+endif()
 
 if(QT_VER EQUAL 6)
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
@@ -83,21 +93,25 @@ add_executable(paths
 if(QT_VER EQUAL 6)
 	target_include_directories(paths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.." "${Qt6Core_INCLUDE_DIRS}/.."
+		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
+		"${Qt6Core_INCLUDE_DIRS}/.."
 	)
 
 	target_link_libraries(paths
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
 	)
 elseif(QT_VER EQUAL 5)
 	target_include_directories(paths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.." "${Qt5Core_INCLUDE_DIRS}/.."
+		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
+		"${Qt5Core_INCLUDE_DIRS}/.."
 	)
 
 	target_link_libraries(paths
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
 	)
 endif()
