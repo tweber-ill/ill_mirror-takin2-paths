@@ -14,22 +14,65 @@
 #include "globals.h"
 
 
-/**
- * wall segment
- */
+// ----------------------------------------------------------------------------
+// wall segment
+// ----------------------------------------------------------------------------
 struct Wall
 {
 	std::string id;
 	t_vec pos1, pos2;
 	t_real height, depth, length;
 };
+// ----------------------------------------------------------------------------
 
 
+
+// ----------------------------------------------------------------------------
+// instrument axis
+// ----------------------------------------------------------------------------
+class Axis
+{
+public:
+	Axis();
+	~Axis();
+
+	void Clear();
+	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
+
+private:
+	t_vec m_pos;	// coordinate origin
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// instrument
+// ----------------------------------------------------------------------------
 class Instrument
 {
 public:
 	Instrument();
 	~Instrument();
+
+	void Clear();
+	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
+
+private:
+	Axis m_mono, m_sample, m_ana;
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// instrument space
+// ----------------------------------------------------------------------------
+class InstrumentSpace
+{
+public:
+	InstrumentSpace();
+	~InstrumentSpace();
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
@@ -45,7 +88,9 @@ private:
 	t_real m_floorlen[2] = { 10., 10. };
 
 	std::vector<Wall> m_walls;
-};
 
+	Instrument m_instr;
+};
+// ----------------------------------------------------------------------------
 
 #endif

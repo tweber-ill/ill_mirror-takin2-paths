@@ -56,7 +56,7 @@ public:
 	virtual ~PathsRenderer();
 
 	void Clear();
-	void LoadInstrument(const Instrument& instr);
+	void LoadInstrument(const InstrumentSpace& instr);
 
 	void UpdateProjection();
 

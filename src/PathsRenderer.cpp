@@ -85,7 +85,7 @@ void PathsRenderer::Clear()
 /**
  * create a 3d representation of the instrument and walls
  */
-void PathsRenderer::LoadInstrument(const Instrument& instr)
+void PathsRenderer::LoadInstrument(const InstrumentSpace& instr)
 {
 	Clear();
 

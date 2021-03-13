@@ -67,7 +67,7 @@ private:
 	QString m_curFile;
 
 	// instrument configuration
-	Instrument m_instr;
+	InstrumentSpace m_instrspace;
 
 	// mouse picker
 	t_real m_mouseX, m_mouseY;
@@ -95,8 +95,8 @@ protected:
 	{
 		SetCurrentFile("");
 
-		m_instr.Clear();
-		m_renderer->LoadInstrument(m_instr);
+		m_instrspace.Clear();
+		m_renderer->LoadInstrument(m_instrspace);
 	}
 
 
@@ -177,7 +177,7 @@ protected:
 				<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
 
 
-		if(!m_instr.Load(prop, FILE_BASENAME "instrument."))
+		if(!m_instrspace.Load(prop, FILE_BASENAME "instrument_space."))
 		{
 			QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
 			return false;
@@ -186,7 +186,7 @@ protected:
 		SetCurrentFile(file);
 		AddRecentFile(file);
 
-		m_renderer->LoadInstrument(m_instr);
+		m_renderer->LoadInstrument(m_instrspace);
 		return true;
 	}
 
@@ -295,7 +295,7 @@ protected slots:
 		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
 			= m_renderer->GetGlDescr();
 
-		m_renderer->LoadInstrument(m_instr);
+		m_renderer->LoadInstrument(m_instrspace);
 	}
 
 

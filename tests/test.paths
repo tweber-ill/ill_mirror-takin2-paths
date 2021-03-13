@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <paths>
 	<timestamp>1614257982.440783</timestamp>
 	<ident>takin_paths</ident>
 
-	<instrument>
+	<instrument_space>
 		<floor_len_x> 20 </floor_len_x>
 		<floor_len_y> 20 </floor_len_y>
 
@@ -22,5 +23,41 @@
 				<depth> 0.25 </depth>
 			</wall>
 		</walls>
-	</instrument>
+
+		<instrument>
+			<monochromator>
+				<x>0</x> <y>0</y>
+				<geometry>
+					<cylinder>
+						<x> 0 </x> <y> 0 </y>
+						<height> 1 </height>
+						<radius> 0.2 </radius>
+					</cylinder>
+				</geometry>
+			</monochromator>
+
+			<sample>
+				<x>0</x> <y>10</y>
+				<geometry>
+					<cylinder>
+						<x> 0 </x> <y> 0 </y>
+						<height> 1 </height>
+						<radius> 0.2 </radius>
+					</cylinder>
+				</geometry>
+			</sample>
+
+			<analyser>
+				<x>10</x> <y>0</y>
+				<geometry>
+					<cylinder>
+						<x> 0 </x> <y> 0 </y>
+						<height> 1 </height>
+						<radius> 0.2 </radius>
+					</cylinder>
+				</geometry>
+			</analyser>
+		</instrument>
+
+	</instrument_space>
 </paths>
