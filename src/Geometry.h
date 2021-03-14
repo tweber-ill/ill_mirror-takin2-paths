@@ -20,6 +20,7 @@
 enum class GeometryType
 {
 	BOX,
+	CYLINDER,
 };
 
 
@@ -74,6 +75,32 @@ public:
 private:
 	t_vec m_pos1, m_pos2;
 	t_real m_height, m_depth, m_length;
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// cylinder
+// ----------------------------------------------------------------------------
+class CylinderGeometry : public Geometry
+{
+public:
+	CylinderGeometry();
+	virtual ~CylinderGeometry();
+
+	virtual GeometryType GetType() const override { return GeometryType::CYLINDER; }
+
+	virtual void Clear() override;
+	virtual bool Load(const boost::property_tree::ptree& prop) override;
+
+	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
+	GetTriangles() override;
+
+
+private:
+	t_vec m_pos;
+	t_real m_height, m_radius;
 };
 // ----------------------------------------------------------------------------
 

@@ -49,6 +49,14 @@ Geometry::load(const boost::property_tree::ptree& prop, const std::string& baseP
 				if(box->Load(geo.second))
 					geo_objs.emplace_back(std::move(box));
 			}
+			else if(geotype == "cylinder")
+			{
+				auto cyl = std::make_shared<CylinderGeometry>();
+				cyl->m_id = geoid;
+
+				if(cyl->Load(geo.second))
+					geo_objs.emplace_back(std::move(cyl));
+			}
 			else
 			{
 				std::cerr << "Unknown geometry type \"" << geotype << "\"." << std::endl;
@@ -92,7 +100,7 @@ bool BoxGeometry::Load(const boost::property_tree::ptree& prop)
 
 	if(!optX1 || !optX2 || !optY1 || !optY2)
 	{
-		std::cerr << "Wall \"" << m_id << "\" definition is incomplete, ignoring." << std::endl;
+		std::cerr << "Box \"" << m_id << "\" definition is incomplete, ignoring." << std::endl;
 		return false;
 	}
 
@@ -120,6 +128,61 @@ BoxGeometry::GetTriangles()
 
 	auto mat = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
 		vecTo, 1., postTranslate, vecFrom, 1., preTranslate);
+
+	//tl2::transform_obj(verts, norms, mat, true);
+	return std::make_tuple(verts, norms, uvs, mat);
+}
+
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// cylinder
+// ----------------------------------------------------------------------------
+
+CylinderGeometry::CylinderGeometry()
+{
+}
+
+
+CylinderGeometry::~CylinderGeometry()
+{
+}
+
+
+void CylinderGeometry::Clear()
+{
+}
+
+
+bool CylinderGeometry::Load(const boost::property_tree::ptree& prop)
+{
+	auto optX = prop.get_optional<t_real>("x");
+	auto optY = prop.get_optional<t_real>("y");
+
+	if(!optX || !optY)
+	{
+		std::cerr << "Cylinder \"" << m_id << "\" definition is incomplete, ignoring." << std::endl;
+		return false;
+	}
+
+	m_pos = tl2::create<t_vec>({ *optX, *optY, 0 });
+
+	m_height = prop.get<t_real>("height", 1.);
+	m_radius = prop.get<t_real>("radius", 0.1);
+
+	return true;
+}
+
+
+std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
+CylinderGeometry::GetTriangles()
+{
+	auto solid = tl2::create_cylinder<t_vec>(m_radius, m_height, 1, 32);
+	auto [verts, norms, uvs] = tl2::create_triangles<t_vec>(solid);
+
+	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
 
 	//tl2::transform_obj(verts, norms, mat, true);
 	return std::make_tuple(verts, norms, uvs, mat);

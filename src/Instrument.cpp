@@ -126,8 +126,7 @@ bool InstrumentSpace::Load(const pt::ptree& prop, const std::string& basePath)
 				// TODO
 				for(auto& wallseg : std::get<1>(geoobj))
 				{
-					// override id
-					if(id != "")
+					if(wallseg->GetId() == "")
 						wallseg->SetId(id);
 					m_walls.emplace_back(std::move(wallseg));
 				}
