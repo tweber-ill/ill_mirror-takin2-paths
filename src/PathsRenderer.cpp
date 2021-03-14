@@ -95,8 +95,18 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instr)
 	AddBasePlane(OBJNAME_BASE_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
 
 	// walls
-	for(const Wall& wall : instr.GetWalls())
-		AddWall(wall);
+	for(const auto& wall : instr.GetWalls())
+	{
+		auto [_verts, _norms, _uvs, _mat] = wall->GetTriangles();
+		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
+
+		auto verts = tl2::convert<t_vec3_gl>(_verts);
+		auto norms = tl2::convert<t_vec3_gl>(_norms);
+		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+
+		AddTriangleObject(wall->GetId(), verts, norms, uvs, 1,0,0,1);
+		m_objs[wall->GetId()].m_mat = mat;
+	}
 }
 
 
@@ -190,27 +200,6 @@ void PathsRenderer::AddBasePlane(const std::string& obj_name, t_real_gl len_x, t
 
 	AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
 	m_objs[obj_name].m_cull = false;
-}
-
-
-/**
- * add a wall
- */
-void PathsRenderer::AddWall(const Wall& wall)
-{
-	using namespace tl2_ops;
-
-	auto solid = tl2::create_cuboid<t_vec3_gl>(wall.length*0.5, wall.depth*0.5, wall.height*0.5);
-	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(solid);
-
-	auto mat = tl2::get_arrow_matrix<t_vec_gl, t_mat_gl, t_real_gl>(
-		tl2::convert_vec<t_vec_gl>(wall.pos2 - wall.pos1), 	// to
-		1., tl2::create<t_vec_gl>({0, 0, static_cast<t_real_gl>(wall.height*0.5)}), // post scale and translate
-		tl2::create<t_vec_gl>({1, 0, 0}),	// from
-		1., tl2::convert_vec<t_vec_gl>(0.5*(wall.pos1 + wall.pos2)));		// pre scale and translate
-
-	tl2::transform_obj(verts, norms, mat, true);
-	AddTriangleObject(wall.id, verts, norms, uvs, 1,0,0,1);
 }
 
 

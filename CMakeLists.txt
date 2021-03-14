@@ -79,6 +79,7 @@ add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 add_executable(paths
 	src/PathsTool.cpp src/globals.h
 	src/PathsRenderer.cpp src/PathsRenderer.h
+	src/Geometry.cpp src/Geometry.h
 	src/Instrument.cpp src/Instrument.h
 	tlibs2/libs/glplot.cpp tlibs2/libs/glplot.h
 )
