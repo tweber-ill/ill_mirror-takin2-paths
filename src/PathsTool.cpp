@@ -32,7 +32,6 @@ namespace pt = boost::property_tree;
 
 #include "PathsRenderer.h"
 #include "Instrument.h"
-#include "globals.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -428,6 +427,22 @@ public:
 		menuFile->addAction(acQuit);
 
 
+		// view menu
+		QMenu *menuView = new QMenu("View", m_menubar);
+
+		QAction *acPersp = new QAction("Perspective Projection", menuView);
+		acPersp->setCheckable(true);
+		acPersp->setChecked(true);
+
+		connect(acPersp, &QAction::toggled, this, [this](bool b)
+		{
+			if(m_renderer)
+				m_renderer->SetPerspectiveProjection(b);
+		});
+
+		menuView->addAction(acPersp);
+
+
 		// help menu
 		QMenu *menuHelp = new QMenu("Help", m_menubar);
 
@@ -463,6 +478,7 @@ public:
 
 		// menu bar
 		m_menubar->addMenu(menuFile);
+		m_menubar->addMenu(menuView);
 		m_menubar->addMenu(menuHelp);
 		//m_menubar->setNativeMenuBar(0);
 		setMenuBar(m_menubar);

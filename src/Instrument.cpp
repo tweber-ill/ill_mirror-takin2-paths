@@ -12,7 +12,7 @@ namespace pt = boost::property_tree;
 // ----------------------------------------------------------------------------
 // instrument axis
 // ----------------------------------------------------------------------------
-Axis::Axis()
+Axis::Axis(const std::string& id) : m_id{id}
 {
 }
 
@@ -24,6 +24,7 @@ Axis::~Axis()
 
 void Axis::Clear()
 {
+	m_comps.clear();
 }
 
 
@@ -34,6 +35,17 @@ bool Axis::Load(const boost::property_tree::ptree& prop, const std::string& base
 		m_pos[0] = *opt;
 	if(auto opt = prop.get_optional<t_real>(basePath + "y"); opt)
 		m_pos[1] = *opt;
+
+	if(auto geoobj = Geometry::load(prop, basePath + "geometry"); std::get<0>(geoobj))
+	{
+		// get individual 3d primitives that comprise this object
+		for(auto& comp : std::get<1>(geoobj))
+		{
+			if(comp->GetId() == "")
+				comp->SetId(m_id);
+			m_comps.emplace_back(std::move(comp));
+		}
+	}
 
 	return true;
 }
@@ -123,7 +135,7 @@ bool InstrumentSpace::Load(const pt::ptree& prop, const std::string& basePath)
 
 			if(auto geoobj = Geometry::load(wall.second, "geometry"); std::get<0>(geoobj))
 			{
-				// TODO
+				// get individual 3d primitives that comprise this wall
 				for(auto& wallseg : std::get<1>(geoobj))
 				{
 					if(wallseg->GetId() == "")

@@ -86,17 +86,35 @@ void PathsRenderer::Clear()
 /**
  * create a 3d representation of the instrument and walls
  */
-void PathsRenderer::LoadInstrument(const InstrumentSpace& instr)
+void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 {
 	Clear();
 
-	//AddCoordinateCross(OBJNAME_COORD_CROSS);
-
 	// base plane
-	AddFloorPlane(OBJNAME_FLOOR_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
+	AddFloorPlane(OBJNAME_FLOOR_PLANE, instrspace.GetFloorLenX(), instrspace.GetFloorLenY());
+
+	// instrument
+	const auto& instr = instrspace.GetInstrument();
+	const auto& mono = instr.GetMonochromator();
+	const auto& sample = instr.GetSample();
+	const auto& ana = instr.GetAnalyser();
+
+	for(const auto& comp : mono.GetComps())
+	{
+		auto [_verts, _norms, _uvs, _mat] = comp->GetTriangles();
+		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
+
+		auto verts = tl2::convert<t_vec3_gl>(_verts);
+		auto norms = tl2::convert<t_vec3_gl>(_norms);
+		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+
+		AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
+		m_objs[comp->GetId()].m_mat = mat;
+	}
+
 
 	// walls
-	for(const auto& wall : instr.GetWalls())
+	for(const auto& wall : instrspace.GetWalls())
 	{
 		auto [_verts, _norms, _uvs, _mat] = wall->GetTriangles();
 		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
@@ -111,7 +129,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instr)
 }
 
 
-QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible)
+QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) const
 {
 	auto [ vecPersp, vec ] =
 		tl2::hom_to_screen_coords<t_mat_gl, t_vec_gl>
@@ -203,46 +221,15 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, 
 }
 
 
-void PathsRenderer::AddCoordinateCross(const std::string& obj_name)
-{
-	t_real_gl min = -m_CoordMax;
-	t_real_gl max = m_CoordMax;
-
-	auto col = tl2::create<t_vec_gl>({0,0,0,1});
-	auto verts = std::vector<t_vec3_gl>
-	{{
-		tl2::create<t_vec3_gl>({min,0,0}), tl2::create<t_vec3_gl>({max,0,0}),
-		tl2::create<t_vec3_gl>({0,min,0}), tl2::create<t_vec3_gl>({0,max,0}),
-		tl2::create<t_vec3_gl>({0,0,min}), tl2::create<t_vec3_gl>({0,0,max}),
-	}};
-
-	QMutexLocker _locker{&m_mutexObj};
-
-	PathsObj obj;
-	create_line_object(this, obj, verts, col, m_attrVertex, m_attrVertexCol);
-
-	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
-}
-
-
-void PathsRenderer::SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY)
-{
-	m_matCamBase = mat;
-	m_vecCamDir[0] = vecX;
-	m_vecCamDir[1] = vecY;
-
-	UpdateCam();
-}
-
-
 void PathsRenderer::UpdateCam()
 {
-	m_matCamTrans(0,3) = m_vecCamPos[0];
-	m_matCamTrans(1,3) = m_vecCamPos[1];
-	m_matCamTrans(2,3) = m_vecCamPos[2];
+	t_mat_gl matCamTrans = tl2::unit<t_mat_gl>();
+	matCamTrans(0,3) = m_vecCamPos[0];
+	matCamTrans(1,3) = m_vecCamPos[1];
+	matCamTrans(2,3) = m_vecCamPos[2];
 
-	m_matCam = m_matCamBase;
-	m_matCam *= m_matCamTrans;
+	m_matCam = tl2::unit<t_mat_gl>();
+	m_matCam *= matCamTrans;
 	m_matCam(2,3) /= m_zoom;
 	m_matCam *= m_matCamRot;
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
@@ -289,7 +276,7 @@ void PathsRenderer::EnablePicker(bool b)
 
 void PathsRenderer::UpdatePicker()
 {
-	if(!m_bInitialised || !m_bPlatformSupported || !m_bPickerEnabled)
+	if(!m_bInitialised || !m_bPickerEnabled)
 		return;
 
 	// picker ray
@@ -446,10 +433,10 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 
 	m_vecCamPos[0] += move_scale * t_real_gl(m_arrowDown[0]);
 	m_vecCamPos[0] -= move_scale * t_real_gl(m_arrowDown[1]);
-	m_vecCamPos[2] += move_scale * t_real_gl(m_arrowDown[2]);
-	m_vecCamPos[2] -= move_scale * t_real_gl(m_arrowDown[3]);
 	m_vecCamPos[1] -= move_scale * t_real_gl(m_pageDown[0]);
 	m_vecCamPos[1] += move_scale * t_real_gl(m_pageDown[1]);
+	m_vecCamPos[2] += move_scale * t_real_gl(m_arrowDown[2]);
+	m_vecCamPos[2] -= move_scale * t_real_gl(m_arrowDown[3]);
 
 	UpdateCam();
 }
@@ -561,23 +548,33 @@ void PathsRenderer::resizeGL(int w, int h)
 {
 	m_iScreenDims[0] = w;
 	m_iScreenDims[1] = h;
-	m_bWantsResize = true;
 
-	if(!m_bPlatformSupported || !m_bInitialised) return;
+	m_bPerspectiveNeedsUpdate = true;
+	m_bViewportNeedsUpdate = true;
+}
 
+
+void PathsRenderer::UpdatePerspective()
+{
+	if(!m_bInitialised)
+		return;
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
 		return;
 	auto *pGl = get_gl_functions(this);
 	if(!pGl)
 		return;
 
-	UpdateProjection();
+	// projection
+	const t_real_gl nearPlane = 0.1;
+	const t_real_gl farPlane = 1000.;
 
-	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(w, h, 0., 1.);
-	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
+	if(m_perspectiveProjection)
+		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
+			nearPlane, farPlane, tl2::pi<t_real_gl>*0.5, t_real_gl(m_iScreenDims[1])/t_real_gl(m_iScreenDims[0]));
+	else
+		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(nearPlane, farPlane, -10., 10., -10., 10.);
 
-	pGl->glViewport(0, 0, w, h);
-	pGl->glDepthRange(0, 1);
+	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
 
 	// bind shaders
 	m_pShaders->bind();
@@ -585,34 +582,40 @@ void PathsRenderer::resizeGL(int w, int h)
 	LOGGLERR(pGl);
 
 	// set matrices
-	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 	m_pShaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
 	LOGGLERR(pGl);
 
-	m_bWantsResize = false;
+	m_bPerspectiveNeedsUpdate = false;
 }
 
 
-void PathsRenderer::UpdateProjection()
+void PathsRenderer::UpdateViewport()
 {
-	if(m_perspectiveProjection)
-	{
-		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			0.01, 100., tl2::pi<t_real_gl>*0.5, t_real_gl(m_iScreenDims[1])/t_real_gl(m_iScreenDims[0]));
-		std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
-	}
-	else
-	{
-		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(0.01, 100., -5., 5. -5., 5.);
-		std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
-	}
+	if(!m_bInitialised)
+		return;
+	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
+		return;
+	auto *pGl = get_gl_functions(this);
+	if(!pGl)
+		return;
+
+	// viewport
+	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(m_iScreenDims[0], m_iScreenDims[1], 0., 1.);
+	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
+
+	pGl->glViewport(0, 0, m_iScreenDims[0], m_iScreenDims[1]);
+	pGl->glDepthRange(0, 1);
+	LOGGLERR(pGl);
+
+	m_bViewportNeedsUpdate = false;
 }
 
 
 void PathsRenderer::paintGL()
 {
-	if(!m_bPlatformSupported || !m_bInitialised) return;
+	if(!m_bInitialised)
+		return;
+
 	QMutexLocker _locker{&m_mutexObj};
 
 	if(auto *pContext = context(); !pContext) return;
@@ -668,8 +671,12 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	if(m_bLightsNeedUpdate)
 		UpdateLights();
+	if(m_bViewportNeedsUpdate)
+		UpdateViewport();
+	if(m_bPerspectiveNeedsUpdate)
+		UpdatePerspective();
 
-	// set cam matrix
+	// set cam and projection matrices
 	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
 	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 
@@ -739,28 +746,6 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	QFont fontOrig = painter.font();
 	QPen penOrig = painter.pen();
 	QBrush brushOrig = painter.brush();
-
-
-	// coordinate labels
-	/*QPen penLabel(Qt::black);
-	painter.setPen(penLabel);
-
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
-	for(t_real_gl f=-std::floor(m_CoordMax); f<=std::floor(m_CoordMax); f+=0.5)
-	{
-		if(tl2::equals<t_real_gl>(f, 0))
-			continue;
-
-		std::ostringstream ostrF;
-		ostrF << f;
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({f,0.,0.,1.})), ostrF.str().c_str());
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,f,0.,1.})), ostrF.str().c_str());
-		painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,f,1.})), ostrF.str().c_str());
-	}
-
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({m_CoordMax*t_real_gl(1.2), 0., 0., 1.})), "x");
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., m_CoordMax*t_real_gl(1.2), 0., 1.})), "y");
-	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");*/
 
 
 	// draw tooltip

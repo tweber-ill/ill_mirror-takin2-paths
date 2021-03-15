@@ -14,7 +14,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "globals.h"
+#include "types.h"
 
 
 enum class GeometryType

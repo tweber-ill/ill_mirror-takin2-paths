@@ -1,12 +1,12 @@
 /**
- * global definitions
+ * global type definitions
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
  */
 
-#ifndef __PATHS_GLOBALS_H__
-#define __PATHS_GLOBALS_H__
+#ifndef __PATHS_GLOBAL_TYPES_H__
+#define __PATHS_GLOBAL_TYPES_H__
 
 
 #include "tlibs2/libs/maths.h"

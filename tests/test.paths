@@ -38,8 +38,8 @@
 				<geometry>
 					<cylinder>
 						<x> 0 </x> <y> 0 </y>
-						<height> 1 </height>
-						<radius> 0.2 </radius>
+						<height> 2 </height>
+						<radius> 1 </radius>
 					</cylinder>
 				</geometry>
 			</monochromator>

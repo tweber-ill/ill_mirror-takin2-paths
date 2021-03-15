@@ -54,8 +54,6 @@ public:
 	void Clear();
 	void LoadInstrument(const InstrumentSpace& instr);
 
-	void UpdateProjection();
-
 
 protected:
 	virtual void paintEvent(QPaintEvent*) override;
@@ -90,6 +88,7 @@ protected slots:
 
 public slots:
 	void EnablePicker(bool b);
+	void SetPerspectiveProjection(bool b) { m_perspectiveProjection = b; m_bPerspectiveNeedsUpdate = true; }
 
 
 signals:
@@ -144,30 +143,27 @@ protected:
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport_inv = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCamBase = tl2::create<t_mat_gl>({1,0,0,0,  0,1,0,0,  0,0,1,-5,  0,0,0,1});
-	t_mat_gl m_matCamTrans = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
+	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 
-	t_vec_gl m_vecCamPos = tl2::create<t_vec_gl>({0.,0.,0.,1.});
+	t_vec_gl m_vecCamPos = tl2::create<t_vec_gl>({0., 0., -5., 1.});
 
 	t_vec_gl m_vecCamDir[2] =
 	{
-		tl2::create<t_vec_gl>({1.,0.,0.,0.}),
-		tl2::create<t_vec_gl>({0.,0.,1.,0.})
+		tl2::create<t_vec_gl>({1., 0., 0., 0.}),
+		tl2::create<t_vec_gl>({0. ,0., 1., 0.})
 	};
 
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
-	t_real_gl m_CoordMax = 2.5;		// extent of coordinate axes
 
-	std::atomic<bool> m_bPlatformSupported = true;
 	std::atomic<bool> m_bInitialised = false;
-	std::atomic<bool> m_bWantsResize = false;
 	std::atomic<bool> m_bPickerEnabled = true;
 	std::atomic<bool> m_bPickerNeedsUpdate = false;
 	std::atomic<bool> m_bLightsNeedUpdate = false;
+	std::atomic<bool> m_bPerspectiveNeedsUpdate = false;
+	std::atomic<bool> m_bViewportNeedsUpdate = false;
 	std::atomic<int> m_iScreenDims[2] = { 800, 600 };
 	t_real_gl m_pickerSphereRadius = 1;
 
@@ -185,6 +181,8 @@ protected:
 	void UpdateCam();
 	void UpdatePicker();
 	void UpdateLights();
+	void UpdatePerspective();
+	void UpdateViewport();
 
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);
@@ -196,9 +194,7 @@ public:
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
 	bool IsInitialised() const { return m_bInitialised; }
 
-	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr);
-
-	void SetCamBase(const t_mat_gl& mat, const t_vec_gl& vecX, const t_vec_gl& vecY);
+	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
 	void DeleteObject(PathsObj& obj);
@@ -210,9 +206,6 @@ public:
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
 	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
-	void AddCoordinateCross(const std::string& obj_name);
-
-	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 };

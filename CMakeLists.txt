@@ -77,7 +77,7 @@ add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 # -----------------------------------------------------------------------------
 # target executable settings
 add_executable(paths
-	src/PathsTool.cpp src/globals.h
+	src/PathsTool.cpp src/types.h
 	src/PathsRenderer.cpp src/PathsRenderer.h
 	src/Geometry.cpp src/Geometry.h
 	src/Instrument.cpp src/Instrument.h
