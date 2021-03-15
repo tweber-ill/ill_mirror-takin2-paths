@@ -137,6 +137,7 @@ protected:
 	// cursor uv coordinates and object under cursor
 	GLfloat m_curUV[2] = {0., 0.};
 	std::string m_curObj;
+	bool m_curActive = false;
 
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();

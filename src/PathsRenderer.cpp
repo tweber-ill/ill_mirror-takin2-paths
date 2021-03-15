@@ -331,6 +331,7 @@ void PathsRenderer::UpdatePicker()
 	// intersection with geometry
 	bool hasInters = false;
 	m_curObj = "";
+	m_curActive = false;
 	t_vec_gl vecClosestInters = tl2::create<t_vec_gl>({0,0,0,0});
 
 	QMutexLocker _locker{&m_mutexObj};
@@ -385,6 +386,7 @@ void PathsRenderer::UpdatePicker()
 					// save intersections with base plane for drawing walls
 					m_curUV[0] = uv[0];
 					m_curUV[1] = uv[1];
+					m_curActive = true;
 
 					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
 
@@ -426,7 +428,7 @@ void PathsRenderer::UpdatePicker()
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
-	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, 
+	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr,
 		m_curObj, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
 
@@ -688,8 +690,9 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
-		m_pShaders->setUniformValue(m_uniCursorActive, obj_name == OBJNAME_FLOOR_PLANE);
+		m_pShaders->setUniformValue(m_uniCursorActive, obj_name==OBJNAME_FLOOR_PLANE && m_curActive);
 
+		// set object matrix
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
