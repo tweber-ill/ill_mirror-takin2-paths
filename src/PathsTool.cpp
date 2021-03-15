@@ -369,7 +369,7 @@ public:
 
 		connect(m_renderer.get(), &PathsRenderer::MouseDown, this, &PathsTool::MouseDown);
 		connect(m_renderer.get(), &PathsRenderer::MouseUp, this, &PathsTool::MouseUp);
-		connect(m_renderer.get(), &PathsRenderer::BasePlaneCoordsChanged, this, &PathsTool::MouseCoordsChanged);
+		connect(m_renderer.get(), &PathsRenderer::FloorPlaneCoordsChanged, this, &PathsTool::MouseCoordsChanged);
 		connect(m_renderer.get(), &PathsRenderer::PickerIntersection, this, &PathsTool::PickerIntersection);
 		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
 

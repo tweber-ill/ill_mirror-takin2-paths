@@ -29,10 +29,6 @@ struct PathsObj : public GlRenderObj
 	bool m_highlighted = false;	// object highlighted?
 	bool m_cull = true;		// object faces culled?
 
-	t_vec3_gl m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.});
-	std::string m_label;
-	std::string m_datastr;
-
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
 };
@@ -103,7 +99,7 @@ signals:
 	void MouseUp(bool left, bool mid, bool right);
 	void MouseClick(bool left, bool mid, bool right);
 
-	void BasePlaneCoordsChanged(t_real_gl x, t_real_gl y);
+	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 
 
@@ -138,8 +134,9 @@ protected:
 	// version identifiers
 	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
 
-	// cursor uv coordinates
-	GLfloat m_curCursorUV[2] = {0., 0.};
+	// cursor uv coordinates and object under cursor
+	GLfloat m_curUV[2] = {0., 0.};
+	std::string m_curObj;
 
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
@@ -189,7 +186,7 @@ protected:
 	void UpdateLights();
 
 	void DoPaintGL(qgl_funcs *pGL);
-	void DoPaintNonGL(QPainter &painter);
+	void DoPaintQt(QPainter &painter);
 
 	void tick(const std::chrono::milliseconds& ms);
 
@@ -211,7 +208,7 @@ public:
 		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	void AddBasePlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
+	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
 	void AddCoordinateCross(const std::string& obj_name);
 
 	void SetCoordMax(t_real_gl d) { m_CoordMax = d; }

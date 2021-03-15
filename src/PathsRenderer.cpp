@@ -25,19 +25,20 @@
 #include "tlibs2/libs/file.h"
 
 
-#define OBJNAME_COORD_CROSS "__coord_cross"
-#define OBJNAME_BASE_PLANE "__floor"
+#define OBJNAME_COORD_CROSS "coord_cross"
+#define OBJNAME_FLOOR_PLANE "floor"
 #define MAX_LIGHTS 4	// max. number allowed in shader
+#define TIMER_FPS 60
+
 
 
 // ----------------------------------------------------------------------------
 // GL plot implementation
-
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
 	connect(&m_timer, &QTimer::timeout,
 		this, static_cast<void (PathsRenderer::*)()>(&PathsRenderer::tick));
-	m_timer.start(std::chrono::milliseconds(1000 / 60));
+	m_timer.start(std::chrono::milliseconds(1000 / TIMER_FPS));
 
 	UpdateCam();
 	setMouseTracking(true);
@@ -92,7 +93,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instr)
 	//AddCoordinateCross(OBJNAME_COORD_CROSS);
 
 	// base plane
-	AddBasePlane(OBJNAME_BASE_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
+	AddFloorPlane(OBJNAME_FLOOR_PLANE, instr.GetFloorLenX(), instr.GetFloorLenY());
 
 	// walls
 	for(const auto& wall : instr.GetWalls())
@@ -183,7 +184,6 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	obj.m_mat = tl2::hom_translation<t_mat_gl, t_real_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
-	obj.m_labelPos = tl2::create<t_vec3_gl>({0., 0., 0.75});
 
 	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
 }
@@ -192,7 +192,7 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 /**
  * add the floor plane
  */
-void PathsRenderer::AddBasePlane(const std::string& obj_name, t_real_gl len_x, t_real_gl len_y)
+void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, t_real_gl len_y)
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
@@ -330,7 +330,7 @@ void PathsRenderer::UpdatePicker()
 
 	// intersection with geometry
 	bool hasInters = false;
-	std::string objInters;
+	m_curObj = "";
 	t_vec_gl vecClosestInters = tl2::create<t_vec_gl>({0,0,0,0});
 
 	QMutexLocker _locker{&m_mutexObj};
@@ -375,12 +375,29 @@ void PathsRenderer::UpdatePicker()
 			if(bInters)
 			{
 				t_vec_gl vecInters4 = tl2::create<t_vec_gl>({vecInters[0], vecInters[1], vecInters[2], 1});
+
+				// intersection with floor plane
+				if(obj_name == OBJNAME_FLOOR_PLANE)
+				{
+					auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
+					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
+
+					// save intersections with base plane for drawing walls
+					m_curUV[0] = uv[0];
+					m_curUV[1] = uv[1];
+
+					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
+
+					SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
+				}
+
+				// intersection with other objects
 				bool updateUV = false;
 
 				if(!hasInters)
 				{	// first intersection
 					vecClosestInters = vecInters4;
-					objInters = obj_name;
+					m_curObj = obj_name;
 					hasInters = true;
 					updateUV = true;
 				}
@@ -392,28 +409,14 @@ void PathsRenderer::UpdatePicker()
 					if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
 					{	// ...it is closer
 						vecClosestInters = vecInters4;
-						objInters = obj_name;
+						m_curObj = obj_name;
 
 						updateUV = true;
 					}
 				}
 
-
 				if(updateUV)
 				{
-					auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
-						(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
-
-					// save intersections with base plane for drawing walls
-					if(objInters == OBJNAME_BASE_PLANE)
-					{
-						m_curCursorUV[0] = uv[0];
-						m_curCursorUV[1] = uv[1];
-
-						emit BasePlaneCoordsChanged(vecClosestInters[0], vecClosestInters[1]);
-
-						SetLight(0, tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], 10}));
-					}
 				}
 			}
 		}
@@ -424,7 +427,7 @@ void PathsRenderer::UpdatePicker()
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
 	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, 
-		objInters, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
+		m_curObj, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
 
 
@@ -625,7 +628,9 @@ void PathsRenderer::paintGL()
 	}
 
 	// qt painting
-	DoPaintNonGL(painter);
+	{
+		DoPaintQt(painter);
+	}
 }
 
 
@@ -667,7 +672,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 
 	// cursor
-	m_pShaders->setUniformValue(m_uniCursorCoords, m_curCursorUV[0], m_curCursorUV[1]);
+	m_pShaders->setUniformValue(m_uniCursorCoords, m_curUV[0], m_curUV[1]);
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
@@ -683,7 +688,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
-		m_pShaders->setUniformValue(m_uniCursorActive, obj_name == OBJNAME_BASE_PLANE);
+		m_pShaders->setUniformValue(m_uniCursorActive, obj_name == OBJNAME_FLOOR_PLANE);
 
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
@@ -726,17 +731,18 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 /**
  * directly draw on a qpainter
  */
-void PathsRenderer::DoPaintNonGL(QPainter &painter)
+void PathsRenderer::DoPaintQt(QPainter &painter)
 {
 	QFont fontOrig = painter.font();
 	QPen penOrig = painter.pen();
-
-	QPen penLabel(Qt::black);
-	painter.setPen(penLabel);
+	QBrush brushOrig = painter.brush();
 
 
 	// coordinate labels
-	/*painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
+	/*QPen penLabel(Qt::black);
+	painter.setPen(penLabel);
+
+	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0.,0.,0.,1.})), "0");
 	for(t_real_gl f=-std::floor(m_CoordMax); f<=std::floor(m_CoordMax); f+=0.5)
 	{
 		if(tl2::equals<t_real_gl>(f, 0))
@@ -754,38 +760,46 @@ void PathsRenderer::DoPaintNonGL(QPainter &painter)
 	painter.drawText(GlToScreenCoords(tl2::create<t_vec_gl>({0., 0., m_CoordMax*t_real_gl(1.2), 1.})), "z");*/
 
 
-	// render object labels
-	for(const auto& [obj_name, obj] : m_objs)
+	// draw tooltip
+	if(auto curObj = m_objs.find(m_curObj); curObj != m_objs.end())
 	{
-		if(!obj.m_visible) continue;
+		const auto& obj = curObj->second;
 
-		if(obj.m_label != "")
+		if(obj.m_visible)
 		{
-			t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
-			auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
+			QString label = curObj->first.c_str();
+
+			//t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
+			//auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
 
 			QFont fontLabel = fontOrig;
 			QPen penLabel = penOrig;
+			QBrush brushLabel = brushOrig;
 
-			fontLabel.setStyleStrategy(QFont::StyleStrategy(/*QFont::OpenGLCompatible |*/ QFont::PreferAntialias | QFont::PreferQuality));
-			fontLabel.setWeight(QFont::Medium);
-			//penLabel.setColor(QColor(int((1.-obj.m_color[0])*255.), int((1.-obj.m_color[1])*255.), int((1.-obj.m_color[2])*255.), int(obj.m_color[3]*255.)));
-			penLabel.setColor(QColor(0,0,0,255));
-			painter.setFont(fontLabel);
-			painter.setPen(penLabel);
-			painter.drawText(posLabel2d, obj.m_label.c_str());
-
+			fontLabel.setStyleStrategy(QFont::StyleStrategy(QFont::PreferAntialias | QFont::PreferQuality));
 			fontLabel.setWeight(QFont::Normal);
-			penLabel.setColor(QColor(int(obj.m_color[0]*255.), int(obj.m_color[1]*255.), int(obj.m_color[2]*255.), int(obj.m_color[3]*255.)));
+			penLabel.setColor(QColor(0, 0, 0, 255));
+			brushLabel.setColor(QColor(255, 255, 255, 127));
+			brushLabel.setStyle(Qt::SolidPattern);
 			painter.setFont(fontLabel);
 			painter.setPen(penLabel);
-			painter.drawText(posLabel2d, obj.m_label.c_str());
+			painter.setBrush(brushLabel);
+
+			QRect boundingRect = painter.fontMetrics().boundingRect(label);
+			boundingRect.setWidth(boundingRect.width() * 2);
+			boundingRect.setHeight(boundingRect.height() * 2);
+			boundingRect.translate(m_posMouse.x()+16, m_posMouse.y()+24);
+
+			painter.drawRoundedRect(boundingRect, 8., 8.);
+			painter.drawText(boundingRect, Qt::AlignCenter | Qt::AlignVCenter, label);
 		}
 	}
+
 
 	// restore original styles
 	painter.setFont(fontOrig);
 	painter.setPen(penOrig);
+	painter.setBrush(brushOrig);
 }
 
 
@@ -972,5 +986,4 @@ void PathsRenderer::paintEvent(QPaintEvent* pEvt)
 {
 	QOpenGLWidget::paintEvent(pEvt);
 }
-
 // ----------------------------------------------------------------------------
