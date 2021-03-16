@@ -688,12 +688,15 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	// render triangle geometry
 	for(const auto& [obj_name, obj] : m_objs)
 	{
+		if(!obj.m_visible)
+			continue;
+
 		// set override color to white
 		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
 
-		if(!obj.m_visible) continue;
-
-		if(!obj.m_cull)
+		if(obj.m_cull)
+			pGl->glEnable(GL_CULL_FACE);
+		else
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
