@@ -251,6 +251,10 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 
 void PathsRenderer::UpdateLights()
 {
+	auto *pGl = GetGlFunctions();
+	if(!pGl)
+		return;
+
 	int num_lights = std::min(MAX_LIGHTS, static_cast<int>(m_lights.size()));
 	t_real_gl pos[num_lights * 3];
 
@@ -260,6 +264,11 @@ void PathsRenderer::UpdateLights()
 		pos[i*3 + 1] = m_lights[i][1];
 		pos[i*3 + 2] = m_lights[i][2];
 	}
+
+	// bind shaders
+	m_pShaders->bind();
+	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	LOGGLERR(pGl);
 
 	m_pShaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
 	m_pShaders->setUniformValue(m_uniNumActiveLights, num_lights);
@@ -554,13 +563,19 @@ void PathsRenderer::resizeGL(int w, int h)
 }
 
 
-void PathsRenderer::UpdatePerspective()
+qgl_funcs* PathsRenderer::GetGlFunctions()
 {
 	if(!m_bInitialised)
-		return;
+		return nullptr;
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
-		return;
-	auto *pGl = get_gl_functions(this);
+		return nullptr;
+	return get_gl_functions(this);
+}
+
+
+void PathsRenderer::UpdatePerspective()
+{
+	auto *pGl = GetGlFunctions();
 	if(!pGl)
 		return;
 
@@ -591,11 +606,7 @@ void PathsRenderer::UpdatePerspective()
 
 void PathsRenderer::UpdateViewport()
 {
-	if(!m_bInitialised)
-		return;
-	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
-		return;
-	auto *pGl = get_gl_functions(this);
+	auto *pGl = GetGlFunctions();
 	if(!pGl)
 		return;
 
@@ -663,18 +674,17 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	pGl->glEnable(GL_DEPTH_TEST);
 
+	if(m_bPerspectiveNeedsUpdate)
+		UpdatePerspective();
+	if(m_bViewportNeedsUpdate)
+		UpdateViewport();
+	if(m_bLightsNeedUpdate)
+		UpdateLights();
 
 	// bind shaders
 	m_pShaders->bind();
 	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
-
-	if(m_bLightsNeedUpdate)
-		UpdateLights();
-	if(m_bViewportNeedsUpdate)
-		UpdateViewport();
-	if(m_bPerspectiveNeedsUpdate)
-		UpdatePerspective();
 
 	// set cam and projection matrices
 	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);

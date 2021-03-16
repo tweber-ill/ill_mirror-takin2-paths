@@ -178,6 +178,8 @@ protected:
 
 
 protected:
+	qgl_funcs* GetGlFunctions();
+
 	void UpdateCam();
 	void UpdatePicker();
 	void UpdateLights();
