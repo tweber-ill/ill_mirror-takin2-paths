@@ -17,7 +17,7 @@
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/glplot.h"
 
-#include "Instrument.h"
+#include "src/core/Instrument.h"
 
 
 

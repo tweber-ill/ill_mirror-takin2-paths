@@ -23,6 +23,7 @@
 namespace pt = boost::property_tree;
 
 #include <string>
+#include <memory>
 
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
@@ -31,7 +32,7 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/helper.h"
 
 #include "PathsRenderer.h"
-#include "Instrument.h"
+#include "About.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -60,6 +61,8 @@ private:
 
 	QMenu *m_menuOpenRecent = nullptr;
 	QMenuBar *m_menubar = nullptr;
+
+	std::shared_ptr<AboutDlg> m_dlgAbout;
 
 	// recent file list and currently active file
 	QStringList m_recentFiles;
@@ -466,13 +469,18 @@ public:
 			QMessageBox::information(this, "About Renderer", ostrInfo.str().c_str());
 		});
 
-		connect(actionAbout, &QAction::triggered, this, []()
+		connect(actionAbout, &QAction::triggered, this, [this]()
 		{
+			if(!this->m_dlgAbout)
+				this->m_dlgAbout = std::make_shared<AboutDlg>(this);
 
+			m_dlgAbout->show();
+			m_dlgAbout->activateWindow();
 		});
 
 		menuHelp->addAction(actionAboutQt);
 		menuHelp->addAction(actionAboutGl);
+		menuHelp->addSeparator();
 		menuHelp->addAction(actionAbout);
 
 
