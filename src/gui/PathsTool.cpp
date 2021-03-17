@@ -36,7 +36,7 @@ namespace pt = boost::property_tree;
 
 
 #define MAX_RECENT_FILES 16
-#define PROG_TITLE "TAS Paths"
+#define PROG_TITLE "TAS Path Optimisation Tool"
 #define PROG_IDENT "takin_paths"
 #define FILE_BASENAME "paths."
 
