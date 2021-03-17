@@ -12,7 +12,7 @@ namespace pt = boost::property_tree;
 // ----------------------------------------------------------------------------
 // instrument axis
 // ----------------------------------------------------------------------------
-Axis::Axis(const std::string& id) : m_id{id}
+Axis::Axis(const std::string& id, const Axis* prev) : m_id{id}, m_prev{prev}
 {
 }
 
@@ -59,11 +59,17 @@ bool Axis::Load(const boost::property_tree::ptree& prop, const std::string& base
 
 t_mat Axis::GetTrafo() const
 {
-	t_vec axis = tl2::create<t_vec>({0, 0, 1});
-	t_mat matRot = tl2::hom_rotation<t_mat, t_vec>(axis, m_angle/t_real{180}*tl2::pi<t_real>);
+	// trafo of previous axis
+	t_mat matPrev = tl2::unit<t_mat>(4);
+	if(m_prev)
+		matPrev = m_prev->GetTrafo();
+
+	// local trafos
+	t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
+	t_mat matRot = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle/t_real{180}*tl2::pi<t_real>);
 	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
 
-	return matRot * matTrans;
+	return matPrev * matRot * matTrans;
 }
 // ----------------------------------------------------------------------------
 

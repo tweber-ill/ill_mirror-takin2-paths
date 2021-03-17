@@ -22,7 +22,7 @@
 class Axis
 {
 public:
-	Axis(const std::string& id="");
+	Axis(const std::string& id="", const Axis* prev=nullptr);
 	~Axis();
 
 	void Clear();
@@ -39,10 +39,14 @@ public:
 private:
 	// identifier
 	std::string m_id;
+	// previous axis
+	const Axis* m_prev = nullptr;
+
 	// coordinate origin
 	t_vec m_pos = tl2::create<t_vec>({0,0});
 	// angle with respect to previous axis
 	t_real m_angle = 0;
+
 	// components
 	std::vector<std::shared_ptr<Geometry>> m_comps;
 };
@@ -69,8 +73,8 @@ public:
 
 private:
 	Axis m_mono{"monochromator"};
-	Axis m_sample{"sample"};
-	Axis m_ana{"analyser"};
+	Axis m_sample{"sample", &m_mono};
+	Axis m_ana{"analyser", &m_sample};
 };
 // ----------------------------------------------------------------------------
 

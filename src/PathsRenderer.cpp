@@ -99,53 +99,23 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	t_mat_gl matMono = tl2::convert<t_mat_gl>(mono.GetTrafo());
-	t_mat_gl matSample = tl2::convert<t_mat_gl>(sample.GetTrafo());
-	t_mat_gl matAna = tl2::convert<t_mat_gl>(ana.GetTrafo());
-
-	// mono
-	for(const auto& comp : mono.GetComps())
+	for(const auto& axis : {mono, sample, ana})
 	{
-		auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
-		t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-		t_mat_gl mat = matMono * matGeo;
+		t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis.GetTrafo());
 
-		auto verts = tl2::convert<t_vec3_gl>(_verts);
-		auto norms = tl2::convert<t_vec3_gl>(_norms);
-		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+		for(const auto& comp : axis.GetComps())
+		{
+			auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
+			t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
+			t_mat_gl mat = matAxis * matGeo;
 
-		AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
-		m_objs[comp->GetId()].m_mat = mat;
-	}
+			auto verts = tl2::convert<t_vec3_gl>(_verts);
+			auto norms = tl2::convert<t_vec3_gl>(_norms);
+			auto uvs = tl2::convert<t_vec3_gl>(_uvs);
 
-	// sample
-	for(const auto& comp : sample.GetComps())
-	{
-		auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
-		t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-		t_mat_gl mat = matMono * matSample * matGeo;
-
-		auto verts = tl2::convert<t_vec3_gl>(_verts);
-		auto norms = tl2::convert<t_vec3_gl>(_norms);
-		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
-
-		AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
-		m_objs[comp->GetId()].m_mat = mat;
-	}
-
-	// ana
-	for(const auto& comp : ana.GetComps())
-	{
-		auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
-		t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-		t_mat_gl mat = matMono * matSample * matAna * matGeo;
-
-		auto verts = tl2::convert<t_vec3_gl>(_verts);
-		auto norms = tl2::convert<t_vec3_gl>(_norms);
-		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
-
-		AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
-		m_objs[comp->GetId()].m_mat = mat;
+			AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
+			m_objs[comp->GetId()].m_mat = mat;
+		}
 	}
 
 	// walls
