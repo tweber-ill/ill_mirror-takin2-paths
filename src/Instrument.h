@@ -29,14 +29,20 @@ public:
 	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
 
 	const std::string& GetId() const { return m_id; }
-	const t_vec& GetPos() const { return m_pos; }
+	const t_vec& GetZeroPos() const { return m_pos; }
+	t_real GetAxisAngle() const { return m_angle; }
+
+	t_mat GetTrafo() const;
+
 	const std::vector<std::shared_ptr<Geometry>>& GetComps() const { return m_comps; }
 
 private:
 	// identifier
 	std::string m_id;
 	// coordinate origin
-	t_vec m_pos;
+	t_vec m_pos = tl2::create<t_vec>({0,0});
+	// angle with respect to previous axis
+	t_real m_angle = 0;
 	// components
 	std::vector<std::shared_ptr<Geometry>> m_comps;
 };

@@ -35,6 +35,7 @@
 		<instrument>
 			<monochromator>
 				<x>0</x> <y>0</y>
+				<angle> 0 </angle>
 				<geometry>
 					<cylinder>
 						<x> 0 </x> <y> 0 </y>
@@ -45,23 +46,25 @@
 			</monochromator>
 
 			<sample>
-				<x>0</x> <y>10</y>
+				<x>0</x> <y>2.5</y>
+				<angle> 90 </angle>
 				<geometry>
 					<cylinder>
 						<x> 0 </x> <y> 0 </y>
-						<height> 1 </height>
-						<radius> 0.2 </radius>
+						<height> 2 </height>
+						<radius> 1 </radius>
 					</cylinder>
 				</geometry>
 			</sample>
 
 			<analyser>
-				<x>10</x> <y>0</y>
+				<x>0</x> <y>2.5</y>
+				<angle> 90 </angle>
 				<geometry>
 					<cylinder>
 						<x> 0 </x> <y> 0 </y>
-						<height> 1 </height>
-						<radius> 0.2 </radius>
+						<height> 2 </height>
+						<radius> 1 </radius>
 					</cylinder>
 				</geometry>
 			</analyser>

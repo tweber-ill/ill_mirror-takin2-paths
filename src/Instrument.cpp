@@ -30,12 +30,18 @@ void Axis::Clear()
 
 bool Axis::Load(const boost::property_tree::ptree& prop, const std::string& basePath)
 {
+	// zero position
 	m_pos = tl2::create<t_vec>({0, 0});
 	if(auto opt = prop.get_optional<t_real>(basePath + "x"); opt)
 		m_pos[0] = *opt;
 	if(auto opt = prop.get_optional<t_real>(basePath + "y"); opt)
 		m_pos[1] = *opt;
 
+	// axis angle
+	if(auto opt = prop.get_optional<t_real>(basePath + "angle"); opt)
+		m_angle = *opt;
+
+	// geometry
 	if(auto geoobj = Geometry::load(prop, basePath + "geometry"); std::get<0>(geoobj))
 	{
 		// get individual 3d primitives that comprise this object
@@ -48,6 +54,16 @@ bool Axis::Load(const boost::property_tree::ptree& prop, const std::string& base
 	}
 
 	return true;
+}
+
+
+t_mat Axis::GetTrafo() const
+{
+	t_vec axis = tl2::create<t_vec>({0, 0, 1});
+	t_mat matRot = tl2::hom_rotation<t_mat, t_vec>(axis, m_angle/t_real{180}*tl2::pi<t_real>);
+	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
+
+	return matRot * matTrans;
 }
 // ----------------------------------------------------------------------------
 
