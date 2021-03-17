@@ -123,7 +123,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	{
 		auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
 		t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-		t_mat_gl mat = matSample * matMono * matGeo;
+		t_mat_gl mat = matMono * matSample * matGeo;
 
 		auto verts = tl2::convert<t_vec3_gl>(_verts);
 		auto norms = tl2::convert<t_vec3_gl>(_norms);
@@ -138,7 +138,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	{
 		auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
 		t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-		t_mat_gl mat = matAna * matSample * matMono * matGeo;
+		t_mat_gl mat = matMono * matSample * matAna * matGeo;
 
 		auto verts = tl2::convert<t_vec3_gl>(_verts);
 		auto norms = tl2::convert<t_vec3_gl>(_norms);

@@ -46,8 +46,8 @@
 			</monochromator>
 
 			<sample>
-				<x>0</x> <y>2.5</y>
-				<angle> 90 </angle>
+				<x>2.5</x> <y>0</y>
+				<angle> 45 </angle>
 				<geometry>
 					<cylinder>
 						<x> 0 </x> <y> 0 </y>
@@ -58,7 +58,7 @@
 			</sample>
 
 			<analyser>
-				<x>0</x> <y>2.5</y>
+				<x>2.5</x> <y>0</y>
 				<angle> 90 </angle>
 				<geometry>
 					<cylinder>
