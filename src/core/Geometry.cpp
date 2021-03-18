@@ -5,9 +5,11 @@
  * @license GPLv3, see 'LICENSE' file
  */
 
+#include "Geometry.h"
+#include "tlibs2/libs/str.h"
+
 #include <iostream>
 
-#include "Geometry.h"
 namespace pt = boost::property_tree;
 
 
@@ -68,6 +70,22 @@ Geometry::load(const boost::property_tree::ptree& prop, const std::string& baseP
 	return std::make_tuple(true, geo_objs);
 }
 
+
+bool Geometry::Load(const boost::property_tree::ptree& prop)
+{
+	// colour
+	if(auto col = prop.get_optional<std::string>("colour"); col)
+	{
+		m_colour.clear();
+		tl2::get_tokens<t_real>(tl2::trimmed(*col), std::string{" \t,;"}, m_colour);
+
+		if(m_colour.size() < 3)
+			m_colour.resize(3);
+	}
+
+	return true;
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -93,19 +111,26 @@ void BoxGeometry::Clear()
 
 bool BoxGeometry::Load(const boost::property_tree::ptree& prop)
 {
-	auto optX1 = prop.get_optional<t_real>("x1");
-	auto optX2 = prop.get_optional<t_real>("x2");
-	auto optY1 = prop.get_optional<t_real>("y1");
-	auto optY2 = prop.get_optional<t_real>("y2");
-
-	if(!optX1 || !optX2 || !optY1 || !optY2)
-	{
-		std::cerr << "Box \"" << m_id << "\" definition is incomplete, ignoring." << std::endl;
+	if(!Geometry::Load(prop))
 		return false;
+
+	if(auto optPos = prop.get_optional<std::string>("pos1"); optPos)
+	{
+		m_pos1.clear();
+
+		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos1);
+		if(m_pos1.size() < 3)
+			m_pos1.resize(3);
 	}
 
-	m_pos1 = tl2::create<t_vec>({ *optX1, *optY1, 0 });
-	m_pos2 = tl2::create<t_vec>({ *optX2, *optY2, 0 });
+	if(auto optPos = prop.get_optional<std::string>("pos2"); optPos)
+	{
+		m_pos2.clear();
+
+		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos2);
+		if(m_pos2.size() < 3)
+			m_pos2.resize(3);
+	}
 
 	m_height = prop.get<t_real>("height", 1.);
 	m_depth = prop.get<t_real>("depth", 0.1);
@@ -158,16 +183,17 @@ void CylinderGeometry::Clear()
 
 bool CylinderGeometry::Load(const boost::property_tree::ptree& prop)
 {
-	auto optX = prop.get_optional<t_real>("x");
-	auto optY = prop.get_optional<t_real>("y");
-
-	if(!optX || !optY)
-	{
-		std::cerr << "Cylinder \"" << m_id << "\" definition is incomplete, ignoring." << std::endl;
+	if(!Geometry::Load(prop))
 		return false;
-	}
 
-	m_pos = tl2::create<t_vec>({ *optX, *optY, 0 });
+	if(auto optPos = prop.get_optional<std::string>("pos"); optPos)
+	{
+		m_pos.clear();
+
+		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		if(m_pos.size() < 3)
+			m_pos.resize(3);
+	}
 
 	m_height = prop.get<t_real>("height", 1.);
 	m_radius = prop.get<t_real>("radius", 0.1);

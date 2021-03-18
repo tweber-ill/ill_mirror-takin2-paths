@@ -32,8 +32,6 @@
 
 
 
-// ----------------------------------------------------------------------------
-// GL plot implementation
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
 	connect(&m_timer, &QTimer::timeout,
@@ -112,8 +110,10 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 			auto verts = tl2::convert<t_vec3_gl>(_verts);
 			auto norms = tl2::convert<t_vec3_gl>(_norms);
 			auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+			auto cols = tl2::convert<t_vec3_gl>(comp->GetColour());
 
-			AddTriangleObject(comp->GetId(), verts, norms, uvs, 1,0,0,1);
+			AddTriangleObject(comp->GetId(), verts, norms, uvs,
+				cols[0], cols[1], cols[2], 1);
 			m_objs[comp->GetId()].m_mat = mat;
 		}
 	}
@@ -127,8 +127,10 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 		auto verts = tl2::convert<t_vec3_gl>(_verts);
 		auto norms = tl2::convert<t_vec3_gl>(_norms);
 		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+		auto cols = tl2::convert<t_vec3_gl>(wall->GetColour());
 
-		AddTriangleObject(wall->GetId(), verts, norms, uvs, 1,0,0,1);
+		AddTriangleObject(wall->GetId(), verts, norms, uvs,
+			cols[0], cols[1], cols[2], 1);
 		m_objs[wall->GetId()].m_mat = mat;
 	}
 }
@@ -144,7 +146,7 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) co
 	if(vecPersp[2] > 1.)
 	{
 		if(pVisible) *pVisible = false;
-		return QPointF(-1*m_iScreenDims[0], -1*m_iScreenDims[1]);
+		return QPointF(-1*m_screenDims[0], -1*m_screenDims[1]);
 	}
 
 	if(pVisible) *pVisible = true;
@@ -159,7 +161,7 @@ void PathsRenderer::DeleteObject(PathsObj& obj)
 {
 	obj.m_pvertexbuf.reset();
 	obj.m_pnormalsbuf.reset();
-	obj.m_pcolorbuf.reset();
+	obj.m_pcolourbuf.reset();
 	obj.m_puvbuf.reset();
 
 	if(qgl_funcs* pGl = get_gl_functions(this); pGl)
@@ -239,7 +241,7 @@ void PathsRenderer::UpdateCam()
 	m_matCam *= m_matCamRot;
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
 
-	m_bPickerNeedsUpdate = true;
+	m_pickerNeedsUpdate = true;
 	update();
 }
 
@@ -250,7 +252,7 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 		m_lights.resize(idx+1);
 
 	m_lights[idx] = pos;
-	m_bLightsNeedUpdate = true;
+	m_lightsNeedUpdate = true;
 }
 
 
@@ -278,19 +280,19 @@ void PathsRenderer::UpdateLights()
 	m_pShaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
 	m_pShaders->setUniformValue(m_uniNumActiveLights, num_lights);
 
-	m_bLightsNeedUpdate = false;
+	m_lightsNeedUpdate = false;
 }
 
 
 void PathsRenderer::EnablePicker(bool b)
 {
-	m_bPickerEnabled = b;
+	m_pickerEnabled = b;
 }
 
 
 void PathsRenderer::UpdatePicker()
 {
-	if(!m_bInitialised || !m_bPickerEnabled)
+	if(!m_initialised || !m_pickerEnabled)
 		return;
 
 	// picker ray
@@ -385,8 +387,8 @@ void PathsRenderer::UpdatePicker()
 					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
 
 					// save intersections with base plane for drawing walls
-					m_curUV[0] = uv[0];
-					m_curUV[1] = uv[1];
+					m_cursor[0] = uv[0];
+					m_cursor[1] = uv[1];
 					m_curActive = true;
 
 					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
@@ -425,14 +427,13 @@ void PathsRenderer::UpdatePicker()
 		}
 	}
 
-	m_bPickerNeedsUpdate = false;
+	m_pickerNeedsUpdate = false;
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
 	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr,
 		m_curObj, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
-
 
 
 void PathsRenderer::tick()
@@ -458,7 +459,7 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 
 void PathsRenderer::initializeGL()
 {
-	m_bInitialised = false;
+	m_initialised = false;
 
 	// --------------------------------------------------------------------
 	// shaders
@@ -553,24 +554,24 @@ void PathsRenderer::initializeGL()
 	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
 	LOGGLERR(pGl);
 
-	m_bInitialised = true;
+	m_initialised = true;
 	emit AfterGLInitialisation();
 }
 
 
 void PathsRenderer::resizeGL(int w, int h)
 {
-	m_iScreenDims[0] = w;
-	m_iScreenDims[1] = h;
+	m_screenDims[0] = w;
+	m_screenDims[1] = h;
 
-	m_bPerspectiveNeedsUpdate = true;
-	m_bViewportNeedsUpdate = true;
+	m_perspectiveNeedsUpdate = true;
+	m_viewportNeedsUpdate = true;
 }
 
 
 qgl_funcs* PathsRenderer::GetGlFunctions()
 {
-	if(!m_bInitialised)
+	if(!m_initialised)
 		return nullptr;
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
 		return nullptr;
@@ -590,7 +591,7 @@ void PathsRenderer::UpdatePerspective()
 
 	if(m_perspectiveProjection)
 		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, tl2::pi<t_real_gl>*0.5, t_real_gl(m_iScreenDims[1])/t_real_gl(m_iScreenDims[0]));
+			nearPlane, farPlane, tl2::pi<t_real_gl>*0.5, t_real_gl(m_screenDims[1])/t_real_gl(m_screenDims[0]));
 	else
 		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(nearPlane, farPlane, -10., 10., -10., 10.);
 
@@ -605,7 +606,7 @@ void PathsRenderer::UpdatePerspective()
 	m_pShaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
 	LOGGLERR(pGl);
 
-	m_bPerspectiveNeedsUpdate = false;
+	m_perspectiveNeedsUpdate = false;
 }
 
 
@@ -616,20 +617,20 @@ void PathsRenderer::UpdateViewport()
 		return;
 
 	// viewport
-	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(m_iScreenDims[0], m_iScreenDims[1], 0., 1.);
+	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(m_screenDims[0], m_screenDims[1], 0., 1.);
 	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
 
-	pGl->glViewport(0, 0, m_iScreenDims[0], m_iScreenDims[1]);
+	pGl->glViewport(0, 0, m_screenDims[0], m_screenDims[1]);
 	pGl->glDepthRange(0, 1);
 	LOGGLERR(pGl);
 
-	m_bViewportNeedsUpdate = false;
+	m_viewportNeedsUpdate = false;
 }
 
 
 void PathsRenderer::paintGL()
 {
-	if(!m_bInitialised)
+	if(!m_initialised)
 		return;
 
 	QMutexLocker _locker{&m_mutexObj};
@@ -640,7 +641,8 @@ void PathsRenderer::paintGL()
 
 	// gl painting
 	{
-		if(m_bPickerNeedsUpdate) UpdatePicker();
+		if(m_pickerNeedsUpdate)
+			UpdatePicker();
 
 		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
 		auto *pGl = get_gl_functions(this);
@@ -679,11 +681,11 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	pGl->glEnable(GL_DEPTH_TEST);
 
-	if(m_bPerspectiveNeedsUpdate)
+	if(m_perspectiveNeedsUpdate)
 		UpdatePerspective();
-	if(m_bViewportNeedsUpdate)
+	if(m_viewportNeedsUpdate)
 		UpdateViewport();
-	if(m_bLightsNeedUpdate)
+	if(m_lightsNeedUpdate)
 		UpdateLights();
 
 	// bind shaders
@@ -696,7 +698,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 
 	// cursor
-	m_pShaders->setUniformValue(m_uniCursorCoords, m_curUV[0], m_curUV[1]);
+	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursor[0], m_cursor[1]);
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
@@ -887,7 +889,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	m_posMouse = pEvt->localPos();
 #endif
 
-	if(m_bInRotation)
+	if(m_inRotation)
 	{
 		auto diff = (m_posMouse - m_posMouseRotationStart);
 		t_real_gl phi = diff.x() + m_phi_saved;
@@ -898,44 +900,55 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 
 		UpdateCam();
 	}
-	else
+
+	UpdatePicker();
+	update();
+
+	// an object is being dragged
+	if(m_draggedObj != "")
 	{
-		// also automatically done in UpdateCam
-		m_bPickerNeedsUpdate = true;
-		update();
+		emit ObjectDragged(m_draggedObj, m_cursor[0], m_cursor[1]);
 	}
 
-	m_mouseMovedBetweenDownAndUp = 1;
+	m_mouseMovedBetweenDownAndUp = true;
 	pEvt->accept();
 }
 
 
 void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 {
-	m_mouseMovedBetweenDownAndUp = 0;
+	m_mouseMovedBetweenDownAndUp = false;
 
 	if(pEvt->buttons() & Qt::LeftButton) m_mouseDown[0] = 1;
 	if(pEvt->buttons() & Qt::MiddleButton) m_mouseDown[1] = 1;
 	if(pEvt->buttons() & Qt::RightButton) m_mouseDown[2] = 1;
 
+	// left mouse button pressed
+	if(m_mouseDown[0])
+	{
+		m_draggedObj = m_curObj;
+	}
+
+	// middle mouse button pressed
 	if(m_mouseDown[1])
 	{
 		// reset zoom
 		m_zoom = 1;
 		UpdateCam();
 	}
+
+	// right mouse button pressed
 	if(m_mouseDown[2])
 	{
 		// begin rotation
-		if(!m_bInRotation)
+		if(!m_inRotation)
 		{
 			m_posMouseRotationStart = m_posMouse;
-			m_bInRotation = true;
+			m_inRotation = true;
 		}
 	}
 
 	pEvt->accept();
-	emit MouseDown(m_mouseDown[0], m_mouseDown[1], m_mouseDown[2]);
 }
 
 
@@ -947,21 +960,27 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 	if((pEvt->buttons() & Qt::MiddleButton) == 0) m_mouseDown[1] = 0;
 	if((pEvt->buttons() & Qt::RightButton) == 0) m_mouseDown[2] = 0;
 
+	// left mouse button released
+	if(!m_mouseDown[0])
+	{
+		m_draggedObj = "";
+	}
+
+	// right mouse button released
 	if(!m_mouseDown[2])
 	{
 		// end rotation
-		if(m_bInRotation)
+		if(m_inRotation)
 		{
 			auto diff = (m_posMouse - m_posMouseRotationStart);
 			m_phi_saved += diff.x();
 			m_theta_saved += diff.y();
 
-			m_bInRotation = false;
+			m_inRotation = false;
 		}
 	}
 
 	pEvt->accept();
-	emit MouseUp(!m_mouseDown[0], !m_mouseDown[1], !m_mouseDown[2]);
 
 	// only emit click if moving the mouse (i.e. rotationg the scene) was not the primary intent
 	if(!m_mouseMovedBetweenDownAndUp)
@@ -971,7 +990,7 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 			!m_mouseDown[1] && mouseDownOld[1],
 			!m_mouseDown[2] && mouseDownOld[2] };
 		if(mouseClicked[0] || mouseClicked[1] || mouseClicked[2])
-			emit MouseClick(mouseClicked[0], mouseClicked[1], mouseClicked[2]);
+			emit ObjectClicked(m_curObj, mouseClicked[0], mouseClicked[1], mouseClicked[2]);
 	}
 }
 
@@ -992,4 +1011,3 @@ void PathsRenderer::paintEvent(QPaintEvent* pEvt)
 {
 	QOpenGLWidget::paintEvent(pEvt);
 }
-// ----------------------------------------------------------------------------

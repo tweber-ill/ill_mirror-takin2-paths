@@ -88,16 +88,14 @@ protected slots:
 
 public slots:
 	void EnablePicker(bool b);
-	void SetPerspectiveProjection(bool b) { m_perspectiveProjection = b; m_bPerspectiveNeedsUpdate = true; }
+	void SetPerspectiveProjection(bool b) { m_perspectiveProjection = b; m_perspectiveNeedsUpdate = true; }
 
 
 signals:
 	void AfterGLInitialisation();
 
-	void MouseDown(bool left, bool mid, bool right);
-	void MouseUp(bool left, bool mid, bool right);
-	void MouseClick(bool left, bool mid, bool right);
-
+	void ObjectClicked(const std::string& obj, bool left, bool mid, bool right);
+	void ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y);
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 
@@ -134,8 +132,8 @@ protected:
 	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
 
 	// cursor uv coordinates and object under cursor
-	GLfloat m_curUV[2] = {0., 0.};
-	std::string m_curObj;
+	GLfloat m_cursor[2] = {0., 0.};
+	std::string m_curObj, m_draggedObj;
 	bool m_curActive = false;
 
 	// matrices
@@ -158,13 +156,13 @@ protected:
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
 
-	std::atomic<bool> m_bInitialised = false;
-	std::atomic<bool> m_bPickerEnabled = true;
-	std::atomic<bool> m_bPickerNeedsUpdate = false;
-	std::atomic<bool> m_bLightsNeedUpdate = false;
-	std::atomic<bool> m_bPerspectiveNeedsUpdate = false;
-	std::atomic<bool> m_bViewportNeedsUpdate = false;
-	std::atomic<int> m_iScreenDims[2] = { 800, 600 };
+	std::atomic<bool> m_initialised = false;
+	std::atomic<bool> m_pickerEnabled = true;
+	std::atomic<bool> m_pickerNeedsUpdate = false;
+	std::atomic<bool> m_lightsNeedUpdate = false;
+	std::atomic<bool> m_perspectiveNeedsUpdate = false;
+	std::atomic<bool> m_viewportNeedsUpdate = false;
+	std::atomic<int> m_screenDims[2] = { 800, 600 };
 	t_real_gl m_pickerSphereRadius = 1;
 
 	std::vector<t_vec3_gl> m_lights;
@@ -172,7 +170,7 @@ protected:
 
 	QPointF m_posMouse;
 	QPointF m_posMouseRotationStart, m_posMouseRotationEnd;
-	bool m_bInRotation = false;
+	bool m_inRotation = false;
 
 	QTimer m_timer;
 
@@ -194,7 +192,7 @@ protected:
 
 public:
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
-	bool IsInitialised() const { return m_bInitialised; }
+	bool IsInitialised() const { return m_initialised; }
 
 	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
 	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }

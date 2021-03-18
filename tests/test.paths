@@ -5,17 +5,20 @@
 	<ident>takin_paths</ident>
 
 	<instrument_space>
-		<floor_len_x> 20 </floor_len_x>
-		<floor_len_y> 20 </floor_len_y>
+		<floor>
+			<len_x> 20 </len_x>
+			<len_y> 20 </len_y>
+		</floor>
 
 		<walls>
 			<wall id="wall 1">
 				<geometry>
 					<box>
-						<x1>10</x1> <y1>-10</y1>
-						<x2>10</x2> <y2>10</y2>
+						<pos1> 10 -10 </pos1>
+						<pos2> 10 10 </pos2>
 						<height> 3 </height>
-						<depth> 0.25 </depth>
+						<depth> 0.5 </depth>
+						<colour> 1 0 0 </colour>
 					</box>
 				</geometry>
 			</wall>
@@ -23,10 +26,11 @@
 			<wall id="wall 2">
 				<geometry>
 					<box id="">
-						<x1>-10</x1> <y1>10</y1>
-						<x2>10</x2> <y2>10</y2>
+						<pos1> -10 10 </pos1>
+						<pos2> 10 10 </pos2>
 						<height> 3 </height>
-						<depth> 0.25 </depth>
+						<depth> 0.5 </depth>
+						<colour> 1 0 0 </colour>
 					</box>
 				</geometry>
 			</wall>
@@ -34,38 +38,57 @@
 
 		<instrument>
 			<monochromator>
-				<x>0</x> <y>0</y>
+				<x> 0 </x> <y> 0 </y>
 				<angle> 0 </angle>
 				<geometry>
 					<cylinder>
-						<x> 0 </x> <y> 0 </y>
+						<pos> 0 0 </pos>
 						<height> 2 </height>
 						<radius> 1 </radius>
+						<colour> 0 0 1 </colour>
 					</cylinder>
 				</geometry>
 			</monochromator>
 
 			<sample>
-				<x>2.5</x> <y>0</y>
+				<x> 2.5 </x> <y> 0 </y>
 				<angle> 45 </angle>
 				<geometry>
 					<cylinder>
-						<x> 0 </x> <y> 0 </y>
+						<pos> 0 0 </pos>
 						<height> 2 </height>
 						<radius> 1 </radius>
+						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="monochromator-sample axis">
+						<pos1> -2.5 0 </pos1>
+						<pos2> 0 0 </pos2>
+						<height> 1.5 </height>
+						<depth> 0.25 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
 				</geometry>
 			</sample>
 
 			<analyser>
-				<x>2.5</x> <y>0</y>
+				<x> 2.5 </x> <y> 0 </y>
 				<angle> 90 </angle>
 				<geometry>
 					<cylinder>
-						<x> 0 </x> <y> 0 </y>
+						<pos> 0 0 </pos>
 						<height> 2 </height>
 						<radius> 1 </radius>
+						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="sample-analyser axis">
+						<pos1> -2.5 0 </pos1>
+						<pos2> 0 0 </pos2>
+						<height> 1.5 </height>
+						<depth> 0.25 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
 				</geometry>
 			</analyser>
 		</instrument>

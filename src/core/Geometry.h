@@ -36,7 +36,7 @@ public:
 	virtual GeometryType GetType() const = 0;
 
 	virtual void Clear() = 0;
-	virtual bool Load(const boost::property_tree::ptree& prop) = 0;
+	virtual bool Load(const boost::property_tree::ptree& prop);
 
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
 	GetTriangles() = 0;
@@ -44,11 +44,15 @@ public:
 	virtual const std::string& GetId() const { return m_id; }
 	virtual void SetId(const std::string& id) { m_id = id; }
 
+	virtual const t_vec& GetColour() const { return m_colour; }
+	virtual void SetColour(const t_vec& col) { m_colour = col; }
+
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 	load(const boost::property_tree::ptree& prop, const std::string& basePath="root");
 
 protected:
 	std::string m_id;
+	t_vec m_colour = tl2::create<t_vec>({1, 0, 0});
 };
 // ----------------------------------------------------------------------------
 
@@ -73,8 +77,9 @@ public:
 
 
 private:
-	t_vec m_pos1, m_pos2;
-	t_real m_height, m_depth, m_length;
+	t_vec m_pos1 = tl2::create<t_vec>({0, 0, 0});
+	t_vec m_pos2 = tl2::create<t_vec>({0, 0, 0});
+	t_real m_height{}, m_depth{}, m_length{};
 };
 // ----------------------------------------------------------------------------
 
@@ -99,8 +104,8 @@ public:
 
 
 private:
-	t_vec m_pos;
-	t_real m_height, m_radius;
+	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
+	t_real m_height{}, m_radius{};
 };
 // ----------------------------------------------------------------------------
 

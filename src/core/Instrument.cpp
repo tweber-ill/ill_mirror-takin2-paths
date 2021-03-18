@@ -6,6 +6,7 @@
  */
 
 #include "Instrument.h"
+
 namespace pt = boost::property_tree;
 
 
@@ -141,9 +142,9 @@ bool InstrumentSpace::Load(const pt::ptree& prop, const std::string& basePath)
 
 
 	// floor size
-	if(auto opt = prop.get_optional<t_real>(basePath + "floor_len_x"); opt)
+	if(auto opt = prop.get_optional<t_real>(basePath + "floor.len_x"); opt)
 		m_floorlen[0] = *opt;
-	if(auto opt = prop.get_optional<t_real>(basePath + "floor_len_y"); opt)
+	if(auto opt = prop.get_optional<t_real>(basePath + "floor.len_y"); opt)
 		m_floorlen[1] = *opt;
 
 

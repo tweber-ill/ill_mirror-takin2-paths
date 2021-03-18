@@ -54,8 +54,6 @@ private:
 	// gl info strings
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
 
-	bool m_mouseDown[3] = {false, false, false};
-
 	QStatusBar *m_statusbar = nullptr;
 	QLabel *m_labelStatus = nullptr;
 
@@ -151,44 +149,53 @@ protected:
 	 */
 	bool OpenFile(const QString &file)
 	{
-		if(file=="" || !QFile::exists(file))
-			return false;
-
-
-		// load xml
-		pt::ptree prop;
-		std::ifstream ifstr{file.toStdString()};
-
-		if(!ifstr)
+		try
 		{
-			QMessageBox::critical(this, "Error", "Could not load file.");
+			if(file=="" || !QFile::exists(file))
+				return false;
+
+
+			// load xml
+			pt::ptree prop;
+			std::ifstream ifstr{file.toStdString()};
+
+			if(!ifstr)
+			{
+				QMessageBox::critical(this, "Error", "Could not load file.");
+				return false;
+			}
+
+			// check format and version
+			pt::read_xml(ifstr, prop);
+			if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+				!opt || *opt != PROG_IDENT)
+			{
+				QMessageBox::critical(this, "Error", "Not a recognised file format. Ignoring.");
+				return false;
+			}
+
+			if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
+				std::cout << "Loading file \"" << file.toStdString()
+					<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
+
+
+			if(!m_instrspace.Load(prop, FILE_BASENAME "instrument_space."))
+			{
+				QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
+				return false;
+			}
+
+			SetCurrentFile(file);
+			AddRecentFile(file);
+
+			m_renderer->LoadInstrument(m_instrspace);
+		}
+		catch(const std::exception& ex)
+		{
+			QMessageBox::critical(this, "Error",
+				QString{"Instrument configuration error: "} + ex.what() + QString{"."});
 			return false;
 		}
-
-		// check format and version
-		pt::read_xml(ifstr, prop);
-		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
-			!opt || *opt != PROG_IDENT)
-		{
-			QMessageBox::critical(this, "Error", "Not a recognised file format. Ignoring.");
-			return false;
-		}
-
-		if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
-			std::cout << "Loading file \"" << file.toStdString()
-				<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
-
-
-		if(!m_instrspace.Load(prop, FILE_BASENAME "instrument_space."))
-		{
-			QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
-			return false;
-		}
-
-		SetCurrentFile(file);
-		AddRecentFile(file);
-
-		m_renderer->LoadInstrument(m_instrspace);
 		return true;
 	}
 
@@ -302,31 +309,9 @@ protected slots:
 
 
 	/**
-	 * mouse button pressed
-	 */
-	void MouseDown(bool left, bool mid, bool right)
-	{
-		if(left) m_mouseDown[0] = true;
-		if(mid) m_mouseDown[1] = true;
-		if(right) m_mouseDown[2] = true;
-	}
-
-
-	/**
-	 * mouse button released
-	 */
-	void MouseUp(bool left, bool mid, bool right)
-	{
-		if(left) m_mouseDown[0] = false;
-		if(mid) m_mouseDown[1] = false;
-		if(right) m_mouseDown[2] = false;
-	}
-
-
-	/**
 	 * mouse coordinates on base plane
 	 */
-	void MouseCoordsChanged(t_real_gl x, t_real_gl y)
+	void CursorCoordsChanged(t_real_gl x, t_real_gl y)
 	{
 		m_mouseX = x;
 		m_mouseY = y;
@@ -341,6 +326,24 @@ protected slots:
 	{
 		m_curObj = obj_name;
 		UpdateStatusLabel();
+	}
+
+
+	/**
+	 * clicked on an object
+	 */
+	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right)
+	{
+		std::cout << "Clicked on " << obj << "." << std::endl;
+	}
+
+
+	/**
+	 * dragging an object
+	 */
+	void ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y)
+	{
+		std::cout << "Dragging " << obj << " to (" << x << ", " << y << ")." << std::endl;
 	}
 
 
@@ -365,14 +368,14 @@ public:
 
 
 		// --------------------------------------------------------------------
-		// plot widget
+		// rendering widget
 		// --------------------------------------------------------------------
 		auto plotpanel = new QWidget(this);
 
-		connect(m_renderer.get(), &PathsRenderer::MouseDown, this, &PathsTool::MouseDown);
-		connect(m_renderer.get(), &PathsRenderer::MouseUp, this, &PathsTool::MouseUp);
-		connect(m_renderer.get(), &PathsRenderer::FloorPlaneCoordsChanged, this, &PathsTool::MouseCoordsChanged);
+		connect(m_renderer.get(), &PathsRenderer::FloorPlaneCoordsChanged, this, &PathsTool::CursorCoordsChanged);
 		connect(m_renderer.get(), &PathsRenderer::PickerIntersection, this, &PathsTool::PickerIntersection);
+		connect(m_renderer.get(), &PathsRenderer::ObjectClicked, this, &PathsTool::ObjectClicked);
+		connect(m_renderer.get(), &PathsRenderer::ObjectDragged, this, &PathsTool::ObjectDragged);
 		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
 
 		auto pGrid = new QGridLayout(plotpanel);
