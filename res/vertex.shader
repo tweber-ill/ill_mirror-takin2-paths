@@ -44,7 +44,7 @@ float g_diffuse = 1.;
 float g_specular = 0.25;
 float g_shininess = 1.;
 float g_ambient = 0.2;
-float g_atten = 0.05;
+float g_atten = 0.005;
 // ----------------------------------------------------------------------------
 
 
@@ -77,9 +77,7 @@ vec3 get_campos()
  */
 float lighting(vec4 objVert, vec4 objNorm)
 {
-	float I_atten = 1.;
-	float I_diff = 0.;
-	float I_spec = 0.;
+	float I_total = 0.;
 
 	vec3 dirToCam;
 	// only used for specular lighting
@@ -89,17 +87,20 @@ float lighting(vec4 objVert, vec4 objNorm)
 	// iterate (active) light sources
 	for(int lightidx=0; lightidx<min(lightpos.length(), activelights); ++lightidx)
 	{
+		float atten = 1.;
+		float I_diff = 0.;
+		float I_spec = 0.;
+
 		// diffuse lighting
 		vec3 vertToLight = lightpos[lightidx] - objVert.xyz;
 		float distVertLight = length(vertToLight);
 		vec3 dirLight = vertToLight / distVertLight;
 
-		I_atten /= (distVertLight * g_atten);
-
 		if(g_diffuse > 0.)
 		{
 			float I_diff_inc = g_diffuse * dot(objNorm.xyz, dirLight);
-			if(I_diff_inc < 0.) I_diff_inc = 0.;
+			if(I_diff_inc < 0.)
+				I_diff_inc = 0.;
 			I_diff += I_diff_inc;
 		}
 
@@ -115,22 +116,30 @@ float lighting(vec4 objVert, vec4 objNorm)
 				if(val > 0.)
 				{
 					float I_spec_inc = g_specular * pow(val, g_shininess);
-					if(I_spec_inc < 0.) I_spec_inc = 0.;
+					if(I_spec_inc < 0.)
+						I_spec_inc = 0.;
 					I_spec += I_spec_inc;
 				}
 			}
 		}
-	}
 
-	// attenuation
-	if(I_atten > 1.)
-		I_atten = 1.;
+
+		// attenuation
+		atten /= distVertLight*distVertLight * g_atten;
+
+		if(atten > 1.)
+			atten = 1.;
+		if(atten < 0.)
+			atten = 0.;
+
+		I_total += (I_diff + I_spec) * atten;
+	}
 
 	// ambient lighting
 	float I_amb = g_ambient;
 
 	// total intensity
-	return (I_diff + I_spec) * I_atten + I_amb;
+	return I_total + I_amb;
 }
 
 
