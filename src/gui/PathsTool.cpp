@@ -366,6 +366,7 @@ protected slots:
 	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right)
 	{
 		std::cout << "Clicked on " << obj << "." << std::endl;
+		m_renderer->CentreCam(obj);
 	}
 
 

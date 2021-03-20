@@ -88,8 +88,12 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 {
 	Clear();
 
-	// base plane
+	// upper and lower floor plane
+	// the lower floor plane just serves to hide clipping artefacts
+	std::string lowerFloor = "lower " OBJNAME_FLOOR_PLANE;
 	AddFloorPlane(OBJNAME_FLOOR_PLANE, instrspace.GetFloorLenX(), instrspace.GetFloorLenY());
+	AddFloorPlane(lowerFloor, instrspace.GetFloorLenX(), instrspace.GetFloorLenY());
+	m_objs[lowerFloor].m_mat(2,3) = -0.01;
 
 	// instrument
 	const auto& instr = instrspace.GetInstrument();
@@ -230,19 +234,47 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, 
 
 void PathsRenderer::UpdateCam()
 {
-	t_mat_gl matCamTrans = tl2::unit<t_mat_gl>();
-	matCamTrans(0,3) = m_vecCamPos[0];
-	matCamTrans(1,3) = m_vecCamPos[1];
-	matCamTrans(2,3) = m_vecCamPos[2];
+	t_mat_gl matCamTrans = m_matCamTrans;
+	matCamTrans(2,3) = 0.;
+	t_mat_gl matCamTrans_inv = matCamTrans;
+	matCamTrans_inv(0,3) = -matCamTrans(0,3);
+	matCamTrans_inv(1,3) = -matCamTrans(1,3);
+	matCamTrans_inv(2,3) = -matCamTrans(2,3);
+
+	const t_vec_gl vecCamDir[2] =
+	{
+		tl2::create<t_vec_gl>({1., 0., 0., 0.}),
+		tl2::create<t_vec_gl>({0. ,0., 1., 0.})
+	};
+
+	m_matCamRot = tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[0], m_theta/180.*tl2::pi<t_real_gl>, 0);
+	m_matCamRot *= tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[1], m_phi/180.*tl2::pi<t_real_gl>, 0);
 
 	m_matCam = tl2::unit<t_mat_gl>();
-	m_matCam *= matCamTrans;
+	m_matCam *= m_matCamTrans;
 	m_matCam(2,3) /= m_zoom;
-	m_matCam *= m_matCamRot;
+	m_matCam *= matCamTrans_inv * m_matCamRot * matCamTrans;
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
 
 	m_pickerNeedsUpdate = true;
 	update();
+}
+
+
+/**
+ * @brief centre camera around a given object
+ */
+void PathsRenderer::CentreCam(const std::string& objid)
+{
+	if(auto iter = m_objs.find(objid); iter!=m_objs.end())
+	{
+		PathsObj& obj = iter->second;
+		m_matCamTrans(0,3) = -obj.m_mat(0,3);
+		m_matCamTrans(1,3) = -obj.m_mat(1,3);
+		//m_matCamTrans(2,3) = -bj.m_mat(2,3);
+
+		UpdateCam();
+	}
 }
 
 
@@ -446,12 +478,20 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
 	t_real_gl move_scale = t_real_gl(ms.count()) / t_real_gl(75);
 
-	m_vecCamPos[0] += move_scale * t_real_gl(m_arrowDown[0]);
-	m_vecCamPos[0] -= move_scale * t_real_gl(m_arrowDown[1]);
-	m_vecCamPos[1] -= move_scale * t_real_gl(m_pageDown[0]);
-	m_vecCamPos[1] += move_scale * t_real_gl(m_pageDown[1]);
-	m_vecCamPos[2] += move_scale * t_real_gl(m_arrowDown[2]);
-	m_vecCamPos[2] -= move_scale * t_real_gl(m_arrowDown[3]);
+	t_vec_gl xdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 0);
+	t_vec_gl ydir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 1);
+	t_vec_gl zdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 2);
+
+	t_vec_gl xinc = xdir * move_scale *
+		(t_real_gl(m_arrowDown[0]) - t_real_gl(m_arrowDown[1]));
+	t_vec_gl yinc = ydir * move_scale *
+		(t_real_gl(m_pageDown[0]) - t_real_gl(m_pageDown[1]));
+	t_vec_gl zinc = zdir * move_scale *
+		(t_real_gl(m_arrowDown[2]) - t_real_gl(m_arrowDown[3]));
+
+	m_matCamTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
+	m_matCamTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
+	m_matCamTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
 
 	UpdateCam();
 }
@@ -832,10 +872,12 @@ void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
 			pEvt->accept();
 			break;
 		case Qt::Key_PageUp:
+		case Qt::Key_Comma:
 			m_pageDown[0] = 1;
 			pEvt->accept();
 			break;
 		case Qt::Key_PageDown:
+		case Qt::Key_Period:
 			m_pageDown[1] = 1;
 			pEvt->accept();
 			break;
@@ -867,10 +909,12 @@ void PathsRenderer::keyReleaseEvent(QKeyEvent *pEvt)
 			pEvt->accept();
 			break;
 		case Qt::Key_PageUp:
+		case Qt::Key_Comma:
 			m_pageDown[0] = 0;
 			pEvt->accept();
 			break;
 		case Qt::Key_PageDown:
+		case Qt::Key_Period:
 			m_pageDown[1] = 0;
 			pEvt->accept();
 			break;
@@ -892,11 +936,8 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	if(m_inRotation)
 	{
 		auto diff = (m_posMouse - m_posMouseRotationStart);
-		t_real_gl phi = diff.x() + m_phi_saved;
-		t_real_gl theta = diff.y() + m_theta_saved;
-
-		m_matCamRot = tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamDir[0], theta/180.*tl2::pi<t_real_gl>, 0);
-		m_matCamRot *= tl2::rotation<t_mat_gl, t_vec_gl>(m_vecCamDir[1], phi/180.*tl2::pi<t_real_gl>, 0);
+		m_phi = diff.x() + m_phi_saved;
+		m_theta = diff.y() + m_theta_saved;
 
 		UpdateCam();
 	}

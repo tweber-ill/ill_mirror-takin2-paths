@@ -144,15 +144,10 @@ protected:
 	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
+	t_mat_gl m_matCamTrans = tl2::create<t_mat_gl>
+		({1,0,0,0, 0,1,0,0, 0,0,1,-5, 0,0,0,1});
 
-	t_vec_gl m_vecCamPos = tl2::create<t_vec_gl>({0., 0., -5., 1.});
-
-	t_vec_gl m_vecCamDir[2] =
-	{
-		tl2::create<t_vec_gl>({1., 0., 0., 0.}),
-		tl2::create<t_vec_gl>({0. ,0., 1., 0.})
-	};
-
+	t_real_gl m_phi = 0, m_theta = 0;
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
 
@@ -208,6 +203,7 @@ public:
 	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
+	void CentreCam(const std::string& obj);
 };
 // ----------------------------------------------------------------------------
 
