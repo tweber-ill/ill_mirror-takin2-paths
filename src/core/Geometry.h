@@ -48,7 +48,7 @@ public:
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
-	load(const boost::property_tree::ptree& prop, const std::string& basePath="root");
+	load(const boost::property_tree::ptree& prop);
 
 protected:
 	std::string m_id;

@@ -13,7 +13,6 @@
 namespace pt = boost::property_tree;
 
 
-
 // ----------------------------------------------------------------------------
 // geometry base class
 // ----------------------------------------------------------------------------
@@ -29,41 +28,37 @@ Geometry::~Geometry()
 
 
 std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
-Geometry::load(const boost::property_tree::ptree& prop, const std::string& basePath)
+Geometry::load(const boost::property_tree::ptree& prop)
 {
 	std::vector<std::shared_ptr<Geometry>> geo_objs;
 
 	// iterate geometry items
-	if(auto geos = prop.get_child_optional(basePath); geos)
+	for(const auto& geo : prop)
 	{
-		// iterate geometry item properties
-		for(const auto &geo : *geos)
+		const std::string& geotype = geo.first;
+		std::string geoid = geo.second.get<std::string>("<xmlattr>.id", "");
+		//std::cout << "type = " << geotype << ", id = " << geoid << std::endl;
+
+		if(geotype == "box")
 		{
-			std::string geotype = geo.first;
-			std::string geoid = geo.second.get<std::string>("<xmlattr>.id", "");
-			//std::cout << "type = " << geotype << ", id = " << geoid << std::endl;
+			auto box = std::make_shared<BoxGeometry>();
+			box->m_id = geoid;
 
-			if(geotype == "box")
-			{
-				auto box = std::make_shared<BoxGeometry>();
-				box->m_id = geoid;
+			if(box->Load(geo.second))
+				geo_objs.emplace_back(std::move(box));
+		}
+		else if(geotype == "cylinder")
+		{
+			auto cyl = std::make_shared<CylinderGeometry>();
+			cyl->m_id = geoid;
 
-				if(box->Load(geo.second))
-					geo_objs.emplace_back(std::move(box));
-			}
-			else if(geotype == "cylinder")
-			{
-				auto cyl = std::make_shared<CylinderGeometry>();
-				cyl->m_id = geoid;
-
-				if(cyl->Load(geo.second))
-					geo_objs.emplace_back(std::move(cyl));
-			}
-			else
-			{
-				std::cerr << "Unknown geometry type \"" << geotype << "\"." << std::endl;
-				continue;
-			}
+			if(cyl->Load(geo.second))
+				geo_objs.emplace_back(std::move(cyl));
+		}
+		else
+		{
+			std::cerr << "Unknown geometry type \"" << geotype << "\"." << std::endl;
+			continue;
 		}
 	}
 

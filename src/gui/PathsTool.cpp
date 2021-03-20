@@ -24,6 +24,7 @@ namespace pt = boost::property_tree;
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
@@ -33,6 +34,7 @@ namespace pt = boost::property_tree;
 
 #include "PathsRenderer.h"
 #include "About.h"
+#include "src/core/ptree_algos.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -179,11 +181,40 @@ protected:
 					<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
 
 
-			if(!m_instrspace.Load(prop, FILE_BASENAME "instrument_space."))
+			// get variables from config file
+			std::unordered_map<std::string, std::string> propvars;
+
+			if(auto vars = prop.get_child_optional(FILE_BASENAME "variables"); vars)
 			{
-				QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
+				// iterate variables
+				for(const auto &var : *vars)
+				{
+					const auto& key = var.first;
+					std::string val = var.second.get<std::string>("<xmlattr>.value", "");
+					//std::cout << key << " = " << val << std::endl;
+
+					propvars.insert(std::make_pair(key, val));
+				}
+
+				replace_ptree_values(prop, propvars);
+			}
+
+
+			// load instrument definition
+			if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
+			{
+				if(!m_instrspace.Load(*instr))
+				{
+					QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
+					return false;
+				}
+			}
+			else
+			{
+				QMessageBox::critical(this, "Error", "No instrument definition found.");
 				return false;
 			}
+
 
 			SetCurrentFile(file);
 			AddRecentFile(file);

@@ -4,6 +4,11 @@
 	<timestamp>1614257982.440783</timestamp>
 	<ident>takin_paths</ident>
 
+	<variables>
+		<guide_height value="1.75" />
+		<guide_depth value="0.35" />
+	</variables>
+
 	<instrument_space>
 		<floor>
 			<len_x> 20 </len_x>
@@ -34,24 +39,56 @@
 					</box>
 				</geometry>
 			</wall>
+
+			<wall id="wall 3">
+				<geometry>
+					<box id="">
+						<pos1> -10 10 </pos1>
+						<pos2> -10 -10 </pos2>
+						<height> 3 </height>
+						<depth> 0.5 </depth>
+						<colour> 1 0 0 </colour>
+					</box>
+				</geometry>
+			</wall>
+
+			<wall id="wall 4">
+				<geometry>
+					<box id="">
+						<pos1> -10 -10 </pos1>
+						<pos2> 10 -10 </pos2>
+						<height> 3 </height>
+						<depth> 0.5 </depth>
+						<colour> 1 0 0 </colour>
+					</box>
+				</geometry>
+			</wall>
 		</walls>
 
 		<instrument>
 			<monochromator>
-				<x> 0 </x> <y> 0 </y>
+				<x> -5 </x> <y> -8 </y>
 				<angle> 0 </angle>
 				<geometry>
 					<cylinder>
 						<pos> 0 0 </pos>
 						<height> 2 </height>
-						<radius> 1 </radius>
+						<radius> 1.5 </radius>
 						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="reactor-monochromator guide">
+						<pos1> -5 0 </pos1>
+						<pos2> 0 0 </pos2>
+						<height> guide_height </height>
+						<depth> guide_depth </depth>
+						<colour> 0 1 1 </colour>
+					</box>
 				</geometry>
 			</monochromator>
 
 			<sample>
-				<x> 2.5 </x> <y> 0 </y>
+				<x> 3.5 </x> <y> 0 </y>
 				<angle> 45 </angle>
 				<geometry>
 					<cylinder>
@@ -61,11 +98,11 @@
 						<colour> 0 0 1 </colour>
 					</cylinder>
 
-					<box id="monochromator-sample axis">
-						<pos1> -2.5 0 </pos1>
+					<box id="monochromator-sample guide">
+						<pos1> -3.5 0 </pos1>
 						<pos2> 0 0 </pos2>
-						<height> 1.5 </height>
-						<depth> 0.25 </depth>
+						<height> guide_height </height>
+						<depth> guide_depth </depth>
 						<colour> 0 1 1 </colour>
 					</box>
 				</geometry>
@@ -82,12 +119,20 @@
 						<colour> 0 0 1 </colour>
 					</cylinder>
 
-					<box id="sample-analyser axis">
+					<box id="sample-analyser guide">
 						<pos1> -2.5 0 </pos1>
 						<pos2> 0 0 </pos2>
-						<height> 1.5 </height>
-						<depth> 0.25 </depth>
+						<height> guide_height </height>
+						<depth> guide_depth </depth>
 						<colour> 0 1 1 </colour>
+					</box>
+
+					<box id="detector">
+						<pos1> 0 -2.5 </pos1>
+						<pos2> 0 0 </pos2>
+						<height> 1.5 </height>
+						<depth> 0.5 </depth>
+						<colour> 1 1 0 </colour>
 					</box>
 				</geometry>
 			</analyser>

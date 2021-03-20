@@ -754,6 +754,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		LOGGLERR(pGl);
 	}
 
+	pGl->glDisable(GL_CULL_FACE);
 	pGl->glDisable(GL_DEPTH_TEST);
 }
 
@@ -776,7 +777,6 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 		if(obj.m_visible)
 		{
 			QString label = curObj->first.c_str();
-
 			//t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
 			//auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
 
@@ -794,7 +794,7 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			painter.setBrush(brushLabel);
 
 			QRect boundingRect = painter.fontMetrics().boundingRect(label);
-			boundingRect.setWidth(boundingRect.width() * 2);
+			boundingRect.setWidth(boundingRect.width() * 1.5);
 			boundingRect.setHeight(boundingRect.height() * 2);
 			boundingRect.translate(m_posMouse.x()+16, m_posMouse.y()+24);
 

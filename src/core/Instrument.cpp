@@ -29,28 +29,31 @@ void Axis::Clear()
 }
 
 
-bool Axis::Load(const boost::property_tree::ptree& prop, const std::string& basePath)
+bool Axis::Load(const boost::property_tree::ptree& prop)
 {
 	// zero position
 	m_pos = tl2::create<t_vec>({0, 0});
-	if(auto opt = prop.get_optional<t_real>(basePath + "x"); opt)
+	if(auto opt = prop.get_optional<t_real>("x"); opt)
 		m_pos[0] = *opt;
-	if(auto opt = prop.get_optional<t_real>(basePath + "y"); opt)
+	if(auto opt = prop.get_optional<t_real>("y"); opt)
 		m_pos[1] = *opt;
 
 	// axis angle
-	if(auto opt = prop.get_optional<t_real>(basePath + "angle"); opt)
+	if(auto opt = prop.get_optional<t_real>("angle"); opt)
 		m_angle = *opt;
 
 	// geometry
-	if(auto geoobj = Geometry::load(prop, basePath + "geometry"); std::get<0>(geoobj))
+	if(auto geo = prop.get_child_optional("geometry"); geo)
 	{
-		// get individual 3d primitives that comprise this object
-		for(auto& comp : std::get<1>(geoobj))
+		if(auto geoobj = Geometry::load(*geo); std::get<0>(geoobj))
 		{
-			if(comp->GetId() == "")
-				comp->SetId(m_id);
-			m_comps.emplace_back(std::move(comp));
+			// get individual 3d primitives that comprise this object
+			for(auto& comp : std::get<1>(geoobj))
+			{
+				if(comp->GetId() == "")
+					comp->SetId(m_id);
+				m_comps.emplace_back(std::move(comp));
+			}
 		}
 	}
 
@@ -97,11 +100,18 @@ void Instrument::Clear()
 }
 
 
-bool Instrument::Load(const boost::property_tree::ptree& prop, const std::string& basePath)
+bool Instrument::Load(const boost::property_tree::ptree& prop)
 {
-	bool mono_ok = m_mono.Load(prop, basePath + "monochromator.");
-	bool sample_ok = m_sample.Load(prop, basePath + "sample.");
-	bool ana_ok = m_ana.Load(prop, basePath + "analyser.");
+	bool mono_ok = false;
+	bool sample_ok = false;
+	bool ana_ok = false;
+
+	if(auto mono = prop.get_child_optional("monochromator"); mono)
+		mono_ok = m_mono.Load(*mono);
+	if(auto sample = prop.get_child_optional("sample"); sample)
+		sample_ok = m_sample.Load(*sample);
+	if(auto ana = prop.get_child_optional("analyser"); ana)
+		ana_ok = m_ana.Load(*ana);
 
 	return mono_ok && sample_ok && ana_ok;
 }
@@ -129,34 +139,38 @@ void InstrumentSpace::Clear()
 
 	// clear
 	m_walls.clear();
+	m_instr.Clear();
 }
 
 
 /**
  * load instrument and wall configuration
  */
-bool InstrumentSpace::Load(const pt::ptree& prop, const std::string& basePath)
+bool InstrumentSpace::Load(const pt::ptree& prop)
 {
 	Clear();
 	m_instr.Clear();
 
 
 	// floor size
-	if(auto opt = prop.get_optional<t_real>(basePath + "floor.len_x"); opt)
+	if(auto opt = prop.get_optional<t_real>("floor.len_x"); opt)
 		m_floorlen[0] = *opt;
-	if(auto opt = prop.get_optional<t_real>(basePath + "floor.len_y"); opt)
+	if(auto opt = prop.get_optional<t_real>("floor.len_y"); opt)
 		m_floorlen[1] = *opt;
 
 
 	// walls
-	if(auto walls = prop.get_child_optional(basePath + "walls"); walls)
+	if(auto walls = prop.get_child_optional("walls"); walls)
 	{
 		// iterate wall segments
 		for(const auto &wall : *walls)
 		{
 			auto id = wall.second.get<std::string>("<xmlattr>.id", "");
+			auto geo = wall.second.get_child_optional("geometry");
+			if(!geo)
+				continue;
 
-			if(auto geoobj = Geometry::load(wall.second, "geometry"); std::get<0>(geoobj))
+			if(auto geoobj = Geometry::load(*geo); std::get<0>(geoobj))
 			{
 				// get individual 3d primitives that comprise this wall
 				for(auto& wallseg : std::get<1>(geoobj))
@@ -171,7 +185,9 @@ bool InstrumentSpace::Load(const pt::ptree& prop, const std::string& basePath)
 
 
 	// instrument
-	bool instr_ok = m_instr.Load(prop, basePath + "instrument.");
+	bool instr_ok = false;
+	if(auto instr = prop.get_child_optional("instrument"); instr)
+		instr_ok = m_instr.Load(*instr);
 
 	return instr_ok;
 }

@@ -26,7 +26,7 @@ public:
 	~Axis();
 
 	void Clear();
-	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
+	bool Load(const boost::property_tree::ptree& prop);
 
 	const std::string& GetId() const { return m_id; }
 	const t_vec& GetZeroPos() const { return m_pos; }
@@ -64,7 +64,7 @@ public:
 	~Instrument();
 
 	void Clear();
-	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
+	bool Load(const boost::property_tree::ptree& prop);
 
 	const Axis& GetMonochromator() const { return m_mono; }
 	const Axis& GetSample() const { return m_sample; }
@@ -90,7 +90,7 @@ public:
 	~InstrumentSpace();
 
 	void Clear();
-	bool Load(const boost::property_tree::ptree& prop, const std::string& basePath);
+	bool Load(const boost::property_tree::ptree& prop);
 
 
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
