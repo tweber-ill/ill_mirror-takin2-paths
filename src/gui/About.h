@@ -14,9 +14,9 @@
 
 class AboutDlg : public QDialog
 {
-    public:
-        AboutDlg(QWidget* parent=nullptr);
-        virtual ~AboutDlg();
+public:
+	AboutDlg(QWidget* parent=nullptr);
+	virtual ~AboutDlg();
 };
 
 
