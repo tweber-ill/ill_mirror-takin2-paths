@@ -10,9 +10,10 @@
  */
 
 #version ${GLSL_VERSION}
+#define t_real float
 
 
-const float pi = ${PI};
+const t_real pi = ${PI};
 
 in vec4 vertex;
 in vec4 normal;
@@ -40,11 +41,11 @@ uniform vec4 const_col = vec4(1, 1, 1, 1);
 uniform vec3 lightpos[] = vec3[]( vec3(5, 5, 5), vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0) );
 uniform int activelights = 1;	// how many lights to use?
 
-float g_diffuse = 1.;
-float g_specular = 0.25;
-float g_shininess = 1.;
-float g_ambient = 0.2;
-float g_atten = 0.005;
+t_real g_diffuse = 1.;
+t_real g_specular = 0.25;
+t_real g_shininess = 1.;
+t_real g_ambient = 0.2;
+t_real g_atten = 0.005;
 // ----------------------------------------------------------------------------
 
 
@@ -75,9 +76,9 @@ vec3 get_campos()
  * phong lighting model
  * @see https://en.wikipedia.org/wiki/Phong_reflection_model
  */
-float lighting(vec4 objVert, vec4 objNorm)
+t_real lighting(vec4 objVert, vec4 objNorm)
 {
-	float I_total = 0.;
+	t_real I_total = 0.;
 
 	vec3 dirToCam;
 	// only used for specular lighting
@@ -87,18 +88,18 @@ float lighting(vec4 objVert, vec4 objNorm)
 	// iterate (active) light sources
 	for(int lightidx=0; lightidx<min(lightpos.length(), activelights); ++lightidx)
 	{
-		float atten = 1.;
-		float I_diff = 0.;
-		float I_spec = 0.;
+		t_real atten = 1.;
+		t_real I_diff = 0.;
+		t_real I_spec = 0.;
 
 		// diffuse lighting
 		vec3 vertToLight = lightpos[lightidx] - objVert.xyz;
-		float distVertLight = length(vertToLight);
+		t_real distVertLight = length(vertToLight);
 		vec3 dirLight = vertToLight / distVertLight;
 
 		if(g_diffuse > 0.)
 		{
-			float I_diff_inc = g_diffuse * dot(objNorm.xyz, dirLight);
+			t_real I_diff_inc = g_diffuse * dot(objNorm.xyz, dirLight);
 			if(I_diff_inc < 0.)
 				I_diff_inc = 0.;
 			I_diff += I_diff_inc;
@@ -112,10 +113,10 @@ float lighting(vec4 objVert, vec4 objNorm)
 			{
 				vec3 dirLightRefl = reflect(objNorm.xyz) * dirLight;
 
-				float val = dot(dirToCam, dirLightRefl);
+				t_real val = dot(dirToCam, dirLightRefl);
 				if(val > 0.)
 				{
-					float I_spec_inc = g_specular * pow(val, g_shininess);
+					t_real I_spec_inc = g_specular * pow(val, g_shininess);
 					if(I_spec_inc < 0.)
 						I_spec_inc = 0.;
 					I_spec += I_spec_inc;
@@ -136,7 +137,7 @@ float lighting(vec4 objVert, vec4 objNorm)
 	}
 
 	// ambient lighting
-	float I_amb = g_ambient;
+	t_real I_amb = g_ambient;
 
 	// total intensity
 	return I_total + I_amb;
@@ -149,7 +150,7 @@ void main()
 	vec4 objNorm = normalize(obj * normal);
 	gl_Position = proj * cam * objPos;
 
-	float I = lighting(objPos, objNorm);
+	t_real I = lighting(objPos, objNorm);
 	frag_col.rgb = vertex_col.rgb * I;
 	//frag_col.a = 1;
 	frag_col *= const_col;

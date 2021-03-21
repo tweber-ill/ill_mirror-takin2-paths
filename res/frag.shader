@@ -10,6 +10,8 @@
  */
 
 #version ${GLSL_VERSION}
+#define t_real float
+
 
 // colour
 in vec4 frag_col;
