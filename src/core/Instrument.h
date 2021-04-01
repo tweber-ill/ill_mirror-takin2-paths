@@ -19,6 +19,13 @@
 // ----------------------------------------------------------------------------
 // instrument axis
 // ----------------------------------------------------------------------------
+enum class AxisAngle
+{
+	IN,
+	INTERNAL,
+	OUT
+};
+
 class Axis
 {
 public:
@@ -30,11 +37,13 @@ public:
 
 	const std::string& GetId() const { return m_id; }
 	const t_vec& GetZeroPos() const { return m_pos; }
-	t_real GetAxisAngle() const { return m_angle; }
 
-	t_mat GetTrafo() const;
+	t_real GetAxisAngleIn() const { return m_angle_in; }
+	t_real GetAxisAngleOut() const { return m_angle_out; }
 
-	const std::vector<std::shared_ptr<Geometry>>& GetComps() const { return m_comps; }
+	// which==1: in, which==2: internal, which==3: out
+	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
+	const std::vector<std::shared_ptr<Geometry>>& GetComps(AxisAngle which=AxisAngle::IN) const;
 
 private:
 	// identifier
@@ -44,11 +53,16 @@ private:
 
 	// coordinate origin
 	t_vec m_pos = tl2::create<t_vec>({0,0});
-	// angle with respect to previous axis
-	t_real m_angle = 0;
 
-	// components
-	std::vector<std::shared_ptr<Geometry>> m_comps;
+	// angle of incoming axis and outgoing axis
+	t_real m_angle_in = 0, m_angle_out = 0;
+	// internal rotation angle
+	t_real m_angle_internal;
+
+	// components relative to incoming and outgoing axis
+	std::vector<std::shared_ptr<Geometry>> m_comps_in, m_comps_out;
+	// components rotated internally
+	std::vector<std::shared_ptr<Geometry>> m_comps_internal;
 };
 // ----------------------------------------------------------------------------
 

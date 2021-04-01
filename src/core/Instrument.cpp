@@ -25,56 +25,95 @@ Axis::~Axis()
 
 void Axis::Clear()
 {
-	m_comps.clear();
+	m_comps_in.clear();
+	m_comps_out.clear();
+	m_comps_internal.clear();
 }
 
 
 bool Axis::Load(const boost::property_tree::ptree& prop)
 {
 	// zero position
-	m_pos = tl2::create<t_vec>({0, 0});
-	if(auto opt = prop.get_optional<t_real>("x"); opt)
-		m_pos[0] = *opt;
-	if(auto opt = prop.get_optional<t_real>("y"); opt)
-		m_pos[1] = *opt;
-
-	// axis angle
-	if(auto opt = prop.get_optional<t_real>("angle"); opt)
-		m_angle = *opt;
-
-	// geometry
-	if(auto geo = prop.get_child_optional("geometry"); geo)
+	if(auto optPos = prop.get_optional<std::string>("pos"); optPos)
 	{
-		if(auto geoobj = Geometry::load(*geo); std::get<0>(geoobj))
+		m_pos.clear();
+
+		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		if(m_pos.size() < 3)
+			m_pos.resize(3);
+	}
+
+	// axis angles
+	if(auto opt = prop.get_optional<t_real>("angle_in"); opt)
+		m_angle_in = *opt;
+	if(auto opt = prop.get_optional<t_real>("angle_internal"); opt)
+		m_angle_internal = *opt;
+	if(auto opt = prop.get_optional<t_real>("angle_out"); opt)
+		m_angle_out = *opt; //- m_angle_in;
+
+	auto load_geo = [this, &prop](const std::string& name,
+		std::vector<std::shared_ptr<Geometry>>& comp_geo) -> void
+	{
+		if(auto geo = prop.get_child_optional(name); geo)
 		{
-			// get individual 3d primitives that comprise this object
-			for(auto& comp : std::get<1>(geoobj))
+			if(auto geoobj = Geometry::load(*geo); std::get<0>(geoobj))
 			{
-				if(comp->GetId() == "")
-					comp->SetId(m_id);
-				m_comps.emplace_back(std::move(comp));
+				// get individual 3d primitives that comprise this object
+				for(auto& comp : std::get<1>(geoobj))
+				{
+					if(comp->GetId() == "")
+						comp->SetId(m_id);
+					comp_geo.emplace_back(std::move(comp));
+				}
 			}
 		}
-	}
+	};
+
+	// geometry relative to incoming axis
+	load_geo("geometry_in", m_comps_in);
+	// internally rotated geometry
+	load_geo("geometry_internal", m_comps_internal);
+	// geometry relative to outgoing axis
+	load_geo("geometry_out", m_comps_out);
 
 	return true;
 }
 
 
-t_mat Axis::GetTrafo() const
+t_mat Axis::GetTrafo(AxisAngle which) const
 {
 	// trafo of previous axis
 	t_mat matPrev = tl2::unit<t_mat>(4);
 	if(m_prev)
-		matPrev = m_prev->GetTrafo();
+		matPrev = m_prev->GetTrafo(AxisAngle::OUT);
 
 	// local trafos
 	t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
-	t_mat matRot = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle/t_real{180}*tl2::pi<t_real>);
+	t_mat matRotIn = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_in/t_real{180}*tl2::pi<t_real>);
+	t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out/t_real{180}*tl2::pi<t_real>);
+	t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal/t_real{180}*tl2::pi<t_real>);
 	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
+	auto [matTransInv, transinvok] = tl2::inv<t_mat>(matTrans);
 
-	return matPrev * matRot * matTrans;
+	auto matTotal = matPrev * matTrans * matRotIn;
+	if(which==AxisAngle::INTERNAL)
+		matTotal *= matRotInternal;
+	if(which==AxisAngle::OUT)
+		matTotal *= matRotOut;
+	return matTotal;
 }
+
+
+const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) const
+{
+	switch(which)
+	{
+		case AxisAngle::IN: return m_comps_in;
+		case AxisAngle::OUT: return m_comps_out;
+		case AxisAngle::INTERNAL: return m_comps_internal;
+	}
+}
+
 // ----------------------------------------------------------------------------
 
 

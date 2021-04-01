@@ -103,22 +103,26 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 
 	for(const auto& axis : {mono, sample, ana})
 	{
-		t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis.GetTrafo());
-
-		for(const auto& comp : axis.GetComps())
+		// get geometries both relative to incoming and to outgoing axis
+		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
 		{
-			auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
-			t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-			t_mat_gl mat = matAxis * matGeo;
+			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis.GetTrafo(axisangle));
 
-			auto verts = tl2::convert<t_vec3_gl>(_verts);
-			auto norms = tl2::convert<t_vec3_gl>(_norms);
-			auto uvs = tl2::convert<t_vec3_gl>(_uvs);
-			auto cols = tl2::convert<t_vec3_gl>(comp->GetColour());
+			for(const auto& comp : axis.GetComps(axisangle))
+			{
+				auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
+				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
+				t_mat_gl mat = matAxis * matGeo;
 
-			AddTriangleObject(comp->GetId(), verts, norms, uvs,
-				cols[0], cols[1], cols[2], 1);
-			m_objs[comp->GetId()].m_mat = mat;
+				auto verts = tl2::convert<t_vec3_gl>(_verts);
+				auto norms = tl2::convert<t_vec3_gl>(_norms);
+				auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+				auto cols = tl2::convert<t_vec3_gl>(comp->GetColour());
+
+				AddTriangleObject(comp->GetId(), verts, norms, uvs,
+					cols[0], cols[1], cols[2], 1);
+				m_objs[comp->GetId()].m_mat = mat;
+			}
 		}
 	}
 
