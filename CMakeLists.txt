@@ -80,9 +80,12 @@ add_executable(paths
 	src/gui/PathsTool.cpp
 	src/gui/About.cpp src/gui/About.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
+	src/gui/Properties.cpp src/gui/Properties.h
+
 	src/core/Geometry.cpp src/core/Geometry.h
 	src/core/Instrument.cpp src/core/Instrument.h
 	src/core/types.h
+
 	tlibs2/libs/glplot.cpp tlibs2/libs/glplot.h
 )
 

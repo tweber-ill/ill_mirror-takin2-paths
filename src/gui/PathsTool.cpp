@@ -31,10 +31,11 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
+#include "src/core/ptree_algos.h"
 
 #include "PathsRenderer.h"
+#include "Properties.h"
 #include "About.h"
-#include "src/core/ptree_algos.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -56,13 +57,14 @@ private:
 	// gl info strings
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
 
-	QStatusBar *m_statusbar = nullptr;
-	QLabel *m_labelStatus = nullptr;
+	QStatusBar *m_statusbar{nullptr};
+	QLabel *m_labelStatus{nullptr};
 
-	QMenu *m_menuOpenRecent = nullptr;
-	QMenuBar *m_menubar = nullptr;
+	QMenu *m_menuOpenRecent{nullptr};
+	QMenuBar *m_menubar{nullptr};
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<PropertiesDockWidget> m_properties;
 
 	// recent file list and currently active file
 	QStringList m_recentFiles;
@@ -421,6 +423,14 @@ public:
 
 
 		// --------------------------------------------------------------------
+		// dock widgets
+		// --------------------------------------------------------------------
+		m_properties = std::make_shared<PropertiesDockWidget>(this);
+		addDockWidget(Qt::RightDockWidgetArea, m_properties.get());
+		// --------------------------------------------------------------------
+
+
+		// --------------------------------------------------------------------
 		// menu bar
 		// --------------------------------------------------------------------
 		m_menubar = new QMenuBar(this);
@@ -478,6 +488,8 @@ public:
 				m_renderer->SetPerspectiveProjection(b);
 		});
 
+		menuView->addAction(m_properties->toggleViewAction());
+		menuView->addSeparator();
 		menuView->addAction(acPersp);
 
 
