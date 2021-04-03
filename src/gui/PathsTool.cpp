@@ -64,7 +64,7 @@ private:
 	QMenuBar *m_menubar{nullptr};
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
-	std::shared_ptr<PropertiesDockWidget> m_properties;
+	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 
 	// recent file list and currently active file
 	QStringList m_recentFiles;
@@ -210,6 +210,13 @@ protected:
 					QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
 					return false;
 				}
+
+				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
+				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
+				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
+				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle);
+				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle);
+				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle);
 			}
 			else
 			{
@@ -425,8 +432,28 @@ public:
 		// --------------------------------------------------------------------
 		// dock widgets
 		// --------------------------------------------------------------------
-		m_properties = std::make_shared<PropertiesDockWidget>(this);
-		addDockWidget(Qt::RightDockWidgetArea, m_properties.get());
+		m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
+		addDockWidget(Qt::RightDockWidgetArea, m_tasProperties.get());
+
+		auto* taswidget = m_tasProperties->GetWidget().get();
+		connect(taswidget, &TASPropertiesWidget::MonoScatteringAngleChanged,
+		[this](t_real angle) -> void
+		{
+			m_instrspace.GetInstrument().GetMonochromator().
+				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+		});
+		connect(taswidget, &TASPropertiesWidget::SampleScatteringAngleChanged,
+		[this](t_real angle) -> void
+		{
+			m_instrspace.GetInstrument().GetSample().
+				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+		});
+		connect(taswidget, &TASPropertiesWidget::AnaScatteringAngleChanged,
+		[this](t_real angle) -> void
+		{
+			m_instrspace.GetInstrument().GetAnalyser().
+				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+		});
 		// --------------------------------------------------------------------
 
 
@@ -488,7 +515,7 @@ public:
 				m_renderer->SetPerspectiveProjection(b);
 		});
 
-		menuView->addAction(m_properties->toggleViewAction());
+		menuView->addAction(m_tasProperties->toggleViewAction());
 		menuView->addSeparator();
 		menuView->addAction(acPersp);
 

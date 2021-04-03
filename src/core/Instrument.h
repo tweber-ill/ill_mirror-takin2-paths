@@ -41,6 +41,9 @@ public:
 	t_real GetAxisAngleIn() const { return m_angle_in; }
 	t_real GetAxisAngleOut() const { return m_angle_out; }
 
+	void SetAxisAngleIn(t_real angle) { m_angle_in = angle; }
+	void SetAxisAngleOut(t_real angle) { m_angle_out = angle; }
+
 	// which==1: in, which==2: internal, which==3: out
 	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
 	const std::vector<std::shared_ptr<Geometry>>& GetComps(AxisAngle which=AxisAngle::IN) const;
@@ -84,6 +87,10 @@ public:
 	const Axis& GetSample() const { return m_sample; }
 	const Axis& GetAnalyser() const { return m_ana; }
 
+	Axis& GetMonochromator() { return m_mono; }
+	Axis& GetSample() { return m_sample; }
+	Axis& GetAnalyser() { return m_ana; }
+
 
 private:
 	Axis m_mono{"monochromator"};
@@ -112,6 +119,7 @@ public:
 
 	const std::vector<std::shared_ptr<Geometry>>& GetWalls() const { return m_walls; }
 	const Instrument& GetInstrument() const { return m_instr; }
+	Instrument& GetInstrument() { return m_instr; }
 
 
 private:

@@ -11,24 +11,44 @@
 #include <memory>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
+#include <QtWidgets/QDoubleSpinBox>
+
+#include "src/core/types.h"
 
 
-class PropertiesWidget : public QWidget
-{
+class TASPropertiesWidget : public QWidget
+{Q_OBJECT
 public:
-	PropertiesWidget(QWidget* parent=nullptr);
-	virtual ~PropertiesWidget();
+	TASPropertiesWidget(QWidget *parent=nullptr);
+	virtual ~TASPropertiesWidget();
+
+public slots:
+	void SetMonoScatteringAngle(t_real angle);
+	void SetSampleScatteringAngle(t_real angle);
+	void SetAnaScatteringAngle(t_real angle);
+
+signals:
+	void MonoScatteringAngleChanged(t_real angle);
+	void SampleScatteringAngleChanged(t_real angle);
+	void AnaScatteringAngleChanged(t_real angle);	
+
+private:
+	QDoubleSpinBox *m_spinMonoScAngle{nullptr};
+	QDoubleSpinBox *m_spinSampleScAngle{nullptr};
+	QDoubleSpinBox *m_spinAnaScAngle{nullptr};
 };
 
 
-class PropertiesDockWidget : public QDockWidget
+class TASPropertiesDockWidget : public QDockWidget
 {
 public:
-	PropertiesDockWidget(QWidget *parent=nullptr);
-	virtual ~PropertiesDockWidget();
+	TASPropertiesDockWidget(QWidget *parent=nullptr);
+	virtual ~TASPropertiesDockWidget();
+
+	std::shared_ptr<TASPropertiesWidget> GetWidget() { return m_widget; }
 
 private:
-    std::unique_ptr<PropertiesWidget> m_widget;
+    std::shared_ptr<TASPropertiesWidget> m_widget;
 };
 
 

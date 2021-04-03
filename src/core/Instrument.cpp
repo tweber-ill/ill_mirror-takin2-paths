@@ -45,11 +45,11 @@ bool Axis::Load(const boost::property_tree::ptree& prop)
 
 	// axis angles
 	if(auto opt = prop.get_optional<t_real>("angle_in"); opt)
-		m_angle_in = *opt;
+		m_angle_in = *opt/t_real{180}*tl2::pi<t_real>;
 	if(auto opt = prop.get_optional<t_real>("angle_internal"); opt)
-		m_angle_internal = *opt;
+		m_angle_internal = *opt/t_real{180}*tl2::pi<t_real>;
 	if(auto opt = prop.get_optional<t_real>("angle_out"); opt)
-		m_angle_out = *opt; //- m_angle_in;
+		m_angle_out = *opt/t_real{180}*tl2::pi<t_real>; //- m_angle_in;
 
 	auto load_geo = [this, &prop](const std::string& name,
 		std::vector<std::shared_ptr<Geometry>>& comp_geo) -> void
@@ -89,9 +89,9 @@ t_mat Axis::GetTrafo(AxisAngle which) const
 
 	// local trafos
 	t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
-	t_mat matRotIn = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_in/t_real{180}*tl2::pi<t_real>);
-	t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out/t_real{180}*tl2::pi<t_real>);
-	t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal/t_real{180}*tl2::pi<t_real>);
+	t_mat matRotIn = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_in);
+	t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out);
+	t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal);
 	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
 	auto [matTransInv, transinvok] = tl2::inv<t_mat>(matTrans);
 
