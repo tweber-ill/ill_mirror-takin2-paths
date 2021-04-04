@@ -110,9 +110,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 
 			for(const auto& comp : axis->GetComps(axisangle))
 			{
-				auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
-				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
-				t_mat_gl mat = matAxis * matGeo;
+				auto [_verts, _norms, _uvs] = comp->GetTriangles();
 
 				auto verts = tl2::convert<t_vec3_gl>(_verts);
 				auto norms = tl2::convert<t_vec3_gl>(_norms);
@@ -121,6 +119,11 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 
 				AddTriangleObject(comp->GetId(), verts, norms, uvs,
 					cols[0], cols[1], cols[2], 1);
+
+				auto _matGeo = comp->GetTrafo();
+				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
+				t_mat_gl mat = matAxis * matGeo;
+
 				m_objs[comp->GetId()].m_mat = mat;
 			}
 		}
@@ -129,8 +132,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	// walls
 	for(const auto& wall : instrspace.GetWalls())
 	{
-		auto [_verts, _norms, _uvs, _mat] = wall->GetTriangles();
-		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
+		auto [_verts, _norms, _uvs] = wall->GetTriangles();
 
 		auto verts = tl2::convert<t_vec3_gl>(_verts);
 		auto norms = tl2::convert<t_vec3_gl>(_norms);
@@ -139,6 +141,9 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 
 		AddTriangleObject(wall->GetId(), verts, norms, uvs,
 			cols[0], cols[1], cols[2], 1);
+
+		auto _mat = wall->GetTrafo();
+		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
 		m_objs[wall->GetId()].m_mat = mat;
 	}
 }
@@ -147,9 +152,36 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 /**
  * move the instrument to a new position
  */
-void PathsRenderer::UpdateInstrument()
+void PathsRenderer::UpdateInstrument(const Instrument& instr)
 {
-	std::cout << "TODO: update" << std::endl;
+	// instrument axes
+	const auto& mono = instr.GetMonochromator();
+	const auto& sample = instr.GetSample();
+	const auto& ana = instr.GetAnalyser();
+
+	for(const auto* axis : {&mono, &sample, &ana})
+	{
+		// get geometries both relative to incoming and to outgoing axis
+		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
+		{
+			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
+
+			for(const auto& comp : axis->GetComps(axisangle))
+			{
+				auto iter = m_objs.find(comp->GetId());
+				if(iter == m_objs.end())
+					continue;
+
+				auto _matGeo = comp->GetTrafo();
+				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
+				t_mat_gl mat = matAxis * matGeo;
+
+				iter->second.m_mat = mat;
+			}
+		}
+	}
+
+	update();
 }
 
 

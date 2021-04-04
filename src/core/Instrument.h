@@ -101,7 +101,7 @@ public:
 	void AddUpdateSlot(const t_slot& slot)
 	{ m_sigUpdate->connect(slot); }
 
-	void EmitUpdate() { (*m_sigUpdate)(); }
+	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
 private:
 	Axis m_mono{"monochromator", nullptr, this};
@@ -109,7 +109,7 @@ private:
 	Axis m_ana{"analyser", &m_sample, this};
 
 	// update signal
-	using t_sig_update = boost::signals2::signal<void()>;
+	using t_sig_update = boost::signals2::signal<void(const Instrument&)>;
 	std::shared_ptr<t_sig_update> m_sigUpdate;
 };
 // ----------------------------------------------------------------------------

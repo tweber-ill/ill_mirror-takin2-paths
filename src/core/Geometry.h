@@ -38,8 +38,9 @@ public:
 	virtual void Clear() = 0;
 	virtual bool Load(const boost::property_tree::ptree& prop);
 
-	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
-	GetTriangles() = 0;
+	virtual t_mat GetTrafo() const = 0;
+	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+	GetTriangles() const = 0;
 
 	virtual const std::string& GetId() const { return m_id; }
 	virtual void SetId(const std::string& id) { m_id = id; }
@@ -72,8 +73,9 @@ public:
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 
-	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
-	GetTriangles() override;
+	virtual t_mat GetTrafo() const override;
+	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+	GetTriangles() const override;
 
 
 private:
@@ -99,8 +101,9 @@ public:
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 
-	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
-	GetTriangles() override;
+	virtual t_mat GetTrafo() const override;
+	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+	GetTriangles() const override;
 
 
 private:

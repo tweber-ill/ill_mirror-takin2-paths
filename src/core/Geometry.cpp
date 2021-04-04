@@ -135,12 +135,8 @@ bool BoxGeometry::Load(const boost::property_tree::ptree& prop)
 }
 
 
-std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
-BoxGeometry::GetTriangles()
+t_mat BoxGeometry::GetTrafo() const
 {
-	auto solid = tl2::create_cuboid<t_vec>(m_length*0.5, m_depth*0.5, m_height*0.5);
-	auto [verts, norms, uvs] = tl2::create_triangles<t_vec>(solid);
-
 	t_vec vecFrom = tl2::create<t_vec>({1, 0, 0});
 	t_vec vecTo = m_pos2 - m_pos1;
 	t_vec preTranslate = 0.5*(m_pos1 + m_pos2);
@@ -148,9 +144,18 @@ BoxGeometry::GetTriangles()
 
 	auto mat = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
 		vecTo, 1., postTranslate, vecFrom, 1., preTranslate);
+	return mat;
+}
+
+
+std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+BoxGeometry::GetTriangles() const
+{
+	auto solid = tl2::create_cuboid<t_vec>(m_length*0.5, m_depth*0.5, m_height*0.5);
+	auto [verts, norms, uvs] = tl2::create_triangles<t_vec>(solid);
 
 	//tl2::transform_obj(verts, norms, mat, true);
-	return std::make_tuple(verts, norms, uvs, mat);
+	return std::make_tuple(verts, norms, uvs);
 }
 
 // ----------------------------------------------------------------------------
@@ -197,16 +202,21 @@ bool CylinderGeometry::Load(const boost::property_tree::ptree& prop)
 }
 
 
-std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>, t_mat>
-CylinderGeometry::GetTriangles()
+t_mat CylinderGeometry::GetTrafo() const
+{
+	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
+	return mat;
+}
+
+
+std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+CylinderGeometry::GetTriangles() const
 {
 	auto solid = tl2::create_cylinder<t_vec>(m_radius, m_height, 1, 32);
 	auto [verts, norms, uvs] = tl2::create_triangles<t_vec>(solid);
 
-	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
-
 	//tl2::transform_obj(verts, norms, mat, true);
-	return std::make_tuple(verts, norms, uvs, mat);
+	return std::make_tuple(verts, norms, uvs);
 }
 
 // ----------------------------------------------------------------------------

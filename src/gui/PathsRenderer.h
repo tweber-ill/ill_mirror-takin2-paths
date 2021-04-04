@@ -53,7 +53,7 @@ public:
 
 	void Clear();
 	void LoadInstrument(const InstrumentSpace& instr);
-	void UpdateInstrument();
+	void UpdateInstrument(const Instrument& instr);
 
 
 protected:
@@ -146,7 +146,7 @@ protected:
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamTrans = tl2::create<t_mat_gl>
-		({1,0,0,0, 0,1,0,0, 0,0,1,-5, 0,0,0,1});
+		({1,0,0,0, 0,1,0,0, 0,0,1,-15, 0,0,0,1});
 
 	t_real_gl m_phi = 0, m_theta = 0;
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;

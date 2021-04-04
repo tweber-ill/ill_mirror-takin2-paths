@@ -39,7 +39,7 @@ namespace pt = boost::property_tree;
 
 
 #define MAX_RECENT_FILES 16
-#define PROG_TITLE "TAS Path Optimisation Tool"
+#define PROG_TITLE "TAS Path Tool"
 #define PROG_IDENT "takin_paths"
 #define FILE_BASENAME "paths."
 
@@ -229,10 +229,11 @@ protected:
 			AddRecentFile(file);
 
 			m_renderer->LoadInstrument(m_instrspace);
-			m_instrspace.GetInstrument().AddUpdateSlot([this]()->void
+			m_instrspace.GetInstrument().AddUpdateSlot(
+			[this](const Instrument& instr)->void
 			{
 				if(m_renderer)
-					m_renderer->UpdateInstrument();
+					m_renderer->UpdateInstrument(instr);
 			});
 		}
 		catch(const std::exception& ex)

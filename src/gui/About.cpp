@@ -25,7 +25,7 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
 
 	int y = 0;
 
-	QLabel *labTitle = new QLabel("TAS Path Optimisation Tool", this);
+	QLabel *labTitle = new QLabel("TAS Path Tool", this);
 	QFont fontTitle = labTitle->font();
 	fontTitle.setPointSize(fontTitle.pointSize()*1.5);
 	fontTitle.setWeight(QFont::Bold);
