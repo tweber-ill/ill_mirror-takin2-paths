@@ -13,7 +13,8 @@ namespace pt = boost::property_tree;
 // ----------------------------------------------------------------------------
 // instrument axis
 // ----------------------------------------------------------------------------
-Axis::Axis(const std::string& id, const Axis* prev) : m_id{id}, m_prev{prev}
+Axis::Axis(const std::string& id, const Axis* prev, Instrument *instr)
+	: m_id{id}, m_prev{prev}, m_instr{instr}
 {
 }
 
@@ -114,6 +115,22 @@ const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) co
 	}
 }
 
+
+void Axis::SetAxisAngleIn(t_real angle)
+{
+	m_angle_in = angle;
+	if(m_instr)
+		m_instr->EmitUpdate();
+}
+
+
+void Axis::SetAxisAngleOut(t_real angle)
+{
+	m_angle_out = angle;
+	if(m_instr)
+		m_instr->EmitUpdate();
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -122,6 +139,7 @@ const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) co
 // instrument
 // ----------------------------------------------------------------------------
 Instrument::Instrument()
+	: m_sigUpdate{std::make_shared<t_sig_update>()}
 {
 }
 
@@ -136,6 +154,8 @@ void Instrument::Clear()
 	m_mono.Clear();
 	m_sample.Clear();
 	m_ana.Clear();
+
+	m_sigUpdate = std::make_shared<t_sig_update>();
 }
 
 

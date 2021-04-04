@@ -101,14 +101,14 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	for(const auto& axis : {mono, sample, ana})
+	for(const auto* axis : {&mono, &sample, &ana})
 	{
 		// get geometries both relative to incoming and to outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
 		{
-			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis.GetTrafo(axisangle));
+			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
 
-			for(const auto& comp : axis.GetComps(axisangle))
+			for(const auto& comp : axis->GetComps(axisangle))
 			{
 				auto [_verts, _norms, _uvs, _matGeo] = comp->GetTriangles();
 				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
@@ -141,6 +141,15 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 			cols[0], cols[1], cols[2], 1);
 		m_objs[wall->GetId()].m_mat = mat;
 	}
+}
+
+
+/**
+ * move the instrument to a new position
+ */
+void PathsRenderer::UpdateInstrument()
+{
+	std::cout << "TODO: update" << std::endl;
 }
 
 

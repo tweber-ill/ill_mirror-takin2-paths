@@ -10,6 +10,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "types.h"
 #include "Geometry.h"
@@ -26,10 +27,12 @@ enum class AxisAngle
 	OUT
 };
 
+class Instrument;
+
 class Axis
 {
 public:
-	Axis(const std::string& id="", const Axis* prev=nullptr);
+	Axis(const std::string &id="", const Axis *prev=nullptr, Instrument *instr=nullptr);
 	~Axis();
 
 	void Clear();
@@ -41,8 +44,8 @@ public:
 	t_real GetAxisAngleIn() const { return m_angle_in; }
 	t_real GetAxisAngleOut() const { return m_angle_out; }
 
-	void SetAxisAngleIn(t_real angle) { m_angle_in = angle; }
-	void SetAxisAngleOut(t_real angle) { m_angle_out = angle; }
+	void SetAxisAngleIn(t_real angle);
+	void SetAxisAngleOut(t_real angle);
 
 	// which==1: in, which==2: internal, which==3: out
 	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
@@ -52,7 +55,9 @@ private:
 	// identifier
 	std::string m_id;
 	// previous axis
-	const Axis* m_prev = nullptr;
+	const Axis *m_prev{nullptr};
+	// parent instrument
+	Instrument *m_instr{nullptr};
 
 	// coordinate origin
 	t_vec m_pos = tl2::create<t_vec>({0,0});
@@ -91,11 +96,21 @@ public:
 	Axis& GetSample() { return m_sample; }
 	Axis& GetAnalyser() { return m_ana; }
 
+	// connection to update signal
+	template<class t_slot>
+	void AddUpdateSlot(const t_slot& slot)
+	{ m_sigUpdate->connect(slot); }
+
+	void EmitUpdate() { (*m_sigUpdate)(); }
 
 private:
-	Axis m_mono{"monochromator"};
-	Axis m_sample{"sample", &m_mono};
-	Axis m_ana{"analyser", &m_sample};
+	Axis m_mono{"monochromator", nullptr, this};
+	Axis m_sample{"sample", &m_mono, this};
+	Axis m_ana{"analyser", &m_sample, this};
+
+	// update signal
+	using t_sig_update = boost::signals2::signal<void()>;
+	std::shared_ptr<t_sig_update> m_sigUpdate;
 };
 // ----------------------------------------------------------------------------
 
@@ -112,7 +127,6 @@ public:
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
-
 
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
 	t_real GetFloorLenY() const { return m_floorlen[1]; }

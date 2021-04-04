@@ -53,6 +53,7 @@ public:
 
 	void Clear();
 	void LoadInstrument(const InstrumentSpace& instr);
+	void UpdateInstrument();
 
 
 protected:

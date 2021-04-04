@@ -229,6 +229,11 @@ protected:
 			AddRecentFile(file);
 
 			m_renderer->LoadInstrument(m_instrspace);
+			m_instrspace.GetInstrument().AddUpdateSlot([this]()->void
+			{
+				if(m_renderer)
+					m_renderer->UpdateInstrument();
+			});
 		}
 		catch(const std::exception& ex)
 		{
