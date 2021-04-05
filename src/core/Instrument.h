@@ -43,9 +43,11 @@ public:
 
 	t_real GetAxisAngleIn() const { return m_angle_in; }
 	t_real GetAxisAngleOut() const { return m_angle_out; }
+	t_real GetAxisAngleInternal() const { return m_angle_internal; }
 
 	void SetAxisAngleIn(t_real angle);
 	void SetAxisAngleOut(t_real angle);
+	void SetAxisAngleInternal(t_real angle);
 
 	// which==1: in, which==2: internal, which==3: out
 	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;

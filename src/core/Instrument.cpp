@@ -131,6 +131,14 @@ void Axis::SetAxisAngleOut(t_real angle)
 		m_instr->EmitUpdate();
 }
 
+
+void Axis::SetAxisAngleInternal(t_real angle)
+{
+	m_angle_internal = angle;
+	if(m_instr)
+		m_instr->EmitUpdate();
+}
+
 // ----------------------------------------------------------------------------
 
 

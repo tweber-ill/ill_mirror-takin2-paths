@@ -211,12 +211,21 @@ protected:
 					return false;
 				}
 
-				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
-				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
-				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut()*t_real{180}/tl2::pi<t_real>;
-				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle);
-				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle);
-				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle);
+				// get scattering angles
+				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
+				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut();
+				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut();
+				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
+				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
+				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
+
+				// get crystal angles
+				t_real monoXtalAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleInternal();
+				t_real sampleXtalAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleInternal();
+				t_real anaXtalAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleInternal();
+				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
+				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
+				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
 			}
 			else
 			{
@@ -442,24 +451,46 @@ public:
 		addDockWidget(Qt::RightDockWidgetArea, m_tasProperties.get());
 
 		auto* taswidget = m_tasProperties->GetWidget().get();
+
+		// scattering angles
 		connect(taswidget, &TASPropertiesWidget::MonoScatteringAngleChanged,
-		[this](t_real angle) -> void
-		{
-			m_instrspace.GetInstrument().GetMonochromator().
-				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
-		});
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetMonochromator().
+					SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+			});
 		connect(taswidget, &TASPropertiesWidget::SampleScatteringAngleChanged,
-		[this](t_real angle) -> void
-		{
-			m_instrspace.GetInstrument().GetSample().
-				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
-		});
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetSample().
+					SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+			});
 		connect(taswidget, &TASPropertiesWidget::AnaScatteringAngleChanged,
-		[this](t_real angle) -> void
-		{
-			m_instrspace.GetInstrument().GetAnalyser().
-				SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
-		});
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetAnalyser().
+					SetAxisAngleOut(angle/t_real{180}*tl2::pi<t_real>);
+			});
+
+		// crystal angles
+		connect(taswidget, &TASPropertiesWidget::MonoCrystalAngleChanged,
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetMonochromator().
+					SetAxisAngleInternal(angle/t_real{180}*tl2::pi<t_real>);
+			});
+		connect(taswidget, &TASPropertiesWidget::SampleCrystalAngleChanged,
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetSample().
+					SetAxisAngleInternal(angle/t_real{180}*tl2::pi<t_real>);
+			});
+		connect(taswidget, &TASPropertiesWidget::AnaCrystalAngleChanged,
+			[this](t_real angle) -> void
+			{
+				m_instrspace.GetInstrument().GetAnalyser().
+					SetAxisAngleInternal(angle/t_real{180}*tl2::pi<t_real>);
+			});
 		// --------------------------------------------------------------------
 
 

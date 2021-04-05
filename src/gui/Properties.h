@@ -27,15 +27,29 @@ public slots:
 	void SetSampleScatteringAngle(t_real angle);
 	void SetAnaScatteringAngle(t_real angle);
 
+	void SetMonoCrystalAngle(t_real angle);
+	void SetSampleCrystalAngle(t_real angle);
+	void SetAnaCrystalAngle(t_real angle);
+
 signals:
 	void MonoScatteringAngleChanged(t_real angle);
 	void SampleScatteringAngleChanged(t_real angle);
 	void AnaScatteringAngleChanged(t_real angle);	
 
+	void MonoCrystalAngleChanged(t_real angle);
+	void SampleCrystalAngleChanged(t_real angle);
+	void AnaCrystalAngleChanged(t_real angle);	
+
 private:
+	// scattering angles
 	QDoubleSpinBox *m_spinMonoScAngle{nullptr};
 	QDoubleSpinBox *m_spinSampleScAngle{nullptr};
 	QDoubleSpinBox *m_spinAnaScAngle{nullptr};
+
+	// crystal angles
+	QDoubleSpinBox *m_spinMonoXtalAngle{nullptr};
+	QDoubleSpinBox *m_spinSampleXtalAngle{nullptr};
+	QDoubleSpinBox *m_spinAnaXtalAngle{nullptr};
 };
 
 

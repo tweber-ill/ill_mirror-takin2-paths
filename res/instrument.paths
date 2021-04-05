@@ -4,16 +4,19 @@
 	<timestamp>1614257982.440783</timestamp>
 	<ident>takin_paths</ident>
 
+
 	<variables>
 		<guide_height value="1.75" />
 		<guide_depth value="0.35" />
 	</variables>
+
 
 	<instrument_space>
 		<floor>
 			<len_x> 20 </len_x>
 			<len_y> 20 </len_y>
 		</floor>
+
 
 		<walls>
 			<wall id="wall 1">
@@ -65,12 +68,14 @@
 			</wall>
 		</walls>
 
+
 		<instrument>
 			<monochromator>
 				<pos> -5 -8 </pos>
 				<angle_in> 0 </angle_in>
 				<angle_internal> 45 </angle_internal>
 				<angle_out> 90 </angle_out>
+
 				<geometry_in>
 					<box id="reactor-monochromator guide">
 						<pos1> -5 0 </pos1>
@@ -80,6 +85,7 @@
 						<colour> 0 1 1 </colour>
 					</box>
 				</geometry_in>
+
 				<geometry_internal>
 					<cylinder>
 						<pos> 0 0 </pos>
@@ -87,7 +93,16 @@
 						<radius> 1.5 </radius>
 						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="monochromator zero angle">
+						<pos1> -1 0 </pos1>
+						<pos2> 1 0 </pos2>
+						<height> 2.25 </height>
+						<depth> 0.1 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
 				</geometry_internal>
+
 				<geometry_out>
 					<box id="monochromator-sample guide">
 						<pos1> 0 0 </pos1>
@@ -99,11 +114,13 @@
 				</geometry_out>
 			</monochromator>
 
+
 			<sample>
 				<pos> 3.5 0 </pos>
 				<angle_in> 0 </angle_in>
 				<angle_internal> 45 </angle_internal>
 				<angle_out> 90 </angle_out>
+
 				<geometry_internal>
 					<cylinder>
 						<pos> 0 0 </pos>
@@ -111,7 +128,16 @@
 						<radius> 1 </radius>
 						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="sample zero angle">
+						<pos1> -0.75 0 </pos1>
+						<pos2> 0.75 0 </pos2>
+						<height> 2.25 </height>
+						<depth> 0.1 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
 				</geometry_internal>
+
 				<geometry_out>
 					<box id="sample-analyser guide">
 						<pos1> 0 0 </pos1>
@@ -123,11 +149,13 @@
 				</geometry_out>
 			</sample>
 
+
 			<analyser>
 				<pos> 2.5 0 </pos>
 				<angle_in> 0 </angle_in>
 				<angle_internal> -22.5 </angle_internal>
 				<angle_out> -45 </angle_out>
+
 				<geometry_internal>
 					<cylinder>
 						<pos> 0 0 </pos>
@@ -135,7 +163,16 @@
 						<radius> 1 </radius>
 						<colour> 0 0 1 </colour>
 					</cylinder>
+
+					<box id="analyser zero angle">
+						<pos1> -0.75 0 </pos1>
+						<pos2> 0.75 0 </pos2>
+						<height> 2.25 </height>
+						<depth> 0.1 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
 				</geometry_internal>
+
 				<geometry_out>
 					<box id="detector">
 						<pos1> 0 0 </pos1>
