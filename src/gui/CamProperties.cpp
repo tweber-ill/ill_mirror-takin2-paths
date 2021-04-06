@@ -36,6 +36,14 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		m_spinPos[pos]->setDecimals(3);
 	}
 
+	for(int rot=0; rot<2; ++rot)
+	{
+		m_spinRot[rot] = new QDoubleSpinBox(this);
+		m_spinRot[rot]->setMinimum(-180);
+		m_spinRot[rot]->setMaximum(+180);
+		m_spinRot[rot]->setDecimals(2);
+	}
+
 	auto *groupProj = new QGroupBox("Projection", this);
 	{
 		auto *layoutProj = new QGridLayout(groupProj);
@@ -63,6 +71,11 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		layoutVecs->addWidget(m_spinPos[1], y++, 1, 1, 1);
 		layoutVecs->addWidget(new QLabel("Position z:", this), y, 0, 1, 1);
 		layoutVecs->addWidget(m_spinPos[2], y++, 1, 1, 1);
+
+		layoutVecs->addWidget(new QLabel("Rotation φ:", this), y, 0, 1, 1);
+		layoutVecs->addWidget(m_spinRot[0], y++, 1, 1, 1);
+		layoutVecs->addWidget(new QLabel("Rotation θ:", this), y, 0, 1, 1);
+		layoutVecs->addWidget(m_spinRot[1], y++, 1, 1, 1);
 	}
 
 	auto *grid = new QGridLayout(this);
@@ -115,6 +128,22 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 
 			emit CamPositionChanged(x, y, z);
 		});
+
+	// rotation
+	connect(m_spinRot[0], 
+		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+		[this](t_real phi) -> void
+		{
+			t_real theta = m_spinRot[1]->value();
+			emit CamRotationChanged(phi, theta);
+		});
+	connect(m_spinRot[1], 
+		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+		[this](t_real theta) -> void
+		{
+			t_real phi = m_spinRot[0]->value();
+			emit CamRotationChanged(phi, theta);
+		});
 }
 
 
@@ -136,9 +165,17 @@ void CamPropertiesWidget::SetPerspectiveProj(bool proj)
 void CamPropertiesWidget::SetCamPosition(t_real x, t_real y, t_real z)
 {
 	this->blockSignals(true);
-	m_spinPos[0]->setValue(x);
-	m_spinPos[1]->setValue(y);
-	m_spinPos[2]->setValue(z);
+	if(m_spinPos[0]) m_spinPos[0]->setValue(x);
+	if(m_spinPos[1]) m_spinPos[1]->setValue(y);
+	if(m_spinPos[2]) m_spinPos[2]->setValue(z);
+	this->blockSignals(false);
+}
+
+void CamPropertiesWidget::SetCamRotation(t_real phi, t_real theta)
+{
+	this->blockSignals(true);
+	if(m_spinRot[0]) m_spinRot[0]->setValue(phi);
+	if(m_spinRot[1]) m_spinRot[1]->setValue(theta);
 	this->blockSignals(false);
 }
 // --------------------------------------------------------------------------------

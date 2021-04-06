@@ -373,6 +373,12 @@ protected slots:
 		t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
 		m_camProperties->GetWidget()->SetCamPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
 
+		// get camera rotation
+		t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
+		m_camProperties->GetWidget()->SetCamRotation(
+			t_real(camrot[0])*t_real{180}/tl2::pi<t_real>, 
+			t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
+
 		m_renderer->LoadInstrument(m_instrspace);
 	}
 
@@ -447,6 +453,8 @@ public:
 		connect(m_renderer.get(), &PathsRenderer::ObjectClicked, this, &PathsTool::ObjectClicked);
 		connect(m_renderer.get(), &PathsRenderer::ObjectDragged, this, &PathsTool::ObjectDragged);
 		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
+
+		// camera position
 		connect(m_renderer.get(), &PathsRenderer::CamPositionChanged,
 			[this](t_real_gl _x, t_real_gl _y, t_real_gl _z) -> void
 			{
@@ -456,6 +464,19 @@ public:
 
 				if(m_camProperties)
 					m_camProperties->GetWidget()->SetCamPosition(x, y, z);
+			});
+
+		// camera rotation
+		connect(m_renderer.get(), &PathsRenderer::CamRotationChanged,
+			[this](t_real_gl _phi, t_real_gl _theta) -> void
+			{
+				t_real phi = t_real(_phi);
+				t_real theta = t_real(_theta);
+
+				if(m_camProperties)
+					m_camProperties->GetWidget()->SetCamRotation(
+						phi*t_real{180}/tl2::pi<t_real>, 
+						theta*t_real{180}/tl2::pi<t_real>);
 			});
 	
 		auto pGrid = new QGridLayout(plotpanel);
@@ -546,6 +567,19 @@ public:
 
 				if(m_renderer)
 					m_renderer->SetCamPosition(tl2::create<t_vec3_gl>({x, y, z}));
+			});
+
+		// camera rotation
+		connect(camwidget, &CamPropertiesWidget::CamRotationChanged,
+			[this](t_real _phi, t_real _theta) -> void
+			{
+				t_real_gl phi = t_real_gl(_phi);
+				t_real_gl theta = t_real_gl(_theta);
+
+				if(m_renderer)
+					m_renderer->SetCamRotation(tl2::create<t_vec2_gl>(
+						{phi/t_real_gl{180}*tl2::pi<t_real_gl>, 
+						theta/t_real_gl{180}*tl2::pi<t_real_gl>}));
 			});
 		// --------------------------------------------------------------------
 

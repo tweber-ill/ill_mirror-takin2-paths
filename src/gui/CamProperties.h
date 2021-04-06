@@ -27,17 +27,20 @@ public slots:
 	void SetViewingAngle(t_real angle);
 	void SetPerspectiveProj(bool persp);
 	void SetCamPosition(t_real x, t_real y, t_real z);
+	void SetCamRotation(t_real phi, t_real theta);
 
 signals:
 	void ViewingAngleChanged(t_real angle);
 	void PerspectiveProjChanged(bool persp);
 	void CamPositionChanged(t_real x, t_real y, t_real z);
+	void CamRotationChanged(t_real phi, t_real theta);
 
 private:
 	QDoubleSpinBox *m_spinViewingAngle{nullptr};
 	QCheckBox *m_checkPerspectiveProj{nullptr};
 
 	QDoubleSpinBox *m_spinPos[3]{nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinRot[2]{nullptr, nullptr};
 };
 
 

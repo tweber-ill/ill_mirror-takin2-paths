@@ -292,8 +292,8 @@ void PathsRenderer::UpdateCam()
 		tl2::create<t_vec_gl>({0. ,0., 1., 0.})
 	};
 
-	m_matCamRot = tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[0], m_theta/180.*tl2::pi<t_real_gl>, 0);
-	m_matCamRot *= tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[1], m_phi/180.*tl2::pi<t_real_gl>, 0);
+	m_matCamRot = tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[0], m_theta, 0);
+	m_matCamRot *= tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[1], m_phi, 0);
 
 	m_matCam = tl2::unit<t_mat_gl>();
 	m_matCam *= m_matCamTrans;
@@ -303,6 +303,7 @@ void PathsRenderer::UpdateCam()
 
 	m_pickerNeedsUpdate = true;
 	emit CamPositionChanged(m_matCamTrans(0,3), m_matCamTrans(1,3), m_matCamTrans(2,3));
+	emit CamRotationChanged(m_phi, m_theta);
 	update();
 }
 
@@ -681,7 +682,6 @@ void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
 	UpdateCam();
 }
 
-
 t_vec3_gl PathsRenderer::GetCamPosition() const
 {
 	return tl2::create<t_vec3_gl>({
@@ -689,6 +689,20 @@ t_vec3_gl PathsRenderer::GetCamPosition() const
 		m_matCamTrans(1,3),
 		m_matCamTrans(2,3),
 	});
+}
+
+
+void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
+{
+	m_phi = rot[0];
+	m_theta = rot[1];
+
+	UpdateCam();
+}
+
+t_vec2_gl PathsRenderer::GetCamRotation() const
+{
+	return tl2::create<t_vec2_gl>({ m_phi, m_theta });
 }
 
 
@@ -1020,7 +1034,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 
 	if(m_inRotation)
 	{
-		auto diff = (m_posMouse - m_posMouseRotationStart);
+		auto diff = (m_posMouse - m_posMouseRotationStart) * m_rotSpeed;
 		m_phi = diff.x() + m_phi_saved;
 		m_theta = diff.y() + m_theta_saved;
 
@@ -1098,7 +1112,7 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 		// end rotation
 		if(m_inRotation)
 		{
-			auto diff = (m_posMouse - m_posMouseRotationStart);
+			auto diff = (m_posMouse - m_posMouseRotationStart) * m_rotSpeed;
 			m_phi_saved += diff.x();
 			m_theta_saved += diff.y();
 

@@ -89,13 +89,15 @@ protected slots:
 
 public slots:
 	void EnablePicker(bool b);
+	void SetPerspectiveProjection(bool b);
 	void SetCamViewingAngle(t_real_gl angle);
 	void SetCamPosition(const t_vec3_gl& pos);
-	void SetPerspectiveProjection(bool b);
+	void SetCamRotation(const t_vec2_gl& rot);
 
 	t_real_gl GetCamViewingAngle() const { return m_camViewingAngle; }
-	t_vec3_gl GetCamPosition() const;
 	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
+	t_vec3_gl GetCamPosition() const;
+	t_vec2_gl GetCamRotation() const;
 
 
 signals:
@@ -106,6 +108,7 @@ signals:
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
+	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
 
 protected:
 	// ------------------------------------------------------------------------
@@ -158,6 +161,7 @@ protected:
 	t_real_gl m_phi = 0, m_theta = 0;
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
+	const t_real_gl m_rotSpeed = 0.02;
 
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;
