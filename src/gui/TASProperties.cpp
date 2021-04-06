@@ -1,11 +1,11 @@
 /**
- * perperties dock widget
+ * TAS properties dock widget
  * @author Tobias Weber <tweber@ill.fr>
  * @date mar-2021
  * @license GPLv3, see 'LICENSE' file
  */
 
-#include "Properties.h"
+#include "TASProperties.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>
@@ -32,14 +32,14 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	{
 		spin->setMinimum(-180);
 		spin->setMaximum(180);
-		spin->setDecimals(2);
+		spin->setDecimals(3);
 	}
 
 	for(QDoubleSpinBox *spin : {m_spinMonoXtalAngle, m_spinSampleXtalAngle, m_spinAnaXtalAngle})
 	{
 		spin->setMinimum(-360);
 		spin->setMaximum(360);
-		spin->setDecimals(2);
+		spin->setDecimals(3);
 	}
 
 	auto *groupScatterAngles = new QGroupBox("Scattering Angles", this);
@@ -78,9 +78,11 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	grid->setHorizontalSpacing(4);
 	grid->setVerticalSpacing(4);
 	grid->setContentsMargins(6,6,6,6);
-	grid->addWidget(groupScatterAngles, 0, 0, 1, 1);
-	grid->addWidget(groupXtalAngles, 1, 0, 1, 1);
-	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), 2, 0, 1, 1);
+
+	int y = 0;
+	grid->addWidget(groupScatterAngles, y++, 0, 1, 1);
+	grid->addWidget(groupXtalAngles, y++, 0, 1, 1);
+	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
 	connect(m_spinMonoScAngle, 
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
@@ -101,6 +103,11 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	connect(m_spinAnaXtalAngle, 
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::AnaCrystalAngleChanged);
+}
+
+
+TASPropertiesWidget::~TASPropertiesWidget()
+{
 }
 
 
@@ -134,11 +141,6 @@ void TASPropertiesWidget::SetAnaCrystalAngle(t_real angle)
 {
 	m_spinAnaXtalAngle->setValue(angle);
 }
-
-
-TASPropertiesWidget::~TASPropertiesWidget()
-{
-}
 // --------------------------------------------------------------------------------
 
 
@@ -150,7 +152,7 @@ TASPropertiesDockWidget::TASPropertiesDockWidget(QWidget *parent)
 	: QDockWidget{parent}, 
 		m_widget{std::make_shared<TASPropertiesWidget>(this)}
 {
-	setObjectName("PropertiesDockWidget");
+	setObjectName("TASPropertiesDockWidget");
 	setWindowTitle("Instrument Properties");
 
 	setWidget(m_widget.get());

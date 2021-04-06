@@ -34,7 +34,8 @@ namespace pt = boost::property_tree;
 #include "src/core/ptree_algos.h"
 
 #include "PathsRenderer.h"
-#include "Properties.h"
+#include "TASProperties.h"
+#include "CamProperties.h"
 #include "About.h"
 
 
@@ -65,6 +66,7 @@ private:
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
+	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 
 	// recent file list and currently active file
 	QStringList m_recentFiles;
@@ -359,6 +361,18 @@ protected slots:
 		std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
 			= m_renderer->GetGlDescr();
 
+		// get viewing angle
+		t_real viewingAngle = m_renderer ? m_renderer->GetCamViewingAngle() : tl2::pi<t_real>*0.5;
+		m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
+
+		// get perspective projection flag
+		bool persp = m_renderer ? m_renderer->GetPerspectiveProjection() : true;
+		m_camProperties->GetWidget()->SetPerspectiveProj(persp);
+
+		// get camera position
+		t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
+		m_camProperties->GetWidget()->SetCamPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
+
 		m_renderer->LoadInstrument(m_instrspace);
 	}
 
@@ -433,7 +447,17 @@ public:
 		connect(m_renderer.get(), &PathsRenderer::ObjectClicked, this, &PathsTool::ObjectClicked);
 		connect(m_renderer.get(), &PathsRenderer::ObjectDragged, this, &PathsTool::ObjectDragged);
 		connect(m_renderer.get(), &PathsRenderer::AfterGLInitialisation, this, &PathsTool::AfterGLInitialisation);
+		connect(m_renderer.get(), &PathsRenderer::CamPositionChanged,
+			[this](t_real_gl _x, t_real_gl _y, t_real_gl _z) -> void
+			{
+				t_real x = t_real(_x);
+				t_real y = t_real(_y);
+				t_real z = t_real(_z);
 
+				if(m_camProperties)
+					m_camProperties->GetWidget()->SetCamPosition(x, y, z);
+			});
+	
 		auto pGrid = new QGridLayout(plotpanel);
 		pGrid->setSpacing(4);
 		pGrid->setContentsMargins(4,4,4,4);
@@ -448,9 +472,13 @@ public:
 		// dock widgets
 		// --------------------------------------------------------------------
 		m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
+		m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
+
 		addDockWidget(Qt::RightDockWidgetArea, m_tasProperties.get());
+		addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
 
 		auto* taswidget = m_tasProperties->GetWidget().get();
+		auto* camwidget = m_camProperties->GetWidget().get();
 
 		// scattering angles
 		connect(taswidget, &TASPropertiesWidget::MonoScatteringAngleChanged,
@@ -490,6 +518,34 @@ public:
 			{
 				m_instrspace.GetInstrument().GetAnalyser().
 					SetAxisAngleInternal(angle/t_real{180}*tl2::pi<t_real>);
+			});
+
+		// camera viewing angle
+		connect(camwidget, &CamPropertiesWidget::ViewingAngleChanged,
+			[this](t_real angle) -> void
+			{
+				if(m_renderer)
+					m_renderer->SetCamViewingAngle(angle/t_real{180}*tl2::pi<t_real>);
+			});
+
+		// camera projection
+		connect(camwidget, &CamPropertiesWidget::PerspectiveProjChanged,
+			[this](bool persp) -> void
+			{
+				if(m_renderer)
+					m_renderer->SetPerspectiveProjection(persp);
+			});
+
+		// camera position
+		connect(camwidget, &CamPropertiesWidget::CamPositionChanged,
+			[this](t_real _x, t_real _y, t_real _z) -> void
+			{
+				t_real_gl x = t_real_gl(_x);
+				t_real_gl y = t_real_gl(_y);
+				t_real_gl z = t_real_gl(_z);
+
+				if(m_renderer)
+					m_renderer->SetCamPosition(tl2::create<t_vec3_gl>({x, y, z}));
 			});
 		// --------------------------------------------------------------------
 
@@ -542,7 +598,7 @@ public:
 		// view menu
 		QMenu *menuView = new QMenu("View", m_menubar);
 
-		QAction *acPersp = new QAction("Perspective Projection", menuView);
+		/*QAction *acPersp = new QAction("Perspective Projection", menuView);
 		acPersp->setCheckable(true);
 		acPersp->setChecked(true);
 
@@ -550,11 +606,12 @@ public:
 		{
 			if(m_renderer)
 				m_renderer->SetPerspectiveProjection(b);
-		});
+		});*/
 
 		menuView->addAction(m_tasProperties->toggleViewAction());
-		menuView->addSeparator();
-		menuView->addAction(acPersp);
+		menuView->addAction(m_camProperties->toggleViewAction());
+		//menuView->addSeparator();
+		//menuView->addAction(acPersp);
 
 
 		// help menu

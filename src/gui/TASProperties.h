@@ -1,12 +1,12 @@
 /**
- * perperties dock widget
+ * TAS properties dock widget
  * @author Tobias Weber <tweber@ill.fr>
  * @date mar-2021
  * @license GPLv3, see 'LICENSE' file
  */
 
-#ifndef __PROP_WIDGET_H__
-#define __PROP_WIDGET_H__
+#ifndef __TAS_PROP_WIDGET_H__
+#define __TAS_PROP_WIDGET_H__
 
 #include <memory>
 #include <QtWidgets/QWidget>

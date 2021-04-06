@@ -302,6 +302,7 @@ void PathsRenderer::UpdateCam()
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
 
 	m_pickerNeedsUpdate = true;
+	emit CamPositionChanged(m_matCamTrans(0,3), m_matCamTrans(1,3), m_matCamTrans(2,3));
 	update();
 }
 
@@ -664,6 +665,40 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
 }
 
 
+void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
+{
+	m_camViewingAngle = angle;
+	m_perspectiveNeedsUpdate = true;
+}
+
+
+void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
+{
+	m_matCamTrans(0,3) = pos[0];
+	m_matCamTrans(1,3) = pos[1];
+	m_matCamTrans(2,3) = pos[2];
+
+	UpdateCam();
+}
+
+
+t_vec3_gl PathsRenderer::GetCamPosition() const
+{
+	return tl2::create<t_vec3_gl>({
+		m_matCamTrans(0,3),
+		m_matCamTrans(1,3),
+		m_matCamTrans(2,3),
+	});
+}
+
+
+void PathsRenderer::SetPerspectiveProjection(bool b)
+{
+	m_perspectiveProjection = b; 
+	m_perspectiveNeedsUpdate = true;
+}
+
+
 void PathsRenderer::UpdatePerspective()
 {
 	auto *pGl = GetGlFunctions();
@@ -675,10 +710,15 @@ void PathsRenderer::UpdatePerspective()
 	const t_real_gl farPlane = 1000.;
 
 	if(m_perspectiveProjection)
+	{
 		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, tl2::pi<t_real_gl>*0.5, t_real_gl(m_screenDims[1])/t_real_gl(m_screenDims[0]));
+			nearPlane, farPlane, m_camViewingAngle, 
+			t_real_gl(m_screenDims[1])/t_real_gl(m_screenDims[0]));
+	}
 	else
+	{
 		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(nearPlane, farPlane, -10., 10., -10., 10.);
+	}
 
 	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
 
