@@ -1036,7 +1036,13 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	{
 		auto diff = (m_posMouse - m_posMouseRotationStart) * m_rotSpeed;
 		m_phi = diff.x() + m_phi_saved;
-		m_theta = diff.y() + m_theta_saved;
+		t_real theta_new = diff.y() + m_theta_saved;
+
+		// wrap around phi angle
+		m_phi = tl2::mod_pos<t_real>(m_phi, t_real(2)*tl2::pi<t_real>);
+
+		// restrict theta angle
+		m_theta = tl2::clamp<t_real>(theta_new, -tl2::pi<t_real>*t_real(0.5), 0);
 
 		UpdateCam();
 	}
@@ -1112,10 +1118,8 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 		// end rotation
 		if(m_inRotation)
 		{
-			auto diff = (m_posMouse - m_posMouseRotationStart) * m_rotSpeed;
-			m_phi_saved += diff.x();
-			m_theta_saved += diff.y();
-
+			m_phi_saved = m_phi;
+			m_theta_saved = m_theta;
 			m_inRotation = false;
 		}
 	}

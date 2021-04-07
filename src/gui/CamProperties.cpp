@@ -36,13 +36,14 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		m_spinPos[pos]->setDecimals(3);
 	}
 
-	for(int rot=0; rot<2; ++rot)
-	{
-		m_spinRot[rot] = new QDoubleSpinBox(this);
-		m_spinRot[rot]->setMinimum(-180);
-		m_spinRot[rot]->setMaximum(+180);
-		m_spinRot[rot]->setDecimals(2);
-	}
+	m_spinRot[0] = new QDoubleSpinBox(this);
+	m_spinRot[0]->setMinimum(0);
+	m_spinRot[0]->setMaximum(360);
+	m_spinRot[0]->setDecimals(2);
+	m_spinRot[1] = new QDoubleSpinBox(this);
+	m_spinRot[1]->setMinimum(-90);
+	m_spinRot[1]->setMaximum(0);
+	m_spinRot[1]->setDecimals(2);
 
 	auto *groupProj = new QGroupBox("Projection", this);
 	{
