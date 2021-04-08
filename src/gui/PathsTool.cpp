@@ -35,6 +35,8 @@ namespace pt = boost::property_tree;
 
 #include "PathsRenderer.h"
 #include "TASProperties.h"
+#include "XtalProperties.h"
+#include "PathProperties.h"
 #include "CamProperties.h"
 #include "About.h"
 
@@ -66,6 +68,8 @@ private:
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
+	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
+	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 
 	// recent file list and currently active file
@@ -492,13 +496,21 @@ public:
 		// --------------------------------------------------------------------
 		// dock widgets
 		// --------------------------------------------------------------------
+		setDockOptions(QMainWindow::AllowNestedDocks | QMainWindow::AllowTabbedDocks | QMainWindow::VerticalTabs);
+
 		m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
+		m_xtalProperties = std::make_shared<XtalPropertiesDockWidget>(this);
+		m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 		m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
 		addDockWidget(Qt::RightDockWidgetArea, m_tasProperties.get());
+		addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
+		addDockWidget(Qt::LeftDockWidgetArea, m_pathProperties.get());
 		addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
 
 		auto* taswidget = m_tasProperties->GetWidget().get();
+		auto* xtalwidget = m_xtalProperties->GetWidget().get();
+		auto* pathwidget = m_pathProperties->GetWidget().get();
 		auto* camwidget = m_camProperties->GetWidget().get();
 
 		// scattering angles
@@ -581,6 +593,40 @@ public:
 						{phi/t_real_gl{180}*tl2::pi<t_real_gl>, 
 						theta/t_real_gl{180}*tl2::pi<t_real_gl>}));
 			});
+
+		// lattice constants and angles
+		connect(xtalwidget, &XtalPropertiesWidget::LatticeChanged,
+			[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
+			{
+				std::cout << "lattice changed" << std::endl;
+			});
+
+		connect(xtalwidget, &XtalPropertiesWidget::PlaneChanged,
+			[this](t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z) -> void
+			{
+				std::cout << "plane changed" << std::endl;
+			});
+
+		// start coordinates
+		connect(pathwidget, &PathPropertiesWidget::StartChanged,
+			[this](t_real h, t_real k, t_real l, t_real E) -> void
+			{
+				std::cout << "start coords changed" << std::endl;
+			});
+
+		// finish coordinates
+		connect(pathwidget, &PathPropertiesWidget::FinishChanged,
+			[this](t_real h, t_real k, t_real l, t_real E) -> void
+			{
+				std::cout << "finish coords changed" << std::endl;
+			});
+
+		// goto coordinates
+		connect(pathwidget, &PathPropertiesWidget::Goto,
+			[this](t_real h, t_real k, t_real l, t_real E) -> void
+			{
+				std::cout << "goto " << h << " " << k << " " << l << " " << E << std::endl;
+			});
 		// --------------------------------------------------------------------
 
 
@@ -643,6 +689,8 @@ public:
 		});*/
 
 		menuView->addAction(m_tasProperties->toggleViewAction());
+		menuView->addAction(m_xtalProperties->toggleViewAction());
+		menuView->addAction(m_pathProperties->toggleViewAction());
 		menuView->addAction(m_camProperties->toggleViewAction());
 		//menuView->addSeparator();
 		//menuView->addAction(acPersp);

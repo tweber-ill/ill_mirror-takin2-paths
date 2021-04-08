@@ -1,0 +1,209 @@
+/**
+ * path properties dock widget
+ * @author Tobias Weber <tweber@ill.fr>
+ * @date apr-2021
+ * @license GPLv3, see 'LICENSE' file
+ */
+
+#include "PathProperties.h"
+
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QPushButton>
+
+
+// --------------------------------------------------------------------------------
+// properties widget
+// --------------------------------------------------------------------------------
+PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
+	: QWidget{parent}
+{
+	for(int i=0; i<4; ++i)
+	{
+		m_spinStart[i] = new QDoubleSpinBox(this);
+		m_spinFinish[i] = new QDoubleSpinBox(this);
+
+		m_spinStart[i]->setMinimum(-999);
+		m_spinStart[i]->setMaximum(999);
+		m_spinStart[i]->setValue(0);
+		m_spinStart[i]->setDecimals(3);
+		m_spinStart[i]->setSuffix(i==3 ? " meV" : " rlu");
+
+		m_spinFinish[i]->setMinimum(-999);
+		m_spinFinish[i]->setMaximum(999);
+		m_spinFinish[i]->setValue(0);
+		m_spinFinish[i]->setDecimals(3);
+		m_spinFinish[i]->setSuffix(i==3 ? " meV" : " rlu");
+	}
+
+	QPushButton *btnGotoStart = new QPushButton("Go to Start Coordinate", this);
+	QPushButton *btnGotoFinish = new QPushButton("Go to Finish Coordinate", this);
+
+	auto *groupStart = new QGroupBox("Start Coordinate", this);
+	{
+		auto *layoutStart = new QGridLayout(groupStart);
+		layoutStart->setHorizontalSpacing(2);
+		layoutStart->setVerticalSpacing(2);
+		layoutStart->setContentsMargins(4,4,4,4);
+
+		int y = 0;
+		layoutStart->addWidget(new QLabel("h:", this), y, 0, 1, 1);
+		layoutStart->addWidget(m_spinStart[0], y++, 1, 1, 1);
+		layoutStart->addWidget(new QLabel("k:", this), y, 0, 1, 1);
+		layoutStart->addWidget(m_spinStart[1], y++, 1, 1, 1);
+		layoutStart->addWidget(new QLabel("l:", this), y, 0, 1, 1);
+		layoutStart->addWidget(m_spinStart[2], y++, 1, 1, 1);
+		layoutStart->addWidget(new QLabel("E:", this), y, 0, 1, 1);
+		layoutStart->addWidget(m_spinStart[3], y++, 1, 1, 1);
+
+		layoutStart->addWidget(btnGotoStart, y++, 0, 1, 2);
+	}
+
+	auto *groupFinish = new QGroupBox("Finish Coordinate", this);
+	{
+		auto *layoutFinish = new QGridLayout(groupFinish);
+		layoutFinish->setHorizontalSpacing(2);
+		layoutFinish->setVerticalSpacing(2);
+		layoutFinish->setContentsMargins(4,4,4,4);
+
+		int y = 0;
+		layoutFinish->addWidget(new QLabel("h:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(m_spinFinish[0], y++, 1, 1, 1);
+		layoutFinish->addWidget(new QLabel("k:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(m_spinFinish[1], y++, 1, 1, 1);
+		layoutFinish->addWidget(new QLabel("l:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(m_spinFinish[2], y++, 1, 1, 1);
+		layoutFinish->addWidget(new QLabel("E:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(m_spinFinish[3], y++, 1, 1, 1);
+
+		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
+	}
+
+	auto *grid = new QGridLayout(this);
+	grid->setHorizontalSpacing(2);
+	grid->setVerticalSpacing(2);
+	grid->setContentsMargins(4,4,4,4);
+
+	int y = 0;
+	grid->addWidget(groupStart, y++, 0, 1, 1);
+	grid->addWidget(groupFinish, y++, 0, 1, 1);
+	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
+
+	for(int i=0; i<4; ++i)
+	{
+		// start coordinates
+		connect(m_spinStart[i],
+			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			[this, i](t_real val) -> void
+			{
+				t_real coords[4];
+				for(int j=0; j<4; ++j)
+				{
+					if(j == i)
+						coords[j] = val;
+					else
+						coords[j] = m_spinStart[j]->value();
+				}
+
+				emit StartChanged(coords[0], coords[1], coords[2], coords[3]);
+			});
+
+		// finish coordinates
+		connect(m_spinFinish[i],
+			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			[this, i](t_real val) -> void
+			{
+				t_real coords[4];
+				for(int j=0; j<4; ++j)
+				{
+					if(j == i)
+						coords[j] = val;
+					else
+						coords[j] = m_spinFinish[j]->value();
+				}
+
+				emit FinishChanged(coords[0], coords[1], coords[2], coords[3]);
+			});
+	}
+
+	// go to start coordinate
+	connect(btnGotoStart, &QPushButton::clicked,
+		[this]() -> void
+		{
+			t_real h = m_spinStart[0]->value();
+			t_real k = m_spinStart[1]->value();
+			t_real l = m_spinStart[2]->value();
+			t_real E = m_spinStart[3]->value();
+
+			emit Goto(h, k, l, E);
+		});
+
+	// go to finish coordinate
+	connect(btnGotoFinish, &QPushButton::clicked,
+		[this]() -> void
+		{
+			t_real h = m_spinFinish[0]->value();
+			t_real k = m_spinFinish[1]->value();
+			t_real l = m_spinFinish[2]->value();
+			t_real E = m_spinFinish[3]->value();
+
+			emit Goto(h, k, l, E);
+		});
+}
+
+
+PathPropertiesWidget::~PathPropertiesWidget()
+{
+}
+
+
+void PathPropertiesWidget::SetStart(t_real h, t_real k, t_real l, t_real E)
+{
+	this->blockSignals(true);
+
+	m_spinStart[0]->setValue(h);
+	m_spinStart[1]->setValue(k);
+	m_spinStart[2]->setValue(l);
+	m_spinStart[3]->setValue(E);
+
+	this->blockSignals(false);
+}
+
+
+void PathPropertiesWidget::SetFinish(t_real h, t_real k, t_real l, t_real E)
+{
+	this->blockSignals(true);
+
+	m_spinFinish[0]->setValue(h);
+	m_spinFinish[1]->setValue(k);
+	m_spinFinish[2]->setValue(l);
+	m_spinFinish[3]->setValue(E);
+
+	this->blockSignals(false);
+}
+// --------------------------------------------------------------------------------
+
+
+
+// --------------------------------------------------------------------------------
+// properties dock widget
+// --------------------------------------------------------------------------------
+PathPropertiesDockWidget::PathPropertiesDockWidget(QWidget *parent)
+	: QDockWidget{parent}, 
+		m_widget{std::make_shared<PathPropertiesWidget>(this)}
+{
+	setObjectName("PathPropertiesDockWidget");
+	setWindowTitle("Path Properties");
+
+	setWidget(m_widget.get());
+}
+
+
+PathPropertiesDockWidget::~PathPropertiesDockWidget()
+{
+}
+// --------------------------------------------------------------------------------

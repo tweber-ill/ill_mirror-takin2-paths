@@ -81,6 +81,8 @@ add_executable(paths
 	src/gui/About.cpp src/gui/About.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/TASProperties.cpp src/gui/TASProperties.h
+	src/gui/XtalProperties.cpp src/gui/XtalProperties.h
+	src/gui/PathProperties.cpp src/gui/PathProperties.h
 	src/gui/CamProperties.cpp src/gui/CamProperties.h
 
 	src/core/Geometry.cpp src/core/Geometry.h

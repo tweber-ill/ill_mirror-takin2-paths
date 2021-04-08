@@ -33,6 +33,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		spin->setMinimum(-180);
 		spin->setMaximum(180);
 		spin->setDecimals(3);
+		spin->setSuffix("°");
 	}
 
 	for(QDoubleSpinBox *spin : {m_spinMonoXtalAngle, m_spinSampleXtalAngle, m_spinAnaXtalAngle})
@@ -40,14 +41,15 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		spin->setMinimum(-360);
 		spin->setMaximum(360);
 		spin->setDecimals(3);
+		spin->setSuffix("°");
 	}
 
 	auto *groupScatterAngles = new QGroupBox("Scattering Angles", this);
 	{
 		auto *layoutScatterAngles = new QGridLayout(groupScatterAngles);
-		layoutScatterAngles->setHorizontalSpacing(4);
-		layoutScatterAngles->setVerticalSpacing(4);
-		layoutScatterAngles->setContentsMargins(6,6,6,6);
+		layoutScatterAngles->setHorizontalSpacing(2);
+		layoutScatterAngles->setVerticalSpacing(2);
+		layoutScatterAngles->setContentsMargins(4,4,4,4);
 
 		int y = 0;
 		layoutScatterAngles->addWidget(new QLabel("Monochromator:", this), y, 0, 1, 1);
@@ -61,9 +63,9 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	auto *groupXtalAngles = new QGroupBox("Crystal Angles", this);
 	{
 		auto *layoutXtalAngles = new QGridLayout(groupXtalAngles);
-		layoutXtalAngles->setHorizontalSpacing(4);
-		layoutXtalAngles->setVerticalSpacing(4);
-		layoutXtalAngles->setContentsMargins(6,6,6,6);
+		layoutXtalAngles->setHorizontalSpacing(2);
+		layoutXtalAngles->setVerticalSpacing(2);
+		layoutXtalAngles->setContentsMargins(4,4,4,4);
 
 		int y = 0;
 		layoutXtalAngles->addWidget(new QLabel("Monochromator:", this), y, 0, 1, 1);
@@ -75,9 +77,9 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	}
 
 	auto *grid = new QGridLayout(this);
-	grid->setHorizontalSpacing(4);
-	grid->setVerticalSpacing(4);
-	grid->setContentsMargins(6,6,6,6);
+	grid->setHorizontalSpacing(2);
+	grid->setVerticalSpacing(2);
+	grid->setContentsMargins(4,4,4,4);
 
 	int y = 0;
 	grid->addWidget(groupScatterAngles, y++, 0, 1, 1);

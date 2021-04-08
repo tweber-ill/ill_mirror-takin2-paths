@@ -12,6 +12,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QGroupBox>
+#include <QtWidgets/QFrame>
 
 
 // --------------------------------------------------------------------------------
@@ -23,6 +24,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinViewingAngle = new QDoubleSpinBox(this);
 	m_spinViewingAngle->setMinimum(1);
 	m_spinViewingAngle->setMaximum(179);
+	m_spinViewingAngle->setSuffix("°");
 
 	m_checkPerspectiveProj = new QCheckBox(this);
 	m_checkPerspectiveProj->setText("Perspective Projection");
@@ -40,17 +42,19 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinRot[0]->setMinimum(0);
 	m_spinRot[0]->setMaximum(360);
 	m_spinRot[0]->setDecimals(2);
+	m_spinRot[0]->setSuffix("°");
 	m_spinRot[1] = new QDoubleSpinBox(this);
 	m_spinRot[1]->setMinimum(-90);
 	m_spinRot[1]->setMaximum(0);
 	m_spinRot[1]->setDecimals(2);
+	m_spinRot[1]->setSuffix("°");
 
 	auto *groupProj = new QGroupBox("Projection", this);
 	{
 		auto *layoutProj = new QGridLayout(groupProj);
-		layoutProj->setHorizontalSpacing(4);
-		layoutProj->setVerticalSpacing(4);
-		layoutProj->setContentsMargins(6,6,6,6);
+		layoutProj->setHorizontalSpacing(2);
+		layoutProj->setVerticalSpacing(2);
+		layoutProj->setContentsMargins(4,4,4,4);
 
 		int y = 0;
 		layoutProj->addWidget(new QLabel("Viewing Angle:", this), y, 0, 1, 1);
@@ -61,9 +65,9 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	auto *groupVecs = new QGroupBox("Vectors", this);
 	{
 		auto *layoutVecs = new QGridLayout(groupVecs);
-		layoutVecs->setHorizontalSpacing(4);
-		layoutVecs->setVerticalSpacing(4);
-		layoutVecs->setContentsMargins(6,6,6,6);
+		layoutVecs->setHorizontalSpacing(2);
+		layoutVecs->setVerticalSpacing(2);
+		layoutVecs->setContentsMargins(4,4,4,4);
 
 		int y = 0;
 		layoutVecs->addWidget(new QLabel("Position x:", this), y, 0, 1, 1);
@@ -73,6 +77,10 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		layoutVecs->addWidget(new QLabel("Position z:", this), y, 0, 1, 1);
 		layoutVecs->addWidget(m_spinPos[2], y++, 1, 1, 1);
 
+		QFrame *separator = new QFrame(this);
+		separator->setFrameStyle(QFrame::HLine);
+		layoutVecs->addWidget(separator, y++, 0, 1, 2);
+
 		layoutVecs->addWidget(new QLabel("Rotation φ:", this), y, 0, 1, 1);
 		layoutVecs->addWidget(m_spinRot[0], y++, 1, 1, 1);
 		layoutVecs->addWidget(new QLabel("Rotation θ:", this), y, 0, 1, 1);
@@ -80,9 +88,9 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	}
 
 	auto *grid = new QGridLayout(this);
-	grid->setHorizontalSpacing(4);
-	grid->setVerticalSpacing(4);
-	grid->setContentsMargins(6,6,6,6);
+	grid->setHorizontalSpacing(2);
+	grid->setVerticalSpacing(2);
+	grid->setContentsMargins(4,4,4,4);
 
 	int y = 0;
 	grid->addWidget(groupProj, y++, 0, 1, 1);
@@ -102,49 +110,44 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		});
 
 	// position
-	connect(m_spinPos[0], 
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real x) -> void
-		{
-			t_real y = m_spinPos[1]->value();
-			t_real z = m_spinPos[2]->value();
+	for(int i=0; i<3; ++i)
+	{
+		connect(m_spinPos[i],
+			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			[this, i](t_real val) -> void
+			{
+				t_real pos[3];
+				for(int j=0; j<3; ++j)
+				{
+					if(j == i)
+						pos[j] = val;
+					else
+						pos[j] = m_spinPos[j]->value();
+				}
 
-			emit CamPositionChanged(x, y, z);
-		});
-	connect(m_spinPos[1], 
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real y) -> void
-		{
-			t_real x = m_spinPos[0]->value();
-			t_real z = m_spinPos[2]->value();
-
-			emit CamPositionChanged(x, y, z);
-		});
-	connect(m_spinPos[2], 
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real z) -> void
-		{
-			t_real x = m_spinPos[0]->value();
-			t_real y = m_spinPos[1]->value();
-
-			emit CamPositionChanged(x, y, z);
-		});
+				emit CamPositionChanged(pos[0], pos[1], pos[2]);
+			});
+	}
 
 	// rotation
-	connect(m_spinRot[0], 
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real phi) -> void
-		{
-			t_real theta = m_spinRot[1]->value();
-			emit CamRotationChanged(phi, theta);
-		});
-	connect(m_spinRot[1], 
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real theta) -> void
-		{
-			t_real phi = m_spinRot[0]->value();
-			emit CamRotationChanged(phi, theta);
-		});
+	for(int i=0; i<2; ++i)
+	{
+		connect(m_spinRot[i],
+			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			[this, i](t_real angle) -> void
+			{
+				t_real angles[2];
+				for(int j=0; j<2; ++j)
+				{
+					if(j == i)
+						angles[j] = angle;
+					else
+						angles[j] = m_spinRot[j]->value();
+				}
+
+				emit CamRotationChanged(angles[0], angles[1]);
+			});
+	}
 }
 
 
