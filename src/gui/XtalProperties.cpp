@@ -131,9 +131,9 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 						vals[j] = m_spinLatticeConsts[j]->value();
 				}
 
-				t_real alpha = m_spinLatticeAngles[0]->value();
-				t_real beta = m_spinLatticeAngles[1]->value();
-				t_real gamma = m_spinLatticeAngles[2]->value();
+				t_real alpha = m_spinLatticeAngles[0]->value() / t_real(180)*tl2::pi<t_real>;
+				t_real beta = m_spinLatticeAngles[1]->value() / t_real(180)*tl2::pi<t_real>;
+				t_real gamma = m_spinLatticeAngles[2]->value() / t_real(180)*tl2::pi<t_real>;
 
 				emit LatticeChanged(vals[0], vals[1], vals[2], alpha, beta, gamma);
 			});
@@ -143,20 +143,20 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real angle) -> void
 			{
-				t_real vals[3];
+				t_real angles[3];
 				for(int j=0; j<3; ++j)
 				{
 					if(j == i)
-						vals[j] = angle;
+						angles[j] = angle / t_real(180)*tl2::pi<t_real>;
 					else
-						vals[j] = m_spinLatticeAngles[j]->value();
+						angles[j] = m_spinLatticeAngles[j]->value() / t_real(180)*tl2::pi<t_real>;
 				}
 
 				t_real a = m_spinLatticeConsts[0]->value();
 				t_real b = m_spinLatticeConsts[1]->value();
 				t_real c = m_spinLatticeConsts[2]->value();
 
-				emit LatticeChanged(a, b, c, vals[0], vals[1], vals[2]);
+				emit LatticeChanged(a, b, c, angles[0], angles[1], angles[2]);
 			});
 	}
 

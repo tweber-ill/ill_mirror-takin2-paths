@@ -83,6 +83,28 @@ private:
 	t_real m_mouseX, m_mouseY;
 	std::string m_curObj;
 
+	// crystal matrices
+	t_mat m_B = tl2::B_matrix<t_mat>(5., 5., 5., tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5);
+	t_mat m_UB = tl2::unit<t_mat>(3);
+
+	// scattering plane
+	t_vec m_plane_rlu[3] = {
+		tl2::create<t_vec>({1,0,0}),
+		tl2::create<t_vec>({0,1,0}),
+		tl2::create<t_vec>({0,0,1}),
+	};
+
+
+protected:
+	void UpdateUB()
+	{
+		m_UB = tl2::UB_matrix<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1], m_plane_rlu[2]);
+
+		using namespace tl2_ops;
+		std::cout << "B matrix: " << m_B << std::endl;
+		std::cout << "UB matrix: " << m_UB << std::endl;
+	}
+
 
 protected:
 	virtual void closeEvent(QCloseEvent *) override
@@ -357,6 +379,15 @@ protected:
 
 protected slots:
 	/**
+	 * go to crystal coordinates
+	 */
+	void GotoCoordinates(t_real h, t_real k, t_real l, t_real E)
+	{
+		std::cout << h << " " << k << " " << l << " " << E << std::endl;
+	}
+
+
+	/**
 	 * called after the plotter has initialised
 	 */
 	void AfterGLInitialisation()
@@ -598,17 +629,23 @@ public:
 		connect(xtalwidget, &XtalPropertiesWidget::LatticeChanged,
 			[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
 			{
-				std::cout << "lattice changed" << std::endl;
+				m_B = tl2::B_matrix<t_mat>(a, b, c, alpha, beta, gamma);
+
+				UpdateUB();
 			});
 
 		connect(xtalwidget, &XtalPropertiesWidget::PlaneChanged,
 			[this](t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z) -> void
 			{
-				std::cout << "plane changed" << std::endl;
+				m_plane_rlu[0] = tl2::create<t_vec>({vec1_x, vec1_y, vec1_z});
+				m_plane_rlu[1] = tl2::create<t_vec>({vec2_x, vec2_y, vec2_z});
+				m_plane_rlu[2] = tl2::cross<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1]);
+
+				UpdateUB();
 			});
 
 		// start coordinates
-		connect(pathwidget, &PathPropertiesWidget::StartChanged,
+		/*connect(pathwidget, &PathPropertiesWidget::StartChanged,
 			[this](t_real h, t_real k, t_real l, t_real E) -> void
 			{
 				std::cout << "start coords changed" << std::endl;
@@ -619,14 +656,10 @@ public:
 			[this](t_real h, t_real k, t_real l, t_real E) -> void
 			{
 				std::cout << "finish coords changed" << std::endl;
-			});
+			});*/
 
 		// goto coordinates
-		connect(pathwidget, &PathPropertiesWidget::Goto,
-			[this](t_real h, t_real k, t_real l, t_real E) -> void
-			{
-				std::cout << "goto " << h << " " << k << " " << l << " " << E << std::endl;
-			});
+		connect(pathwidget, &PathPropertiesWidget::Goto, this, &PathsTool::GotoCoordinates);
 		// --------------------------------------------------------------------
 
 
@@ -771,6 +804,13 @@ public:
 		// recent files
 		if(m_sett.contains("recent_files"))
 			SetRecentFiles(m_sett.value("recent_files").toStringList());
+		// --------------------------------------------------------------------
+
+
+		// --------------------------------------------------------------------
+		// initialisations
+		// --------------------------------------------------------------------
+		UpdateUB();
 		// --------------------------------------------------------------------
 	}
 };

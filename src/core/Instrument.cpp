@@ -113,6 +113,8 @@ const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) co
 		case AxisAngle::OUT: return m_comps_out;
 		case AxisAngle::INTERNAL: return m_comps_internal;
 	}
+
+	return m_comps_in;
 }
 
 
