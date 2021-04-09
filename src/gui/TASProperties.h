@@ -12,6 +12,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QCheckBox>
 
 #include "src/core/types.h"
 
@@ -31,6 +32,9 @@ public slots:
 	void SetSampleCrystalAngle(t_real angle);
 	void SetAnaCrystalAngle(t_real angle);
 
+	void SetDSpacings(t_real dmono, t_real dana);
+	void SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw);
+
 signals:
 	void MonoScatteringAngleChanged(t_real angle);
 	void SampleScatteringAngleChanged(t_real angle);
@@ -39,6 +43,9 @@ signals:
 	void MonoCrystalAngleChanged(t_real angle);
 	void SampleCrystalAngleChanged(t_real angle);
 	void AnaCrystalAngleChanged(t_real angle);	
+
+	void DSpacingsChanged(t_real dmono, t_real dana);
+	void ScatteringSensesChanged(bool monoccw, bool sampleccw, bool anaccw);
 
 private:
 	// scattering angles
@@ -50,6 +57,13 @@ private:
 	QDoubleSpinBox *m_spinMonoXtalAngle{nullptr};
 	QDoubleSpinBox *m_spinSampleXtalAngle{nullptr};
 	QDoubleSpinBox *m_spinAnaXtalAngle{nullptr};
+
+	// d spacings
+	QDoubleSpinBox *m_spinMonoD{nullptr};
+	QDoubleSpinBox *m_spinAnaD{nullptr};
+
+	// scattering senses
+	QCheckBox *m_checkScatteringSense[3]{nullptr, nullptr, nullptr};
 };
 
 

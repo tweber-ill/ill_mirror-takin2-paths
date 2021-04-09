@@ -5,7 +5,7 @@
 #
 
 cmake_minimum_required(VERSION 3.0)
-project(paths)
+project(taspaths)
 enable_language(CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake")
@@ -76,8 +76,8 @@ add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 
 # -----------------------------------------------------------------------------
 # target executable settings
-add_executable(paths
-	src/gui/PathsTool.cpp
+add_executable(taspaths
+	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/About.cpp src/gui/About.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/TASProperties.cpp src/gui/TASProperties.h
@@ -93,32 +93,32 @@ add_executable(paths
 )
 
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-#	target_link_options(paths
+#	target_link_options(taspaths
 #		# create an __info_plist section in the binary
 #		PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/../../../core/setup_mac/InfoBundle.plist
 #	)
 #endif()
 
 if(QT_VER EQUAL 6)
-	target_include_directories(paths PUBLIC
+	target_include_directories(taspaths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
 		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
 		"${Qt6Core_INCLUDE_DIRS}/.."
 	)
 
-	target_link_libraries(paths
+	target_link_libraries(taspaths
 		${Boost_LIBRARIES}
 		${Lapacke_LIBRARIES}
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
 	)
 elseif(QT_VER EQUAL 5)
-	target_include_directories(paths PUBLIC
+	target_include_directories(taspaths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
 		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
 		"${Qt5Core_INCLUDE_DIRS}/.."
 	)
 
-	target_link_libraries(paths
+	target_link_libraries(taspaths
 		${Boost_LIBRARIES}
 		${Lapacke_LIBRARIES}
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
@@ -127,7 +127,7 @@ endif()
 
 # link resource directory
 add_custom_command(
-	TARGET paths PRE_BUILD
+	TARGET taspaths PRE_BUILD
 	COMMAND if [ ! -d res ]\; then ln -sf ../res\; fi
 )
 

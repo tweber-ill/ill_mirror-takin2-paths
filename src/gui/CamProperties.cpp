@@ -24,6 +24,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinViewingAngle = new QDoubleSpinBox(this);
 	m_spinViewingAngle->setMinimum(1);
 	m_spinViewingAngle->setMaximum(179);
+	m_spinViewingAngle->setSingleStep(1);
 	m_spinViewingAngle->setSuffix("°");
 
 	m_checkPerspectiveProj = new QCheckBox(this);
@@ -36,17 +37,21 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		m_spinPos[pos]->setMinimum(-100);
 		m_spinPos[pos]->setMaximum(+100);
 		m_spinPos[pos]->setDecimals(3);
+		m_spinPos[pos]->setSingleStep(1);
 	}
 
 	m_spinRot[0] = new QDoubleSpinBox(this);
 	m_spinRot[0]->setMinimum(0);
 	m_spinRot[0]->setMaximum(360);
 	m_spinRot[0]->setDecimals(2);
+	m_spinRot[0]->setSingleStep(1);
 	m_spinRot[0]->setSuffix("°");
+
 	m_spinRot[1] = new QDoubleSpinBox(this);
 	m_spinRot[1]->setMinimum(-90);
 	m_spinRot[1]->setMaximum(0);
 	m_spinRot[1]->setDecimals(2);
+	m_spinRot[1]->setSingleStep(1);
 	m_spinRot[1]->setSuffix("°");
 
 	auto *groupProj = new QGroupBox("Projection", this);

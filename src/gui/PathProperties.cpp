@@ -22,23 +22,23 @@
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
-	for(int i=0; i<m_num_coord_elems; ++i)
+	for(std::size_t i=0; i<m_num_coord_elems; ++i)
 	{
 		m_spinStart[i] = new QDoubleSpinBox(this);
 		m_spinFinish[i] = new QDoubleSpinBox(this);
 
 		m_spinStart[i]->setMinimum(-999);
 		m_spinStart[i]->setMaximum(999);
-		m_spinStart[i]->setValue(0);
 		m_spinStart[i]->setSingleStep(0.1);
 		m_spinStart[i]->setDecimals(3);
+		m_spinStart[i]->setValue(0);
 		m_spinStart[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 
 		m_spinFinish[i]->setMinimum(-999);
 		m_spinFinish[i]->setMaximum(999);
-		m_spinFinish[i]->setValue(0);
 		m_spinFinish[i]->setSingleStep(0.1);
 		m_spinFinish[i]->setDecimals(3);
+		m_spinFinish[i]->setValue(0);
 		m_spinFinish[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 	}
 

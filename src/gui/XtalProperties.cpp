@@ -28,15 +28,15 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 
 		m_spinLatticeConsts[i]->setMinimum(0);
 		m_spinLatticeConsts[i]->setMaximum(999);
-		m_spinLatticeConsts[i]->setValue(5);
 		m_spinLatticeConsts[i]->setSingleStep(0.1);
 		m_spinLatticeConsts[i]->setDecimals(3);
+		m_spinLatticeConsts[i]->setValue(5);
 		m_spinLatticeConsts[i]->setSuffix(" Å");
 
 		m_spinLatticeAngles[i]->setMinimum(0);
 		m_spinLatticeAngles[i]->setMaximum(180);
-		m_spinLatticeAngles[i]->setValue(90);
 		m_spinLatticeAngles[i]->setDecimals(2);
+		m_spinLatticeAngles[i]->setValue(90);
 		m_spinLatticeAngles[i]->setSuffix("°");
 	}
 
@@ -46,8 +46,8 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 
 		m_spinPlane[i]->setMinimum(-999);
 		m_spinPlane[i]->setMaximum(999);
-		m_spinPlane[i]->setValue((i==0 || i==4) ? 1 : 0);
 		m_spinPlane[i]->setDecimals(2);
+		m_spinPlane[i]->setValue((i==0 || i==4) ? 1 : 0);
 		m_spinPlane[i]->setSuffix(" rlu");
 	}
 
