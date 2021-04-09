@@ -155,7 +155,7 @@ TASPropertiesDockWidget::TASPropertiesDockWidget(QWidget *parent)
 		m_widget{std::make_shared<TASPropertiesWidget>(this)}
 {
 	setObjectName("TASPropertiesDockWidget");
-	setWindowTitle("Instrument Properties");
+	setWindowTitle("Instrument Axes");
 
 	setWidget(m_widget.get());
 }

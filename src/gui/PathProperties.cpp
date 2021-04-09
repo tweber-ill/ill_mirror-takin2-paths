@@ -22,7 +22,7 @@
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
-	for(int i=0; i<5; ++i)
+	for(int i=0; i<m_num_coord_elems; ++i)
 	{
 		m_spinStart[i] = new QDoubleSpinBox(this);
 		m_spinFinish[i] = new QDoubleSpinBox(this);
@@ -30,12 +30,14 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinStart[i]->setMinimum(-999);
 		m_spinStart[i]->setMaximum(999);
 		m_spinStart[i]->setValue(0);
+		m_spinStart[i]->setSingleStep(0.1);
 		m_spinStart[i]->setDecimals(3);
 		m_spinStart[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 
 		m_spinFinish[i]->setMinimum(-999);
 		m_spinFinish[i]->setMaximum(999);
 		m_spinFinish[i]->setValue(0);
+		m_spinFinish[i]->setSingleStep(0.1);
 		m_spinFinish[i]->setDecimals(3);
 		m_spinFinish[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 	}
@@ -51,6 +53,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnGotoStart = new QPushButton("Go to Start Coordinate", this);
 	QPushButton *btnGotoFinish = new QPushButton("Go to Finish Coordinate", this);
 
+	const char* labels[] = {"h:", "k:", "l:", "ki:", "kf:"};
+
 	auto *groupStart = new QGroupBox("Start Coordinate", this);
 	{
 		auto *layoutStart = new QGridLayout(groupStart);
@@ -59,17 +63,11 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutStart->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutStart->addWidget(new QLabel("h:", this), y, 0, 1, 1);
-		layoutStart->addWidget(m_spinStart[0], y++, 1, 1, 1);
-		layoutStart->addWidget(new QLabel("k:", this), y, 0, 1, 1);
-		layoutStart->addWidget(m_spinStart[1], y++, 1, 1, 1);
-		layoutStart->addWidget(new QLabel("l:", this), y, 0, 1, 1);
-		layoutStart->addWidget(m_spinStart[2], y++, 1, 1, 1);
-		layoutStart->addWidget(new QLabel("ki:", this), y, 0, 1, 1);
-		layoutStart->addWidget(m_spinStart[3], y++, 1, 1, 1);
-		layoutStart->addWidget(new QLabel("kf:", this), y, 0, 1, 1);
-		layoutStart->addWidget(m_spinStart[4], y++, 1, 1, 1);
-
+		for(std::size_t i=0; i<m_num_coord_elems; ++i)
+		{
+			layoutStart->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
+			layoutStart->addWidget(m_spinStart[i], y++, 1, 1, 1);
+		}
 		layoutStart->addWidget(btnGotoStart, y++, 0, 1, 2);
 	}
 
@@ -81,16 +79,11 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutFinish->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutFinish->addWidget(new QLabel("h:", this), y, 0, 1, 1);
-		layoutFinish->addWidget(m_spinFinish[0], y++, 1, 1, 1);
-		layoutFinish->addWidget(new QLabel("k:", this), y, 0, 1, 1);
-		layoutFinish->addWidget(m_spinFinish[1], y++, 1, 1, 1);
-		layoutFinish->addWidget(new QLabel("l:", this), y, 0, 1, 1);
-		layoutFinish->addWidget(m_spinFinish[2], y++, 1, 1, 1);
-		layoutFinish->addWidget(new QLabel("ki:", this), y, 0, 1, 1);
-		layoutFinish->addWidget(m_spinFinish[3], y++, 1, 1, 1);
-		layoutFinish->addWidget(new QLabel("kf:", this), y, 0, 1, 1);
-		layoutFinish->addWidget(m_spinFinish[4], y++, 1, 1, 1);
+		for(std::size_t i=0; i<m_num_coord_elems; ++i)
+		{
+			layoutFinish->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
+			layoutFinish->addWidget(m_spinFinish[i], y++, 1, 1, 1);
+		}
 
 		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
 	}
@@ -105,15 +98,15 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupFinish, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
-	for(int i=0; i<5; ++i)
+	for(std::size_t i=0; i<m_num_coord_elems; ++i)
 	{
 		// start coordinates
 		connect(m_spinStart[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real coords[5];
-				for(int j=0; j<5; ++j)
+				t_real coords[m_num_coord_elems];
+				for(std::size_t j=0; j<m_num_coord_elems; ++j)
 				{
 					if(j == i)
 						coords[j] = val;
@@ -129,8 +122,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real coords[5];
-				for(int j=0; j<5; ++j)
+				t_real coords[m_num_coord_elems];
+				for(std::size_t j=0; j<m_num_coord_elems; ++j)
 				{
 					if(j == i)
 						coords[j] = val;

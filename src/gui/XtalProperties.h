@@ -31,12 +31,23 @@ signals:
 	void PlaneChanged(t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z);
 
 private:
+	// number of lattice constant elements
+	static constexpr std::size_t m_num_lattice_elems = 3;
+
 	// crystal lattice constants
-	QDoubleSpinBox *m_spinLatticeConsts[3]{nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinLatticeConsts[m_num_lattice_elems]
+		{nullptr, nullptr, nullptr};
+
 	// crystal lattice angles
-	QDoubleSpinBox *m_spinLatticeAngles[3]{nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinLatticeAngles[m_num_lattice_elems]
+		{nullptr, nullptr, nullptr};
+
+	// number of scattering plane elements
+	static constexpr std::size_t m_num_plane_elems = 6;
+
 	// scattering plane vectors
-	QDoubleSpinBox *m_spinPlane[6]{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinPlane[m_num_plane_elems]
+		{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 };
 
 

@@ -32,10 +32,16 @@ signals:
 	void Goto(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 
 private:
+	// number of coordinate elements
+	static constexpr std::size_t m_num_coord_elems = 5;
+
 	// path start (h, k, l, ki, kf) coordinates
-	QDoubleSpinBox *m_spinStart[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinStart[m_num_coord_elems]
+		{nullptr, nullptr, nullptr, nullptr, nullptr};
+
 	// path finish (h, k, l, ki, kf) coordinates
-	QDoubleSpinBox *m_spinFinish[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
+	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]
+		{nullptr, nullptr, nullptr, nullptr, nullptr};
 };
 
 

@@ -21,7 +21,7 @@
 XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
-	for(int i=0; i<3; ++i)
+	for(std::size_t i=0; i<m_num_lattice_elems; ++i)
 	{
 		m_spinLatticeConsts[i] = new QDoubleSpinBox(this);
 		m_spinLatticeAngles[i] = new QDoubleSpinBox(this);
@@ -40,7 +40,7 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		m_spinLatticeAngles[i]->setSuffix("°");
 	}
 
-	for(int i=0; i<6; ++i)
+	for(std::size_t i=0; i<m_num_plane_elems; ++i)
 	{
 		m_spinPlane[i] = new QDoubleSpinBox(this);
 
@@ -85,24 +85,23 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		layoutPlane->setVerticalSpacing(2);
 		layoutPlane->setContentsMargins(4,4,4,4);
 
+		const char* labels[] = {
+			"Vector 1, x:", "Vector 1, y:", "Vector 1, z:",
+			"Vector 2, x:", "Vector 2, y:", "Vector 2, z:"
+		};
 		int y = 0;
-		layoutPlane->addWidget(new QLabel("Vector 1, x:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[0], y++, 1, 1, 1);
-		layoutPlane->addWidget(new QLabel("Vector 1, y:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[1], y++, 1, 1, 1);
-		layoutPlane->addWidget(new QLabel("Vector 1, z:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[2], y++, 1, 1, 1);
+		for(std::size_t i=0; i<m_num_plane_elems; ++i)
+		{
+			layoutPlane->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
+			layoutPlane->addWidget(m_spinPlane[i], y++, 1, 1, 1);
 
-		QFrame *separator = new QFrame(this);
-		separator->setFrameStyle(QFrame::HLine);
-		layoutPlane->addWidget(separator, y++, 0, 1, 2);
-
-		layoutPlane->addWidget(new QLabel("Vector 2, x:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[3], y++, 1, 1, 1);
-		layoutPlane->addWidget(new QLabel("Vector 2, y:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[4], y++, 1, 1, 1);
-		layoutPlane->addWidget(new QLabel("Vector 2, z:", this), y, 0, 1, 1);
-		layoutPlane->addWidget(m_spinPlane[5], y++, 1, 1, 1);
+			if(i == 2)
+			{
+				QFrame *separator = new QFrame(this);
+				separator->setFrameStyle(QFrame::HLine);
+				layoutPlane->addWidget(separator, y++, 0, 1, 2);
+			}
+		}
 	}
 
 	auto *grid = new QGridLayout(this);
@@ -115,15 +114,15 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupPlane, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
-	for(int i=0; i<3; ++i)
+	for(std::size_t i=0; i<m_num_lattice_elems; ++i)
 	{
 		// lattice constants
 		connect(m_spinLatticeConsts[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real vals[3];
-				for(int j=0; j<3; ++j)
+				t_real vals[m_num_lattice_elems];
+				for(std::size_t j=0; j<m_num_lattice_elems; ++j)
 				{
 					if(j == i)
 						vals[j] = val;
@@ -143,8 +142,8 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real angle) -> void
 			{
-				t_real angles[3];
-				for(int j=0; j<3; ++j)
+				t_real angles[m_num_lattice_elems];
+				for(std::size_t j=0; j<m_num_lattice_elems; ++j)
 				{
 					if(j == i)
 						angles[j] = angle / t_real(180)*tl2::pi<t_real>;
@@ -161,14 +160,14 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 	}
 
 	// plane vectors
-	for(int i=0; i<6; ++i)
+	for(std::size_t i=0; i<m_num_plane_elems; ++i)
 	{
 		connect(m_spinPlane[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real vals[6];
-				for(int j=0; j<6; ++j)
+				t_real vals[m_num_plane_elems];
+				for(std::size_t j=0; j<m_num_plane_elems; ++j)
 				{
 					if(j == i)
 						vals[j] = val;
@@ -233,7 +232,7 @@ XtalPropertiesDockWidget::XtalPropertiesDockWidget(QWidget *parent)
 		m_widget{std::make_shared<XtalPropertiesWidget>(this)}
 {
 	setObjectName("XtalPropertiesDockWidget");
-	setWindowTitle("Crystal Properties");
+	setWindowTitle("Crystal Definition");
 
 	setWidget(m_widget.get());
 }
