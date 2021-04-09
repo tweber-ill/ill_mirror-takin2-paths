@@ -51,7 +51,9 @@ public:
 
 	// which==1: in, which==2: internal, which==3: out
 	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
-	const std::vector<std::shared_ptr<Geometry>>& GetComps(AxisAngle which=AxisAngle::IN) const;
+
+	const std::vector<std::shared_ptr<Geometry>>& 
+	GetComps(AxisAngle which=AxisAngle::IN) const;
 
 private:
 	// identifier

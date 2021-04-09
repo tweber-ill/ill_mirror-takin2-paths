@@ -22,7 +22,7 @@
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
-	for(int i=0; i<4; ++i)
+	for(int i=0; i<5; ++i)
 	{
 		m_spinStart[i] = new QDoubleSpinBox(this);
 		m_spinFinish[i] = new QDoubleSpinBox(this);
@@ -31,14 +31,22 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinStart[i]->setMaximum(999);
 		m_spinStart[i]->setValue(0);
 		m_spinStart[i]->setDecimals(3);
-		m_spinStart[i]->setSuffix(i==3 ? " meV" : " rlu");
+		m_spinStart[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 
 		m_spinFinish[i]->setMinimum(-999);
 		m_spinFinish[i]->setMaximum(999);
 		m_spinFinish[i]->setValue(0);
 		m_spinFinish[i]->setDecimals(3);
-		m_spinFinish[i]->setSuffix(i==3 ? " meV" : " rlu");
+		m_spinFinish[i]->setSuffix(i>=3 ? " Å⁻¹" : " rlu");
 	}
+
+	// default values
+	m_spinStart[0]->setValue(1);
+	m_spinStart[3]->setValue(1.4);
+	m_spinStart[4]->setValue(1.4);
+	m_spinFinish[0]->setValue(1);
+	m_spinFinish[3]->setValue(1.4);
+	m_spinFinish[4]->setValue(1.4);
 
 	QPushButton *btnGotoStart = new QPushButton("Go to Start Coordinate", this);
 	QPushButton *btnGotoFinish = new QPushButton("Go to Finish Coordinate", this);
@@ -57,8 +65,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutStart->addWidget(m_spinStart[1], y++, 1, 1, 1);
 		layoutStart->addWidget(new QLabel("l:", this), y, 0, 1, 1);
 		layoutStart->addWidget(m_spinStart[2], y++, 1, 1, 1);
-		layoutStart->addWidget(new QLabel("E:", this), y, 0, 1, 1);
+		layoutStart->addWidget(new QLabel("ki:", this), y, 0, 1, 1);
 		layoutStart->addWidget(m_spinStart[3], y++, 1, 1, 1);
+		layoutStart->addWidget(new QLabel("kf:", this), y, 0, 1, 1);
+		layoutStart->addWidget(m_spinStart[4], y++, 1, 1, 1);
 
 		layoutStart->addWidget(btnGotoStart, y++, 0, 1, 2);
 	}
@@ -77,8 +87,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutFinish->addWidget(m_spinFinish[1], y++, 1, 1, 1);
 		layoutFinish->addWidget(new QLabel("l:", this), y, 0, 1, 1);
 		layoutFinish->addWidget(m_spinFinish[2], y++, 1, 1, 1);
-		layoutFinish->addWidget(new QLabel("E:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(new QLabel("ki:", this), y, 0, 1, 1);
 		layoutFinish->addWidget(m_spinFinish[3], y++, 1, 1, 1);
+		layoutFinish->addWidget(new QLabel("kf:", this), y, 0, 1, 1);
+		layoutFinish->addWidget(m_spinFinish[4], y++, 1, 1, 1);
 
 		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
 	}
@@ -93,15 +105,15 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupFinish, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
-	for(int i=0; i<4; ++i)
+	for(int i=0; i<5; ++i)
 	{
 		// start coordinates
 		connect(m_spinStart[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real coords[4];
-				for(int j=0; j<4; ++j)
+				t_real coords[5];
+				for(int j=0; j<5; ++j)
 				{
 					if(j == i)
 						coords[j] = val;
@@ -109,7 +121,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 						coords[j] = m_spinStart[j]->value();
 				}
 
-				emit StartChanged(coords[0], coords[1], coords[2], coords[3]);
+				emit StartChanged(coords[0], coords[1], coords[2], coords[3], coords[4]);
 			});
 
 		// finish coordinates
@@ -117,8 +129,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real coords[4];
-				for(int j=0; j<4; ++j)
+				t_real coords[5];
+				for(int j=0; j<5; ++j)
 				{
 					if(j == i)
 						coords[j] = val;
@@ -126,7 +138,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 						coords[j] = m_spinFinish[j]->value();
 				}
 
-				emit FinishChanged(coords[0], coords[1], coords[2], coords[3]);
+				emit FinishChanged(coords[0], coords[1], coords[2], coords[3], coords[4]);
 			});
 	}
 
@@ -137,9 +149,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			t_real h = m_spinStart[0]->value();
 			t_real k = m_spinStart[1]->value();
 			t_real l = m_spinStart[2]->value();
-			t_real E = m_spinStart[3]->value();
+			t_real ki = m_spinStart[3]->value();
+			t_real kf = m_spinStart[4]->value();
 
-			emit Goto(h, k, l, E);
+			emit Goto(h, k, l, ki, kf);
 		});
 
 	// go to finish coordinate
@@ -149,9 +162,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			t_real h = m_spinFinish[0]->value();
 			t_real k = m_spinFinish[1]->value();
 			t_real l = m_spinFinish[2]->value();
-			t_real E = m_spinFinish[3]->value();
+			t_real ki = m_spinFinish[3]->value();
+			t_real kf = m_spinFinish[4]->value();
 
-			emit Goto(h, k, l, E);
+			emit Goto(h, k, l, ki, kf);
 		});
 }
 
@@ -161,27 +175,29 @@ PathPropertiesWidget::~PathPropertiesWidget()
 }
 
 
-void PathPropertiesWidget::SetStart(t_real h, t_real k, t_real l, t_real E)
+void PathPropertiesWidget::SetStart(t_real h, t_real k, t_real l, t_real ki, t_real kf)
 {
 	this->blockSignals(true);
 
 	m_spinStart[0]->setValue(h);
 	m_spinStart[1]->setValue(k);
 	m_spinStart[2]->setValue(l);
-	m_spinStart[3]->setValue(E);
+	m_spinStart[3]->setValue(ki);
+	m_spinStart[4]->setValue(kf);
 
 	this->blockSignals(false);
 }
 
 
-void PathPropertiesWidget::SetFinish(t_real h, t_real k, t_real l, t_real E)
+void PathPropertiesWidget::SetFinish(t_real h, t_real k, t_real l, t_real ki, t_real kf)
 {
 	this->blockSignals(true);
 
 	m_spinFinish[0]->setValue(h);
 	m_spinFinish[1]->setValue(k);
 	m_spinFinish[2]->setValue(l);
-	m_spinFinish[3]->setValue(E);
+	m_spinFinish[3]->setValue(ki);
+	m_spinFinish[4]->setValue(kf);
 
 	this->blockSignals(false);
 }

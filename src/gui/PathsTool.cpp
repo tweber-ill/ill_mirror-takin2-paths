@@ -238,22 +238,6 @@ protected:
 					QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
 					return false;
 				}
-
-				// get scattering angles
-				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
-				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut();
-				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut();
-				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
-
-				// get crystal angles
-				t_real monoXtalAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleInternal();
-				t_real sampleXtalAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleInternal();
-				t_real anaXtalAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleInternal();
-				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
 			}
 			else
 			{
@@ -267,11 +251,29 @@ protected:
 
 			m_renderer->LoadInstrument(m_instrspace);
 			m_instrspace.GetInstrument().AddUpdateSlot(
-			[this](const Instrument& instr)->void
-			{
-				if(m_renderer)
-					m_renderer->UpdateInstrument(instr);
-			});
+				[this](const Instrument& instr)->void
+				{
+					// get scattering angles
+					t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
+					t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut();
+					t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut();
+					m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
+
+					// get crystal angles
+					t_real monoXtalAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleInternal();
+					t_real sampleXtalAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleInternal();
+					t_real anaXtalAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleInternal();
+					m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
+
+					if(m_renderer)
+						m_renderer->UpdateInstrument(instr);
+				});
+
+			m_instrspace.GetInstrument().EmitUpdate();
 		}
 		catch(const std::exception& ex)
 		{
@@ -381,9 +383,37 @@ protected slots:
 	/**
 	 * go to crystal coordinates
 	 */
-	void GotoCoordinates(t_real h, t_real k, t_real l, t_real E)
+	void GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf)
 	{
-		std::cout << h << " " << k << " " << l << " " << E << std::endl;
+		// TODO
+		t_real di = 3.355;
+		t_real df = 3.355;
+		t_real scattering_senses[3] = {1., 1., -1.};
+		t_real a3_offs = tl2::pi<t_real>*0.5;
+
+		t_real a1 = scattering_senses[0] * tl2::calc_tas_a1<t_real>(ki, di);
+		t_real a5 = scattering_senses[2] * tl2::calc_tas_a1<t_real>(kf, df);
+
+		t_vec Q = tl2::create<t_vec>({h, k, l});
+		auto [a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
+			m_B, ki, kf, Q,
+			m_plane_rlu[0], m_plane_rlu[2], scattering_senses[1], a3_offs);
+
+		// set scattering angles
+		m_instrspace.GetInstrument().GetMonochromator().
+			SetAxisAngleOut(t_real{2}*a1);
+		m_instrspace.GetInstrument().GetSample().
+			SetAxisAngleOut(a4);
+		m_instrspace.GetInstrument().GetAnalyser().
+			SetAxisAngleOut(t_real{2}*a5);
+
+		// set crystal angles
+		m_instrspace.GetInstrument().GetMonochromator().
+			SetAxisAngleInternal(a1);
+		m_instrspace.GetInstrument().GetSample().
+			SetAxisAngleInternal(a3);
+		m_instrspace.GetInstrument().GetAnalyser().
+			SetAxisAngleInternal(a5);
 	}
 
 
@@ -643,20 +673,6 @@ public:
 
 				UpdateUB();
 			});
-
-		// start coordinates
-		/*connect(pathwidget, &PathPropertiesWidget::StartChanged,
-			[this](t_real h, t_real k, t_real l, t_real E) -> void
-			{
-				std::cout << "start coords changed" << std::endl;
-			});
-
-		// finish coordinates
-		connect(pathwidget, &PathPropertiesWidget::FinishChanged,
-			[this](t_real h, t_real k, t_real l, t_real E) -> void
-			{
-				std::cout << "finish coords changed" << std::endl;
-			});*/
 
 		// goto coordinates
 		connect(pathwidget, &PathPropertiesWidget::Goto, this, &PathsTool::GotoCoordinates);

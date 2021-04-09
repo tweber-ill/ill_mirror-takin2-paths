@@ -23,19 +23,19 @@ public:
 	virtual ~PathPropertiesWidget();
 
 public slots:
-	void SetStart(t_real h, t_real k, t_real l, t_real E);
-	void SetFinish(t_real h, t_real k, t_real l, t_real E);
+	void SetStart(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void SetFinish(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 
 signals:
-	void StartChanged(t_real h, t_real k, t_real l, t_real E);
-	void FinishChanged(t_real h, t_real k, t_real l, t_real E);
-	void Goto(t_real h, t_real k, t_real l, t_real E);
+	void StartChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void FinishChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void Goto(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 
 private:
-	// path start (h, k, l, E) coordinates
-	QDoubleSpinBox *m_spinStart[4]{nullptr, nullptr, nullptr, nullptr};
-	// path finish (h, k, l, E) coordinates
-	QDoubleSpinBox *m_spinFinish[4]{nullptr, nullptr, nullptr, nullptr};
+	// path start (h, k, l, ki, kf) coordinates
+	QDoubleSpinBox *m_spinStart[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
+	// path finish (h, k, l, ki, kf) coordinates
+	QDoubleSpinBox *m_spinFinish[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
 };
 
 
