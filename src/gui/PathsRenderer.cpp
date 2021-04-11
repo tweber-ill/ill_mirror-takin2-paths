@@ -28,8 +28,7 @@
 #define OBJNAME_COORD_CROSS "coord_cross"
 #define OBJNAME_FLOOR_PLANE "floor"
 #define MAX_LIGHTS 4	// max. number allowed in shader
-#define TIMER_FPS 60
-
+#define TIMER_FPS 30
 
 
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)

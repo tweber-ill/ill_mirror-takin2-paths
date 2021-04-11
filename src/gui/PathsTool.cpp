@@ -496,9 +496,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 	m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
-	addDockWidget(Qt::RightDockWidgetArea, m_tasProperties.get());
+	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
-	addDockWidget(Qt::LeftDockWidgetArea, m_pathProperties.get());
+	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
 
 	auto* taswidget = m_tasProperties->GetWidget().get();

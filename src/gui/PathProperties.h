@@ -12,6 +12,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QCheckBox>
 
 #include "src/core/types.h"
 
@@ -33,15 +34,17 @@ signals:
 
 private:
 	// number of coordinate elements
-	static constexpr std::size_t m_num_coord_elems = 5;
+	static constexpr std::size_t m_num_coord_elems = 6;
 
-	// path start (h, k, l, ki, kf) coordinates
+	// path start (h, k, l, ki, kf, E) coordinates
 	QDoubleSpinBox *m_spinStart[m_num_coord_elems]
-		{nullptr, nullptr, nullptr, nullptr, nullptr};
+		{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+	QCheckBox *m_checkStartKfFixed{nullptr};
 
-	// path finish (h, k, l, ki, kf) coordinates
+	// path finish (h, k, l, ki, kf, E) coordinates
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]
-		{nullptr, nullptr, nullptr, nullptr, nullptr};
+		{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+	QCheckBox *m_checkFinishKfFixed{nullptr};
 };
 
 
