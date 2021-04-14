@@ -94,7 +94,7 @@
 						<colour> 0 0 1 </colour>
 					</cylinder>
 
-					<box id="monochromator zero angle">
+					<box id="monochromator crystal angle">
 						<pos1> -1 0 </pos1>
 						<pos2> 1 0 </pos2>
 						<height> 2.25 </height>
@@ -129,7 +129,7 @@
 						<colour> 0 0 1 </colour>
 					</cylinder>
 
-					<box id="sample zero angle">
+					<box id="sample crystal angle">
 						<pos1> -0.75 0 </pos1>
 						<pos2> 0.75 0 </pos2>
 						<height> 2.25 </height>
@@ -164,7 +164,7 @@
 						<colour> 0 0 1 </colour>
 					</cylinder>
 
-					<box id="analyser zero angle">
+					<box id="analyser crystal angle">
 						<pos1> -0.75 0 </pos1>
 						<pos2> 0.75 0 </pos2>
 						<height> 2.25 </height>

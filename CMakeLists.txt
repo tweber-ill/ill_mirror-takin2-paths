@@ -78,6 +78,7 @@ add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 # target executable settings
 add_executable(taspaths
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
+	src/gui/Settings.cpp src/gui/Settings.h
 	src/gui/About.cpp src/gui/About.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/TASProperties.cpp src/gui/TASProperties.h

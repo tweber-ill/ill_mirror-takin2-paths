@@ -1,0 +1,15 @@
+{
+	"folders":
+	[{
+		"path": "."
+	}],
+	"settings":
+	{
+		"telemetry.enableCrashReporter": false,
+		"telemetry.enableTelemetry": false,
+		"workbench.enableExperiments": false,
+		"workbench.settings.enableNaturalLanguageSearch": false,
+		"C_Cpp.default.cppStandard": "c++20",
+		"C_Cpp.default.cStandard": "c17"
+	}
+}

@@ -11,6 +11,7 @@
  */
 
 #include "PathsRenderer.h"
+#include "Settings.h"
 
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
@@ -22,20 +23,20 @@
 #include <iostream>
 #include <boost/scope_exit.hpp>
 
+#include "tlibs2/libs/str.h"
 #include "tlibs2/libs/file.h"
 
 
 #define OBJNAME_COORD_CROSS "coord_cross"
 #define OBJNAME_FLOOR_PLANE "floor"
 #define MAX_LIGHTS 4	// max. number allowed in shader
-#define TIMER_FPS 30
 
 
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 {
 	connect(&m_timer, &QTimer::timeout,
 		this, static_cast<void (PathsRenderer::*)()>(&PathsRenderer::tick));
-	m_timer.start(std::chrono::milliseconds(1000 / TIMER_FPS));
+	EnableTimer(true);
 
 	UpdateCam();
 	setMouseTracking(true);
@@ -45,14 +46,23 @@ PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
 
 PathsRenderer::~PathsRenderer()
 {
+	EnableTimer(false);
 	setMouseTracking(false);
-	m_timer.stop();
-
 	Clear();
 
 	// delete gl objects within current gl context
 	m_pShaders.reset();
 }
+
+
+void PathsRenderer::EnableTimer(bool enabled)
+{
+	if(enabled)
+		m_timer.start(std::chrono::milliseconds(1000 / g_timer_fps));
+	else
+		m_timer.stop();
+}
+
 
 
 /**
@@ -145,6 +155,8 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
 		m_objs[wall->GetId()].m_mat = mat;
 	}
+
+	update();
 }
 
 
@@ -303,6 +315,7 @@ void PathsRenderer::UpdateCam()
 	m_pickerNeedsUpdate = true;
 	emit CamPositionChanged(m_matCamTrans(0,3), m_matCamTrans(1,3), m_matCamTrans(2,3));
 	emit CamRotationChanged(m_phi, m_theta);
+
 	update();
 }
 
@@ -509,6 +522,7 @@ void PathsRenderer::UpdatePicker()
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
 	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
+	update();
 	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr,
 		m_curObj, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
 }
@@ -516,30 +530,35 @@ void PathsRenderer::UpdatePicker()
 
 void PathsRenderer::tick()
 {
-	tick(std::chrono::milliseconds(1000 / 60));
+	tick(std::chrono::milliseconds(1000 / g_timer_fps));
 }
 
 
 void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
-	t_real_gl move_scale = t_real_gl(ms.count()) / t_real_gl(75);
+	// if a key is pressed, move and update the camera
+	if(m_arrowDown[0] || m_arrowDown[1] || m_arrowDown[2] || m_arrowDown[3]
+		|| m_pageDown[0] || m_pageDown[1])
+	{
+		t_real_gl move_scale = t_real_gl(ms.count()) * g_move_scale;
 
-	t_vec_gl xdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 0);
-	t_vec_gl ydir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 1);
-	t_vec_gl zdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 2);
+		t_vec_gl xdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 0);
+		t_vec_gl ydir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 1);
+		t_vec_gl zdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 2);
 
-	t_vec_gl xinc = xdir * move_scale *
-		(t_real_gl(m_arrowDown[0]) - t_real_gl(m_arrowDown[1]));
-	t_vec_gl yinc = ydir * move_scale *
-		(t_real_gl(m_pageDown[0]) - t_real_gl(m_pageDown[1]));
-	t_vec_gl zinc = zdir * move_scale *
-		(t_real_gl(m_arrowDown[2]) - t_real_gl(m_arrowDown[3]));
+		t_vec_gl xinc = xdir * move_scale *
+			(t_real_gl(m_arrowDown[0]) - t_real_gl(m_arrowDown[1]));
+		t_vec_gl yinc = ydir * move_scale *
+			(t_real_gl(m_pageDown[0]) - t_real_gl(m_pageDown[1]));
+		t_vec_gl zinc = zdir * move_scale *
+			(t_real_gl(m_arrowDown[2]) - t_real_gl(m_arrowDown[3]));
 
-	m_matCamTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
-	m_matCamTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
-	m_matCamTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
+		m_matCamTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
+		m_matCamTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
+		m_matCamTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
 
-	UpdateCam();
+		UpdateCam();
+	}
 }
 
 
@@ -562,8 +581,8 @@ void PathsRenderer::initializeGL()
 
 
 	// set glsl version and constants
-	const std::string strGlsl = std::to_string(_GLSL_MAJ_VER*100 + _GLSL_MIN_VER*10);
-	std::string strPi = std::to_string(tl2::pi<t_real_gl>);			// locale-dependent !
+	const std::string strGlsl = tl2::var_to_str<t_real_gl>(_GLSL_MAJ_VER*100 + _GLSL_MIN_VER*10);
+	std::string strPi = tl2::var_to_str<t_real_gl>(tl2::pi<t_real_gl>);
 	algo::replace_all(strPi, std::string(","), std::string("."));	// ensure decimal point
 
 	for(std::string* strSrc : { &strFragShader, &strVertexShader })
@@ -652,6 +671,7 @@ void PathsRenderer::resizeGL(int w, int h)
 
 	m_perspectiveNeedsUpdate = true;
 	m_viewportNeedsUpdate = true;
+	update();
 }
 
 
@@ -669,6 +689,7 @@ void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
 {
 	m_camViewingAngle = angle;
 	m_perspectiveNeedsUpdate = true;
+	update();
 }
 
 
@@ -680,6 +701,7 @@ void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
 
 	UpdateCam();
 }
+
 
 t_vec3_gl PathsRenderer::GetCamPosition() const
 {
@@ -699,6 +721,7 @@ void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
 	UpdateCam();
 }
 
+
 t_vec2_gl PathsRenderer::GetCamRotation() const
 {
 	return tl2::create<t_vec2_gl>({ m_phi, m_theta });
@@ -709,6 +732,7 @@ void PathsRenderer::SetPerspectiveProjection(bool b)
 {
 	m_perspectiveProjection = b; 
 	m_perspectiveNeedsUpdate = true;
+	update();
 }
 
 
@@ -1033,7 +1057,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 
 	if(m_inRotation)
 	{
-		auto diff = (m_posMouse - m_posMouseRotationStart) * m_rotSpeed;
+		auto diff = (m_posMouse - m_posMouseRotationStart) * g_rotation_scale;
 		m_phi = diff.x() + m_phi_saved;
 		t_real theta_new = diff.y() + m_theta_saved;
 
@@ -1047,7 +1071,6 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	}
 
 	UpdatePicker();
-	update();
 
 	// an object is being dragged
 	if(m_draggedObj != "")

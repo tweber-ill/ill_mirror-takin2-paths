@@ -44,7 +44,21 @@ void PathsTool::UpdateUB()
 }
 
 
-void PathsTool::closeEvent(QCloseEvent *)
+void PathsTool::showEvent(QShowEvent *evt)
+{
+	m_renderer->EnableTimer(true);
+	QMainWindow::showEvent(evt);
+}
+
+
+void PathsTool::hideEvent(QHideEvent *evt)
+{
+	m_renderer->EnableTimer(false);
+	QMainWindow::hideEvent(evt);
+}
+
+
+void PathsTool::closeEvent(QCloseEvent *evt)
 {
 	// save window size, position, and state
 	m_sett.setValue("geo", saveGeometry());
@@ -54,6 +68,8 @@ void PathsTool::closeEvent(QCloseEvent *)
 	while(m_recentFiles.size() > MAX_RECENT_FILES)
 		m_recentFiles.pop_front();
 	m_sett.setValue("recent_files", m_recentFiles);
+
+	QMainWindow::closeEvent(evt);
 }
 
 

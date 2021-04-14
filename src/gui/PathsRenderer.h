@@ -99,6 +99,7 @@ public slots:
 	t_vec3_gl GetCamPosition() const;
 	t_vec2_gl GetCamRotation() const;
 
+	void EnableTimer(bool enable=true);
 
 signals:
 	void AfterGLInitialisation();
@@ -155,13 +156,12 @@ protected:
 	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamTrans = tl2::create<t_mat_gl>
-		({1,0,0,0, 0,1,0,0, 0,0,1,-15, 0,0,0,1});
+		({ 1,0,0,0, 0,1,0,0, 0,0,1,-15, 0,0,0,1 });
 
 	t_real_gl m_camViewingAngle = tl2::pi<t_real_gl>*t_real_gl(0.5);
 	t_real_gl m_phi = 0, m_theta = 0;
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
 	t_real_gl m_zoom = 1.;
-	const t_real_gl m_rotSpeed = 0.02;
 
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;

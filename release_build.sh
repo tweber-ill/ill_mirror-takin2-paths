@@ -18,4 +18,4 @@ if ! make -j4; then
 	exit -1
 fi
 
-strip -v paths
+strip -v taspaths
