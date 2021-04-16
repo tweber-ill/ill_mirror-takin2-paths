@@ -25,7 +25,8 @@
 *.exe
 *.out
 *.app
-taspaths.app/**
+*.dmg
+TASPaths.app/**
 
 # Temporary files
 tmp/**
