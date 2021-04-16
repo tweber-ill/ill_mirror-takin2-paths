@@ -6,15 +6,7 @@
  */
 
 #include "Settings.h"
-
-#if __has_include(<filesystem>) && !defined(__APPLE__)
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#else
-	#include <boost/filesystem.hpp>
-	namespace fs = boost::filesystem;
-#endif
-
+#include "tlibs2/libs/file.h"
 
 std::string g_apppath = ".";
 

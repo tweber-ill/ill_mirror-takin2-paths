@@ -8,7 +8,17 @@ cmake_minimum_required(VERSION 3.0)
 project(taspaths)
 enable_language(CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake")
+list(APPEND CMAKE_MODULE_PATH
+	"${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake"
+)
+
+#if(NOT "$ENV{LOCAL_BOOST_CMAKE_DIR}" STREQUAL "")
+#	message("Using local boost cmake dir: $ENV{LOCAL_BOOST_CMAKE_DIR}.")
+#
+#	list(PREPEND CMAKE_MODULE_PATH
+#		"$ENV{LOCAL_BOOST_CMAKE_DIR}"
+#	)
+#endif()
 
 option(USE_QT6 "use qt 6" FALSE)
 
@@ -40,6 +50,7 @@ endif()
 
 # -----------------------------------------------------------------------------
 # packages
+set(Boost_NO_BOOST_CMAKE FALSE)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(Lapacke)
@@ -103,7 +114,8 @@ add_executable(taspaths
 if(QT_VER EQUAL 6)
 	target_include_directories(taspaths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
+		"${Boost_INCLUDE_DIRS}/.."
+		"${Lapacke_INCLUDE_DIRS}"
 		"${Qt6Core_INCLUDE_DIRS}/.."
 	)
 
@@ -115,7 +127,8 @@ if(QT_VER EQUAL 6)
 elseif(QT_VER EQUAL 5)
 	target_include_directories(taspaths PUBLIC
 		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.." "${Lapacke_INCLUDE_DIRS}"
+		"${Boost_INCLUDE_DIRS}/.."
+		"${Lapacke_INCLUDE_DIRS}"
 		"${Qt5Core_INCLUDE_DIRS}/.."
 	)
 
