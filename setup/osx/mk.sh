@@ -20,12 +20,21 @@ if [ $create_appdir -ne 0 ]; then
 	rm -rfv "${APPDIRNAME}"
 	mkdir -pv "${APPDIRNAME}/Contents/MacOS"
 	mkdir -pv "${APPDIRNAME}/Contents/Resources"
+	mkdir -pv "${APPDIRNAME}/Contents/Libraries"
 	echo -e "--------------------------------------------------------------------------------"
 
 	echo -e "\nCopying files to ${APPDIRNAME}..."
 	cp -v setup/osx/Info.plist "${APPDIRNAME}/Contents/"
 	cp -v build/taspaths "${APPDIRNAME}/Contents/MacOS/"
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
+	cp -v /usr/local/lib/libboost_filesystem.dylib "${APPDIRNAME}/Contents/Libraries/"
+	echo -e "--------------------------------------------------------------------------------"
+
+	echo -e "\nChanging linked names..."
+	install_name_tool -change \
+		@rpath/libboost_filesystem.dylib \
+		@executable_path/../Libraries/libboost_filesystem.dylib \
+		"${APPDIRNAME}/Contents/MacOS/taspaths"
 	echo -e "--------------------------------------------------------------------------------"
 fi
 
