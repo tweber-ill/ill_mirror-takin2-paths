@@ -13,8 +13,8 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tli
 option(USE_QT6 "use qt 6" FALSE)
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
-set(GL_MAJOR_VER 4)
-set(GL_MINOR_VER 1)
+set(GL_MAJOR_VER 3)
+set(GL_MINOR_VER 3)
 
 if(USE_QT6)
 	set(QT_VER 6)
@@ -33,14 +33,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# pass linker --subsystem option
 	add_compile_options(-Wl,--subsystem,windows)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	add_compile_options(-mmacosx-version-min=10.15)
+	add_compile_options(-mmacosx-version-min=10.10)
 endif()
 # -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
 # packages
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(Lapacke)
 if(Lapacke_FOUND)
@@ -127,9 +127,9 @@ elseif(QT_VER EQUAL 5)
 endif()
 
 # link resource directory
-add_custom_command(
-	TARGET taspaths PRE_BUILD
-	COMMAND if [ ! -d res ]\; then ln -sf ../res\; fi
-)
+#add_custom_command(
+#	TARGET taspaths PRE_BUILD
+#	COMMAND if [ ! -d res ]\; then ln -sf ../res\; fi
+#)
 
 # -----------------------------------------------------------------------------

@@ -53,6 +53,8 @@ private:
 	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 
+	std::string m_initialInstrFile = "instrument.paths";
+
 	// recent file list and currently active file
 	QStringList m_recentFiles;
 	QString m_curFile;
@@ -184,6 +186,8 @@ public:
 	PathsTool(QWidget* pParent=nullptr);
 
 	~PathsTool() = default;
+
+	void SetInitialInstrumentFile(const std::string& file) { m_initialInstrFile = file;  }
 };
 // ----------------------------------------------------------------------------
 

@@ -281,7 +281,8 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, 
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
-	auto [verts, norms, uvs] = tl2::create_triangles<t_vec3_gl>(plane);
+	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(
+		tl2::create_triangles<t_vec3_gl>(plane), 3);
 
 	AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
 	m_objs[obj_name].m_cull = false;
@@ -569,8 +570,11 @@ void PathsRenderer::initializeGL()
 	// --------------------------------------------------------------------
 	// shaders
 	// --------------------------------------------------------------------
-	auto [frag_ok, strFragShader] = tl2::load_file<std::string>("res/frag.shader");
-	auto [vertex_ok, strVertexShader] = tl2::load_file<std::string>("res/vertex.shader");
+	std::string fragfile = find_resource("frag.shader");
+	std::string vertexfile = find_resource("vertex.shader");
+
+	auto [frag_ok, strFragShader] = tl2::load_file<std::string>(fragfile);
+	auto [vertex_ok, strVertexShader] = tl2::load_file<std::string>(vertexfile);
 
 	if(!frag_ok || !vertex_ok)
 	{

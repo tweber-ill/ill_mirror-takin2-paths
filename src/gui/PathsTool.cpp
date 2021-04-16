@@ -6,6 +6,7 @@
  */
 
 #include "PathsTool.h"
+#include "Settings.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QLoggingCategory>
@@ -393,6 +394,9 @@ void PathsTool::AfterGLInitialisation()
 		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>, 
 		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
 
+	// load an initial instrument definition
+	if(std::string instrfile = find_resource(m_initialInstrFile); !instrfile.empty())
+		OpenFile(instrfile.c_str());
 	m_renderer->LoadInstrument(m_instrspace);
 }
 
@@ -846,10 +850,13 @@ int main(int argc, char** argv)
 	QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "qtplugins");
 	auto app = std::make_unique<QApplication>(argc, argv);
 	app->addLibraryPath(app->applicationDirPath() + QDir::separator() + "qtplugins");
+	g_apppath = app->applicationDirPath().toStdString();
+	std::cout << "Application binary path: " << g_apppath << "." << std::endl;
 
 	auto dlg = std::make_unique<PathsTool>(nullptr);
+	if(argc > 1)
+		dlg->SetInitialInstrumentFile(argv[1]);
 	dlg->show();
-
 	return app->exec();
 }
 // ----------------------------------------------------------------------------
