@@ -12,8 +12,8 @@ std::string g_apppath = ".";
 
 unsigned int g_timer_fps = 30;
 
-t_real_gl g_move_scale = t_real_gl(1./75.);
-t_real_gl g_rotation_scale = 0.02;
+tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
+tl2::t_real_gl g_rotation_scale = 0.02;
 
 
 /**

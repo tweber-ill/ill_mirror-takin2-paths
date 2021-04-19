@@ -24,7 +24,7 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
-#include "src/core/ptree_algos.h"
+#include "src/libs/ptree.h"
 
 
 #define MAX_RECENT_FILES 16
@@ -842,7 +842,7 @@ int main(int argc, char** argv)
 		std::cerr << ": " << log.toStdString() << std::endl;
 	});
 
-	set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
+	tl2::set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
 	tl2::set_locales();
 
 	//QApplication::setAttribute(Qt::AA_NativeWindows, true);

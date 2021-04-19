@@ -224,7 +224,7 @@ void PathsRenderer::DeleteObject(PathsObj& obj)
 	obj.m_pcolourbuf.reset();
 	obj.m_puvbuf.reset();
 
-	if(qgl_funcs* pGl = get_gl_functions(this); pGl)
+	if(qgl_funcs* pGl = tl2::get_gl_functions(this); pGl)
 	{
 		pGl->glDeleteVertexArrays(1, &obj.m_vertexarr);
 		LOGGLERR(pGl)
@@ -433,7 +433,7 @@ void PathsRenderer::UpdatePicker()
 
 	for(const auto& [obj_name, obj] : m_objs)
 	{
-		if(obj.m_type != GlRenderObjType::TRIANGLES || !obj.m_visible)
+		if(obj.m_type != tl2::GlRenderObjType::TRIANGLES || !obj.m_visible)
 			continue;
 
 
@@ -597,7 +597,7 @@ void PathsRenderer::initializeGL()
 
 
 	// get gl functions
-	auto *pGl = get_gl_functions(this);
+	auto *pGl = tl2::get_gl_functions(this);
 	if(!pGl) return;
 
 	m_strGlVer = (char*)pGl->glGetString(GL_VERSION);
@@ -685,7 +685,7 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
 		return nullptr;
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
 		return nullptr;
-	return get_gl_functions(this);
+	return tl2::get_gl_functions(this);
 }
 
 
@@ -811,7 +811,7 @@ void PathsRenderer::paintGL()
 			UpdatePicker();
 
 		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
-		auto *pGl = get_gl_functions(this);
+		auto *pGl = tl2::get_gl_functions(this);
 		painter.beginNativePainting();
 		DoPaintGL(pGl);
 	}
@@ -893,7 +893,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 
 		pGl->glEnableVertexAttribArray(m_attrVertex);
-		if(obj.m_type == GlRenderObjType::TRIANGLES)
+		if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
 		{
 			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
 			pGl->glEnableVertexAttribArray(m_attrTexCoords);
@@ -910,9 +910,9 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		LOGGLERR(pGl);
 
 
-		if(obj.m_type == GlRenderObjType::TRIANGLES)
+		if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
 			pGl->glDrawArrays(GL_TRIANGLES, 0, obj.m_triangles.size());
-		else if(obj.m_type == GlRenderObjType::LINES)
+		else if(obj.m_type == tl2::GlRenderObjType::LINES)
 			pGl->glDrawArrays(GL_LINES, 0, obj.m_vertices.size());
 		else
 			std::cerr << "Unknown plot object type." << std::endl;

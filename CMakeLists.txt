@@ -5,8 +5,10 @@
 #
 
 cmake_minimum_required(VERSION 3.0)
+
 project(taspaths)
 enable_language(CXX)
+
 
 list(APPEND CMAKE_MODULE_PATH
 	"${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake"

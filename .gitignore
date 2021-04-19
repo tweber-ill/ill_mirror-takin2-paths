@@ -31,6 +31,7 @@ TASPaths.app/**
 # Temporary files
 tmp/**
 build/**
+tests/build/**
 *.pyc
 .DS_Store
 *.csv
@@ -50,6 +51,7 @@ build/**
 *.jpg
 *.png
 *.pdf
+*.svg
 
 # Libraries
 tlibs2

@@ -18,10 +18,10 @@ extern std::string g_apppath;
 extern unsigned int g_timer_fps;
 
 // camera translation scaling factor
-extern t_real_gl g_move_scale;
+extern tl2::t_real_gl g_move_scale;
 
 // camera rotation scaling factor
-extern t_real_gl g_rotation_scale;
+extern tl2::t_real_gl g_rotation_scale;
 
 
 /**
