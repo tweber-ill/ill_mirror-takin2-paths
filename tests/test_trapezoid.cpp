@@ -30,11 +30,22 @@ int main()
 		{ tl2::create<t_vec>({-7, -8}), tl2::create<t_vec>({-1, -3}) },
 		{ tl2::create<t_vec>({6, 7}), tl2::create<t_vec>({8, 9}) },
 		{ tl2::create<t_vec>({6, 6}), tl2::create<t_vec>({8, 6}) },
+		{ tl2::create<t_vec>({2, -6}), tl2::create<t_vec>({5, -6}) },
+		{ tl2::create<t_vec>({-5, 7}), tl2::create<t_vec>({4, 6}) },
+		{ tl2::create<t_vec>({-8, 3}), tl2::create<t_vec>({-7, 6}) },
 	};
+
+	/*std::vector<std::pair<t_vec, t_vec>> lines
+	{
+		{ tl2::create<t_vec>({-5, -5}), tl2::create<t_vec>({5, -5}) },
+		{ tl2::create<t_vec>({-5, 5}), tl2::create<t_vec>({5, 5}) },
+		{ tl2::create<t_vec>({5, -5.02}), tl2::create<t_vec>({5, 5.02}) },
+		{ tl2::create<t_vec>({-5, -5.01}), tl2::create<t_vec>({-5, 5.01}) },
+	};*/
 
 	bool randomise = true;
 	bool shear = true;
-	auto node = geo::create_trapezoid_tree<t_vec>(lines, randomise, shear, 1.);
+	auto node = geo::create_trapezoid_tree<t_vec>(lines, randomise, shear, 1., 1e-5);
 	std::cout << std::make_pair(node, 0) << std::endl;
 	save_trapezoid_svg(node, "tst.svg", &lines);
 

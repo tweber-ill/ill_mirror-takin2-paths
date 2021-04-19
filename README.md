@@ -1,3 +1,3 @@
-# paths
+# TAS-Paths
 
-Path optimiser tool.
+Triple-axis path finding tool.
