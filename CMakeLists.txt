@@ -23,6 +23,8 @@ list(APPEND CMAKE_MODULE_PATH
 #endif()
 
 option(USE_QT6 "use qt 6" FALSE)
+option(USE_LAPACK "use lapack" TRUE)
+
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 set(GL_MAJOR_VER 3)
@@ -55,13 +57,17 @@ endif()
 set(Boost_NO_BOOST_CMAKE FALSE)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
-find_package(Lapacke)
-if(Lapacke_FOUND)
-	message("Lapacke enabled.")
-	add_definitions(-DUSE_LAPACK)
-else()
-	message("Lapacke disabled.")
+
+if(USE_LAPACK)
+	find_package(Lapacke)
+	if(Lapacke_FOUND)
+		message("Lapacke enabled.")
+		add_definitions(-DUSE_LAPACK)
+	else()
+		message("Lapacke disabled.")
+	endif()
 endif()
+
 
 if(QT_VER EQUAL 6)
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)

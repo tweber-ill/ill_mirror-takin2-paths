@@ -1,3 +1,3 @@
 # TAS-Paths
 
-Triple-axis path finding tool.
+Triple-axis path-finding tool.
