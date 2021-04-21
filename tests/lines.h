@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "src/libs/lines.h"
+#include "src/libs/trapezoid.h"
 using t_real = double;
 
 
@@ -63,6 +64,9 @@ public:
 	const LinesScene& operator=(const LinesScene&) const = delete;
 
 public:
+	bool GetCalculateTrapezoids() const { return m_calctrapezoids; }
+	void SetCalculateTrapezoids(bool);
+
 	void AddVertex(const QPointF& pos);
 	void ClearVertices();
 	const std::vector<Vertex*>& GetVertexElems() const { return m_elems_vertices; }
@@ -71,6 +75,7 @@ public:
 	void UpdateAll();
 	void UpdateLines();
 	void UpdateIntersections();
+	void UpdateTrapezoids();
 
 	void SetIntersectionCalculationMethod(IntersectionCalculationMethod m);
 
@@ -82,11 +87,15 @@ private:
 	QWidget *m_parent = nullptr;
 
 	std::vector<Vertex*> m_elems_vertices{};
-	std::vector<QGraphicsItem*> m_elems_lines{}, m_elems_inters{};
+	std::vector<QGraphicsItem*> m_elems_lines{};
+	std::vector<QGraphicsItem*> m_elems_inters{};
+	std::vector<QGraphicsItem*> m_elems_trap{};
 	QImage *m_elem_voro = nullptr;
 	std::vector<std::pair<t_vec, t_vec>> m_lines{};
 
-	IntersectionCalculationMethod m_intersectioncalculationmethod = IntersectionCalculationMethod::SWEEP;
+	IntersectionCalculationMethod m_intersectioncalculationmethod
+		= IntersectionCalculationMethod::SWEEP;
+	bool m_calctrapezoids = false;
 
 private:
 	std::size_t GetClosestLineIdx(const t_vec& pt) const;

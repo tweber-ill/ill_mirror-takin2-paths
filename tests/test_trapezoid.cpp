@@ -1,5 +1,5 @@
 /**
- * @author Tobias Weber (orcid: 0000-0002-7230-1932)
+ * @author Tobias Weber <tweber@ill.fr>
  * @date nov-2020
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license see 'LICENSE' file

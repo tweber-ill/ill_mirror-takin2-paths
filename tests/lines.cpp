@@ -152,6 +152,7 @@ void LinesScene::UpdateAll()
 {
 	UpdateLines();
 	UpdateIntersections();
+	UpdateTrapezoids();
 }
 
 
@@ -222,10 +223,12 @@ void LinesScene::UpdateIntersections()
 	switch(m_intersectioncalculationmethod)
 	{
 		case IntersectionCalculationMethod::DIRECT:
-			intersections = geo::intersect_ineff<t_vec, std::pair<t_vec, t_vec>>(m_lines);
+			intersections = 
+				geo::intersect_ineff<t_vec, std::pair<t_vec, t_vec>>(m_lines);
 			break;
 		case IntersectionCalculationMethod::SWEEP:
-			intersections = geo::intersect_sweep<t_vec, std::pair<t_vec, t_vec>>(m_lines, g_eps);
+			intersections = 
+				geo::intersect_sweep<t_vec, std::pair<t_vec, t_vec>>(m_lines, g_eps);
 			break;
 		default:
 			QMessageBox::critical(m_parent, "Error", "Unknown intersection calculation method.");
@@ -250,6 +253,59 @@ void LinesScene::UpdateIntersections()
 		QRectF rect{inters[0]-width/2, inters[1]-width/2, width, width};
 		QGraphicsItem *item = addEllipse(rect, pen, brush);
 		m_elems_inters.push_back(item);
+	}
+}
+
+
+void LinesScene::SetCalculateTrapezoids(bool b)
+{
+	m_calctrapezoids = b;
+	UpdateTrapezoids();
+}
+
+
+void LinesScene::UpdateTrapezoids()
+{
+	// remove previous trapezoids
+	for(QGraphicsItem* item : m_elems_trap)
+	{
+		removeItem(item);
+		delete item;
+	}
+	m_elems_trap.clear();
+
+	if(!m_calctrapezoids)
+		return;
+
+	// calculate trapezoids
+	bool randomise = true;
+	bool shear = true;
+	t_real padding = 25.;
+	auto node = geo::create_trapezoid_tree<t_vec>(m_lines, randomise, shear, padding, g_eps);
+	auto trapezoids = geo::get_trapezoids<t_vec>(node);
+
+	QPen penTrap;
+	penTrap.setWidthF(2.);
+
+	for(const auto& trap : trapezoids)
+	{
+		for(std::size_t idx1=0; idx1<trap.size(); ++idx1)
+		{
+			std::size_t idx2 = idx1+1;
+			if(idx2 >= trap.size())
+				idx2 = 0;
+			if(idx1 == idx2)
+				continue;
+
+			QLineF line
+			{
+				QPointF{trap[idx1][0], trap[idx1][1]}, 
+				QPointF{trap[idx2][0], trap[idx2][1]}
+			};
+
+			QGraphicsItem *item = addLine(line, penTrap);
+			m_elems_trap.push_back(item);
+		}
 	}
 }
 
@@ -323,9 +379,12 @@ void LinesScene::UpdateVoro(const QTransform& trafoSceneToVP)
 	for(int y=0; y<height; ++y)
 	{
 		if(progdlg.wasCanceled())
+		{
+			tp.stop();
 			break;
-		progdlg.setValue(y);
+		}
 
+		progdlg.setValue(y);
 		if(packages[y])
 			packages[y]->get_future().get();
 	}
@@ -552,7 +611,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 
-	setWindowTitle("Line Intersections");
+	setWindowTitle("Line Segments");
 	setCentralWidget(m_view.get());
 
 	QStatusBar *statusBar = new QStatusBar{this};
@@ -670,6 +729,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		m_scene->UpdateVoro(m_view->viewportTransform());
 	});
 
+	QAction *actionTrap = new QAction{"Trapezoid Map", this};
+	actionTrap->setCheckable(true);
+	actionTrap->setChecked(m_scene->GetCalculateTrapezoids());
+	connect(actionTrap, &QAction::toggled, [this](bool b)
+		{ m_scene->SetCalculateTrapezoids(b); });
+
 
 	QAction *actionIntersDirect = new QAction{"Direct", this};
 	actionIntersDirect->setCheckable(true);
@@ -703,6 +768,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
 
+	menuCalc->addAction(actionTrap);
+	menuCalc->addSeparator();
 	menuCalc->addAction(actionVoro);
 
 	menuBack->addAction(actionIntersDirect);
