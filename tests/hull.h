@@ -156,12 +156,13 @@ public:
 	HullDlg(QWidget* pParent = nullptr);
 	virtual ~HullDlg() = default;
 
-	void CalculateHull();
-
 protected:
 	QTableWidget *m_pTab{};
 	QPlainTextEdit *m_pEdit{};
 	QMenu *m_pTabContextMenu{};
+
+protected:
+	virtual void closeEvent(QCloseEvent *) override;
 
 protected:
 	void AddTabItem(int row = -1);
@@ -171,6 +172,9 @@ protected:
 
 	void TableCellChanged(int rowNew, int colNew, int rowOld, int colOld);
 	void ShowTableContextMenu(const QPoint& pt);
+
+	void SetDim(int dim);
+	void CalculateHull();
 
 private:
 	std::vector<int> GetSelectedRows(bool sort_reversed = false) const;
@@ -195,7 +199,7 @@ public:
 
 	void SetStatusMessage(const QString& msg);
 
-private:
+protected:
 	virtual void closeEvent(QCloseEvent *) override;
 
 private:

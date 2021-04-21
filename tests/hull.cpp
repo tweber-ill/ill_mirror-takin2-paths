@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QMenuBar>
 #include <QLabel>
+#include <QSpinBox>
 #include <QStatusBar>
 #include <QMouseEvent>
 #include <QFileDialog>
@@ -992,7 +993,21 @@ HullWnd::~HullWnd()
 HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 {
 	setWindowTitle("Convex Hull");
-	resize(450, 400);
+
+	// ------------------------------------------------------------------------
+	// restore settings
+	QSettings settings{this};
+
+	if(settings.contains("hullwnd_geo"))
+	{
+		QByteArray arr{settings.value("hullwnd_geo").toByteArray()};
+		this->restoreGeometry(arr);
+	}
+	else
+	{
+		resize(450, 400);
+	}
+	// ------------------------------------------------------------------------
 
 
 	// table
@@ -1003,20 +1018,6 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_pTab->setSelectionBehavior(QTableWidget::SelectRows);
 	m_pTab->setSelectionMode(QTableWidget::ContiguousSelection);
 	m_pTab->setContextMenuPolicy(Qt::CustomContextMenu);
-
-	m_pTab->horizontalHeader()->setDefaultSectionSize(125);
-	m_pTab->verticalHeader()->setDefaultSectionSize(32);
-	m_pTab->verticalHeader()->setVisible(false);
-
-	const char *coords[] = { "x", "y", "z" };
-	int dim = sizeof(coords)/sizeof(coords[0]);
-
-	for(int i=0; i<dim; ++i)
-	{
-		m_pTab->setColumnCount(dim);
-		m_pTab->setColumnWidth(i, 125);
-		m_pTab->setHorizontalHeaderItem(i, new QTableWidgetItem{coords[i]});
-	}
 
 
 	// text edit
@@ -1046,19 +1047,30 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_pTabBtnDown->setToolTip("Move vertex down.");
 
 
+	// dimension spin box
+	QSpinBox *spin = new QSpinBox(this);
+	spin->setMinimum(2);
+	spin->setMaximum(99);
+	spin->setValue(3);
+	spin->setPrefix("dim = ");
+
+
 	// grid
 	int y = 0;
 	auto pTabGrid = new QGridLayout(this);
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
-	pTabGrid->addWidget(m_pTab, y++,0,1,5);
-	pTabGrid->addWidget(m_pEdit, y++,0,1,5);
+	pTabGrid->addWidget(m_pTab, y++,0,1,7);
+	pTabGrid->addWidget(m_pEdit, y++,0,1,7);
 	pTabGrid->addWidget(m_pTabBtnAdd, y,0,1,1);
 	pTabGrid->addWidget(m_pTabBtnDel, y,1,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
 		QSizePolicy::Expanding, QSizePolicy::Minimum), y,2,1,1);
-	pTabGrid->addWidget(m_pTabBtnUp, y,3,1,1);
-	pTabGrid->addWidget(m_pTabBtnDown, y++,4,1,1);
+	pTabGrid->addWidget(spin, y,3,1,1);
+	pTabGrid->addItem(new QSpacerItem(4, 4, 
+		QSizePolicy::Expanding, QSizePolicy::Minimum), y,4,1,1);
+	pTabGrid->addWidget(m_pTabBtnUp, y,5,1,1);
+	pTabGrid->addWidget(m_pTabBtnDown, y++,6,1,1);
 
 
 	// table context CustomContextMenu
@@ -1084,6 +1096,45 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 		this, &HullDlg::TableCellChanged);
 	connect(m_pTab, &QTableWidget::customContextMenuRequested, 
 		this, &HullDlg::ShowTableContextMenu);
+	connect(spin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+		this, &HullDlg::SetDim);
+
+	SetDim(3);
+}
+
+
+void HullDlg::closeEvent(QCloseEvent *e)
+{
+	// ------------------------------------------------------------------------
+	// save settings
+	QSettings settings{this};
+
+	QByteArray geo{this->saveGeometry()};
+	settings.setValue("hullwnd_geo", geo);
+	// ------------------------------------------------------------------------
+
+	QDialog::closeEvent(e);
+}
+
+
+void HullDlg::SetDim(int dim)
+{
+	m_pTab->clear();
+	m_pTab->horizontalHeader()->setDefaultSectionSize(125);
+	m_pTab->verticalHeader()->setDefaultSectionSize(32);
+	m_pTab->verticalHeader()->setVisible(false);
+	m_pTab->setColumnCount(dim);
+	m_pTab->setRowCount(0);
+
+	for(int i=0; i<dim; ++i)
+	{
+		m_pTab->setColumnWidth(i, 125);
+
+		QString coord = QString("x%1").arg(i);
+		m_pTab->setHorizontalHeaderItem(i, new QTableWidgetItem{coord});
+	}
+
+	CalculateHull();
 }
 
 
