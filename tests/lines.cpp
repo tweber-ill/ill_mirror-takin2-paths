@@ -339,7 +339,7 @@ void LinesScene::UpdateVoro(const QTransform& trafoSceneToVP)
 	for(int y=0; y<height; ++y)
 	{
 		auto package = std::make_shared<std::packaged_task<void()>>(
-			[this, y, width, &linecolours, &mtx, &trafoVPToScene]() -> void
+			[this, y, width, &linecolours, &mtx, &trafoVPToScene]()
 			{
 				for(int x=0; x<width; ++x)
 				{
@@ -373,7 +373,7 @@ void LinesScene::UpdateVoro(const QTransform& trafoSceneToVP)
 			});
 
 		packages.push_back(package);
-		asio::post(tp, [package]() -> void { if(package) (*package)(); });
+		asio::post(tp, [package]() { if(package) (*package)(); });
 	}
 
 	for(int y=0; y<height; ++y)
@@ -787,7 +787,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// connections
 	connect(m_view.get(), &LinesView::SignalMouseCoordinates,
-	[this](double x, double y, double vpx, double vpy) -> void
+	[this](double x, double y, double vpx, double vpy)
 	{
 		SetStatusMessage(QString("Scene: x=%1, y=%2, Viewport: x=%3, y=%4.")
 			.arg(x, 5).arg(y, 5).arg(vpx, 5).arg(vpy, 5));

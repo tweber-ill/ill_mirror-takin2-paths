@@ -945,7 +945,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// connections
 	connect(m_view.get(), &HullView::SignalMouseCoordinates, 
-		[this](double x, double y) -> void
+		[this](double x, double y)
 		{
 			SetStatusMessage(QString("x=%1, y=%2.").arg(x, 5).arg(y, 5));
 		});
@@ -1011,40 +1011,40 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 
 	// table
-	m_pTab = new QTableWidget(this);
-	m_pTab->setShowGrid(true);
-	m_pTab->setSortingEnabled(true);
-	m_pTab->setMouseTracking(true);
-	m_pTab->setSelectionBehavior(QTableWidget::SelectRows);
-	m_pTab->setSelectionMode(QTableWidget::ContiguousSelection);
-	m_pTab->setContextMenuPolicy(Qt::CustomContextMenu);
+	m_tab = new QTableWidget(this);
+	m_tab->setShowGrid(true);
+	m_tab->setSortingEnabled(true);
+	m_tab->setMouseTracking(true);
+	m_tab->setSelectionBehavior(QTableWidget::SelectRows);
+	m_tab->setSelectionMode(QTableWidget::ContiguousSelection);
+	m_tab->setContextMenuPolicy(Qt::CustomContextMenu);
 
 
 	// text edit
-	m_pEdit = new QPlainTextEdit(this);
-	m_pEdit->setReadOnly(true);
+	m_editResults = new QPlainTextEdit(this);
+	m_editResults->setReadOnly(true);
 
 
 	// buttons
-	QToolButton *m_pTabBtnAdd = new QToolButton(this);
-	QToolButton *m_pTabBtnDel = new QToolButton(this);
-	QToolButton *m_pTabBtnUp = new QToolButton(this);
-	QToolButton *m_pTabBtnDown = new QToolButton(this);
+	QToolButton *m_tabBtnAdd = new QToolButton(this);
+	QToolButton *m_tabBtnDel = new QToolButton(this);
+	QToolButton *m_tabBtnUp = new QToolButton(this);
+	QToolButton *m_tabBtnDown = new QToolButton(this);
 
-	m_pTabBtnAdd->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_pTabBtnDel->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_pTabBtnUp->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_pTabBtnDown->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	m_tabBtnAdd->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	m_tabBtnDel->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	m_tabBtnUp->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	m_tabBtnDown->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
 
-	m_pTabBtnAdd->setText("\xe2\x8a\x95");
-	m_pTabBtnDel->setText("\xe2\x8a\x96");
-	m_pTabBtnUp->setText("\342\206\221");
-	m_pTabBtnDown->setText("\342\206\223");
+	m_tabBtnAdd->setText("\xe2\x8a\x95");
+	m_tabBtnDel->setText("\xe2\x8a\x96");
+	m_tabBtnUp->setText("\342\206\221");
+	m_tabBtnDown->setText("\342\206\223");
 
-	m_pTabBtnAdd->setToolTip("Add vertex.");
-	m_pTabBtnDel->setToolTip("Delete vertex.");
-	m_pTabBtnUp->setToolTip("Move vertex up.");
-	m_pTabBtnDown->setToolTip("Move vertex down.");
+	m_tabBtnAdd->setToolTip("Add vertex.");
+	m_tabBtnDel->setToolTip("Delete vertex.");
+	m_tabBtnUp->setToolTip("Move vertex up.");
+	m_tabBtnDown->setToolTip("Move vertex down.");
 
 
 	// dimension spin box
@@ -1055,49 +1055,58 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	spin->setPrefix("dim = ");
 
 
+	// delaunay / hull check box
+	m_checkDelaunay = new QCheckBox(this);
+	m_checkDelaunay->setChecked(false);
+	m_checkDelaunay->setText("Delaunay");
+
+
 	// grid
 	int y = 0;
 	auto pTabGrid = new QGridLayout(this);
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
-	pTabGrid->addWidget(m_pTab, y++,0,1,7);
-	pTabGrid->addWidget(m_pEdit, y++,0,1,7);
-	pTabGrid->addWidget(m_pTabBtnAdd, y,0,1,1);
-	pTabGrid->addWidget(m_pTabBtnDel, y,1,1,1);
+	pTabGrid->addWidget(m_tab, y++,0,1,7);
+	pTabGrid->addWidget(m_editResults, y++,0,1,7);
+	pTabGrid->addWidget(m_tabBtnAdd, y,0,1,1);
+	pTabGrid->addWidget(m_tabBtnDel, y,1,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
 		QSizePolicy::Expanding, QSizePolicy::Minimum), y,2,1,1);
 	pTabGrid->addWidget(spin, y,3,1,1);
+	pTabGrid->addWidget(m_checkDelaunay, y,4,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
-		QSizePolicy::Expanding, QSizePolicy::Minimum), y,4,1,1);
-	pTabGrid->addWidget(m_pTabBtnUp, y,5,1,1);
-	pTabGrid->addWidget(m_pTabBtnDown, y++,6,1,1);
+		QSizePolicy::Expanding, QSizePolicy::Minimum), y,5,1,1);
+	pTabGrid->addWidget(m_tabBtnUp, y,6,1,1);
+	pTabGrid->addWidget(m_tabBtnDown, y++,7,1,1);
 
 
 	// table context CustomContextMenu
-	m_pTabContextMenu = new QMenu(m_pTab);
-	m_pTabContextMenu->addAction("Add Item Before", this, 
+	m_contextMenuTab = new QMenu(m_tab);
+	m_contextMenuTab->addAction("Add Item Before", this, 
 		[this]() { this->AddTabItem(-2); });
-	m_pTabContextMenu->addAction("Add Item After", this, 
+	m_contextMenuTab->addAction("Add Item After", this, 
 		[this]() { this->AddTabItem(-3); });
-	m_pTabContextMenu->addAction("Delete Item", this, 
+	m_contextMenuTab->addAction("Delete Item", this, 
 		&HullDlg::DelTabItem);
 
 
 	// signals
-	connect(m_pTabBtnAdd, &QToolButton::clicked, 
+	connect(m_tabBtnAdd, &QToolButton::clicked, 
 		this, [this]() { this->AddTabItem(-1); });
-	connect(m_pTabBtnDel, &QToolButton::clicked, 
+	connect(m_tabBtnDel, &QToolButton::clicked, 
 		this, &HullDlg::DelTabItem);
-	connect(m_pTabBtnUp, &QToolButton::clicked, 
+	connect(m_tabBtnUp, &QToolButton::clicked, 
 		this, &HullDlg::MoveTabItemUp);
-	connect(m_pTabBtnDown, &QToolButton::clicked, 
+	connect(m_tabBtnDown, &QToolButton::clicked, 
 		this, &HullDlg::MoveTabItemDown);
-	connect(m_pTab, &QTableWidget::currentCellChanged, 
+	connect(m_tab, &QTableWidget::currentCellChanged, 
 		this, &HullDlg::TableCellChanged);
-	connect(m_pTab, &QTableWidget::customContextMenuRequested, 
+	connect(m_tab, &QTableWidget::customContextMenuRequested, 
 		this, &HullDlg::ShowTableContextMenu);
 	connect(spin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
 		this, &HullDlg::SetDim);
+	connect(m_checkDelaunay, &QCheckBox::stateChanged,
+		[this]() { CalculateHull(); });
 
 	SetDim(3);
 }
@@ -1119,19 +1128,19 @@ void HullDlg::closeEvent(QCloseEvent *e)
 
 void HullDlg::SetDim(int dim)
 {
-	m_pTab->clear();
-	m_pTab->horizontalHeader()->setDefaultSectionSize(125);
-	m_pTab->verticalHeader()->setDefaultSectionSize(32);
-	m_pTab->verticalHeader()->setVisible(false);
-	m_pTab->setColumnCount(dim);
-	m_pTab->setRowCount(0);
+	m_tab->clear();
+	m_tab->horizontalHeader()->setDefaultSectionSize(125);
+	m_tab->verticalHeader()->setDefaultSectionSize(32);
+	m_tab->verticalHeader()->setVisible(false);
+	m_tab->setColumnCount(dim);
+	m_tab->setRowCount(0);
 
 	for(int i=0; i<dim; ++i)
 	{
-		m_pTab->setColumnWidth(i, 125);
+		m_tab->setColumnWidth(i, 125);
 
 		QString coord = QString("x%1").arg(i);
-		m_pTab->setHorizontalHeaderItem(i, new QTableWidgetItem{coord});
+		m_tab->setHorizontalHeaderItem(i, new QTableWidgetItem{coord});
 	}
 
 	CalculateHull();
@@ -1144,14 +1153,14 @@ void HullDlg::CalculateHull()
 
 	try
 	{
-		m_pEdit->clear();
+		m_editResults->clear();
 
-		int dim = m_pTab->columnCount();
-		int rows = m_pTab->rowCount();
+		int dim = m_tab->columnCount();
+		int rows = m_tab->rowCount();
 
 		if(rows < dim+1)
 		{
-			m_pEdit->setPlainText("Not enough vectors.\n");
+			m_editResults->setPlainText("Not enough vectors.\n");
 			return;
 		}
 
@@ -1165,7 +1174,7 @@ void HullDlg::CalculateHull()
 			for(int col=0; col<dim; ++col)
 			{
 				auto widget = dynamic_cast<NumericTableWidgetItem<t_real>*>(
-					m_pTab->item(row, col));
+					m_tab->item(row, col));
 				vertex[col] = widget->GetValue();
 			}
 
@@ -1183,15 +1192,15 @@ void HullDlg::CalculateHull()
 
 		if(numNonZeroVerts < dim+1)
 		{
-			m_pEdit->setPlainText("Not enough independent vectors.\n");
+			m_editResults->setPlainText("Not enough independent vectors.\n");
 			return;
 		}
 
 
 		// calculate hull
-		std::vector<std::vector<t_vec>> hull;
-		std::tie(std::ignore, hull, std::ignore) = 
-			geo::calc_delaunay<t_vec>(dim, vertices, true);
+		bool calc_hull = !m_checkDelaunay->isChecked();
+		auto [voro, triags, neighbourindices] = 
+			geo::calc_delaunay<t_vec>(dim, vertices, calc_hull);
 
 
 		// output results
@@ -1205,9 +1214,19 @@ void HullDlg::CalculateHull()
 
 		ostr << "\n";
 
-		for(std::size_t polyidx=0; polyidx<hull.size(); ++polyidx)
+		// voronoi vertices
+		for(std::size_t voroidx=0; voroidx<voro.size(); ++voroidx)
 		{
-			const auto& poly = hull[polyidx];
+			ostr << "Voronoi vertex " << (voroidx+1) << ": "
+				<< voro[voroidx] << "\n";
+		}
+
+		ostr << "\n";
+
+		// hull or delaunay triangles
+		for(std::size_t polyidx=0; polyidx<triags.size(); ++polyidx)
+		{
+			const auto& poly = triags[polyidx];
 			ostr << "Polygon " << (polyidx+1) << ":\n";
 
 			for(const auto& vertex : poly)
@@ -1216,11 +1235,11 @@ void HullDlg::CalculateHull()
 			ostr << "\n";
 		}
 
-		m_pEdit->setPlainText(ostr.str().c_str());
+		m_editResults->setPlainText(ostr.str().c_str());
 	}
 	catch(const std::exception& ex)
 	{
-		m_pEdit->setPlainText(ex.what());
+		m_editResults->setPlainText(ex.what());
 	}
 }
 
@@ -1229,7 +1248,7 @@ void HullDlg::AddTabItem(int row)
 {
 	// append to end of table
 	if(row == -1)
-		row = m_pTab->rowCount();
+		row = m_tab->rowCount();
 
 	// use row from member variable
 	else if(row == -2 && m_iCursorRow >= 0)
@@ -1239,36 +1258,36 @@ void HullDlg::AddTabItem(int row)
 	else if(row == -3 && m_iCursorRow >= 0)
 		row = m_iCursorRow + 1;
 
-	m_pTab->setSortingEnabled(false);
-	m_pTab->insertRow(row);
+	m_tab->setSortingEnabled(false);
+	m_tab->insertRow(row);
 
-	for(int col=0; col<m_pTab->columnCount(); ++col)
-		m_pTab->setItem(row, col, new NumericTableWidgetItem<t_real>(0));
+	for(int col=0; col<m_tab->columnCount(); ++col)
+		m_tab->setItem(row, col, new NumericTableWidgetItem<t_real>(0));
 
-	m_pTab->scrollToItem(m_pTab->item(row, 0));
-	m_pTab->setCurrentCell(row, 0);
-	m_pTab->setSortingEnabled(true);
+	m_tab->scrollToItem(m_tab->item(row, 0));
+	m_tab->setCurrentCell(row, 0);
+	m_tab->setSortingEnabled(true);
 }
 
 
 void HullDlg::DelTabItem()
 {
 	// if nothing is selected, clear all items
-	if(m_pTab->selectedItems().count() == 0)
+	if(m_tab->selectedItems().count() == 0)
 	{
-		m_pTab->clearContents();
-		m_pTab->setRowCount(0);
+		m_tab->clearContents();
+		m_tab->setRowCount(0);
 	}
 
 
 	for(int row : GetSelectedRows(true))
-		m_pTab->removeRow(row);
+		m_tab->removeRow(row);
 }
 
 
 void HullDlg::MoveTabItemUp()
 {
-	m_pTab->setSortingEnabled(false);
+	m_tab->setSortingEnabled(false);
 
 	auto selected = GetSelectedRows(false);
 	for(int row : selected)
@@ -1276,23 +1295,23 @@ void HullDlg::MoveTabItemUp()
 		if(row == 0)
 			continue;
 
-		auto *item = m_pTab->item(row, 0);
+		auto *item = m_tab->item(row, 0);
 		if(!item || !item->isSelected())
 			continue;
 
-		m_pTab->insertRow(row-1);
-		for(int col=0; col<m_pTab->columnCount(); ++col)
-			m_pTab->setItem(row-1, col, m_pTab->item(row+1, col)->clone());
-		m_pTab->removeRow(row+1);
+		m_tab->insertRow(row-1);
+		for(int col=0; col<m_tab->columnCount(); ++col)
+			m_tab->setItem(row-1, col, m_tab->item(row+1, col)->clone());
+		m_tab->removeRow(row+1);
 	}
 
-	for(int row=0; row<m_pTab->rowCount(); ++row)
+	for(int row=0; row<m_tab->rowCount(); ++row)
 	{
-		if(auto *item = m_pTab->item(row, 0);
+		if(auto *item = m_tab->item(row, 0);
 			item && std::find(selected.begin(), selected.end(), row+1) != selected.end())
 		{
-			for(int col=0; col<m_pTab->columnCount(); ++col)
-				m_pTab->item(row, col)->setSelected(true);
+			for(int col=0; col<m_tab->columnCount(); ++col)
+				m_tab->item(row, col)->setSelected(true);
 		}
 	}
 }
@@ -1300,31 +1319,31 @@ void HullDlg::MoveTabItemUp()
 
 void HullDlg::MoveTabItemDown()
 {
-	m_pTab->setSortingEnabled(false);
+	m_tab->setSortingEnabled(false);
 
 	auto selected = GetSelectedRows(true);
 	for(int row : selected)
 	{
-		if(row == m_pTab->rowCount()-1)
+		if(row == m_tab->rowCount()-1)
 			continue;
 
-		auto *item = m_pTab->item(row, 0);
+		auto *item = m_tab->item(row, 0);
 		if(!item || !item->isSelected())
 			continue;
 
-		m_pTab->insertRow(row+2);
-		for(int col=0; col<m_pTab->columnCount(); ++col)
-			m_pTab->setItem(row+2, col, m_pTab->item(row, col)->clone());
-		m_pTab->removeRow(row);
+		m_tab->insertRow(row+2);
+		for(int col=0; col<m_tab->columnCount(); ++col)
+			m_tab->setItem(row+2, col, m_tab->item(row, col)->clone());
+		m_tab->removeRow(row);
 	}
 
-	for(int row=0; row<m_pTab->rowCount(); ++row)
+	for(int row=0; row<m_tab->rowCount(); ++row)
 	{
-		if(auto *item = m_pTab->item(row, 0);
+		if(auto *item = m_tab->item(row, 0);
 			item && std::find(selected.begin(), selected.end(), row-1) != selected.end())
 		{
-			for(int col=0; col<m_pTab->columnCount(); ++col)
-				m_pTab->item(row, col)->setSelected(true);
+			for(int col=0; col<m_tab->columnCount(); ++col)
+				m_tab->item(row, col)->setSelected(true);
 		}
 	}
 }
@@ -1333,11 +1352,11 @@ void HullDlg::MoveTabItemDown()
 std::vector<int> HullDlg::GetSelectedRows(bool sort_reversed) const
 {
 	std::vector<int> vec;
-	vec.reserve(m_pTab->selectedItems().size());
+	vec.reserve(m_tab->selectedItems().size());
 
-	for(int row=0; row<m_pTab->rowCount(); ++row)
+	for(int row=0; row<m_tab->rowCount(); ++row)
 	{
-		if(auto *item = m_pTab->item(row, 0); item && item->isSelected())
+		if(auto *item = m_tab->item(row, 0); item && item->isSelected())
 			vec.push_back(row);
 	}
 
@@ -1359,14 +1378,14 @@ void HullDlg::TableCellChanged(int, int, int, int)
 
 void HullDlg::ShowTableContextMenu(const QPoint& pt)
 {
-	const auto* item = m_pTab->itemAt(pt);
+	const auto* item = m_tab->itemAt(pt);
 	if(!item)
 		return;
 
 	m_iCursorRow = item->row();
-	auto ptGlob = m_pTab->mapToGlobal(pt);
-	ptGlob.setY(ptGlob.y() + m_pTabContextMenu->sizeHint().height()/2);
-	m_pTabContextMenu->popup(ptGlob);
+	auto ptGlob = m_tab->mapToGlobal(pt);
+	ptGlob.setY(ptGlob.y() + m_contextMenuTab->sizeHint().height()/2);
+	m_contextMenuTab->popup(ptGlob);
 }
 // ----------------------------------------------------------------------------
 

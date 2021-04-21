@@ -418,7 +418,7 @@ std::ostream& operator<<(std::ostream& ostr,
 	const auto& node = *std::get<0>(node_depth);
 	int depth = std::get<1>(node_depth);
 
-	auto print_indent = [&ostr, depth]() -> void
+	auto print_indent = [&ostr, depth]()
 	{
 		for(int i=0; i<depth; ++i)
 			ostr << "  ";
@@ -512,7 +512,7 @@ std::shared_ptr<TrapezoidNodeTrapezoid<t_vec>> find_neighbour_trapezoid(
 	std::function<void(const std::shared_ptr<TrapezoidNode<t_vec>>&)> traverse;
 	traverse = [&candidates, &traverse, &cache, 
 		lineTop, lineBottom, ptLeft, ptRight, left, top, eps]
-		(const std::shared_ptr<TrapezoidNode<t_vec>>& node) -> void
+		(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	{
 		// TODO: better use of binary search tree, no need to check all nodes...
 		if(node->GetLeft())
@@ -611,7 +611,7 @@ std::shared_ptr<TrapezoidNodeTrapezoid<t_vec>> find_trapezoid(
 	// function to traverse the tree
 	std::function<void(const std::shared_ptr<TrapezoidNode<t_vec>>&)> traverse;
 	traverse = [&candidates, &pt, &traverse]
-		(const std::shared_ptr<TrapezoidNode<t_vec>>& node) -> void
+		(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	{
 		if(node->IsLeft(pt))
 		{
@@ -812,7 +812,7 @@ void save_trapezoid_svg(const std::shared_ptr<TrapezoidNode<t_vec>>& node,
 	// function to traverse the tree
 	std::function<void(const std::shared_ptr<TrapezoidNode<t_vec>>&)> traverse;
 	traverse = [&svg, &traverse, &cache]
-	(const std::shared_ptr<TrapezoidNode<t_vec>>& node) -> void
+	(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	{
 		if(node->GetLeft())
 			traverse(node->GetLeft());
@@ -878,7 +878,7 @@ get_trapezoids(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	// function to traverse the tree
 	std::function<void(const std::shared_ptr<TrapezoidNode<t_vec>>&)> traverse;
 	traverse = [&polys, &traverse, &cache]
-	(const std::shared_ptr<TrapezoidNode<t_vec>>& node) -> void
+	(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	{
 		if(node->GetLeft())
 			traverse(node->GetLeft());

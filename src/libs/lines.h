@@ -266,7 +266,7 @@ requires tl2::is_vec<t_vec>
 
 	// remove duplicate points
 	verts.erase(std::unique(verts.begin(), verts.end(),
-		[eps](const t_vec& vec1, const t_vec& vec2)->bool
+		[eps](const t_vec& vec1, const t_vec& vec2) -> bool
 		{ return tl2::equals<t_vec>(vec1, vec2, eps); }
 		), verts.end());
 

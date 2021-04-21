@@ -19,7 +19,7 @@
 template<class t_prop, class t_map>
 void replace_ptree_values(t_prop& prop, const t_map& map)
 {
-	const auto& replace_str = [&map](std::string& str) -> void
+	const auto& replace_str = [&map](std::string& str)
 	{
 		for(const auto& pair : map)
 			boost::algorithm::replace_all(str, pair.first, pair.second);

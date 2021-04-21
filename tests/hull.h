@@ -20,6 +20,7 @@
 #include <QTableWidget>
 #include <QToolButton>
 #include <QPlainTextEdit>
+#include <QCheckBox>
 
 #include <memory>
 #include <unordered_set>
@@ -157,9 +158,10 @@ public:
 	virtual ~HullDlg() = default;
 
 protected:
-	QTableWidget *m_pTab{};
-	QPlainTextEdit *m_pEdit{};
-	QMenu *m_pTabContextMenu{};
+	QTableWidget *m_tab{};
+	QPlainTextEdit *m_editResults{};
+	QCheckBox *m_checkDelaunay{};
+	QMenu *m_contextMenuTab{};
 
 protected:
 	virtual void closeEvent(QCloseEvent *) override;
