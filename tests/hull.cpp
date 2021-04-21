@@ -943,10 +943,11 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 
 
 	// connections
-	connect(m_view.get(), &HullView::SignalMouseCoordinates, [this](double x, double y) -> void
-	{
-		SetStatusMessage(QString("x=%1, y=%2.").arg(x, 5).arg(y, 5));
-	});
+	connect(m_view.get(), &HullView::SignalMouseCoordinates, 
+		[this](double x, double y) -> void
+		{
+			SetStatusMessage(QString("x=%1, y=%2.").arg(x, 5).arg(y, 5));
+		});
 
 
 	SetStatusMessage("Ready.");
@@ -991,7 +992,7 @@ HullWnd::~HullWnd()
 HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 {
 	setWindowTitle("Convex Hull");
-	resize(500, 400);
+	resize(450, 400);
 
 
 	// table
@@ -1003,18 +1004,19 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_pTab->setSelectionMode(QTableWidget::ContiguousSelection);
 	m_pTab->setContextMenuPolicy(Qt::CustomContextMenu);
 
-	m_pTab->setColumnCount(3);
-	m_pTab->setHorizontalHeaderItem(0, new QTableWidgetItem{"x"});
-	m_pTab->setHorizontalHeaderItem(1, new QTableWidgetItem{"y"});
-	m_pTab->setHorizontalHeaderItem(2, new QTableWidgetItem{"z"});
-
-	m_pTab->horizontalHeader()->setDefaultSectionSize(200);
+	m_pTab->horizontalHeader()->setDefaultSectionSize(125);
 	m_pTab->verticalHeader()->setDefaultSectionSize(32);
 	m_pTab->verticalHeader()->setVisible(false);
 
-	m_pTab->setColumnWidth(0, 150);
-	m_pTab->setColumnWidth(1, 150);
-	m_pTab->setColumnWidth(2, 150);
+	const char *coords[] = { "x", "y", "z" };
+	int dim = sizeof(coords)/sizeof(coords[0]);
+
+	for(int i=0; i<dim; ++i)
+	{
+		m_pTab->setColumnCount(dim);
+		m_pTab->setColumnWidth(i, 125);
+		m_pTab->setHorizontalHeaderItem(i, new QTableWidgetItem{coords[i]});
+	}
 
 
 	// text edit
@@ -1023,10 +1025,10 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 
 	// buttons
-	m_pTabBtnAdd = new QToolButton(this);
-	m_pTabBtnDel = new QToolButton(this);
-	m_pTabBtnUp = new QToolButton(this);
-	m_pTabBtnDown = new QToolButton(this);
+	QToolButton *m_pTabBtnAdd = new QToolButton(this);
+	QToolButton *m_pTabBtnDel = new QToolButton(this);
+	QToolButton *m_pTabBtnUp = new QToolButton(this);
+	QToolButton *m_pTabBtnDown = new QToolButton(this);
 
 	m_pTabBtnAdd->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
 	m_pTabBtnDel->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
@@ -1038,10 +1040,10 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_pTabBtnUp->setText("\342\206\221");
 	m_pTabBtnDown->setText("\342\206\223");
 
-	m_pTabBtnAdd->setToolTip("Add item.");
-	m_pTabBtnDel->setToolTip("Delete selected item(s).");
-	m_pTabBtnUp->setToolTip("Move selected item(s) up.");
-	m_pTabBtnDown->setToolTip("Move selected item(s) down.");
+	m_pTabBtnAdd->setToolTip("Add vertex.");
+	m_pTabBtnDel->setToolTip("Delete vertex.");
+	m_pTabBtnUp->setToolTip("Move vertex up.");
+	m_pTabBtnDown->setToolTip("Move vertex down.");
 
 
 	// grid
@@ -1096,7 +1098,7 @@ void HullDlg::CalculateHull()
 		int dim = m_pTab->columnCount();
 		int rows = m_pTab->rowCount();
 
-		if(rows < 4)
+		if(rows < dim+1)
 		{
 			m_pEdit->setPlainText("Not enough vectors.\n");
 			return;
@@ -1120,7 +1122,7 @@ void HullDlg::CalculateHull()
 		}
 
 
-		std::size_t numNonZeroVerts = 0;
+		int numNonZeroVerts = 0;
 		for(const t_vec& vertex : vertices)
 		{
 			t_real n = tl2::norm<t_vec>(vertex);
@@ -1128,7 +1130,7 @@ void HullDlg::CalculateHull()
 				++numNonZeroVerts;
 		}
 
-		if(numNonZeroVerts < 4)
+		if(numNonZeroVerts < dim+1)
 		{
 			m_pEdit->setPlainText("Not enough independent vectors.\n");
 			return;
@@ -1167,7 +1169,7 @@ void HullDlg::CalculateHull()
 	}
 	catch(const std::exception& ex)
 	{
-		std::cerr << ex.what() << std::endl;
+		m_pEdit->setPlainText(ex.what());
 	}
 }
 
@@ -1189,9 +1191,8 @@ void HullDlg::AddTabItem(int row)
 	m_pTab->setSortingEnabled(false);
 	m_pTab->insertRow(row);
 
-	m_pTab->setItem(row, 0, new NumericTableWidgetItem<t_real>(0));
-	m_pTab->setItem(row, 1, new NumericTableWidgetItem<t_real>(0));
-	m_pTab->setItem(row, 2, new NumericTableWidgetItem<t_real>(0));
+	for(int col=0; col<m_pTab->columnCount(); ++col)
+		m_pTab->setItem(row, col, new NumericTableWidgetItem<t_real>(0));
 
 	m_pTab->scrollToItem(m_pTab->item(row, 0));
 	m_pTab->setCurrentCell(row, 0);

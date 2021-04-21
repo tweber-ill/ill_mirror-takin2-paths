@@ -154,8 +154,6 @@ class HullDlg : public QDialog
 {
 public:
 	HullDlg(QWidget* pParent = nullptr);
-	HullDlg(const HullDlg&) = default;
-
 	virtual ~HullDlg() = default;
 
 	void CalculateHull();
@@ -163,12 +161,6 @@ public:
 protected:
 	QTableWidget *m_pTab{};
 	QPlainTextEdit *m_pEdit{};
-
-	QToolButton *m_pTabBtnAdd{};
-	QToolButton *m_pTabBtnDel{};
-	QToolButton *m_pTabBtnUp{};
-	QToolButton *m_pTabBtnDown{};
-
 	QMenu *m_pTabContextMenu{};
 
 protected:
