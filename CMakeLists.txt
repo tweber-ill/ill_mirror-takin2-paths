@@ -47,7 +47,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# pass linker --subsystem option
 	add_compile_options(-Wl,--subsystem,windows)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	add_compile_options(-mmacosx-version-min=10.10)
+	add_compile_options(-mmacosx-version-min=10.14)
 endif()
 # -----------------------------------------------------------------------------
 

@@ -11,10 +11,15 @@
 
 
 #include <QMainWindow>
+#include <QDialog>
+#include <QMenu>
 #include <QLabel>
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <QTableWidget>
+#include <QToolButton>
+#include <QPlainTextEdit>
 
 #include <memory>
 #include <unordered_set>
@@ -142,6 +147,52 @@ signals:
 
 
 
+/**
+ * convex hull calculation dialog
+ */
+class HullDlg : public QDialog
+{
+public:
+	HullDlg(QWidget* pParent = nullptr);
+	HullDlg(const HullDlg&) = default;
+
+	virtual ~HullDlg() = default;
+
+	void CalculateHull();
+
+protected:
+	QTableWidget *m_pTab{};
+	QPlainTextEdit *m_pEdit{};
+
+	QToolButton *m_pTabBtnAdd{};
+	QToolButton *m_pTabBtnDel{};
+	QToolButton *m_pTabBtnUp{};
+	QToolButton *m_pTabBtnDown{};
+
+	QMenu *m_pTabContextMenu{};
+
+protected:
+	void AddTabItem(int row = -1);
+	void DelTabItem();
+	void MoveTabItemUp();
+	void MoveTabItemDown();
+
+	void TableCellChanged(int rowNew, int colNew, int rowOld, int colOld);
+	void ShowTableContextMenu(const QPoint& pt);
+
+private:
+	std::vector<int> GetSelectedRows(bool sort_reversed = false) const;
+
+private:
+	int m_iCursorRow{-1};
+
+};
+
+
+
+/**
+ * main window
+ */
 class HullWnd : public QMainWindow
 {
 public:
@@ -156,10 +207,10 @@ private:
 	virtual void closeEvent(QCloseEvent *) override;
 
 private:
+	std::shared_ptr<HullDlg> m_hulldlg;
 	std::shared_ptr<HullScene> m_scene;
 	std::shared_ptr<HullView> m_view;
 	std::shared_ptr<QLabel> m_statusLabel;
 };
-
 
 #endif

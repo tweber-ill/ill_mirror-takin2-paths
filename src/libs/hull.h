@@ -569,7 +569,8 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 			for(int i=0; i<dim; ++i)
 				_verts.push_back(t_real_qhull{vert[i]});
 
-		qh::Qhull qh{"triag", dim, int(_verts.size()/dim), _verts.data(), only_hull ? "Qt" : "v Qu QJ" };
+		qh::Qhull qh{"triag", dim, int(_verts.size()/dim), _verts.data(), 
+			only_hull ? "Qt" : "v Qu QJ" };
 		if(qh.hasQhullMessage())
 			std::cout << qh.qhullMessage() << std::endl;
 
@@ -610,7 +611,11 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 				thetriag.emplace_back(std::move(vec));
 			}
 
-			std::tie(thetriag, std::ignore) = sort_vertices_by_angle<t_vec>(thetriag);
+			if(dim == 2)
+			{
+				std::tie(thetriag, std::ignore)
+					= sort_vertices_by_angle<t_vec>(thetriag);
+			}
 			triags.emplace_back(std::move(thetriag));
 		}
 
