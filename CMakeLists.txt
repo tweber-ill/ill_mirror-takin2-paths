@@ -147,6 +147,7 @@ elseif(QT_VER EQUAL 5)
 	)
 endif()
 
+
 # link resource directory
 #add_custom_command(
 #	TARGET taspaths PRE_BUILD
