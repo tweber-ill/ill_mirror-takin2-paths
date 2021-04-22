@@ -1067,8 +1067,8 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	auto pTabGrid = new QGridLayout(this);
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
-	pTabGrid->addWidget(m_tab, y++,0,1,7);
-	pTabGrid->addWidget(m_editResults, y++,0,1,7);
+	pTabGrid->addWidget(m_tab, y++,0,1,8);
+	pTabGrid->addWidget(m_editResults, y++,0,1,8);
 	pTabGrid->addWidget(m_tabBtnAdd, y,0,1,1);
 	pTabGrid->addWidget(m_tabBtnDel, y,1,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 

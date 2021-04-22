@@ -939,8 +939,7 @@ bool check_line_equal_x(const std::vector<t_line>& lines,
 	};
 
 	std::vector<t_vec> alreadyseen0, alreadyseen1;
-	std::set<t_real, CompareReals> cache_x0{CompareReals{eps}},
-		cache_x1{CompareReals{eps}};
+	std::set<t_real, CompareReals> cache_x{CompareReals{eps}};
 
 	for(const t_line& line : lines)
 	{
@@ -965,15 +964,14 @@ bool check_line_equal_x(const std::vector<t_line>& lines,
 		}
 
 		t_real x0 = pt0[0];
+		if(cache_x.find(x0) != cache_x.end())
+			return true;
+		cache_x.insert(x0);
+
 		t_real x1 = pt1[0];
-
-		if(cache_x0.find(x0) != cache_x0.end())
+		if(cache_x.find(x1) != cache_x.end())
 			return true;
-		if(cache_x1.find(x1) != cache_x1.end())
-			return true;
-
-		cache_x0.insert(x0);
-		cache_x1.insert(x1);
+		cache_x.insert(x1);
 
 		if(exclude_duplicates)
 		{
