@@ -41,6 +41,7 @@ using t_vec = tl2::vec<t_real, std::vector>;
 using t_mat = tl2::mat<t_real, std::vector>;
 
 const constexpr t_real g_eps = 1e-5;
+const constexpr std::streamsize g_prec = 5;
 
 
 
@@ -1155,10 +1156,12 @@ void HullDlg::CalculateHull()
 	{
 		m_editResults->clear();
 
+		bool calc_hull = !m_checkDelaunay->isChecked();
 		int dim = m_tab->columnCount();
 		int rows = m_tab->rowCount();
+		int needed_dim = calc_hull ? dim+1 : dim+2;
 
-		if(rows < dim+1)
+		if(rows < needed_dim)
 		{
 			m_editResults->setPlainText("Not enough vectors.\n");
 			return;
@@ -1190,15 +1193,14 @@ void HullDlg::CalculateHull()
 				++numNonZeroVerts;
 		}
 
-		if(numNonZeroVerts < dim+1)
+		if(numNonZeroVerts < needed_dim)
 		{
 			m_editResults->setPlainText("Not enough independent vectors.\n");
 			return;
 		}
 
 
-		// calculate hull
-		bool calc_hull = !m_checkDelaunay->isChecked();
+		// calculate hull / delaunay triangulation
 		auto [voro, triags, neighbourindices] = 
 			geo::calc_delaunay<t_vec>(dim, vertices, calc_hull);
 
@@ -1228,9 +1230,19 @@ void HullDlg::CalculateHull()
 		{
 			const auto& poly = triags[polyidx];
 			ostr << "Polygon " << (polyidx+1) << ":\n";
-
+			ostr << "\tVertices:\n";
 			for(const auto& vertex : poly)
-				ostr << "\t" << vertex << "\n";
+				ostr << "\t\t" << vertex << "\n";
+
+			if(neighbourindices.size())
+			{
+				const auto& neighbours = neighbourindices[polyidx];
+				ostr << "\tNeighbour indices:\n";
+				ostr << "\t\t";
+				for(auto neighbour : neighbours)
+					ostr << neighbour << ", ";
+				ostr << "\n";
+			}
 
 			ostr << "\n";
 		}
@@ -1262,7 +1274,7 @@ void HullDlg::AddTabItem(int row)
 	m_tab->insertRow(row);
 
 	for(int col=0; col<m_tab->columnCount(); ++col)
-		m_tab->setItem(row, col, new NumericTableWidgetItem<t_real>(0));
+		m_tab->setItem(row, col, new NumericTableWidgetItem<t_real>(0, g_prec));
 
 	m_tab->scrollToItem(m_tab->item(row, 0));
 	m_tab->setCurrentCell(row, 0);
