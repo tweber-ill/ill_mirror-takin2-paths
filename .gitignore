@@ -32,6 +32,7 @@ TASPaths.app/**
 tmp/**
 build/**
 tests/build/**
+unittests/build/**
 *.pyc
 .DS_Store
 *.csv

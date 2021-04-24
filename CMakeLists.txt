@@ -22,11 +22,16 @@ list(APPEND CMAKE_MODULE_PATH
 #	)
 #endif()
 
+
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
 
 
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+	set(CMAKE_VERBOSE_MAKEFILE TRUE)
+endif()
+
+
 set(GL_MAJOR_VER 3)
 set(GL_MINOR_VER 3)
 
@@ -36,11 +41,15 @@ else()
 	set(QT_VER 5)
 endif()
 
+
+message("Build type: ${CMAKE_BUILD_TYPE}")
 message("Selected Qt version ${QT_VER}.")
 message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 
+
 # -----------------------------------------------------------------------------
 # system specific settings
+# -----------------------------------------------------------------------------
 message("Building for ${CMAKE_SYSTEM_NAME} systems.")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -54,8 +63,11 @@ endif()
 
 # -----------------------------------------------------------------------------
 # packages
+# -----------------------------------------------------------------------------
 set(Boost_NO_BOOST_CMAKE FALSE)
 find_package(Boost REQUIRED COMPONENTS filesystem)
+
+message("Using Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}.")
 
 
 if(USE_LAPACK)
@@ -84,6 +96,7 @@ set(CMAKE_AUTOMOC TRUE)
 
 # -----------------------------------------------------------------------------
 # compiler settings
+# -----------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-std=c++20)
 add_compile_options(${Boost_CXX_FLAGS})
@@ -95,6 +108,7 @@ add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 
 # -----------------------------------------------------------------------------
 # target executable settings
+# -----------------------------------------------------------------------------
 add_executable(taspaths
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/Settings.cpp src/gui/Settings.h

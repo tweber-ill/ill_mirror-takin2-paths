@@ -326,6 +326,136 @@ requires tl2::is_vec<t_vec>
 	return std::make_tuple(verts, mean);
 }
 
+
+/**
+ * test if point is on the circle border
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
+requires tl2::is_vec<t_vec>
+bool is_on_circle(
+	const t_vec& org, t_real rad, 
+	const t_vec& pos, 
+	t_real eps = std::numeric_limits<typename t_vec::value_type>::epsilon())
+{
+	t_real val = tl2::inner<t_vec>(org-pos, org-pos);
+	return tl2::equals<t_real>(val, rad*rad, eps);
+};
+
+
+/**
+ * intersection of two circles
+ * <x-mid_{1,2} | x-mid_{1,2}> = r_{1,2}^2
+ *
+ * circle 1:
+ * trafo to mid_1 = (0,0)
+ * x^2 + y^2 = r_1^2  ->  y = +-sqrt(r_1^2 - x^2)
+ *
+ * circle 2:
+ * (x-m_1)^2 + (y-m_2)^2 = r_2^2
+ * (x-m_1)^2 + (+-sqrt(r_1^2 - x^2)-m_2)^2 = r_2^2
+ *
+ * @see https://mathworld.wolfram.com/Circle-CircleIntersection.html
+ */
+template<class t_vec, template<class...> class t_cont = std::vector>
+requires tl2::is_vec<t_vec>
+t_cont<t_vec> intersect_circle_circle(
+	const t_vec& org1, typename t_vec::value_type r1,
+	const t_vec& org2, typename t_vec::value_type r2,
+	typename t_vec::value_type eps = 
+		std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()))
+{
+	using T = typename t_vec::value_type;
+
+	T m1 = org2[0] - org1[0];
+	T m2 = org2[1] - org1[1];
+
+	T r1_2 = r1*r1;
+	T r2_2 = r2*r2;
+	T m1_2 = m1*m1;
+	T m2_2 = m2*m2;
+	T m2_4 = m2_2*m2_2;
+
+	T rt = T(2)*m2_2 * (r1_2*r2_2 + m1_2*(r1_2 + r2_2) + m2_2*(r1_2 + r2_2))
+		- m2_2 * (r1_2*r1_2 + r2_2*r2_2)
+		- (T(2)*m1_2*m2_4 + m1_2*m1_2*m2_2 + m2_4*m2_2);
+
+	t_cont<t_vec> inters;
+	if(rt < T(0))
+		return inters;
+
+	rt = std::sqrt(rt);
+	T factors = m1*(r1_2 - r2_2) + m1*m1_2 + m1*m2_2;
+	T div = T(2)*(m1_2 + m2_2);
+
+	// first intersection
+	T x1 = (factors - rt) / div;
+	T y1a = std::sqrt(r1_2 - x1*x1);
+	T y1b = -std::sqrt(r1_2 - x1*x1);
+
+	t_vec pos1a = tl2::create<t_vec>({x1, y1a}) + org1;
+	t_vec pos1b = tl2::create<t_vec>({x1, y1b}) + org1;
+
+	if(is_on_circle<t_vec>(org1, r1, pos1a, eps) 
+		&& is_on_circle<t_vec>(org2, r2, pos1a, eps))
+	{
+		inters.emplace_back(std::move(pos1a));
+	}
+
+	if(!tl2::equals<t_vec>(pos1a, pos1b, eps) 
+		&& is_on_circle<t_vec>(org1, r1, pos1b, eps) 
+		&& is_on_circle<t_vec>(org2, r2, pos1b, eps))
+	{
+		inters.emplace_back(std::move(pos1b));
+	}
+
+	// second intersection
+	if(!tl2::equals<T>(rt, T(0), eps))
+	{
+		T x2 = (factors + rt) / div;
+		T y2a = std::sqrt(r1_2 - x2*x2);
+		T y2b = -std::sqrt(r1_2 - x2*x2);
+
+		t_vec pos2a = tl2::create<t_vec>({x2, y2a}) + org1;
+		t_vec pos2b = tl2::create<t_vec>({x2, y2b}) + org1;
+
+		if(is_on_circle<t_vec>(org1, r1, pos2a, eps) 
+			&& is_on_circle<t_vec>(org2, r2, pos2a, eps))
+		{
+			inters.emplace_back(std::move(pos2a));
+		}
+
+		if(!tl2::equals<t_vec>(pos2a, pos2b, eps) 
+			&& is_on_circle<t_vec>(org1, r1, pos2b, eps) 
+			&& is_on_circle<t_vec>(org2, r2, pos2b, eps))
+		{
+			inters.emplace_back(std::move(pos2b));
+		}
+	}
+
+	// sort intersections by x
+	std::sort(inters.begin(), inters.end(), 
+	[](const t_vec& vec1, const t_vec& vec2) -> bool
+	{
+		return vec1[0] < vec2[0];
+	});
+
+	return inters;
+}
+
+
+/**
+ * check circles for collision
+ */
+template<class t_vec> requires tl2::is_vec<t_vec>
+bool collide_circle_circle(
+	const t_vec& org1, typename t_vec::value_type r1,
+	const t_vec& org2, typename t_vec::value_type r2)
+{
+	using t_real = typename t_vec::value_type;
+
+	t_real dot = tl2::inner<t_vec>(org2-org1, org2-org1);
+	return (dot < (r2+r1) * (r2+r1));
+}
 // ----------------------------------------------------------------------------
 
 
@@ -392,7 +522,9 @@ struct IntersTreeLeaf
  * line segment intersection via sweep
  * @see (FUH 2020), ch. 2.3.2, pp. 69-80
  */
-template<class t_vec, class t_line = std::pair<t_vec, t_vec>, class t_real = typename t_vec::value_type>
+template<class t_vec, 
+	class t_line = std::pair<t_vec, t_vec>, 
+	class t_real = typename t_vec::value_type>
 std::vector<std::tuple<std::size_t, std::size_t, t_vec>>
 intersect_sweep(const std::vector<t_line>& _lines, t_real eps = 1e-6)
 requires tl2::is_vec<t_vec>
