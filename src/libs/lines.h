@@ -102,10 +102,76 @@ std::pair<bool, t_vec> intersect_lines(
 	if(!valid)
 		return std::make_pair(false, tl2::create<t_vec>({}));
 
-	if(only_segments && (param1<0. || param1>1. || param2<0. || param2>1.))
+	if(only_segments && (param1<0. || param1>=1. || param2<0. || param2>=1.))
 		return std::make_pair(false, tl2::create<t_vec>({}));
 
 	return std::make_pair(true, pt1);
+}
+
+
+/**
+ * intersection of a line and polygon line segments
+ */
+template<class t_vec, template<class...> class t_cont=std::vector>
+t_cont<t_vec> intersect_line_polylines(
+	const t_vec& linePt1, const t_vec& linePt2,
+	const t_cont<t_vec>& poly, bool only_segment = false)
+requires tl2::is_vec<t_vec>
+{
+	t_cont<t_vec> inters;
+
+	for(std::size_t idx=0; idx<poly.size(); ++idx)
+	{
+		std::size_t idx2 = (idx+1) % poly.size();
+		const t_vec& pt1 = poly[idx];
+		const t_vec& pt2 = poly[idx2];
+
+		if(auto [has_inters, inters_pt] =
+			intersect_lines<t_vec>(linePt1, linePt2, pt1, pt2, only_segment); has_inters)
+		{
+			inters.emplace_back(std::move(inters_pt));
+		}
+	}
+
+	// sort intersections by x
+	std::sort(inters.begin(), inters.end(),
+		[](const t_vec& vec1, const t_vec& vec2) -> bool
+		{ return vec1[0] < vec2[0]; });
+
+	return inters;
+}
+
+
+/**
+ * intersection of a circle and polygon line segments
+ */
+template<class t_vec, template<class...> class t_cont=std::vector>
+t_cont<t_vec> intersect_circle_polylines(
+	const t_vec& circleOrg, typename t_vec::value_type circleRad,
+	const t_cont<t_vec>& poly, bool only_segment = false)
+requires tl2::is_vec<t_vec>
+{
+	t_cont<t_vec> inters;
+
+	for(std::size_t idx=0; idx<poly.size(); ++idx)
+	{
+		std::size_t idx2 = (idx+1) % poly.size();
+		const t_vec& pt1 = poly[idx];
+		const t_vec& pt2 = poly[idx2];
+
+		auto theinters = tl2::intersect_line_sphere<t_vec>(
+			pt1, pt2-pt1, circleOrg, circleRad, false, only_segment);
+
+		for(const t_vec& vec : theinters)
+			inters.emplace_back(std::move(vec));
+	}
+
+	// sort intersections by x
+	std::sort(inters.begin(), inters.end(),
+		[](const t_vec& vec1, const t_vec& vec2) -> bool
+		{ return vec1[0] < vec2[0]; });
+
+	return inters;
 }
 
 
@@ -434,10 +500,8 @@ t_cont<t_vec> intersect_circle_circle(
 
 	// sort intersections by x
 	std::sort(inters.begin(), inters.end(), 
-	[](const t_vec& vec1, const t_vec& vec2) -> bool
-	{
-		return vec1[0] < vec2[0];
-	});
+		[](const t_vec& vec1, const t_vec& vec2) -> bool
+		{ return vec1[0] < vec2[0]; });
 
 	return inters;
 }
