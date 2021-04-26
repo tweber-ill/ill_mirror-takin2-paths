@@ -20,6 +20,7 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QSettings>
+#include <QActionGroup>
 
 #include <locale>
 #include <memory>

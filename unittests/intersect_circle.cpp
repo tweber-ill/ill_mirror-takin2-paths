@@ -34,9 +34,11 @@ template<class T> using t_poly = bgeo::model::polygon<t_vertex<T>, true /*cw*/, 
 template<class T> using t_polys = bgeo::model::multi_polygon<t_poly<T>, std::vector>;
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real, decltype(std::tuple</*float,*/ double, long double>{}))
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real, 
+	decltype(std::tuple</*float,*/ double, long double>{}))
 {
-	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name() << " type." << std::endl;
+	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name() 
+		<< " type." << std::endl;
 
 	constexpr const std::size_t NUM_TESTS = 1000;
 	const t_real eps = std::sqrt(std::numeric_limits<t_real>::epsilon());
@@ -97,7 +99,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real, decltype(std::tuple</*
 			tl2::create<t_vec<t_real>>({x2, y2}), rad2);
 
 
-		auto print_circles = [&x1, &x2, &y1, &y2, &rad1, &rad2, &custom_inters, &inters_circle_circle]() -> void
+		auto print_circles = [&x1, &x2, &y1, &y2, &rad1, &rad2, &custom_inters, &inters_circle_circle]()
 		{
 			std::cout << "--------------------------------------------------------------------------------" << std::endl;
 			std::cout << "circle 1: mid = (" << x1 << ", " << y1 << "), rad = " << rad1 << std::endl;
@@ -158,15 +160,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real, decltype(std::tuple</*
 			}};
 
 
-			/*std::sort(pos1.begin(), pos1.end(), [](const auto& tup1, const auto& tup2) -> bool
-			{
-				return std::get<0>(tup1) < std::get<0>(tup2);
-			});*/
+			/*std::sort(pos1.begin(), pos1.end(), 
+				[](const auto& tup1, const auto& tup2) -> bool
+				{
+					return std::get<0>(tup1) < std::get<0>(tup2);
+				});*/
 
-			std::sort(pos2.begin(), pos2.end(), [](const auto& tup1, const auto& tup2) -> bool
-			{
-				return std::get<0>(tup1) < std::get<0>(tup2);
-			});
+			std::sort(pos2.begin(), pos2.end(), 
+				[](const auto& tup1, const auto& tup2) -> bool
+				{
+					return std::get<0>(tup1) < std::get<0>(tup2);
+				});
 
 
 			bool equals = (tl2::equals<t_real>(std::get<0>(pos1[0]), std::get<0>(pos2[0]), cmp_eps) &&

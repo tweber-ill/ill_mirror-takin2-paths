@@ -4,7 +4,7 @@
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license see 'LICENSE' file
  *
- * g++ -std=c++20 -I.. -o test_trapezoid test_trapezoid.cpp
+ * g++ -std=c++20 -I.. -o trapezoid trapezoid.cpp
  */
 
 

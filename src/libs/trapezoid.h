@@ -382,34 +382,6 @@ private:
 };
 
 
-/**
- * output a point
- */
-template<class t_vec> requires tl2::is_vec<t_vec>
-std::ostream& print_point(std::ostream& ostr, const t_vec& pt)
-{
-	ostr << "(" << pt[0] << ", " << pt[1] << ")";
-	return ostr;
-};
-
-
-/**
- * output a line
- */
-template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
-requires tl2::is_vec<t_vec>
-std::ostream& print_line(std::ostream& ostr, const t_line& line)
-{
-	const auto& pt0 = std::get<0>(line);
-	const auto& pt1 = std::get<1>(line);
-
-	ostr << "(" << pt0[0] << ", " << pt0[1] << "), ("
-		<< pt1[0] << ", " << pt1[1] << ")";
-
-	return ostr;
-};
-
-
 template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
 requires tl2::is_vec<t_vec>
 std::ostream& operator<<(std::ostream& ostr,
@@ -432,9 +404,7 @@ std::ostream& operator<<(std::ostream& ostr,
 		{
 			auto ptnode = dynamic_cast<const TrapezoidNodePoint<t_vec>&>(node);
 			const auto& pt = ptnode.GetPoint();
-			ostr << "point: ";
-			print_point<t_vec>(ostr, pt);
-
+			ostr << "point: " << pt;
 			break;
 		}
 
@@ -453,14 +423,10 @@ std::ostream& operator<<(std::ostream& ostr,
 			auto trnode = dynamic_cast<const TrapezoidNodeTrapezoid<t_vec>&>(node);
 
 			ostr << "trapezoid: ";
-			ostr << "left: ";
-			print_point<t_vec>(ostr, trnode.GetTrapezoid()->GetLeftPoint());
-			ostr << ", right: ";
-			print_point<t_vec>(ostr, trnode.GetTrapezoid()->GetRightPoint());
-			ostr << ", bottom: ";
-			print_line<t_vec>(ostr, trnode.GetTrapezoid()->GetBottomLine());
-			ostr << ", top: ";
-			print_line<t_vec>(ostr, trnode.GetTrapezoid()->GetTopLine());
+			ostr << "left: " << trnode.GetTrapezoid()->GetLeftPoint();
+			ostr << ", right: " << trnode.GetTrapezoid()->GetRightPoint();
+			ostr << ", bottom: " << trnode.GetTrapezoid()->GetBottomLine();
+			ostr << ", top: " << trnode.GetTrapezoid()->GetTopLine();
 
 			break;
 		}

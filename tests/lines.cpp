@@ -17,6 +17,7 @@
 #include <QSvgGenerator>
 #include <QMessageBox>
 #include <QSettings>
+#include <QActionGroup>
 #include <QProgressDialog>
 
 #include <locale>
@@ -180,10 +181,6 @@ void LinesScene::UpdateLines()
 
 		t_vec vert1 = tl2::create<t_vec>({_vert1->x(), _vert1->y()});
 		t_vec vert2 = tl2::create<t_vec>({_vert2->x(), _vert2->y()});
-
-		// ensure that first vertex is on the left-hand side
-		if(vert1[0] > vert2[0])
-			std::swap(vert1, vert2);
 
 		m_lines.emplace_back(std::make_pair(vert1, vert2));
 	}

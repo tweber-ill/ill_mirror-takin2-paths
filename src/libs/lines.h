@@ -1,7 +1,7 @@
 /**
  * geometric calculations, line segment intersections
  * @author Tobias Weber <tweber@ill.fr>
- * @date Oct/Nov-2020
+ * @date Oct/Nov-2020, Apr-2021
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license see 'LICENSE' file
  *
@@ -88,16 +88,36 @@ requires tl2::is_vec<t_vec>
 }
 
 
-template<class t_vec> requires tl2::is_vec<t_vec>
+/**
+ * output a line
+ */
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
+requires tl2::is_vec<t_vec>
+std::ostream& print_line(std::ostream& ostr, const t_line& line)
+{
+	const auto& pt0 = std::get<0>(line);
+	const auto& pt1 = std::get<1>(line);
+
+	using namespace tl2_ops;
+
+	ostr << "(" << pt0 << "), (" << pt1 << ")";
+	return ostr;
+};
+
+
+template<class t_vec, class t_real=typename t_vec::value_type>
+requires tl2::is_vec<t_vec>
 std::pair<bool, t_vec> intersect_lines(
 	const t_vec& pos1a, const t_vec& pos1b,
-	const t_vec& pos2a, const t_vec& pos2b, bool only_segments=true)
+	const t_vec& pos2a, const t_vec& pos2b,
+	bool only_segments = true,
+	t_real eps = std::numeric_limits<t_real>::epsilon())
 {
 	t_vec dir1 = pos1b - pos1a;
 	t_vec dir2 = pos2b - pos2a;
 
 	auto[pt1, pt2, valid, dist, param1, param2] =
-		tl2::intersect_line_line(pos1a, dir1, pos2a, dir2);
+		tl2::intersect_line_line(pos1a, dir1, pos2a, dir2, eps);
 
 	if(!valid)
 		return std::make_pair(false, tl2::create<t_vec>({}));
@@ -112,10 +132,12 @@ std::pair<bool, t_vec> intersect_lines(
 /**
  * intersection of a line and polygon line segments
  */
-template<class t_vec, template<class...> class t_cont=std::vector>
+template<class t_vec, class t_real=typename t_vec::value_type,
+	template<class...> class t_cont=std::vector>
 t_cont<t_vec> intersect_line_polylines(
 	const t_vec& linePt1, const t_vec& linePt2,
-	const t_cont<t_vec>& poly, bool only_segment = false)
+	const t_cont<t_vec>& poly, bool only_segment = false,
+	t_real eps = std::numeric_limits<t_real>::epsilon())
 requires tl2::is_vec<t_vec>
 {
 	t_cont<t_vec> inters;
@@ -127,17 +149,19 @@ requires tl2::is_vec<t_vec>
 		const t_vec& pt2 = poly[idx2];
 
 		if(auto [has_inters, inters_pt] =
-			intersect_lines<t_vec>(linePt1, linePt2, pt1, pt2, only_segment); has_inters)
+			intersect_lines<t_vec>(linePt1, linePt2, pt1, pt2, only_segment, eps);
+			has_inters)
 		{
 			inters.emplace_back(std::move(inters_pt));
 		}
 	}
 
 	// sort intersections by x
-	std::sort(inters.begin(), inters.end(),
+	std::sort(inters.begin(), inters.end(), 
 		[](const t_vec& vec1, const t_vec& vec2) -> bool
-		{ return vec1[0] < vec2[0]; });
-
+		{
+			return vec1[0] < vec2[0];
+		});
 	return inters;
 }
 
@@ -148,7 +172,7 @@ requires tl2::is_vec<t_vec>
 template<class t_vec, template<class...> class t_cont=std::vector>
 t_cont<t_vec> intersect_circle_polylines(
 	const t_vec& circleOrg, typename t_vec::value_type circleRad,
-	const t_cont<t_vec>& poly, bool only_segment = false)
+	const t_cont<t_vec>& poly, bool only_segment = true)
 requires tl2::is_vec<t_vec>
 {
 	t_cont<t_vec> inters;
@@ -169,7 +193,9 @@ requires tl2::is_vec<t_vec>
 	// sort intersections by x
 	std::sort(inters.begin(), inters.end(),
 		[](const t_vec& vec1, const t_vec& vec2) -> bool
-		{ return vec1[0] < vec2[0]; });
+		{
+			return vec1[0] < vec2[0];
+		});
 
 	return inters;
 }
@@ -180,9 +206,14 @@ template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 requires tl2::is_vec<t_vec>
 std::pair<t_real, t_real> get_line_slope_offs(const t_line& line)
 {
-	t_real slope = (std::get<1>(line)[1] - std::get<0>(line)[1])
-		/ (std::get<1>(line)[0] - std::get<0>(line)[0]);
-	t_real offs = std::get<0>(line)[1] - std::get<0>(line)[0]*slope;
+	const t_vec& pt1 = std::get<0>(line);
+	const t_vec& pt2 = std::get<1>(line);
+
+	if(pt1.size() < 2 || pt2.size() < 2)
+		return std::make_pair(0, 0);
+
+	t_real slope = (pt2[1] - pt1[1]) / (pt2[0] - pt1[0]);
+	t_real offs = pt1[1] - pt1[0]*slope;
 
 	return std::make_pair(slope, offs);
 }
@@ -210,19 +241,21 @@ bool is_line_equal(const t_line& line1, const t_line& line2,
 	auto [slope1, offs1] = get_line_slope_offs<t_vec>(line1);
 	auto [slope2, offs2] = get_line_slope_offs<t_vec>(line2);
 
-	return tl2::equals<t_real>(slope1, slope2, eps) 
-		&& tl2::equals<t_real>(offs1, offs2, eps);
+	return tl2::equals<t_real>(slope1, slope2, eps) && tl2::equals<t_real>(offs1, offs2, eps);
 }
 
 
-template<class t_line /*= std::pair<t_vec, t_vec>*/>
-std::tuple<bool, typename t_line::first_type> intersect_lines(
-	const t_line& line1, const t_line& line2)
-requires tl2::is_vec<typename t_line::first_type> 
-	&& tl2::is_vec<typename t_line::second_type>
+template<class t_line, class t_vec=typename std::tuple_element<0, t_line>::type,
+	class t_real = typename t_vec::value_type>
+std::tuple<bool, t_vec>
+intersect_lines(const t_line& line1, const t_line& line2,
+	t_real eps = std::numeric_limits<t_real>::epsilon())
+requires tl2::is_vec<t_vec>
 {
-	return intersect_lines<typename t_line::first_type>(
-		line1.first, line1.second, line2.first, line2.second, true);
+	return intersect_lines<t_vec>(
+		std::get<0>(line1), std::get<1>(line1),
+		std::get<0>(line2), std::get<1>(line2),
+		true, eps);
 }
 
 
@@ -384,10 +417,12 @@ requires tl2::is_vec<t_vec>
 	// sort by angle
 	t_vec mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
 	mean /= t_real(verts.size());
-	std::stable_sort(verts.begin(), verts.end(), [&mean](const t_vec& vec1, const t_vec& vec2)->bool
-	{
-		return line_angle<t_vec>(mean, vec1) < line_angle<t_vec>(mean, vec2);
-	});
+	std::stable_sort(verts.begin(), verts.end(), 
+		[&mean](const t_vec& vec1, const t_vec& vec2)->bool
+		{
+			return line_angle<t_vec>(mean, vec1) 
+				< line_angle<t_vec>(mean, vec2);
+		});
 
 	return std::make_tuple(verts, mean);
 }
@@ -422,15 +457,15 @@ bool is_on_circle(
  *
  * @see https://mathworld.wolfram.com/Circle-CircleIntersection.html
  */
-template<class t_vec, template<class...> class t_cont = std::vector>
+template<class t_vec, template<class...> class t_cont = std::vector,
+	class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 t_cont<t_vec> intersect_circle_circle(
-	const t_vec& org1, typename t_vec::value_type r1,
-	const t_vec& org2, typename t_vec::value_type r2,
-	typename t_vec::value_type eps = 
-		std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()))
+	const t_vec& org1, t_real r1,
+	const t_vec& org2, t_real r2,
+	t_real eps = std::sqrt(std::numeric_limits<t_real>::epsilon()))
 {
-	using T = typename t_vec::value_type;
+	using T = t_real;
 
 	T m1 = org2[0] - org1[0];
 	T m2 = org2[1] - org1[1];
@@ -505,21 +540,6 @@ t_cont<t_vec> intersect_circle_circle(
 
 	return inters;
 }
-
-
-/**
- * check circles for collision
- */
-template<class t_vec> requires tl2::is_vec<t_vec>
-bool collide_circle_circle(
-	const t_vec& org1, typename t_vec::value_type r1,
-	const t_vec& org2, typename t_vec::value_type r2)
-{
-	using t_real = typename t_vec::value_type;
-
-	t_real dot = tl2::inner<t_vec>(org2-org1, org2-org1);
-	return (dot < (r2+r1) * (r2+r1));
-}
 // ----------------------------------------------------------------------------
 
 
@@ -544,12 +564,36 @@ requires tl2::is_vec<t_vec>
 			const t_line& line1 = lines[i];
 			const t_line& line2 = lines[j];
 
-			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2); intersects)
+			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2);
+				intersects)
+			{
 				intersections.emplace_back(std::make_tuple(i, j, pt));
+			}
 		}
 	}
 
 	return intersections;
+}
+
+
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
+requires tl2::is_vec<t_vec>
+bool cmp_line(const t_line& line1, const t_line& line2,
+	typename t_vec::value_type x, typename t_vec::value_type eps)
+{
+	using t_real = typename t_vec::value_type;
+
+	auto [slope1, offs1] = get_line_slope_offs<t_vec>(line1);
+	auto [slope2, offs2] = get_line_slope_offs<t_vec>(line2);
+	t_real line1_y = slope1*x + offs1;
+	t_real line2_y = slope2*x + offs2;
+
+	// equal y -> compare by slope
+	if(tl2::equals<t_real>(line1_y, line2_y, eps))
+		return slope1 < slope2;
+
+	// compare by y
+	return line1_y < line2_y;
 }
 
 
@@ -563,36 +607,41 @@ struct IntersTreeLeaf
 	const std::vector<t_line> *lines{nullptr};
 	std::size_t line_idx{0};
 
+	t_real eps = std::numeric_limits<t_real>::epsilon();
 	t_hook _h{};
 
-	friend std::ostream& operator<<(std::ostream& ostr, const IntersTreeLeaf<t_hook, t_vec, t_line>& e)
+	friend std::ostream& operator<<(std::ostream& ostr,
+		const IntersTreeLeaf<t_hook, t_vec, t_line>& e)
 	{
-		ostr << std::get<0>((*e.lines)[e.line_idx]) << ", " << std::get<1>((*e.lines)[e.line_idx]);
+		ostr << std::get<0>((*e.lines)[e.line_idx])
+			<< ", " << std::get<1>((*e.lines)[e.line_idx]);
 		return ostr;
 	}
 
-	friend bool operator<(const IntersTreeLeaf<t_hook, t_vec, t_line>& e1, const IntersTreeLeaf<t_hook, t_vec, t_line>& e2)
+	friend bool operator<(const IntersTreeLeaf<t_hook, t_vec, t_line>& e1,
+		const IntersTreeLeaf<t_hook, t_vec, t_line>& e2)
 	{
-		t_real line1_y = get_line_y<t_vec>((*e1.lines)[e1.line_idx], *e1.curX);
-		t_real line2_y = get_line_y<t_vec>((*e2.lines)[e2.line_idx], *e2.curX);
+		const t_line& line1 = (*e1.lines)[e1.line_idx];
+		const t_line& line2 = (*e2.lines)[e2.line_idx];
 
-		// compare by y
-		return line1_y < line2_y;
+		return cmp_line<t_vec, t_line>(line1, line2, *e1.curX, e1.eps);
 	}
 };
 
 
 /**
  * line segment intersection via sweep
+ * @returns [idx1, idx2, point]
  * @see (FUH 2020), ch. 2.3.2, pp. 69-80
  */
-template<class t_vec, 
-	class t_line = std::pair<t_vec, t_vec>, 
+template<class t_vec, class t_line = std::tuple<t_vec, t_vec>,
 	class t_real = typename t_vec::value_type>
-std::vector<std::tuple<std::size_t, std::size_t, t_vec>>
-intersect_sweep(const std::vector<t_line>& _lines, t_real eps = 1e-6)
 requires tl2::is_vec<t_vec>
+std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
+	const std::vector<t_line>& _lines, t_real eps = 1e-6)
 {
+	// additional parameter in t_line tuple serves as line group identifier
+	constexpr bool use_line_groups = (std::tuple_size_v<t_line> > 2);
 	using t_mat = tl2::mat<t_real, std::vector>;
 
 	// look for vertical lines
@@ -602,18 +651,19 @@ requires tl2::is_vec<t_vec>
 
 	for(const t_line& line : lines)
 	{
-		if(tl2::equals<t_real>(line.first[0], line.second[0], eps))
+		if(tl2::equals<t_real>(std::get<0>(line)[0], std::get<1>(line)[0], eps))
 		{
 			has_vert_line = 1;
 		}
 		else
 		{
 			// get angles relative to y axis
-			t_real angle_to_y = line_angle<t_vec>(line.first, line.second) + tl2::pi<t_real>/t_real(2);
+			t_real angle_to_y = line_angle<t_vec>(
+				std::get<0>(line), std::get<1>(line)) + tl2::pi<t_real>/t_real(2);
 			angle_to_y = tl2::mod_pos<t_real>(angle_to_y, t_real(2)*tl2::pi<t_real>);
+
 			if(angle_to_y > tl2::pi<t_real>/t_real(2))
 				angle_to_y -= tl2::pi<t_real>;
-
 			if(std::abs(angle_to_y) < std::abs(min_angle_to_y))
 				min_angle_to_y = angle_to_y;
 		}
@@ -627,13 +677,27 @@ requires tl2::is_vec<t_vec>
 
 		for(t_line& line : lines)
 		{
-			line.first = *rotmat * line.first;
-			line.second = *rotmat * line.second;
+			std::get<0>(line) = *rotmat * std::get<0>(line);
+			std::get<1>(line) = *rotmat * std::get<1>(line);
 		}
 	}
 
 
-	enum class SweepEventType { LEFT_VERTEX, RIGHT_VERTEX, INTERSECTION };
+	// order line vertices by x
+	for(t_line& line : lines)
+	{
+		if(std::get<0>(line)[0] > std::get<1>(line)[0])
+			std::swap(std::get<0>(line), std::get<1>(line));
+	}
+
+
+	enum class SweepEventType
+	{
+		LEFT_VERTEX, 
+		RIGHT_VERTEX, 
+		INTERSECTION
+	};
+
 
 	struct SweepEvent
 	{
@@ -663,9 +727,8 @@ requires tl2::is_vec<t_vec>
 
 			if(intersection)
 			{
-				//using namespace tl2_ops;
-				//ostr << ", intersection=" << *intersection;
-				ostr << ", intersection=(" << (*intersection)[0] << "," << (*intersection)[1] << ")";
+				using namespace tl2_ops;
+				ostr << ", intersection=" << *intersection;
 			}
 		}
 	};
@@ -696,8 +759,19 @@ requires tl2::is_vec<t_vec>
 	{
 		const t_line& line = lines[line_idx];
 
-		SweepEvent evtLeft{.x = std::get<0>(line)[0], .ty=SweepEventType::LEFT_VERTEX, .line_idx=line_idx};
-		SweepEvent evtRight{.x = std::get<1>(line)[0], .ty=SweepEventType::RIGHT_VERTEX, .line_idx=line_idx};
+		SweepEvent evtLeft
+		{
+			.x = std::get<0>(line)[0], 
+			.ty = SweepEventType::LEFT_VERTEX, 
+			.line_idx = line_idx
+		};
+
+		SweepEvent evtRight
+		{
+			.x = std::get<1>(line)[0], 
+			.ty = SweepEventType::RIGHT_VERTEX, 
+			.line_idx = line_idx
+		};
 
 		// wrong order of vertices?
 		if(evtLeft.x > evtRight.x)
@@ -715,6 +789,27 @@ requires tl2::is_vec<t_vec>
 	}
 
 
+	auto add_intersection = [&events, &lines, eps]
+		(std::size_t lower_idx, std::size_t upper_idx, t_real curX) -> void
+		{
+			const t_line& line1 = lines[lower_idx];
+			const t_line& line2 = lines[upper_idx];
+
+			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2, eps);
+				intersects && !tl2::equals<t_real>(curX, pt[0], eps))
+			{
+				SweepEvent evtNext
+				{
+					.x = pt[0], 
+					.ty = SweepEventType::INTERSECTION,
+					.lower_idx = lower_idx, 
+					.upper_idx = upper_idx,
+					.intersection = pt
+				};
+				events.emplace(std::move(evtNext));
+			}
+		};
+
 	// status
 	t_tree status;
 
@@ -731,49 +826,36 @@ requires tl2::is_vec<t_vec>
 
 		switch(evt.ty)
 		{
+			/*
+			 * arrived at left vertex
+			 */
 			case SweepEventType::LEFT_VERTEX:
 			{
 				// activate line
-				t_leaf *leaf = new t_leaf{.curX=&curX, .lines=&lines, .line_idx=evt.line_idx};
+				t_leaf *leaf = new t_leaf
+				{
+					.curX = &curX, 
+					.lines = &lines, 
+					.line_idx = evt.line_idx, 
+					.eps = eps
+				};
 				auto iter = status.insert_equal(*leaf);
 
 				auto iterPrev = (iter == status.begin() ? status.end() : std::prev(iter, 1));
-				auto iterNext = std::next(iter, 1);
+				auto iterNext = (iter == status.end() ? status.end() : std::next(iter, 1));
 
-				// add possible intersection event
+				// add possible intersection events
 				if(iterPrev != iter && iterPrev != status.end())
-				{
-					const t_line& line = lines[evt.line_idx];
-					const t_line& linePrev = lines[iterPrev->line_idx];
-
-					if(auto [intersects, pt] = intersect_lines<t_line>(line, linePrev);
-					   intersects && !tl2::equals<t_real>(curX, pt[0], eps))
-					{
-						SweepEvent evtPrev{.x = pt[0], .ty=SweepEventType::INTERSECTION,
-							.lower_idx=iterPrev->line_idx, .upper_idx=evt.line_idx,
-							.intersection=pt};
-						events.emplace(std::move(evtPrev));
-					}
-				}
-
-				// add possible intersection event
+					add_intersection(iterPrev->line_idx, evt.line_idx, curX);
 				if(iterNext != iter && iterNext != status.end())
-				{
-					const t_line& line = lines[evt.line_idx];
-					const t_line& lineNext = lines[iterNext->line_idx];
-
-					if(auto [intersects, pt] = intersect_lines<t_line>(line, lineNext);
-					   intersects && !tl2::equals<t_real>(curX, pt[0], eps))
-					{
-						SweepEvent evtNext{.x = pt[0], .ty=SweepEventType::INTERSECTION,
-							.lower_idx=evt.line_idx, .upper_idx=iterNext->line_idx,
-							.intersection=pt};
-						events.emplace(std::move(evtNext));
-					}
-				}
+					add_intersection(evt.line_idx, iterNext->line_idx, curX);
 
 				break;
 			}
+
+			/*
+			 * arrived at right vertex
+			 */
 			case SweepEventType::RIGHT_VERTEX:
 			{
 				// find current line
@@ -785,31 +867,22 @@ requires tl2::is_vec<t_vec>
 					continue;
 
 				auto iterPrev = (iter == status.begin() ? status.end() : std::prev(iter, 1));
-				auto iterNext = std::next(iter, 1);
+				auto iterNext = (iter == status.end() ? status.end() : std::next(iter, 1));
 
 				// inactivate current line
 				delete &*iter;
 				iter = status.erase(iter);
 
-
 				// add possible intersection event
 				if(iterPrev != iterNext && iterPrev != status.end() && iterNext != status.end())
-				{
-					const t_line& linePrev = lines[iterPrev->line_idx];
-					const t_line& lineNext = lines[iterNext->line_idx];
-
-					if(auto [intersects, pt] = intersect_lines<t_line>(linePrev, lineNext);
-					   intersects && !tl2::equals<t_real>(curX, pt[0], eps))
-					{
-						SweepEvent evt{.x = pt[0], .ty=SweepEventType::INTERSECTION,
-							.lower_idx=iterPrev->line_idx, .upper_idx=iterNext->line_idx,
-							.intersection=pt};
-						events.emplace(std::move(evt));
-					}
-				}
+					add_intersection(iterPrev->line_idx, iterNext->line_idx, curX);
 
 				break;
 			}
+
+			/*
+			 * arrived at intersection
+			 */
 			case SweepEventType::INTERSECTION:
 			{
 				if(std::find_if(intersections.begin(), intersections.end(),
@@ -817,8 +890,25 @@ requires tl2::is_vec<t_vec>
 						{ return tl2::equals<t_vec>(std::get<2>(inters), *evt.intersection, eps); })
 					== intersections.end())
 				{
-					// report an intersection
-					intersections.emplace_back(std::make_tuple(*evt.lower_idx, *evt.upper_idx, *evt.intersection));
+					if constexpr(use_line_groups)
+					{
+						// if the lines belong to the same group, don't report the intersection
+						if(std::get<2>(lines[*evt.lower_idx]) 
+							!= std::get<2>(lines[*evt.upper_idx]))
+						{
+							// report an intersection
+							intersections.emplace_back(
+								std::make_tuple(
+									*evt.lower_idx, *evt.upper_idx, *evt.intersection));
+						}
+					}
+					else
+					{
+						// report an intersection
+						intersections.emplace_back(
+							std::make_tuple(
+								*evt.lower_idx, *evt.upper_idx, *evt.intersection));
+					}
 				}
 				else
 				{
@@ -836,46 +926,26 @@ requires tl2::is_vec<t_vec>
 					[&evt](const auto& leaf) -> bool
 					{ return leaf.line_idx == evt.lower_idx; });
 
+				if(iterUpper == status.end() || iterLower == status.end())
+					continue;
 
-				std::swap(iterUpper->line_idx, iterLower->line_idx);
-				std::swap(iterUpper, iterLower);
+				if(!cmp_line<t_vec, t_line>(lines[iterLower->line_idx], 
+					lines[iterUpper->line_idx], curX, eps))
+				{
+					std::swap(iterUpper->line_idx, iterLower->line_idx);
+					std::swap(iterUpper, iterLower);
+				}
 
+				auto iterPrev = (iterUpper == status.begin() 
+					? status.end() : std::prev(iterUpper, 1));
+				auto iterNext = (iterLower == status.end() 
+					? status.end() : std::next(iterLower, 1));
 
-				auto iterPrev = (iterUpper == status.begin() ? status.end() : std::prev(iterUpper, 1));
-				auto iterNext = std::next(iterLower, 1);
-
-
-				// add possible intersection event
+				// add possible intersection events
 				if(iterPrev != iterUpper && iterPrev != status.end() && iterUpper != status.end())
-				{
-					const t_line& linePrev = lines[iterPrev->line_idx];
-					const t_line& lineUpper = lines[iterUpper->line_idx];
-
-					if(auto [intersects, pt] = intersect_lines<t_line>(linePrev, lineUpper);
-					   intersects && !tl2::equals<t_real>(curX, pt[0], eps))
-					{
-						SweepEvent evtPrev{.x = pt[0], .ty=SweepEventType::INTERSECTION,
-							.lower_idx=iterPrev->line_idx, .upper_idx=iterUpper->line_idx,
-							.intersection=pt};
-						events.emplace(std::move(evtPrev));
-					}
-				}
-
-				// add possible intersection event
+					add_intersection(iterPrev->line_idx, iterUpper->line_idx, curX);
 				if(iterNext != iterLower && iterNext != status.end() && iterLower != status.end())
-				{
-					const t_line& lineNext = lines[iterNext->line_idx];
-					const t_line& lineLower = lines[iterLower->line_idx];
-
-					if(auto [intersects, pt] = intersect_lines<t_line>(lineNext, lineLower);
-					   intersects && !tl2::equals<t_real>(curX, pt[0], eps))
-					{
-						SweepEvent evtNext{.x = pt[0], .ty=SweepEventType::INTERSECTION,
-							.lower_idx=iterLower->line_idx, .upper_idx=iterNext->line_idx,
-							.intersection=pt};
-						events.emplace(std::move(evtNext));
-					}
-				}
+					add_intersection(iterLower->line_idx, iterNext->line_idx, curX);
 
 				break;
 			}
@@ -887,14 +957,109 @@ requires tl2::is_vec<t_vec>
 	if(rotmat)
 	{
 		*rotmat = tl2::trans<t_mat>(*rotmat);
-
 		for(auto& inters : intersections)
 			std::get<2>(inters) = *rotmat * std::get<2>(inters);
 	}
 
 	return intersections;
 }
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
+/**
+ * check circles for collision
+ */
+template<class t_vec> requires tl2::is_vec<t_vec>
+bool collide_circle_circle(
+	const t_vec& org1, typename t_vec::value_type r1,
+	const t_vec& org2, typename t_vec::value_type r2)
+{
+	using t_real = typename t_vec::value_type;
+
+	t_real dot = tl2::inner<t_vec>(org2-org1, org2-org1);
+	return dot < (r2+r1) * (r2+r1);
+}
+
+
+/**
+ * check for a collision of a circle and a polygon
+ */
+template<class t_vec, template<class...> class t_cont=std::vector>
+bool collide_circle_poly(
+	const t_vec& circleOrg, typename t_vec::value_type circleRad,
+	const t_cont<t_vec>& poly)
+requires tl2::is_vec<t_vec>
+{
+	using t_real = typename t_vec::value_type;
+
+	// check for intersections
+	auto vecs = intersect_circle_polylines<t_vec, t_cont>(
+		circleOrg, circleRad, poly, true);
+	
+	if(vecs.size())
+		return true;
+
+
+	// check cases when one object is completely contained in the other
+	std::size_t num_inside = 0;
+	std::size_t num_outside = 0;
+
+	for(const t_vec& vec : poly)
+	{
+		t_real dot = tl2::inner<t_vec>(vec-circleOrg, vec-circleOrg);
+		bool inside = dot < circleRad*circleRad;
+
+		if(inside)
+			++num_inside;
+		else
+			++num_outside;
+	}
+
+	return num_inside==0 || num_outside==0;
+}
+
+
+/**
+ * check for a collision of two polygons
+ */
+template<class t_vec, template<class...> class t_cont=std::vector>
+bool collide_poly_poly(
+	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2)
+requires tl2::is_vec<t_vec>
+{
+	using t_real = typename t_vec::value_type;
+	using t_line = std::tuple<t_vec, t_vec, int>;
+
+	t_real eps = 1e-6;
+	std::vector<t_line> lines;
+
+	// add first polygon line segments
+	for(std::size_t idx1=0; idx1<poly1.size(); ++idx1)
+	{
+		std::size_t idx2 = (idx1+1) % poly1.size();
+		auto tup = std::make_tuple(poly1[idx1], poly1[idx2], 0);
+		lines.emplace_back(std::move(tup));
+	}
+
+	// add second polygon line segments
+	for(std::size_t idx1=0; idx1<poly2.size(); ++idx1)
+	{
+		std::size_t idx2 = (idx1+1) % poly2.size();
+		auto tup = std::make_tuple(poly2[idx1], poly2[idx2], 1);
+		lines.emplace_back(std::move(tup));
+	}
+
+	// check for intersection
+	auto inters = intersect_sweep<t_vec, t_line>(lines, eps);
+	if(inters.size())
+		return true;
+
+
+	// TODO: check cases when one object is completely contained in the other
+	return false;
+}
 // ----------------------------------------------------------------------------
 
 }
