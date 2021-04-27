@@ -13,6 +13,7 @@
 #include <QtWidgets/QDialogButtonBox>
 
 #include <boost/config.hpp>
+#include <boost/version.hpp>
 
 
 AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
@@ -25,7 +26,7 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
 
 	int y = 0;
 
-	QLabel *labTitle = new QLabel("TAS Path Tool", this);
+	QLabel *labTitle = new QLabel("TAS Paths Tool", this);
 	QFont fontTitle = labTitle->font();
 	fontTitle.setPointSize(fontTitle.pointSize()*1.5);
 	fontTitle.setWeight(QFont::Bold);
@@ -55,7 +56,7 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
 	QLabel *labDate1 = new QLabel("Date: ", this);
 	labDate1->setFont(fontLabel1);
 	grid->addWidget(labDate1, y,0,1,1);
-	QLabel *labDate2 = new QLabel("February 2021 - March 2021.", this);
+	QLabel *labDate2 = new QLabel("February 2021 - April 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
 	QSpacerItem *spacer2 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
@@ -81,6 +82,16 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
 	QString cpplib2 = QString{BOOST_STDLIB} + QString{"."};
 	QLabel *labCPPLib = new QLabel(cpplib2, this);
 	grid->addWidget(labCPPLib, y++,1,1,1);
+
+	QLabel *labBoostLib1 = new QLabel("Boost Library: ", this);
+	labBoostLib1->setFont(fontLabel1);
+	grid->addWidget(labBoostLib1, y,0,1,1);
+	QString boostlib2 = QString{"Version %1.%2.%3."}
+		.arg(BOOST_VERSION / 100000)
+		.arg((BOOST_VERSION % 100000) / 100)
+		.arg(BOOST_VERSION % 100);
+	QLabel *labBoostLib = new QLabel(boostlib2, this);
+	grid->addWidget(labBoostLib, y++,1,1,1);
 
 	QSpacerItem *spacer3 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
 	grid->addItem(spacer3, y++,0,1,2);
