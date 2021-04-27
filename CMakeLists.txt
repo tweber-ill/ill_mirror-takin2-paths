@@ -23,7 +23,7 @@ list(APPEND CMAKE_MODULE_PATH
 #endif()
 
 
-option(USE_QT6 "use qt 6" FALSE)
+option(USE_QT6 "use qt 6" TRUE)
 option(USE_LAPACK "use lapack" TRUE)
 
 

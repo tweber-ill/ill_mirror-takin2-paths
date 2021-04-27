@@ -30,7 +30,7 @@ namespace pt = boost::property_tree;
 #define MAX_RECENT_FILES 16
 #define PROG_TITLE "TAS Path Tool"
 #define PROG_IDENT "takin_paths"
-#define FILE_BASENAME "paths."
+#define FILE_BASENAME "taspaths."
 
 
 
@@ -93,7 +93,8 @@ void PathsTool::OpenFile()
 {
 	QString dirLast = m_sett.value("cur_dir", "").toString();
 
-	QString filename = QFileDialog::getOpenFileName(this, "Open File", dirLast, "Paths Files (*.paths)");
+	QString filename = QFileDialog::getOpenFileName(
+		this, "Open File", dirLast, "Paths Files (*.taspaths)");
 	if(filename=="" || !QFile::exists(filename))
 		return;
 
@@ -121,7 +122,8 @@ void PathsTool::SaveFileAs()
 {
 	QString dirLast = m_sett.value("cur_dir", "").toString();
 
-	QString filename = QFileDialog::getSaveFileName(this, "Save File", dirLast, "Paths Files (*.paths)");
+	QString filename = QFileDialog::getSaveFileName(
+		this, "Save File", dirLast, "Paths Files (*.taspaths)");
 	if(filename=="")
 		return;
 
@@ -222,6 +224,8 @@ bool PathsTool::OpenFile(const QString &file)
 				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
+
+				SetCollisionStatus(m_instrspace.CheckCollision2D());
 
 				if(m_renderer)
 					m_renderer->UpdateInstrument(instr);
@@ -449,6 +453,19 @@ void PathsTool::UpdateStatusLabel()
 	if(m_curObj != "")
 		ostr << ", object: " << m_curObj;
 	m_labelStatus->setText(ostr.str().c_str());
+}
+
+
+void PathsTool::SetCollisionStatus(bool colliding)
+{
+	std::ostringstream ostr;
+
+	if(colliding)
+		ostr << "Collision detected!";
+	else
+		ostr << "Position ok.";
+
+	m_labelCollisionStatus->setText(ostr.str().c_str());
 }
 
 
@@ -769,7 +786,13 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_labelStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
 	m_labelStatus->setLineWidth(1);
 
+	m_labelCollisionStatus = new QLabel(this);
+	m_labelCollisionStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	m_labelCollisionStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
+	m_labelCollisionStatus->setLineWidth(1);
+
 	m_statusbar = new QStatusBar(this);
+	m_statusbar->addPermanentWidget(m_labelCollisionStatus);
 	m_statusbar->addPermanentWidget(m_labelStatus);
 	setStatusBar(m_statusbar);
 	// --------------------------------------------------------------------

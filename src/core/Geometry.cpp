@@ -55,6 +55,14 @@ Geometry::load(const boost::property_tree::ptree& prop)
 			if(cyl->Load(geo.second))
 				geo_objs.emplace_back(std::move(cyl));
 		}
+		else if(geotype == "sphere")
+		{
+			auto sph = std::make_shared<SphereGeometry>();
+			sph->m_id = geoid;
+
+			if(sph->Load(geo.second))
+				geo_objs.emplace_back(std::move(sph));
+		}
 		else
 		{
 			std::cerr << "Unknown geometry type \"" << geotype << "\"." << std::endl;
@@ -217,6 +225,69 @@ CylinderGeometry::GetTriangles() const
 
 	//tl2::transform_obj(verts, norms, mat, true);
 	return std::make_tuple(verts, norms, uvs);
+}
+
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// sphere
+// ----------------------------------------------------------------------------
+
+SphereGeometry::SphereGeometry()
+{
+}
+
+
+SphereGeometry::~SphereGeometry()
+{
+}
+
+
+void SphereGeometry::Clear()
+{
+}
+
+
+bool SphereGeometry::Load(const boost::property_tree::ptree& prop)
+{
+	if(!Geometry::Load(prop))
+		return false;
+
+	if(auto optPos = prop.get_optional<std::string>("pos"); optPos)
+	{
+		m_pos.clear();
+
+		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		if(m_pos.size() < 3)
+			m_pos.resize(3);
+	}
+
+	m_radius = prop.get<t_real>("radius", 0.1);
+
+	return true;
+}
+
+
+t_mat SphereGeometry::GetTrafo() const
+{
+	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
+	return mat;
+}
+
+
+std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+SphereGeometry::GetTriangles() const
+{
+	const int numsubdivs = 2;
+	auto solid = tl2::create_icosahedron<t_vec>(1);
+	auto [triagverts, norms, uvs] = tl2::spherify<t_vec>(
+		tl2::subdivide_triangles<t_vec>(
+			tl2::create_triangles<t_vec>(solid), numsubdivs), m_radius);
+
+	//tl2::transform_obj(verts, norms, mat, true);
+	return std::make_tuple(triagverts, norms, uvs);
 }
 
 // ----------------------------------------------------------------------------

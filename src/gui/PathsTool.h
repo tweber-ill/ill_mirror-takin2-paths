@@ -43,6 +43,7 @@ private:
 
 	QStatusBar *m_statusbar{nullptr};
 	QLabel *m_labelStatus{nullptr};
+	QLabel *m_labelCollisionStatus{nullptr};
 
 	QMenu *m_menuOpenRecent{nullptr};
 	QMenuBar *m_menubar{nullptr};
@@ -53,7 +54,7 @@ private:
 	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 
-	std::string m_initialInstrFile = "instrument.paths";
+	std::string m_initialInstrFile = "instrument.taspaths";
 
 	// recent file list and currently active file
 	QStringList m_recentFiles;
@@ -94,89 +95,60 @@ protected:
 	virtual void hideEvent(QHideEvent *) override;
 	virtual void closeEvent(QCloseEvent *) override;
 
-	/**
-	 * File -> New
-	 */
+	// File -> New
 	void NewFile();
 
-	/**
-	 * File -> Open
-	 */
+	// File -> Open
 	void OpenFile();
 
-	/**
-	 * File -> Save
-	 */
+	// File -> Save
 	void SaveFile();
 
-	/**
-	 * File -> Save As
-	 */
+	// File -> Save As
 	void SaveFileAs();
 
-	/**
-	 * load file
-	 */
+	// load file
 	bool OpenFile(const QString &file);
 
-	/**
-	 * save file
-	 */
+	// save file
 	bool SaveFile(const QString &file);
 
-	/**
-	 * adds a file to the recent files menu
-	 */
+	// adds a file to the recent files menu
 	void AddRecentFile(const QString &file);
 
-	/**
-	 * remember current file and set window title
-	 */
+	// remember current file and set window title
 	void SetCurrentFile(const QString &file);
 
-	/**
-	 * sets the recent file menu
-	 */
+	// sets the recent file menu
 	void SetRecentFiles(const QStringList &files);
 
-	/**
-	 * creates the "recent files" sub-menu
-	 */
+	// creates the "recent files" sub-menu
 	void RebuildRecentFiles();
 
 
 protected slots:
-	/**
-	 * go to crystal coordinates
-	 */
+	// go to crystal coordinates
 	void GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 
-	/**
-	 * called after the plotter has initialised
-	 */
+	// called after the plotter has initialised
 	void AfterGLInitialisation();
 
-	/**
-	 * mouse coordinates on base plane
-	 */
+	// mouse coordinates on base plane
 	void CursorCoordsChanged(t_real_gl x, t_real_gl y);
 
-	/**
-	 * mouse is over an object
-	 */
+	// mouse is over an object
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 
-	/**
-	 * clicked on an object
-	 */
+	// clicked on an object
 	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right);
 
-	/**
-	 * dragging an object
-	 */
+	// dragging an object
 	void ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y);
 
 	void UpdateStatusLabel();
+
+	// set status flag indicating if the instrument is colliding
+	void SetCollisionStatus(bool colliding);
 
 
 public:

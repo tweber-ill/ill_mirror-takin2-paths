@@ -997,10 +997,9 @@ requires tl2::is_vec<t_vec>
 	// check for intersections
 	auto vecs = intersect_circle_polylines<t_vec, t_cont>(
 		circleOrg, circleRad, poly, true);
-	
+
 	if(vecs.size())
 		return true;
-
 
 	// check cases when one object is completely contained in the other
 	std::size_t num_inside = 0;
@@ -1017,7 +1016,9 @@ requires tl2::is_vec<t_vec>
 			++num_outside;
 	}
 
-	return num_inside==0 || num_outside==0;
+	if(num_inside==0 || num_outside==0)
+		return false;
+	return true;
 }
 
 

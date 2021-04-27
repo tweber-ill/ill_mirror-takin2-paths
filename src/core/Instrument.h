@@ -53,7 +53,7 @@ public:
 	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
 
 	const std::vector<std::shared_ptr<Geometry>>& 
-	GetComps(AxisAngle which=AxisAngle::IN) const;
+		GetComps(AxisAngle which=AxisAngle::IN) const;
 
 private:
 	// identifier
@@ -103,7 +103,7 @@ public:
 	// connection to update signal
 	template<class t_slot>
 	void AddUpdateSlot(const t_slot& slot)
-	{ m_sigUpdate->connect(slot); }
+		{ m_sigUpdate->connect(slot); }
 
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
@@ -139,6 +139,7 @@ public:
 	const Instrument& GetInstrument() const { return m_instr; }
 	Instrument& GetInstrument() { return m_instr; }
 
+	bool CheckCollision2D() const;
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };

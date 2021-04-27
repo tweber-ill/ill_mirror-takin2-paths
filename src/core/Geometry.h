@@ -17,10 +17,14 @@
 #include "types.h"
 
 
+/**
+ * geometric primitive types
+ */
 enum class GeometryType
 {
 	BOX,
 	CYLINDER,
+	SPHERE
 };
 
 
@@ -49,7 +53,7 @@ public:
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
-	load(const boost::property_tree::ptree& prop);
+		load(const boost::property_tree::ptree& prop);
 
 protected:
 	std::string m_id;
@@ -77,6 +81,9 @@ public:
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
+	t_real GetHeight() const { return m_height; }
+	t_real GetDepth() const { return m_depth; }
+	t_real GetLength() const { return m_length; }
 
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({0, 0, 0});
@@ -105,10 +112,42 @@ public:
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
+	const t_vec& GetPos() const { return m_pos; }
+	t_real GetHeight() const { return m_height; }
+	t_real GetRadius() const { return m_radius; }
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
 	t_real m_height{}, m_radius{};
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// sphere
+// ----------------------------------------------------------------------------
+class SphereGeometry : public Geometry
+{
+public:
+	SphereGeometry();
+	virtual ~SphereGeometry();
+
+	virtual GeometryType GetType() const override { return GeometryType::SPHERE; }
+
+	virtual void Clear() override;
+	virtual bool Load(const boost::property_tree::ptree& prop) override;
+
+	virtual t_mat GetTrafo() const override;
+	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
+	GetTriangles() const override;
+
+	const t_vec& GetPos() const { return m_pos; }
+	t_real GetRadius() const { return m_radius; }
+
+private:
+	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
+	t_real m_radius{};
 };
 // ----------------------------------------------------------------------------
 

@@ -12,7 +12,8 @@
 		"C_Cpp.default.cppStandard": "c++20",
 		"C_Cpp.default.cStandard": "c17",
 		"files.associations": {
-			"limits": "cpp"
+			"limits": "cpp",
+			"memory": "cpp"
 		}
 	}
 }
