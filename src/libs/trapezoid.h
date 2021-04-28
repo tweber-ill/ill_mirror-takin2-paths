@@ -867,7 +867,7 @@ get_trapezoids(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 				poly.push_back(std::get<1>(lineBottom));
 				poly.push_back(std::get<1>(lineTop));
 				poly.push_back(std::get<0>(lineTop));
-				
+
 				polys.emplace_back(std::move(poly));
 			}
 		}
@@ -1024,6 +1024,14 @@ create_trapezoid_tree(const std::vector<t_line>& _lines,
 {
 	using t_mat = tl2::mat<t_real, std::vector>;
 	std::vector<t_line> lines = _lines;
+
+	// order line vertices by x
+	for(t_line& line : lines)
+	{
+		if(std::get<0>(line)[0] > std::get<1>(line)[0])
+			std::swap(std::get<0>(line), std::get<1>(line));
+	}
+
 
 	t_real shear_eps = eps * 10.;
 	if(shear)

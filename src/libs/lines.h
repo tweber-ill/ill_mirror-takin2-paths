@@ -99,7 +99,6 @@ std::ostream& print_line(std::ostream& ostr, const t_line& line)
 	const auto& pt1 = std::get<1>(line);
 
 	using namespace tl2_ops;
-
 	ostr << "(" << pt0 << "), (" << pt1 << ")";
 	return ostr;
 };
@@ -157,7 +156,7 @@ requires tl2::is_vec<t_vec>
 	}
 
 	// sort intersections by x
-	std::sort(inters.begin(), inters.end(), 
+	std::sort(inters.begin(), inters.end(),
 		[](const t_vec& vec1, const t_vec& vec2) -> bool
 		{
 			return vec1[0] < vec2[0];
@@ -219,7 +218,7 @@ std::pair<t_real, t_real> get_line_slope_offs(const t_line& line)
 }
 
 
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 t_real get_line_y(const t_line& line, t_real x)
@@ -232,7 +231,7 @@ t_real get_line_y(const t_line& line, t_real x)
 /**
  * are two lines equal?
  */
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 bool is_line_equal(const t_line& line1, const t_line& line2,
@@ -693,8 +692,8 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 	enum class SweepEventType
 	{
-		LEFT_VERTEX, 
-		RIGHT_VERTEX, 
+		LEFT_VERTEX,
+		RIGHT_VERTEX,
 		INTERSECTION
 	};
 
@@ -727,8 +726,10 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 			if(intersection)
 			{
-				using namespace tl2_ops;
-				ostr << ", intersection=" << *intersection;
+				tl2_ops::operator<<<t_vec>(ostr, *intersection);
+
+				//using namespace tl2_ops;
+				//ostr << ", intersection=" << *intersection;
 			}
 		}
 	};
