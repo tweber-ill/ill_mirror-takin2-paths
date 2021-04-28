@@ -1,9 +1,8 @@
 # TAS-Paths
-
 Triple-axis path-finding tool.
 
 
-**Building**
+## Building
 - Install development versions of the following external libraries: [*Boost*](https://www.boost.org/), [*Qt*](https://www.qt.io/), and optionally [*Lapack(e)*](https://www.netlib.org/lapack/).
 - Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
 - Go to the repository's root directory: `cd paths`.
