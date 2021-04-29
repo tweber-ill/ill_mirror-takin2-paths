@@ -12,6 +12,8 @@ enable_language(CXX)
 
 
 option(USE_QT6 "use qt 6" FALSE)
+option(USE_LAPACK "use lapack" TRUE)
+
 
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -34,6 +36,7 @@ message("Selected Qt version ${QT_VER}.")
 find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 
+
 if(QT_VER EQUAL 6)
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
 elseif(QT_VER EQUAL 5)
@@ -44,6 +47,17 @@ endif()
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
+
+
+if(USE_LAPACK)
+	find_package(Lapacke)
+	if(Lapacke_FOUND)
+		message("Lapacke enabled.")
+		add_definitions(-DUSE_LAPACK)
+	else()
+		message("Lapacke disabled.")
+	endif()
+endif()
 # -----------------------------------------------------------------------------
 
 
@@ -65,12 +79,14 @@ if(QT_VER EQUAL 6)
 		${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src
 		${PROJECT_SOURCE_DIR}/.. ${PROJECT_SOURCE_DIR}/../src
 		${Boost_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}/..
+		${Lapacke_INCLUDE_DIRS}
 		${Qt6Svg_INCLUDE_DIRS})
 elseif(QT_VER EQUAL 5)
 	include_directories(
 		${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src
 		${PROJECT_SOURCE_DIR}/.. ${PROJECT_SOURCE_DIR}/../src
 		${Boost_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}/..
+		${Lapacke_INCLUDE_DIRS}
 		${Qt5Svg_INCLUDE_DIRS})
 endif()
 
@@ -90,24 +106,28 @@ if(QT_VER EQUAL 6)
 	target_link_libraries(hull
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		-lqhull_r -lqhullcpp
 	)
 
 	target_link_libraries(lines
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		Threads::Threads
 	)
 elseif(QT_VER EQUAL 5)
 	target_link_libraries(hull
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		-lqhull_r -lqhullcpp
 	)
 
 	target_link_libraries(lines
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 		${Boost_LIBRARIES}
+		${Lapacke_LIBRARIES}
 		Threads::Threads
 	)
 endif()

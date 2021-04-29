@@ -713,22 +713,45 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// view menu
 	QMenu *menuView = new QMenu("View", m_menubar);
 
-	/*QAction *acPersp = new QAction("Perspective Projection", menuView);
-	acPersp->setCheckable(true);
-	acPersp->setChecked(true);
-
-	connect(acPersp, &QAction::toggled, this, [this](bool b)
-	{
-		if(m_renderer)
-			m_renderer->SetPerspectiveProjection(b);
-	});*/
-
 	menuView->addAction(m_tasProperties->toggleViewAction());
 	menuView->addAction(m_xtalProperties->toggleViewAction());
 	menuView->addAction(m_pathProperties->toggleViewAction());
 	menuView->addAction(m_camProperties->toggleViewAction());
 	//menuView->addSeparator();
 	//menuView->addAction(acPersp);
+
+
+	// tools menu
+	QMenu *menuTools = new QMenu("Tools", m_menubar);
+
+	fs::path hullpath = fs::path(g_apppath) / fs::path("hull");
+	fs::path linespath = fs::path(g_apppath) / fs::path("lines");
+
+	std::size_t num_tools = 0;
+	if(fs::exists(hullpath))
+	{
+		QAction *acHullTool = new QAction("Hull Test...", menuTools);
+		menuTools->addAction(acHullTool);
+		++num_tools;
+
+		connect(acHullTool, &QAction::triggered, this, [hullpath]()
+		{
+			std::system((hullpath.string() + "&").c_str());
+		});
+	}
+
+	if(fs::exists(linespath))
+	{
+		QAction *acLinesTool = new QAction("Line Segment Test...", menuTools);
+		menuTools->addAction(acLinesTool);
+		++num_tools;
+
+		connect(acLinesTool, &QAction::triggered, this, [linespath]()
+		{
+			std::system((linespath.string() + "&").c_str());
+		});
+	}
+
 
 
 	// help menu
@@ -772,6 +795,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// menu bar
 	m_menubar->addMenu(menuFile);
 	m_menubar->addMenu(menuView);
+	if(num_tools)
+		m_menubar->addMenu(menuTools);
 	m_menubar->addMenu(menuHelp);
 	//m_menubar->setNativeMenuBar(0);
 	setMenuBar(m_menubar);
@@ -870,10 +895,12 @@ int main(int argc, char** argv)
 
 	//QApplication::setAttribute(Qt::AA_NativeWindows, true);
 	QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
-	QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "qtplugins");
+	QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
+
 	auto app = std::make_unique<QApplication>(argc, argv);
-	app->addLibraryPath(app->applicationDirPath() + QDir::separator() + "qtplugins");
 	g_apppath = app->applicationDirPath().toStdString();
+	app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." + 
+		QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 	std::cout << "Application binary path: " << g_apppath << "." << std::endl;
 
 	auto dlg = std::make_unique<PathsTool>(nullptr);

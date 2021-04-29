@@ -23,7 +23,7 @@ list(APPEND CMAKE_MODULE_PATH
 #endif()
 
 
-option(USE_QT6 "use qt 6" TRUE)
+option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
 
 
@@ -142,8 +142,8 @@ if(QT_VER EQUAL 6)
 	)
 
 	target_link_libraries(taspaths
-		${Boost_LIBRARIES}
-		${Lapacke_LIBRARIES}
+		"${Boost_LIBRARIES}"
+		"${Lapacke_LIBRARIES}"
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
 	)
 elseif(QT_VER EQUAL 5)
@@ -155,8 +155,8 @@ elseif(QT_VER EQUAL 5)
 	)
 
 	target_link_libraries(taspaths
-		${Boost_LIBRARIES}
-		${Lapacke_LIBRARIES}
+		"${Boost_LIBRARIES}"
+		"${Lapacke_LIBRARIES}"
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
 	)
 endif()
