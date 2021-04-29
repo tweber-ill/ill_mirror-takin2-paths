@@ -14,8 +14,12 @@
 
 #include <unordered_map>
 
+#include <QtCore/QTimer>
+#include <QtWidgets/QDialog>
+#include <QtGui/QMouseEvent>
+
 #include "tlibs2/libs/maths.h"
-#include "tlibs2/libs/glplot.h"
+#include "tlibs2/libs/qt/gl.h"
 
 #include "src/core/Instrument.h"
 

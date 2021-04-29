@@ -1,5 +1,5 @@
 /**
- * instrument walls
+ * instrument and walls
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
@@ -22,9 +22,9 @@
 // ----------------------------------------------------------------------------
 enum class AxisAngle
 {
-	IN,
-	INTERNAL,
-	OUT
+	IN,		// defined with respect to incoming axis
+	INTERNAL,	// defined with respect to local rotation
+	OUT		// defined with respect to outgoing axis
 };
 
 class Instrument;

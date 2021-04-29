@@ -680,10 +680,10 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionNew, &QAction::triggered, [this]()
 		{ m_scene->ClearVertices(); });
 
-	QAction *actionLoad = new QAction{"Load...", this};
+	QAction *actionLoad = new QAction{"Open...", this};
 	connect(actionLoad, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getOpenFileName(this, "Load Data", "",
+		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", "",
 			"XML Files (*.xml);;All Files (* *.*)"); file!="")
 		{
 			std::ifstream ifstr(file.toStdString());
@@ -933,6 +933,14 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBack->addMenu(menuBackHull);
 	menuBack->addMenu(menuDelaunay);
 	menuBack->addMenu(menuSpan);
+
+
+	// shortcuts
+	actionNew->setShortcut(QKeySequence::New);
+	actionLoad->setShortcut(QKeySequence::Open);
+	//actionSave->setShortcut(QKeySequence::Save);
+	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	actionQuit->setShortcut(QKeySequence::Quit);
 
 
 	// menu bar

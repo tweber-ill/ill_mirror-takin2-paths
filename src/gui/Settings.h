@@ -9,7 +9,7 @@
 #define __TASPATHS_SETTINGS__
 
 #include <string>
-#include "tlibs2/libs/glplot.h"
+#include "tlibs2/libs/qt/gl.h"
 
 // application binary path
 extern std::string g_apppath;

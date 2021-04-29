@@ -33,7 +33,7 @@
 class PathsTool : public QMainWindow
 { /*Q_OBJECT*/
 private:
-	QSettings m_sett{"takin", "paths"};
+	QSettings m_sett{"takin", "taspaths"};
 
 	// renderer
 	std::shared_ptr<PathsRenderer> m_renderer{std::make_shared<PathsRenderer>(this)};

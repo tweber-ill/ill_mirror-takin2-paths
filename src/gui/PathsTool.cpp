@@ -829,7 +829,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	if(m_sett.contains("geo"))
 		restoreGeometry(m_sett.value("geo").toByteArray());
 	else
-		resize(800, 600);
+		resize(1200, 800);
 
 	if(m_sett.contains("state"))
 		restoreState(m_sett.value("state").toByteArray());

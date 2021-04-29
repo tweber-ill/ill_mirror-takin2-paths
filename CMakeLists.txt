@@ -123,7 +123,7 @@ add_executable(taspaths
 	src/core/Instrument.cpp src/core/Instrument.h
 	src/core/types.h
 
-	tlibs2/libs/glplot.cpp tlibs2/libs/glplot.h
+	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 )
 
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
