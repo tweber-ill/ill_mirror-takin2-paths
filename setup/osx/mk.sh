@@ -70,12 +70,10 @@ change_to_rpath() {
 				done
 
 				local new_path=@rpath/${new_path}
-				#local new_path=@executable_path/../Frameworks/${new_path}
 				;;
 
 			*)
 				local new_path=@rpath/$(basename $old_path)
-				#local new_path=@executable_path/../Libraries/$(basename $old_path)
 				;;
 		esac
 
@@ -100,31 +98,21 @@ if [ $create_appdir -ne 0 ]; then
 
 
 	echo -e "\nCopying files to ${APPDIRNAME}..."
+
+	# program files
 	cp -v setup/osx/Info.plist "${APPDIRNAME}/Contents/"
 	cp -v build/taspaths "${APPDIRNAME}/Contents/MacOS/"
 	cp -v tests/build/lines "${APPDIRNAME}/Contents/MacOS/"
 	cp -v tests/build/hull "${APPDIRNAME}/Contents/MacOS/"
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
 
+	# libraries
 	cp -v /usr/local/lib/libboost_filesystem-mt.dylib "${APPDIRNAME}/Contents/Libraries/"
 	cp -v /usr/local/lib/libqhull_r.8.0.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapacke.3.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapack.3.dylib "${APPDIRNAME}/Contents/Libraries/"
 
-	#cp -v /usr/local/lib/libglib-2.0.0.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libpng16.16.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libfreetype.6.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libgthread-2.0.0.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libpcre.1.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libpcre2-16.0.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libintl.8.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libdbus-1.3.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libdouble-conversion.3.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/lib/libb2.1.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/opt/icu4c/lib/libicui18n.69.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/opt/icu4c/lib/libicuuc.69.dylib "${APPDIRNAME}/Contents/Libraries/"
-	#cp -v /usr/local/opt/icu4c/lib/libicudata.69.dylib "${APPDIRNAME}/Contents/Libraries/"
-
+	# frameworks
 	for (( libidx=0; libidx<${#QT_LIBS[@]}; ++libidx )); do
 		QT_LIB=${QT_LIBS[$libidx]}
 
@@ -139,7 +127,7 @@ if [ $create_appdir -ne 0 ]; then
 		echo -e "--------------------------------------------------------------------------------"
 	fi
 
-	#cp -rv /usr/local/opt/qt@5/plugins/* "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
+	# qt plugins
 	cp -rv /usr/local/opt/qt@5/plugins/platforms "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	cp -rv /usr/local/opt/qt@5/plugins/styles "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	#cp -rv /usr/local/opt/qt@5/plugins/renderers "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
@@ -154,6 +142,8 @@ if [ $create_appdir -ne 0 ]; then
 
 
 	echo -e "\nChanging linked names..."
+
+	# binaries
 	for binary in $(ls "${APPDIRNAME}/Contents/MacOS/"); do
 		install_name_tool \
 			-add_rpath @executable_path/../Libraries \
@@ -163,7 +153,9 @@ if [ $create_appdir -ne 0 ]; then
 		change_to_rpath "${APPDIRNAME}/Contents/MacOS/${binary}"
 	done
 
-	for library in $(find "${APPDIRNAME}/Contents/Libraries/" -type f && find "${APPDIRNAME}/Contents/Frameworks/" -type f)
+	# libraries and frameworks
+	for library in $(find "${APPDIRNAME}/Contents/Libraries/" -type f && \
+		find "${APPDIRNAME}/Contents/Frameworks/" -type f)
 	do
 		is_binary ${library}
 		if [[ $? == 0 ]]; then
