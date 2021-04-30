@@ -1,6 +1,6 @@
 /**
  * intersection tests
- * @author Tobias Weber
+ * @author Tobias Weber <tweber@ill.fr>
  * @date 24-apr-2021
  * @note Forked on 24-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license see 'LICENSE' file

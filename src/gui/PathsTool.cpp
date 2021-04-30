@@ -345,29 +345,50 @@ void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real 
 	// TODO
 	t_real a3_offs = tl2::pi<t_real>*0.5;
 
-	t_real a1 = m_sensesCCW[0] * tl2::calc_tas_a1<t_real>(ki, m_dspacings[0]);
-	t_real a5 = m_sensesCCW[2] * tl2::calc_tas_a1<t_real>(kf, m_dspacings[1]);
+	std::optional<t_real> a1 = tl2::calc_tas_a1<t_real>(ki, m_dspacings[0]);
+	std::optional<t_real> a5 = tl2::calc_tas_a1<t_real>(kf, m_dspacings[1]);
+
+	if(!a1)
+	{
+		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");
+		return;
+	}
+
+	if(!a5)
+	{
+		QMessageBox::critical(this, "Error", "Invalid analyser angle.");
+		return;
+	}
+
+	*a1 *= m_sensesCCW[0];
+	*a5 *= m_sensesCCW[2];
 
 	t_vec Q = tl2::create<t_vec>({h, k, l});
-	auto [a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
+	auto [ok, a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
 		m_B, ki, kf, Q,
 		m_plane_rlu[0], m_plane_rlu[2], m_sensesCCW[1], a3_offs);
 
+	if(!ok)
+	{
+		QMessageBox::critical(this, "Error", "Invalid scattering angles.");
+		return;		
+	}
+
 	// set scattering angles
 	m_instrspace.GetInstrument().GetMonochromator().
-		SetAxisAngleOut(t_real{2}*a1);
+		SetAxisAngleOut(t_real{2} * *a1);
 	m_instrspace.GetInstrument().GetSample().
 		SetAxisAngleOut(a4);
 	m_instrspace.GetInstrument().GetAnalyser().
-		SetAxisAngleOut(t_real{2}*a5);
+		SetAxisAngleOut(t_real{2} * *a5);
 
 	// set crystal angles
 	m_instrspace.GetInstrument().GetMonochromator().
-		SetAxisAngleInternal(a1);
+		SetAxisAngleInternal(*a1);
 	m_instrspace.GetInstrument().GetSample().
 		SetAxisAngleInternal(a3);
 	m_instrspace.GetInstrument().GetAnalyser().
-		SetAxisAngleInternal(a5);
+		SetAxisAngleInternal(*a5);
 }
 
 
