@@ -102,8 +102,8 @@ if [ $create_appdir -ne 0 ]; then
 	# program files
 	cp -v setup/osx/Info.plist "${APPDIRNAME}/Contents/"
 	cp -v build/taspaths "${APPDIRNAME}/Contents/MacOS/"
-	cp -v tests/build/lines "${APPDIRNAME}/Contents/MacOS/"
-	cp -v tests/build/hull "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/lines "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/hull "${APPDIRNAME}/Contents/MacOS/"
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
 
 	# libraries

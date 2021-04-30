@@ -25,6 +25,7 @@ list(APPEND CMAKE_MODULE_PATH
 
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
+option(BUILD_TEST_TOOLS "build test tools" FALSE)
 
 
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -58,16 +59,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 	add_compile_options(-mmacosx-version-min=10.14)
 endif()
+
+include_directories("${PROJECT_SOURCE_DIR}")
 # -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
 # packages
 # -----------------------------------------------------------------------------
+find_package(Threads REQUIRED)
+
 set(Boost_NO_BOOST_CMAKE FALSE)
 find_package(Boost REQUIRED COMPONENTS filesystem)
-
 message("Using Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}.")
+include_directories("${Boost_INCLUDE_DIRS}/..")
 
 
 if(USE_LAPACK)
@@ -75,6 +80,7 @@ if(USE_LAPACK)
 	if(Lapacke_FOUND)
 		message("Lapacke enabled.")
 		add_definitions(-DUSE_LAPACK)
+		include_directories("${Lapacke_INCLUDE_DIRS}")
 	else()
 		message("Lapacke disabled.")
 	endif()
@@ -82,9 +88,9 @@ endif()
 
 
 if(QT_VER EQUAL 6)
-	find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
+	find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL OpenGLWidgets)
 elseif(QT_VER EQUAL 5)
-	find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+	find_package(Qt5 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL)
 else()
 	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
@@ -126,6 +132,20 @@ add_executable(taspaths
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 )
 
+
+if(BUILD_TEST_TOOLS)
+	add_executable(hull
+		src/tests/hull.cpp src/tests/hull.h
+		src/libs/hull.h
+	)
+
+	add_executable(lines
+		src/tests/lines.cpp src/tests/lines.h
+		src/libs/lines.h
+	)
+endif()
+
+
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 #	target_link_options(taspaths
 #		# create an __info_plist section in the binary
@@ -134,31 +154,56 @@ add_executable(taspaths
 #endif()
 
 if(QT_VER EQUAL 6)
-	target_include_directories(taspaths PUBLIC
-		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.."
-		"${Lapacke_INCLUDE_DIRS}"
-		"${Qt6Core_INCLUDE_DIRS}/.."
-	)
+	include_directories("${Qt6Core_INCLUDE_DIRS}/..")
 
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
 	)
+
+
+	if(BUILD_TEST_TOOLS)
+		target_link_libraries(hull
+			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
+			${Boost_LIBRARIES}
+			${Lapacke_LIBRARIES}
+			-lqhull_r -lqhullcpp
+		)
+
+		target_link_libraries(lines
+			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
+			${Boost_LIBRARIES}
+			${Lapacke_LIBRARIES}
+			Threads::Threads
+		)
+	endif()
+
 elseif(QT_VER EQUAL 5)
-	target_include_directories(taspaths PUBLIC
-		"${PROJECT_SOURCE_DIR}"
-		"${Boost_INCLUDE_DIRS}/.."
-		"${Lapacke_INCLUDE_DIRS}"
-		"${Qt5Core_INCLUDE_DIRS}/.."
-	)
+	include_directories("${Qt5Core_INCLUDE_DIRS}/..")
 
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
 	)
+
+
+	if(BUILD_TEST_TOOLS)
+		target_link_libraries(hull
+			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
+			${Boost_LIBRARIES}
+			${Lapacke_LIBRARIES}
+			-lqhull_r -lqhullcpp
+		)
+
+		target_link_libraries(lines
+			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
+			${Boost_LIBRARIES}
+			${Lapacke_LIBRARIES}
+			Threads::Threads
+		)
+	endif()
 endif()
 
 
