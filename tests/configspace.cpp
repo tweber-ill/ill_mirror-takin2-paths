@@ -4,6 +4,10 @@
  * @date may-2021
  * @license see 'LICENSE' file
  *
+ * references:
+ *   - https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/reference/thread_pool.html
+ *   - https://github.com/boostorg/gil/tree/develop/example
+ *
  * g++-10 -O2 -DNDEBUG -std=c++20 -I.. -o configspace configspace.cpp ../src/core/Geometry.cpp ../src/core/Instrument.cpp -lboost_filesystem-mt -lboost_system-mt -lpng -lpthread
  */
 
@@ -11,6 +15,7 @@
 #include <thread>
 #include <future>
 #include <cmath>
+#include <cstdint>
 
 #include <boost/asio.hpp>
 #include <boost/gil/image.hpp>
@@ -60,13 +65,13 @@ int main(int argc, char** argv)
 		// create image
 		std::size_t img_w = (enda4-starta4) / da4;
 		std::size_t img_h = (enda2-starta2) / da2;
+		std::uint8_t *img_buf = new std::uint8_t[img_w * img_h];
 		std::cout << "Image size: " << img_w << " x " << img_h << "." << std::endl;
-		gil::gray8_image_t img(img_w, img_h);
-		auto img_view = gil::view(img);
 
 		// create thread pool
-		unsigned int num_threads = std::thread::hardware_concurrency();
-		asio::thread_pool pool{num_threads};
+		unsigned int num_threads = std::max<unsigned int>(
+			1, std::thread::hardware_concurrency()/2);
+		asio::thread_pool pool(num_threads);
 		std::cout << "Using " << num_threads << " threads." << std::endl;
 
 		std::vector<t_taskptr> tasks;
@@ -76,11 +81,11 @@ int main(int argc, char** argv)
 		for(std::size_t img_row=0; img_row<img_h; ++img_row)
 		{
 			t_real a2 = std::lerp(starta2, enda2, t_real(img_row)/t_real(img_h));
+			std::uint8_t* img_buf_row = img_buf + img_row*img_w;
 
-			auto task = [&instrspace, img_w, img_row, &img_view, starta4, enda4, a2, a6]()
+			auto task = [&instrspace, img_buf_row, img_w, img_row, starta4, enda4, a2, a6]()
 			{
 				InstrumentSpace instrspace_cpy = instrspace;
-				auto img_iter = img_view.row_begin(img_row);
 
 				for(std::size_t img_col=0; img_col<img_w; ++img_col)
 				{
@@ -98,9 +103,9 @@ int main(int argc, char** argv)
 					instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
 
 					if(instrspace_cpy.CheckCollision2D())
-						(*img_iter)[img_col] = 0x00;
+						img_buf_row[img_col] = 0x00;
 					else
-						(*img_iter)[img_col] = 0xff;
+						img_buf_row[img_col] = 0xff;
 				}
 			};
 
@@ -111,13 +116,25 @@ int main(int argc, char** argv)
 
 		for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 		{
-			std::cout << "Task " << taskidx+1 << " of " << tasks.size() << std::endl;
 			tasks[taskidx]->get_future().get();
+			std::cout << "Task " << taskidx+1 << " of " 
+				<< tasks.size() << " finished." << std::endl;
 		}
 
 		pool.join();
 
 		// save image
+		gil::gray8_image_t img(img_w, img_h);
+		auto img_view = gil::view(img);
+
+		for(std::size_t img_row=0; img_row<img_h; ++img_row)
+		{
+			auto img_iter = img_view.row_begin(img_row);
+			for(std::size_t img_col=0; img_col<img_w; ++img_col)
+				(*img_iter)[img_col] = img_buf[img_row*img_w + img_col];
+		}
+
+		delete[] img_buf;
 		gil::write_view("configspace.png", img_view, gil::png_tag{});
 	}
 	catch(const std::exception& ex)

@@ -736,8 +736,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 	using t_leaf = IntersTreeLeaf<
 		intr::avl_set_member_hook<
-			intr::link_mode<
-				intr::normal_link>>,
+			intr::link_mode<intr::normal_link>>,
 		t_vec, t_line>;
 
 	using t_tree = intr::avltree<
@@ -871,8 +870,9 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 				auto iterNext = (iter == status.end() ? status.end() : std::next(iter, 1));
 
 				// inactivate current line
-				delete &*iter;
+				auto cur_line_ptr = &*iter;
 				iter = status.erase(iter);
+				delete cur_line_ptr;
 
 				// add possible intersection event
 				if(iterPrev != iterNext && iterPrev != status.end() && iterNext != status.end())
@@ -1033,6 +1033,14 @@ requires tl2::is_vec<t_vec>
 {
 	using t_real = typename t_vec::value_type;
 	using t_line = std::tuple<t_vec, t_vec, int>;
+
+	/*using namespace tl2_ops;
+	std::cout << "polygon 1:" << std::endl;
+	for(const t_vec& vec : poly1)
+		std::cout << vec << std::endl;
+	std::cout << "polygon 2:" << std::endl;
+	for(const t_vec& vec : poly2)
+		std::cout << vec << std::endl;*/
 
 	t_real eps = 1e-6;
 	std::vector<t_line> lines;
