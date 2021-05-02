@@ -135,12 +135,12 @@ add_executable(taspaths
 
 if(BUILD_TEST_TOOLS)
 	add_executable(hull
-		src/tests/hull.cpp src/tests/hull.h
+		src/tools/hull.cpp src/tools/hull.h
 		src/libs/hull.h
 	)
 
 	add_executable(lines
-		src/tests/lines.cpp src/tests/lines.h
+		src/tools/lines.cpp src/tools/lines.h
 		src/libs/lines.h
 	)
 endif()

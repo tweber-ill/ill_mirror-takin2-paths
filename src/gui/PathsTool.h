@@ -17,7 +17,6 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
 
 #include "tlibs2/libs/maths.h"
 

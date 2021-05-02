@@ -151,4 +151,17 @@ private:
 };
 // ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
+// functions
+// ----------------------------------------------------------------------------
+#define FILE_BASENAME "taspaths."
+#define PROG_IDENT "takin_taspaths"
+
+extern std::tuple<bool, std::string> load_instrumentspace(
+	const std::string& filename, InstrumentSpace& instrspace);
+// ----------------------------------------------------------------------------
+
+
 #endif

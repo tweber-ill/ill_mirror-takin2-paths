@@ -24,14 +24,10 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
-#include "src/libs/ptree.h"
 
 
 #define MAX_RECENT_FILES 16
 #define PROG_TITLE "Triple-Axis Paths Tool"
-#define PROG_IDENT "takin_paths"
-#define FILE_BASENAME "taspaths."
-
 
 
 // ----------------------------------------------------------------------------
@@ -139,68 +135,20 @@ bool PathsTool::OpenFile(const QString &file)
 {
 	try
 	{
-		if(file=="" || !QFile::exists(file))
+		NewFile();
+
+		// load instrument definition file
+		if(auto [instrok, msg] = 
+			load_instrumentspace(file.toStdString(), m_instrspace); !instrok)
+		{
+			QMessageBox::critical(this, "Error", msg.c_str());
 			return false;
-
-
-		// load xml
-		pt::ptree prop;
-		std::ifstream ifstr{file.toStdString()};
-
-		if(!ifstr)
-		{
-			QMessageBox::critical(this, "Error", "Could not load file.");
-			return false;
-		}
-
-		// check format and version
-		pt::read_xml(ifstr, prop);
-		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
-			!opt || *opt != PROG_IDENT)
-		{
-			QMessageBox::critical(this, "Error", "Not a recognised file format. Ignoring.");
-			return false;
-		}
-
-		if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
-			std::cout << "Loading file \"" << file.toStdString()
-				<< "\" dated " << tl2::epoch_to_str(*optTime) << "." << std::endl;
-
-
-		// get variables from config file
-		std::unordered_map<std::string, std::string> propvars;
-
-		if(auto vars = prop.get_child_optional(FILE_BASENAME "variables"); vars)
-		{
-			// iterate variables
-			for(const auto &var : *vars)
-			{
-				const auto& key = var.first;
-				std::string val = var.second.get<std::string>("<xmlattr>.value", "");
-				//std::cout << key << " = " << val << std::endl;
-
-				propvars.insert(std::make_pair(key, val));
-			}
-
-			replace_ptree_values(prop, propvars);
-		}
-
-
-		// load instrument definition
-		if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
-		{
-			if(!m_instrspace.Load(*instr))
-			{
-				QMessageBox::critical(this, "Error", "Instrument configuration could not be loaded.");
-				return false;
-			}
 		}
 		else
 		{
-			QMessageBox::critical(this, "Error", "No instrument definition found.");
-			return false;
+			std::cout << "Loaded instrument file \"" << file.toStdString() << "\" "
+				<< "dated " << msg << "." << std::endl;
 		}
-
 
 		SetCurrentFile(file);
 		AddRecentFile(file);
@@ -421,8 +369,10 @@ void PathsTool::AfterGLInitialisation()
 
 	// load an initial instrument definition
 	if(std::string instrfile = find_resource(m_initialInstrFile); !instrfile.empty())
-		OpenFile(instrfile.c_str());
-	m_renderer->LoadInstrument(m_instrspace);
+	{
+		if(OpenFile(instrfile.c_str()))
+			m_renderer->LoadInstrument(m_instrspace);
+	}
 }
 
 

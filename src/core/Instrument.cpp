@@ -5,8 +5,14 @@
  * @license GPLv3, see 'LICENSE' file
  */
 
+#include <unordered_map>
+#include <optional>
+
 #include "Instrument.h"
 #include "src/libs/lines.h"
+#include "src/libs/ptree.h"
+#include "tlibs2/libs/file.h"
+#include "tlibs2/libs/str.h"
 
 namespace pt = boost::property_tree;
 
@@ -513,5 +519,71 @@ bool InstrumentSpace::CheckCollision2D() const
 	//	return true;
 
 	return false;
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// functions
+// ----------------------------------------------------------------------------
+/**
+ * load an instrument space definition from an xml file
+ */
+std::tuple<bool, std::string> load_instrumentspace(
+	const std::string& filename, InstrumentSpace& instrspace)
+{
+	if(filename == "" || !fs::exists(fs::path(filename)))
+		return std::make_tuple(false, "Instrument file \"" + filename + "\" does not exist.");
+
+	// open xml
+	std::ifstream ifstr{filename};
+	if(!ifstr)
+		return std::make_tuple(false, "Could not read instrument file \"" + filename + "\".");
+
+	// read xml
+	pt::ptree prop;
+	pt::read_xml(ifstr, prop);
+	// check format and version
+	if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+		!opt || *opt != PROG_IDENT)
+	{
+		return std::make_tuple(false, "Instrument file \"" + filename + "\" has invalid identifier.");
+	}
+
+	// get variables from config file
+	std::unordered_map<std::string, std::string> propvars;
+
+	if(auto vars = prop.get_child_optional(FILE_BASENAME "variables"); vars)
+	{
+		// iterate variables
+		for(const auto &var : *vars)
+		{
+			const auto& key = var.first;
+			std::string val = var.second.get<std::string>("<xmlattr>.value", "");
+			//std::cout << key << " = " << val << std::endl;
+
+			propvars.insert(std::make_pair(key, val));
+		}
+
+		replace_ptree_values(prop, propvars);
+	}
+
+	// load instrument definition
+	if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
+	{
+		if(!instrspace.Load(*instr))
+			return std::make_tuple(false, "Instrument configuration \"" + filename + "\" could not be loaded.");
+	}
+	else
+	{
+		return std::make_tuple(false, "No instrument definition found in \"" + filename + "\".");
+	}
+
+	std::ostringstream timestamp;
+	if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
+		timestamp << tl2::epoch_to_str(*optTime);;
+
+	return std::make_tuple(true, timestamp.str());
 }
 // ----------------------------------------------------------------------------
