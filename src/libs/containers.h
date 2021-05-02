@@ -22,6 +22,12 @@
 #include <unordered_map>
 #include <cstdint>
 
+#include <boost/intrusive/bstree_algorithms.hpp>
+#include <boost/intrusive/avltree_algorithms.hpp>
+#include <boost/intrusive/rbtree_algorithms.hpp>
+#include <boost/intrusive/splaytree_algorithms.hpp>
+#include <boost/intrusive/treap_algorithms.hpp>
+
 
 /**
  * range tree's underlying binary tree:
@@ -33,18 +39,6 @@
 #ifndef __RANGE_TREE_UNDERLYING_IMPL
 	#define __RANGE_TREE_UNDERLYING_IMPL 2
 #endif
-
-#if __RANGE_TREE_UNDERLYING_IMPL==1
-	#include <boost/intrusive/bstree_algorithms.hpp>
-#elif __RANGE_TREE_UNDERLYING_IMPL==2
-	#include <boost/intrusive/avltree_algorithms.hpp>
-#elif __RANGE_TREE_UNDERLYING_IMPL==3
-	#include <boost/intrusive/rbtree_algorithms.hpp>
-#elif __RANGE_TREE_UNDERLYING_IMPL==4
-	#include <boost/intrusive/splaytree_algorithms.hpp>
-#endif
-
-#include <boost/intrusive/treap_algorithms.hpp>
 
 
 namespace geo {
@@ -63,9 +57,6 @@ concept is_tree_node = requires(const T& a)
 	a.parent;
 	a.left;
 	a.right;
-
-	// tree data member var
-	a.vec;
 };
 
 // ----------------------------------------------------------------------------
@@ -79,33 +70,28 @@ concept is_tree_node = requires(const T& a)
 /**
  * common node type
  */
-template<class t_vec, template<class ...> class t_nodetype>
-requires tl2::is_basic_vec<t_vec>
+template<class t_nodetype>
 struct CommonTreeNode
 {
 	// tree hierarchy
-	t_nodetype<t_vec> *parent = nullptr;
-	t_nodetype<t_vec> *left = nullptr;
-	t_nodetype<t_vec> *right = nullptr;
-
-	// pointer to actual data
-	std::shared_ptr<const t_vec> vec{};
+	t_nodetype *parent = nullptr;
+	t_nodetype *left = nullptr;
+	t_nodetype *right = nullptr;
 
 
 	CommonTreeNode() {}
-	CommonTreeNode(const std::shared_ptr<const t_vec>& vec) : vec{vec} {}
 
-	CommonTreeNode(const CommonTreeNode<t_vec, t_nodetype>& other)
+	CommonTreeNode(const CommonTreeNode<t_nodetype>& other)
 	{
 		*this = operator=(other);
 	}
 
-	const CommonTreeNode<t_vec, t_nodetype>& operator=(const CommonTreeNode<t_vec, t_nodetype>& other)
+	const CommonTreeNode<t_nodetype>& 
+	operator=(const CommonTreeNode<t_nodetype>& other)
 	{
 		this->parent = other.parent;
 		this->left = other.left;
 		this->right = other.right;
-		this->vec = other.vec;
 	}
 };
 
@@ -160,6 +146,69 @@ struct BasicNodeTraits
 };
 
 
+/**
+ * node traits
+ * @see https://www.boost.org/doc/libs/1_74_0/doc/html/intrusive/node_algorithms.html
+ */
+template<class t_tree_node>
+requires is_tree_node<t_tree_node>
+struct BinTreeNodeTraits : public BasicNodeTraits<t_tree_node>
+{
+	using node = typename BasicNodeTraits<t_tree_node>::node;
+	using node_ptr = typename BasicNodeTraits<t_tree_node>::node_ptr;
+	using const_node_ptr = typename BasicNodeTraits<t_tree_node>::const_node_ptr;
+
+	using balance = typename node::t_balance;
+
+	static balance positive() { return 1; }
+	static balance negative() { return -1; }
+	static balance zero() { return 0; }
+
+	static balance get_balance(const node* thenode)
+	{
+		if(!thenode) return zero();
+		return thenode->balance;
+	}
+
+	static void set_balance(node* thenode, balance bal)
+	{
+		if(!thenode) return;
+		thenode->balance = bal;
+	}
+};
+
+
+/**
+ * node traits
+ * @see https://www.boost.org/doc/libs/1_74_0/doc/html/intrusive/node_algorithms.html
+ */
+template<class t_tree_node>
+requires is_tree_node<t_tree_node>
+struct RbTreeNodeTraits : public BasicNodeTraits<t_tree_node>
+{
+	using node = typename BasicNodeTraits<t_tree_node>::node;
+	using node_ptr = typename BasicNodeTraits<t_tree_node>::node_ptr;
+	using const_node_ptr = typename BasicNodeTraits<t_tree_node>::const_node_ptr;
+
+	using color = typename node::t_colour;
+
+	static color red() { return 1; }
+	static color black() { return 0; }
+
+	static color get_color(const node* thenode)
+	{
+		if(!thenode) return black();
+		return thenode->colour;
+	}
+
+	static void set_color(node* thenode, color col)
+	{
+		if(!thenode) return;
+		thenode->colour = col;
+	}
+};
+
+
 template<class t_node>
 void write_graph(std::ostream& ostrStates, std::ostream& ostrTransitions,
 	const std::unordered_map<const t_node*, std::size_t>& nodeMap, const t_node* node)
@@ -169,7 +218,7 @@ requires is_tree_node<t_node>
 	if(!node) return;
 
 	std::size_t num = nodeMap.find(node)->second;
-	ostrStates << "\t" << num << " [label=\"" << *node->vec << "\"];\n";
+	ostrStates << "\t" << num << " [label=\"" << num << "\"];\n";
 
 	if(node->left)
 	{
@@ -187,6 +236,7 @@ requires is_tree_node<t_node>
 		write_graph<t_node>(ostrStates, ostrTransitions, nodeMap, node->right);
 	}
 }
+
 
 template<class t_node>
 void number_nodes(std::unordered_map<const t_node*, std::size_t>& map, const t_node* node, std::size_t &num)
@@ -234,14 +284,15 @@ requires is_tree_node<t_node>
 // see (Berg 2008), pp. 105-110.
 // ----------------------------------------------------------------------------
 
-template<class t_vec> requires tl2::is_basic_vec<t_vec> class RangeTree;
+template<class t_vec> requires tl2::is_basic_vec<t_vec> 
+class RangeTree;
 
 /**
  * range tree node
  */
 template<class t_vec>
 requires tl2::is_basic_vec<t_vec>
-struct RangeTreeNode : public CommonTreeNode<t_vec, RangeTreeNode>
+struct RangeTreeNode : public CommonTreeNode<RangeTreeNode<t_vec>>
 {
 	using t_real = typename t_vec::value_type;
 
@@ -265,11 +316,16 @@ struct RangeTreeNode : public CommonTreeNode<t_vec, RangeTreeNode>
 	// range for current index
 	t_real range[2] = { 0., 0. };
 
+	// pointer to actual data
+	std::shared_ptr<const t_vec> vec{};
+
 
 	RangeTreeNode() {}
 
-	RangeTreeNode(const std::shared_ptr<const t_vec>& vec, std::size_t dim, std::size_t idx=0)
-		: CommonTreeNode<t_vec, RangeTreeNode>{vec}, dim{dim}, idx{idx}
+	RangeTreeNode(
+		const std::shared_ptr<const t_vec>& vec, 
+		std::size_t dim, std::size_t idx=0)
+		: CommonTreeNode<RangeTreeNode<t_vec>>{}, dim{dim}, idx{idx}, vec{vec}
 	{}
 
 
@@ -281,7 +337,10 @@ struct RangeTreeNode : public CommonTreeNode<t_vec, RangeTreeNode>
 		std::vector<std::shared_ptr<const t_vec>>& vecs,
 		const t_vec* min=nullptr, const t_vec* max=nullptr)
 	{
-		auto is_in_range = [](const t_vec& vec, const t_vec& min, const t_vec& max, std::size_t dim) -> bool
+		auto is_in_range = [](
+			const t_vec& vec, 
+			const t_vec& min, const t_vec& max, 
+			std::size_t dim) -> bool
 		{
 			for(std::size_t idx=0; idx<dim; ++idx)
 			{
@@ -318,8 +377,6 @@ struct RangeTreeNode : public CommonTreeNode<t_vec, RangeTreeNode>
 			ostr << "null";
 		ostr << ", idx: " << node->idx;
 		ostr << ", range: " << node->range[0] << ".." << node->range[1] << "\n";
-		//if(node->nextidxtree)
-		//	ostr << "next index tree: " << *node->nextidxtree << "---------------------\n";
 
 		if(node->left || node->right)
 		{
@@ -358,62 +415,6 @@ struct RangeTreeNode : public CommonTreeNode<t_vec, RangeTreeNode>
 
 
 /**
- * range tree node traits
- * @see https://www.boost.org/doc/libs/1_74_0/doc/html/intrusive/node_algorithms.html
- */
-template<class t_vec>
-requires tl2::is_basic_vec<t_vec>
-struct RangeTreeNodeTraits : public BasicNodeTraits<RangeTreeNode<t_vec>>
-{
-	using node = typename BasicNodeTraits<RangeTreeNode<t_vec>>::node;
-	using node_ptr = typename BasicNodeTraits<RangeTreeNode<t_vec>>::node_ptr;
-	using const_node_ptr = typename BasicNodeTraits<RangeTreeNode<t_vec>>::const_node_ptr;
-
-	// ------------------------------------------------------------------------
-#if __RANGE_TREE_UNDERLYING_IMPL==1 || __RANGE_TREE_UNDERLYING_IMPL==2
-	// bstree or avltree
-	using balance = typename node::t_balance;
-
-	static balance positive() { return 1; }
-	static balance negative() { return -1; }
-	static balance zero() { return 0; }
-
-	static balance get_balance(const node* thenode)
-	{
-		if(!thenode) return zero();
-		return thenode->balance;
-	}
-
-	static void set_balance(node* thenode, balance bal)
-	{
-		if(!thenode) return;
-		thenode->balance = bal;
-	}
-
-#elif __RANGE_TREE_UNDERLYING_IMPL==3
-	// rbtree
-	using color = typename node::t_colour;
-
-	static color red() { return 1; }
-	static color black() { return 0; }
-
-	static color get_color(const node* thenode)
-	{
-		if(!thenode) return black();
-		return thenode->colour;
-	}
-
-	static void set_color(node* thenode, color col)
-	{
-		if(!thenode) return;
-		thenode->colour = col;
-	}
-#endif
-	// ------------------------------------------------------------------------
-};
-
-
-/**
  * k-dim range tree
  * @see (Klein 2005), ch. 3.3.2, pp. 135f
  * @see (Berg 2008), pp. 105-110
@@ -424,19 +425,22 @@ class RangeTree
 {
 public:
 	using t_node = RangeTreeNode<t_vec>;
-	using t_nodetraits = RangeTreeNodeTraits<t_vec>;
 
 #if __RANGE_TREE_UNDERLYING_IMPL==1
 	// bstree
+	using t_nodetraits = BinTreeNodeTraits<t_node>;
 	using t_treealgos = boost::intrusive::bstree_algorithms<t_nodetraits>;
 #elif __RANGE_TREE_UNDERLYING_IMPL==2
 	// avltree
+	using t_nodetraits = BinTreeNodeTraits<t_node>;
 	using t_treealgos = boost::intrusive::avltree_algorithms<t_nodetraits>;
 #elif __RANGE_TREE_UNDERLYING_IMPL==3
 	// rbtree
+	using t_nodetraits = RbTreeNodeTraits<t_node>;
 	using t_treealgos = boost::intrusive::rbtree_algorithms<t_nodetraits>;
 #elif __RANGE_TREE_UNDERLYING_IMPL==4
 	// sgtree
+	using t_nodetraits = BasicNodeTraits<t_node>;
 	using t_treealgos = boost::intrusive::splaytree_algorithms<t_nodetraits>;
 #endif
 
@@ -456,9 +460,11 @@ public:
 	/**
 	 * query a rectangular range
 	 */
-	std::vector<std::shared_ptr<const t_vec>> query_range(const t_vec& _min, const t_vec& _max)
+	std::vector<std::shared_ptr<const t_vec>> 
+	query_range(const t_vec& _min, const t_vec& _max)
 	{
-		auto is_in_range = [](const t_node* node, const t_vec& min, const t_vec& max) -> bool
+		auto is_in_range = 
+		[](const t_node* node, const t_vec& min, const t_vec& max) -> bool
 		{
 			const std::size_t idx = node->idx;
 			return node->range[0] <= min[idx] && node->range[1] >= max[idx];
@@ -572,6 +578,7 @@ public:
 		update(get_root());
 	}
 
+
 	static void update(t_node* node)
 	{
 		if(!node) return;
@@ -679,8 +686,11 @@ private:
 
 template<class t_vec>
 requires tl2::is_basic_vec<t_vec>
-struct TreapNode : public CommonTreeNode<t_vec, TreapNode>
-{};
+struct TreapNode : public CommonTreeNode<TreapNode<t_vec>>
+{
+	// pointer to actual data
+	std::shared_ptr<const t_vec> vec{};
+};
 
 
 template<class t_vec>

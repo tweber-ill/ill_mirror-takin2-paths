@@ -21,8 +21,7 @@
 #include <limits>
 #include <iostream>
 
-#include <boost/intrusive/avltree.hpp>
-
+#include "containers.h"
 #include "tlibs2/libs/maths.h"
 
 
@@ -596,29 +595,30 @@ bool cmp_line(const t_line& line1, const t_line& line2,
 }
 
 
-template<class t_hook, class t_vec, class t_line = std::pair<t_vec, t_vec>>
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
 requires tl2::is_vec<t_vec>
-struct IntersTreeLeaf
+struct IntersTreeNode : public CommonTreeNode<IntersTreeNode<t_vec, t_line>>
 {
 	using t_real = typename t_vec::value_type;
+	using t_balance = std::int64_t;
 
+	t_balance balance = 0;
 	const t_real *curX{nullptr};
 	const std::vector<t_line> *lines{nullptr};
 	std::size_t line_idx{0};
 
 	t_real eps = std::numeric_limits<t_real>::epsilon();
-	t_hook _h{};
 
 	friend std::ostream& operator<<(std::ostream& ostr,
-		const IntersTreeLeaf<t_hook, t_vec, t_line>& e)
+		const IntersTreeNode<t_vec, t_line>& e)
 	{
 		ostr << std::get<0>((*e.lines)[e.line_idx])
 			<< ", " << std::get<1>((*e.lines)[e.line_idx]);
 		return ostr;
 	}
 
-	friend bool operator<(const IntersTreeLeaf<t_hook, t_vec, t_line>& e1,
-		const IntersTreeLeaf<t_hook, t_vec, t_line>& e2)
+	friend bool operator<(const IntersTreeNode<t_vec, t_line>& e1,
+		const IntersTreeNode<t_vec, t_line>& e2)
 	{
 		const t_line& line1 = (*e1.lines)[e1.line_idx];
 		const t_line& line2 = (*e2.lines)[e2.line_idx];
@@ -726,23 +726,12 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 			if(intersection)
 			{
+				ostr << ", ";
 				tl2_ops::operator<<<t_vec>(ostr, *intersection);
 			}
 		}
 	};
-
-
-	namespace intr = boost::intrusive;
-
-	using t_leaf = IntersTreeLeaf<
-		intr::avl_set_member_hook<
-			intr::link_mode<intr::normal_link>>,
-		t_vec, t_line>;
-
-	using t_tree = intr::avltree<
-		t_leaf, intr::member_hook<
-			t_leaf, decltype(t_leaf::_h), &t_leaf::_h>>;
-
+	
 
 	// events
 	auto events_comp = [](const SweepEvent& evt1, const SweepEvent& evt2) -> bool
@@ -750,7 +739,8 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 		return evt1.x > evt2.x;
 	};
 
-	std::priority_queue<SweepEvent, std::vector<SweepEvent>, decltype(events_comp)> events(events_comp);
+	std::priority_queue<SweepEvent, std::vector<SweepEvent>, decltype(events_comp)> 
+		events(events_comp);
 
 	for(std::size_t line_idx=0; line_idx<lines.size(); ++line_idx)
 	{
@@ -808,7 +798,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 		};
 
 	// status
-	t_tree status;
+	namespace intr = boost::intrusive;
+	using t_node = IntersTreeNode<t_vec, t_line>;
+	using t_treealgos = intr::avltree_algorithms<BinTreeNodeTraits<t_node>>;
+	t_node status;
+	t_treealgos::init_header(&status);
 
 	// results
 	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
@@ -832,22 +826,32 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			case SweepEventType::LEFT_VERTEX:
 			{
 				// activate line
-				t_leaf *leaf = new t_leaf
+				t_node *leaf = new t_node
 				{
 					.curX = &curX, 
 					.lines = &lines, 
 					.line_idx = evt.line_idx, 
 					.eps = eps
 				};
-				auto iter = status.insert_equal(*leaf);
 
-				auto iterPrev = (iter == status.begin() ? status.end() : std::prev(iter, 1));
-				auto iterNext = (iter == status.end() ? status.end() : std::next(iter, 1));
+				auto iter = t_treealgos::insert_equal(&status, 
+					t_treealgos::root_node(&status), leaf,
+					[](const t_node* node1, const t_node* node2) -> bool
+					{
+						return *node1 < *node2;
+					});
+
+
+				auto status_begin = t_treealgos::begin_node(&status);
+				auto status_end = t_treealgos::end_node(&status);
+	
+				auto iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
+				auto iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
 
 				// add possible intersection events
-				if(iterPrev != iter && iterPrev != status.end())
+				if(iterPrev != iter && iterPrev != status_end)
 					add_intersection(iterPrev->line_idx, evt.line_idx, curX);
-				if(iterNext != iter && iterNext != status.end())
+				if(iterNext != iter && iterNext != status_end)
 					add_intersection(evt.line_idx, iterNext->line_idx, curX);
 
 				break;
@@ -858,24 +862,31 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			 */
 			case SweepEventType::RIGHT_VERTEX:
 			{
-				// find current line
-				auto iter = std::find_if(status.begin(), status.end(),
-					[&evt](const auto& leaf) -> bool
-					{ return leaf.line_idx == evt.line_idx; });
+				auto status_begin = t_treealgos::begin_node(&status);
+				auto status_end = t_treealgos::end_node(&status);
 
-				if(iter == status.end())
+				// find current line
+				auto iter = status_begin;
+				for(; iter!=status_end; iter = t_treealgos::next_node(iter))
+				{
+					if(iter->line_idx == evt.line_idx)
+						break;
+				}
+				if(iter == status_end)
 					continue;
 
-				auto iterPrev = (iter == status.begin() ? status.end() : std::prev(iter, 1));
-				auto iterNext = (iter == status.end() ? status.end() : std::next(iter, 1));
+				auto iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
+				auto iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
 
 				// inactivate current line
 				auto cur_line_ptr = &*iter;
-				iter = status.erase(iter);
+				iter = t_treealgos::erase(&status, iter);
 				delete cur_line_ptr;
 
 				// add possible intersection event
-				if(iterPrev != iterNext && iterPrev != status.end() && iterNext != status.end())
+				status_begin = t_treealgos::begin_node(&status);
+				status_end = t_treealgos::end_node(&status);
+				if(iterPrev != iterNext && iterPrev != status_end && iterNext != status_end)
 					add_intersection(iterPrev->line_idx, iterNext->line_idx, curX);
 
 				break;
@@ -917,17 +928,26 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					continue;
 				}
 
+				auto status_begin = t_treealgos::begin_node(&status);
+				auto status_end = t_treealgos::end_node(&status);
+
 				// find upper line
-				auto iterUpper = std::find_if(status.begin(), status.end(),
-					[&evt](const auto& leaf) -> bool
-					{ return leaf.line_idx == evt.upper_idx; });
+				auto iterUpper = status_begin;
+				for(; iterUpper != status_end; iterUpper = t_treealgos::next_node(iterUpper))
+				{
+					if(iterUpper->line_idx == evt.upper_idx)
+						break;
+				}
 
 				// find lower line
-				auto iterLower = std::find_if(status.begin(), status.end(),
-					[&evt](const auto& leaf) -> bool
-					{ return leaf.line_idx == evt.lower_idx; });
+				auto iterLower = status_begin;
+				for(; iterLower != status_end; iterLower = t_treealgos::next_node(iterLower))
+				{
+					if(iterLower->line_idx == evt.lower_idx)
+						break;
+				}
 
-				if(iterUpper == status.end() || iterLower == status.end())
+				if(iterUpper == status_end || iterLower == status_end)
 					continue;
 
 				if(!cmp_line<t_vec, t_line>(lines[iterLower->line_idx], 
@@ -937,15 +957,15 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					std::swap(iterUpper, iterLower);
 				}
 
-				auto iterPrev = (iterUpper == status.begin() 
-					? status.end() : std::prev(iterUpper, 1));
-				auto iterNext = (iterLower == status.end() 
-					? status.end() : std::next(iterLower, 1));
+				auto iterPrev = (iterUpper == status_begin 
+					? status_end : t_treealgos::prev_node(iterUpper));
+				auto iterNext = (iterLower == status_end 
+					? status_end : t_treealgos::next_node(iterLower));
 
 				// add possible intersection events
-				if(iterPrev != iterUpper && iterPrev != status.end() && iterUpper != status.end())
+				if(iterPrev != iterUpper && iterPrev != status_end && iterUpper != status_end)
 					add_intersection(iterPrev->line_idx, iterUpper->line_idx, curX);
-				if(iterNext != iterLower && iterNext != status.end() && iterLower != status.end())
+				if(iterNext != iterLower && iterNext != status_end && iterLower != status_end)
 					add_intersection(iterLower->line_idx, iterNext->line_idx, curX);
 
 				break;
