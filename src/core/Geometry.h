@@ -44,7 +44,7 @@ public:
 
 	virtual t_mat GetTrafo() const = 0;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
-	GetTriangles() const = 0;
+		GetTriangles() const = 0;
 
 	virtual const std::string& GetId() const { return m_id; }
 	virtual void SetId(const std::string& id) { m_id = id; }

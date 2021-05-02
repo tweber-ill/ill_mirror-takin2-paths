@@ -32,8 +32,16 @@ class Instrument;
 class Axis
 {
 public:
+	// constructor and destructor
 	Axis(const std::string &id="", const Axis *prev=nullptr, Instrument *instr=nullptr);
 	~Axis();
+
+	// copy constructor and operator
+	Axis(const Axis& axis);
+	const Axis& operator=(const Axis& axis);
+
+	void SetPreviousAxis(const Axis* axis) { m_prev = axis; }
+	void SetParentInstrument(Instrument* instr) { m_instr = instr; }
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
@@ -86,8 +94,13 @@ private:
 class Instrument
 {
 public:
+	// constructor and destructor
 	Instrument();
 	~Instrument();
+
+	// copy constructor and operator
+	Instrument(const Instrument& instr);
+	const Instrument& operator=(const Instrument& instr);
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
@@ -126,8 +139,13 @@ private:
 class InstrumentSpace
 {
 public:
+	// constructor and destructor
 	InstrumentSpace();
 	~InstrumentSpace();
+
+	// copy constructor and operator
+	InstrumentSpace(const InstrumentSpace& instr);
+	const InstrumentSpace& operator=(const InstrumentSpace& instr);
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);

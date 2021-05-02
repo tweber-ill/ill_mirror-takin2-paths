@@ -70,6 +70,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 find_package(Threads REQUIRED)
 
 set(Boost_NO_BOOST_CMAKE FALSE)
+set(Boost_USE_MULTITHREADED TRUE)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 message("Using Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}.")
 include_directories("${Boost_INCLUDE_DIRS}/..")

@@ -31,6 +31,34 @@ Axis::~Axis()
 }
 
 
+Axis::Axis(const Axis& axis)
+{
+	*this = operator=(axis);
+}
+
+
+const Axis& Axis::operator=(const Axis& axis)
+{
+	this->m_id = axis.m_id;
+
+	// has to be set separately from the instrument
+	this->m_prev = nullptr;
+	this->m_instr = nullptr;
+
+	this->m_pos = axis.m_pos;
+
+	this->m_angle_in = axis.m_angle_in;
+	this->m_angle_out = axis.m_angle_out;
+	this->m_angle_internal = axis.m_angle_internal;
+
+	this->m_comps_in = axis.m_comps_in;
+	this->m_comps_out = axis.m_comps_out;
+	this->m_comps_internal = axis.m_comps_internal;
+
+	return *this;
+}
+
+
 void Axis::Clear()
 {
 	m_comps_in.clear();
@@ -166,6 +194,31 @@ Instrument::~Instrument()
 }
 
 
+Instrument::Instrument(const Instrument& instr)
+{
+	*this = operator=(instr);
+}
+
+
+const Instrument& Instrument::operator=(const Instrument& instr)
+{
+	this->m_mono = instr.m_mono;
+	this->m_sample = instr.m_sample;
+	this->m_ana = instr.m_ana;
+
+	this->m_mono.SetParentInstrument(this);
+	this->m_sample.SetParentInstrument(this);
+	this->m_ana.SetParentInstrument(this);
+
+	this->m_mono.SetPreviousAxis(nullptr);
+	this->m_sample.SetPreviousAxis(&this->m_mono);
+	this->m_ana.SetPreviousAxis(&this->m_sample);
+
+	this->m_sigUpdate = std::make_shared<t_sig_update>();
+	return *this;
+}
+
+
 void Instrument::Clear()
 {
 	m_mono.Clear();
@@ -205,6 +258,24 @@ InstrumentSpace::InstrumentSpace()
 
 InstrumentSpace::~InstrumentSpace()
 {
+}
+
+
+InstrumentSpace::InstrumentSpace(const InstrumentSpace& instr)
+{
+	*this = instr;
+}
+
+
+const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
+{
+	this->m_floorlen[0] = instr.m_floorlen[0];
+	this->m_floorlen[1] = instr.m_floorlen[1];
+
+	this->m_walls = instr.m_walls;
+	this->m_instr = instr.m_instr;
+
+	return *this;
 }
 
 
@@ -443,8 +514,7 @@ bool InstrumentSpace::CheckCollision2D() const
 				const auto& poly = polys[idx2];
 
 				if(geo::collide_circle_poly<t_vec>(
-					std::get<0>(circle), std::get<1>(circle),
-					poly))
+					std::get<0>(circle), std::get<1>(circle),poly))
 					return true;
 			}
 		}
@@ -472,7 +542,6 @@ bool InstrumentSpace::CheckCollision2D() const
 	get_polys(sample, samplePolys);
 	get_polys(ana, anaPolys);
 	get_comp_polys(walls, wallPolys);
-
 
 	// check for collisions
 	// TODO: exclude checks for objects that are already colliding

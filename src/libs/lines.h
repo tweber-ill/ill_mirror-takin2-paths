@@ -727,9 +727,6 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			if(intersection)
 			{
 				tl2_ops::operator<<<t_vec>(ostr, *intersection);
-
-				//using namespace tl2_ops;
-				//ostr << ", intersection=" << *intersection;
 			}
 		}
 	};
@@ -822,8 +819,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 	{
 		SweepEvent evt{std::move(events.top())};
 		events.pop();
-
 		curX = evt.x;
+
+		/*std::cout << "Event: ";
+		evt.print(std::cout);
+		std::cout << std::endl;*/
 
 		switch(evt.ty)
 		{
