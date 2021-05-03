@@ -602,12 +602,13 @@ struct IntersTreeNode : public CommonTreeNode<IntersTreeNode<t_vec, t_line>>
 	using t_real = typename t_vec::value_type;
 	using t_balance = std::int64_t;
 
-	t_balance balance = 0;
+	t_balance balance{0};
 	const t_real *curX{nullptr};
 	const std::vector<t_line> *lines{nullptr};
 	std::size_t line_idx{0};
 
 	t_real eps = std::numeric_limits<t_real>::epsilon();
+
 
 	friend std::ostream& operator<<(std::ostream& ostr,
 		const IntersTreeNode<t_vec, t_line>& e)
@@ -785,14 +786,12 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2, eps);
 				intersects && !tl2::equals<t_real>(curX, pt[0], eps))
 			{
-				SweepEvent evtNext
-				{
-					.x = pt[0], 
-					.ty = SweepEventType::INTERSECTION,
-					.lower_idx = lower_idx, 
-					.upper_idx = upper_idx,
-					.intersection = pt
-				};
+				SweepEvent evtNext;
+				evtNext.x = pt[0];
+				evtNext.ty = SweepEventType::INTERSECTION;
+				evtNext.lower_idx = lower_idx;
+				evtNext.upper_idx = upper_idx;
+				evtNext.intersection = pt;
 				events.emplace(std::move(evtNext));
 			}
 		};
@@ -826,15 +825,13 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			case SweepEventType::LEFT_VERTEX:
 			{
 				// activate line
-				t_node *leaf = new t_node
-				{
-					.curX = &curX, 
-					.lines = &lines, 
-					.line_idx = evt.line_idx, 
-					.eps = eps
-				};
+				t_node *leaf = new t_node;
+				leaf->curX = &curX;
+				leaf->lines = &lines;
+				leaf->line_idx = evt.line_idx;
+				leaf->eps = eps;
 
-				auto iter = t_treealgos::insert_equal(&status, 
+				t_node* iter = t_treealgos::insert_equal(&status, 
 					t_treealgos::root_node(&status), leaf,
 					[](const t_node* node1, const t_node* node2) -> bool
 					{
@@ -842,11 +839,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					});
 
 
-				auto status_begin = t_treealgos::begin_node(&status);
-				auto status_end = t_treealgos::end_node(&status);
+				t_node* status_begin = t_treealgos::begin_node(&status);
+				t_node* status_end = t_treealgos::end_node(&status);
 	
-				auto iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
-				auto iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
+				t_node* iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
+				t_node* iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
 
 				// add possible intersection events
 				if(iterPrev != iter && iterPrev != status_end)
@@ -862,11 +859,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			 */
 			case SweepEventType::RIGHT_VERTEX:
 			{
-				auto status_begin = t_treealgos::begin_node(&status);
-				auto status_end = t_treealgos::end_node(&status);
+				t_node* status_begin = t_treealgos::begin_node(&status);
+				t_node* status_end = t_treealgos::end_node(&status);
 
 				// find current line
-				auto iter = status_begin;
+				t_node* iter = status_begin;
 				for(; iter!=status_end; iter = t_treealgos::next_node(iter))
 				{
 					if(iter->line_idx == evt.line_idx)
@@ -875,11 +872,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 				if(iter == status_end)
 					continue;
 
-				auto iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
-				auto iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
+				t_node* iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
+				t_node* iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
 
 				// inactivate current line
-				auto cur_line_ptr = &*iter;
+				t_node* cur_line_ptr = iter;
 				iter = t_treealgos::erase(&status, iter);
 				delete cur_line_ptr;
 
@@ -928,11 +925,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					continue;
 				}
 
-				auto status_begin = t_treealgos::begin_node(&status);
-				auto status_end = t_treealgos::end_node(&status);
+				t_node* status_begin = t_treealgos::begin_node(&status);
+				t_node* status_end = t_treealgos::end_node(&status);
 
 				// find upper line
-				auto iterUpper = status_begin;
+				t_node* iterUpper = status_begin;
 				for(; iterUpper != status_end; iterUpper = t_treealgos::next_node(iterUpper))
 				{
 					if(iterUpper->line_idx == evt.upper_idx)
@@ -940,7 +937,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 				}
 
 				// find lower line
-				auto iterLower = status_begin;
+				t_node* iterLower = status_begin;
 				for(; iterLower != status_end; iterLower = t_treealgos::next_node(iterLower))
 				{
 					if(iterLower->line_idx == evt.lower_idx)
@@ -957,9 +954,9 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					std::swap(iterUpper, iterLower);
 				}
 
-				auto iterPrev = (iterUpper == status_begin 
+				t_node* iterPrev = (iterUpper == status_begin 
 					? status_end : t_treealgos::prev_node(iterUpper));
-				auto iterNext = (iterLower == status_end 
+				t_node* iterNext = (iterLower == status_end 
 					? status_end : t_treealgos::next_node(iterLower));
 
 				// add possible intersection events
