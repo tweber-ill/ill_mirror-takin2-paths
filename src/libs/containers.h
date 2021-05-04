@@ -86,7 +86,7 @@ struct CommonTreeNode
 		*this = operator=(other);
 	}
 
-	const CommonTreeNode<t_nodetype>& 
+	const CommonTreeNode<t_nodetype>&
 	operator=(const CommonTreeNode<t_nodetype>& other)
 	{
 		this->parent = other.parent;
@@ -284,8 +284,7 @@ requires is_tree_node<t_node>
 // see (Berg 2008), pp. 105-110.
 // ----------------------------------------------------------------------------
 
-template<class t_vec> requires tl2::is_basic_vec<t_vec> 
-class RangeTree;
+template<class t_vec> requires tl2::is_basic_vec<t_vec> class RangeTree;
 
 /**
  * range tree node
@@ -323,9 +322,10 @@ struct RangeTreeNode : public CommonTreeNode<RangeTreeNode<t_vec>>
 	RangeTreeNode() {}
 
 	RangeTreeNode(
-		const std::shared_ptr<const t_vec>& vec, 
+		const std::shared_ptr<const t_vec>& vec,
 		std::size_t dim, std::size_t idx=0)
-		: CommonTreeNode<RangeTreeNode<t_vec>>{}, dim{dim}, idx{idx}, vec{vec}
+			: CommonTreeNode<RangeTreeNode<t_vec>>{},
+				dim{dim}, idx{idx}, vec{vec}
 	{}
 
 
@@ -338,8 +338,8 @@ struct RangeTreeNode : public CommonTreeNode<RangeTreeNode<t_vec>>
 		const t_vec* min=nullptr, const t_vec* max=nullptr)
 	{
 		auto is_in_range = [](
-			const t_vec& vec, 
-			const t_vec& min, const t_vec& max, 
+			const t_vec& vec,
+			const t_vec& min, const t_vec& max,
 			std::size_t dim) -> bool
 		{
 			for(std::size_t idx=0; idx<dim; ++idx)
@@ -460,10 +460,10 @@ public:
 	/**
 	 * query a rectangular range
 	 */
-	std::vector<std::shared_ptr<const t_vec>> 
+	std::vector<std::shared_ptr<const t_vec>>
 	query_range(const t_vec& _min, const t_vec& _max)
 	{
-		auto is_in_range = 
+		auto is_in_range =
 		[](const t_node* node, const t_vec& min, const t_vec& max) -> bool
 		{
 			const std::size_t idx = node->idx;
