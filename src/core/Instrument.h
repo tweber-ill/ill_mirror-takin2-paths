@@ -45,6 +45,7 @@ public:
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
+	boost::property_tree::ptree Save() const;
 
 	const std::string& GetId() const { return m_id; }
 	const t_vec& GetZeroPos() const { return m_pos; }
@@ -104,6 +105,7 @@ public:
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
+	boost::property_tree::ptree Save() const;
 
 	const Axis& GetMonochromator() const { return m_mono; }
 	const Axis& GetSample() const { return m_sample; }

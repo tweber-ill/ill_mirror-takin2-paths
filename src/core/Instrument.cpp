@@ -67,7 +67,7 @@ void Axis::Clear()
 }
 
 
-bool Axis::Load(const boost::property_tree::ptree& prop)
+bool Axis::Load(const pt::ptree& prop)
 {
 	// zero position
 	if(auto optPos = prop.get_optional<std::string>("pos"); optPos)
@@ -113,6 +113,39 @@ bool Axis::Load(const boost::property_tree::ptree& prop)
 	load_geo("geometry_out", m_comps_out);
 
 	return true;
+}
+
+
+pt::ptree Axis::Save() const
+{
+	pt::ptree prop;
+
+	// position
+	prop.put<std::string>("pos", geo_vec_to_str(m_pos));
+
+	// axis angles
+	prop.put<t_real>("angle_in", m_angle_in/tl2::pi<t_real>*t_real(180));
+	prop.put<t_real>("angle_internal", m_angle_internal/tl2::pi<t_real>*t_real(180));
+	prop.put<t_real>("angle_out", m_angle_out/tl2::pi<t_real>*t_real(180));
+
+	// geometries
+	auto allcomps = { m_comps_in, m_comps_internal, m_comps_out };
+	auto allcompnames = { "geometry_in" , "geometry_internal", "geometry_out" };
+
+	auto itercompname = allcompnames.begin();
+	for(auto itercomp = allcomps.begin(); itercomp != allcomps.end(); ++itercomp)
+	{
+		pt::ptree propGeo;
+		for(const auto& comp : *itercomp)
+		{
+			pt::ptree propgeo = comp->Save();
+			propGeo.insert(propGeo.end(), propgeo.begin(), propgeo.end());
+		}
+		prop.put_child(*itercompname, propGeo);
+		++itercompname;
+	}
+
+	return prop;
 }
 
 
@@ -229,7 +262,7 @@ void Instrument::Clear()
 }
 
 
-bool Instrument::Load(const boost::property_tree::ptree& prop)
+bool Instrument::Load(const pt::ptree& prop)
 {
 	bool mono_ok = false;
 	bool sample_ok = false;
@@ -243,6 +276,18 @@ bool Instrument::Load(const boost::property_tree::ptree& prop)
 		ana_ok = m_ana.Load(*ana);
 
 	return mono_ok && sample_ok && ana_ok;
+}
+
+
+pt::ptree Instrument::Save() const
+{
+	pt::ptree prop;
+
+	prop.put_child("monochromator", m_mono.Save());
+	prop.put_child("sample", m_sample.Save());
+	prop.put_child("analyser", m_ana.Save());
+
+	return prop;
 }
 // ----------------------------------------------------------------------------
 
@@ -330,7 +375,6 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 		}
 	}
 
-return true;
 	// instrument
 	bool instr_ok = false;
 	if(auto instr = prop.get_child_optional("instrument"); instr)
@@ -364,6 +408,7 @@ pt::ptree InstrumentSpace::Save() const
 	}
 
 	prop.put_child(FILE_BASENAME "instrument_space.walls", propwalls);
+	prop.put_child(FILE_BASENAME "instrument_space.instrument", m_instr.Save());
 
 	return prop;
 }

@@ -20,7 +20,7 @@ namespace pt = boost::property_tree;
 /**
  * convert a vector to a serialisable string
  */
-static inline std::string vec_to_str(const t_vec& vec)
+std::string geo_vec_to_str(const t_vec& vec)
 {
 	std::ostringstream ostr;
 	for(t_real val : vec)
@@ -116,7 +116,7 @@ pt::ptree Geometry::Save() const
 	pt::ptree prop;
 
 	prop.put<std::string>("<xmlattr>.id", GetId());
-	prop.put<std::string>("colour", vec_to_str(m_colour));
+	prop.put<std::string>("colour", geo_vec_to_str(m_colour));
 
 	return prop;
 }
@@ -178,8 +178,8 @@ pt::ptree BoxGeometry::Save() const
 {
 	pt::ptree prop = Geometry::Save();
 
-	prop.put<std::string>("pos1", vec_to_str(m_pos1));
-	prop.put<std::string>("pos2", vec_to_str(m_pos2));
+	prop.put<std::string>("pos1", geo_vec_to_str(m_pos1));
+	prop.put<std::string>("pos2", geo_vec_to_str(m_pos2));
 	prop.put<t_real>("height", m_height);
 	prop.put<t_real>("depth", m_depth);
 
@@ -260,7 +260,7 @@ pt::ptree CylinderGeometry::Save() const
 {
 	pt::ptree prop = Geometry::Save();
 
-	prop.put<std::string>("pos", vec_to_str(m_pos));
+	prop.put<std::string>("pos", geo_vec_to_str(m_pos));
 	prop.put<t_real>("height", m_height);
 	prop.put<t_real>("radius", m_radius);
 
@@ -334,7 +334,7 @@ pt::ptree SphereGeometry::Save() const
 {
 	pt::ptree prop = Geometry::Save();
 
-	prop.put<std::string>("pos", vec_to_str(m_pos));
+	prop.put<std::string>("pos", geo_vec_to_str(m_pos));
 	prop.put<t_real>("radius", m_radius);
 
 	pt::ptree propSphere;

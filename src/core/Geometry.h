@@ -10,6 +10,7 @@
 
 #include <tuple>
 #include <memory>
+#include <string>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -17,6 +18,20 @@
 #include "types.h"
 
 
+// ----------------------------------------------------------------------------
+// helper functions
+// ----------------------------------------------------------------------------
+
+// convert a vector to a serialisable string
+extern std::string geo_vec_to_str(const t_vec& vec);
+
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// geometry base class
+// ----------------------------------------------------------------------------
 /**
  * geometric primitive types
  */
@@ -28,9 +43,6 @@ enum class GeometryType
 };
 
 
-// ----------------------------------------------------------------------------
-// geometry base class
-// ----------------------------------------------------------------------------
 class Geometry
 {
 public:
@@ -109,7 +121,7 @@ public:
 
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
-	virtual boost::property_tree::ptree Save() const;
+	virtual boost::property_tree::ptree Save() const override;
 
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
@@ -140,7 +152,7 @@ public:
 
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
-	virtual boost::property_tree::ptree Save() const;
+	virtual boost::property_tree::ptree Save() const override;
 
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
