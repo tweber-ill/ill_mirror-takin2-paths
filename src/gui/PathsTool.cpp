@@ -199,7 +199,7 @@ bool PathsTool::SaveFile(const QString &file)
 	if(file=="")
 		return false;
 
-	pt::ptree prop;
+	pt::ptree prop = m_instrspace.Save();
 
 	// set format and version
 	prop.put(FILE_BASENAME "ident", PROG_IDENT);

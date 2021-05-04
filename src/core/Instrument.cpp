@@ -330,13 +330,42 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 		}
 	}
 
-
+return true;
 	// instrument
 	bool instr_ok = false;
 	if(auto instr = prop.get_child_optional("instrument"); instr)
 		instr_ok = m_instr.Load(*instr);
 
 	return instr_ok;
+}
+
+
+pt::ptree InstrumentSpace::Save() const
+{
+	pt::ptree prop;
+
+	// floor
+	prop.put<t_real>(FILE_BASENAME "instrument_space.floor.len_x", m_floorlen[0]);
+	prop.put<t_real>(FILE_BASENAME "instrument_space.floor.len_y", m_floorlen[1]);
+
+	// walls
+	pt::ptree propwalls;
+	for(std::size_t wallidx=0; wallidx<m_walls.size(); ++wallidx)
+	{
+		const auto& wall = m_walls[wallidx];
+
+		pt::ptree propwall;
+		propwall.put<std::string>("<xmlattr>.id", "wall " + std::to_string(wallidx+1));
+		propwall.put_child("geometry", wall->Save());
+
+		pt::ptree propwall2;
+		propwall2.put_child("wall", propwall);
+		propwalls.insert(propwalls.end(), propwall2.begin(), propwall2.end());
+	}
+
+	prop.put_child(FILE_BASENAME "instrument_space.walls", propwalls);
+
+	return prop;
 }
 
 

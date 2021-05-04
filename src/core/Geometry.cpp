@@ -14,6 +14,27 @@ namespace pt = boost::property_tree;
 
 
 // ----------------------------------------------------------------------------
+// helper functions
+// ----------------------------------------------------------------------------
+
+/**
+ * convert a vector to a serialisable string
+ */
+static inline std::string vec_to_str(const t_vec& vec)
+{
+	std::ostringstream ostr;
+	for(t_real val : vec)
+		ostr << val << " ";
+
+	return ostr.str();
+}
+
+
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
 // geometry base class
 // ----------------------------------------------------------------------------
 
@@ -28,7 +49,7 @@ Geometry::~Geometry()
 
 
 std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
-Geometry::load(const boost::property_tree::ptree& prop)
+Geometry::load(const pt::ptree& prop)
 {
 	std::vector<std::shared_ptr<Geometry>> geo_objs;
 
@@ -74,7 +95,7 @@ Geometry::load(const boost::property_tree::ptree& prop)
 }
 
 
-bool Geometry::Load(const boost::property_tree::ptree& prop)
+bool Geometry::Load(const pt::ptree& prop)
 {
 	// colour
 	if(auto col = prop.get_optional<std::string>("colour"); col)
@@ -89,6 +110,16 @@ bool Geometry::Load(const boost::property_tree::ptree& prop)
 	return true;
 }
 
+
+pt::ptree Geometry::Save() const
+{
+	pt::ptree prop;
+
+	prop.put<std::string>("<xmlattr>.id", GetId());
+	prop.put<std::string>("colour", vec_to_str(m_colour));
+
+	return prop;
+}
 // ----------------------------------------------------------------------------
 
 
@@ -112,7 +143,7 @@ void BoxGeometry::Clear()
 }
 
 
-bool BoxGeometry::Load(const boost::property_tree::ptree& prop)
+bool BoxGeometry::Load(const pt::ptree& prop)
 {
 	if(!Geometry::Load(prop))
 		return false;
@@ -140,6 +171,21 @@ bool BoxGeometry::Load(const boost::property_tree::ptree& prop)
 	m_length = tl2::norm<t_vec>(m_pos1 - m_pos2);
 
 	return true;
+}
+
+
+pt::ptree BoxGeometry::Save() const
+{
+	pt::ptree prop = Geometry::Save();
+
+	prop.put<std::string>("pos1", vec_to_str(m_pos1));
+	prop.put<std::string>("pos2", vec_to_str(m_pos2));
+	prop.put<t_real>("height", m_height);
+	prop.put<t_real>("depth", m_depth);
+
+	pt::ptree propBox;
+	propBox.put_child("box", prop);
+	return propBox;
 }
 
 
@@ -189,7 +235,7 @@ void CylinderGeometry::Clear()
 }
 
 
-bool CylinderGeometry::Load(const boost::property_tree::ptree& prop)
+bool CylinderGeometry::Load(const pt::ptree& prop)
 {
 	if(!Geometry::Load(prop))
 		return false;
@@ -207,6 +253,20 @@ bool CylinderGeometry::Load(const boost::property_tree::ptree& prop)
 	m_radius = prop.get<t_real>("radius", 0.1);
 
 	return true;
+}
+
+
+pt::ptree CylinderGeometry::Save() const
+{
+	pt::ptree prop = Geometry::Save();
+
+	prop.put<std::string>("pos", vec_to_str(m_pos));
+	prop.put<t_real>("height", m_height);
+	prop.put<t_real>("radius", m_radius);
+
+	pt::ptree propCyl;
+	propCyl.put_child("cylinder", prop);
+	return propCyl;
 }
 
 
@@ -250,7 +310,7 @@ void SphereGeometry::Clear()
 }
 
 
-bool SphereGeometry::Load(const boost::property_tree::ptree& prop)
+bool SphereGeometry::Load(const pt::ptree& prop)
 {
 	if(!Geometry::Load(prop))
 		return false;
@@ -267,6 +327,19 @@ bool SphereGeometry::Load(const boost::property_tree::ptree& prop)
 	m_radius = prop.get<t_real>("radius", 0.1);
 
 	return true;
+}
+
+
+pt::ptree SphereGeometry::Save() const
+{
+	pt::ptree prop = Geometry::Save();
+
+	prop.put<std::string>("pos", vec_to_str(m_pos));
+	prop.put<t_real>("radius", m_radius);
+
+	pt::ptree propSphere;
+	propSphere.put_child("sphere", prop);
+	return propSphere;
 }
 
 

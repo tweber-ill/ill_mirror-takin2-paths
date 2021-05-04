@@ -149,6 +149,7 @@ public:
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
+	boost::property_tree::ptree Save() const;
 
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
 	t_real GetFloorLenY() const { return m_floorlen[1]; }

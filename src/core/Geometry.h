@@ -41,6 +41,7 @@ public:
 
 	virtual void Clear() = 0;
 	virtual bool Load(const boost::property_tree::ptree& prop);
+	virtual boost::property_tree::ptree Save() const;
 
 	virtual t_mat GetTrafo() const = 0;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
@@ -76,6 +77,7 @@ public:
 
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
+	virtual boost::property_tree::ptree Save() const override;
 
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
@@ -107,6 +109,7 @@ public:
 
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
+	virtual boost::property_tree::ptree Save() const;
 
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
@@ -137,6 +140,7 @@ public:
 
 	virtual void Clear() override;
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
+	virtual boost::property_tree::ptree Save() const;
 
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
