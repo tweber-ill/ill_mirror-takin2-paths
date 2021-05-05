@@ -296,13 +296,15 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 {
 	Axis* ax = nullptr;
 	Axis* ax_prev = nullptr;
+	bool set_xtal_angle = false;
 
-	if(obj=="sample")
+	if(obj == "sample")
 	{
 		ax = &m_sample;
 		ax_prev = &m_mono;
+		set_xtal_angle = true;
 	}
-	else if(obj=="analyser")
+	else if(obj == "analyser")
 	{
 		ax = &m_ana;
 		ax_prev = &m_sample;
@@ -324,11 +326,16 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	if(drag_start)
 		m_drag_pos_axis_start = pos_ax;
 	auto pos_drag = pos_cur - pos_startcur + m_drag_pos_axis_start;
-	//t_real angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_ax - pos_ax_prev);
-	t_real new_angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_drag - pos_ax_prev);
 
-	//std::cout << angle/tl2::pi<t_real>*180. << " -> " << new_angle/tl2::pi<t_real>*180. << std::endl;
+	t_real new_angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_drag - pos_ax_prev);
+	new_angle = tl2::mod_pos(new_angle, t_real(2)*tl2::pi<t_real>);
+	if(new_angle > tl2::pi<t_real>)
+		new_angle -= t_real(2)*tl2::pi<t_real>;
+
+	// set scattering and crystal angle
 	ax_prev->SetAxisAngleOut(new_angle);
+	if(set_xtal_angle)
+		ax_prev->SetAxisAngleInternal(new_angle * t_real(0.5));
 }
 // ----------------------------------------------------------------------------
 
