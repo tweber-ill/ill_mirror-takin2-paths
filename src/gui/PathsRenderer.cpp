@@ -476,15 +476,16 @@ void PathsRenderer::UpdatePicker()
 				if(obj_name == OBJNAME_FLOOR_PLANE)
 				{
 					auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
-					(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
+						(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
 
 					// save intersections with base plane for drawing walls
-					m_cursor[0] = uv[0];
-					m_cursor[1] = uv[1];
+					m_cursorUV[0] = uv[0];
+					m_cursorUV[1] = uv[1];
+					m_cursor[0] = vecInters4[0];
+					m_cursor[1] = vecInters4[1];
 					m_curActive = true;
 
 					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
-
 					SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
 				}
 
@@ -864,7 +865,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 
 	// cursor
-	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursor[0], m_cursor[1]);
+	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
@@ -1079,7 +1080,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	// an object is being dragged
 	if(m_draggedObj != "")
 	{
-		emit ObjectDragged(m_draggedObj, 
+		emit ObjectDragged(false, m_draggedObj, 
 			m_dragstartcursor[0], m_dragstartcursor[1], 
 			m_cursor[0], m_cursor[1]);
 	}
@@ -1103,6 +1104,10 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 		m_draggedObj = m_curObj;
 		m_dragstartcursor[0] = m_cursor[0];
 		m_dragstartcursor[1] = m_cursor[1];
+
+		emit ObjectDragged(true, m_draggedObj, 
+			m_dragstartcursor[0], m_dragstartcursor[1], 
+			m_cursor[0], m_cursor[1]);
 	}
 
 	// middle mouse button pressed

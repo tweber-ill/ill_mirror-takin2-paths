@@ -410,14 +410,14 @@ void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bo
 /**
  * dragging an object
  */
-void PathsTool::ObjectDragged(const std::string& obj, 
+void PathsTool::ObjectDragged(bool drag_start, const std::string& obj, 
 	t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y)
 {
 	/*std::cout << "Dragging " << obj 
 		<< " from (" << x_start << ", " << y_start << ")"
 		<< " to (" << x << ", " << y << ")." << std::endl;*/
 
-	m_instrspace.DragObject(obj, 0, 0, m_mouseX, m_mouseY);
+	m_instrspace.DragObject(drag_start, obj, x_start, y_start, x, y);
 }
 
 

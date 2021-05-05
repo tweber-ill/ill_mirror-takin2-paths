@@ -291,7 +291,8 @@ pt::ptree Instrument::Save() const
 }
 
 
-void Instrument::DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y)
+void Instrument::DragObject(bool drag_start, const std::string& obj, 
+	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	Axis* ax = nullptr;
 	Axis* ax_prev = nullptr;
@@ -320,14 +321,14 @@ void Instrument::DragObject(const std::string& obj, t_real x_start, t_real y_sta
 	pos_ax_prev.resize(2);
 	pos_ax_prev_in.resize(2);
 
-	t_real angle = tl2::angle<t_vec>(pos_ax - pos_ax_prev, pos_ax_prev - pos_ax_prev_in);
-	t_real new_angle = tl2::angle<t_vec>(pos_cur - pos_ax_prev, pos_ax_prev - pos_ax_prev_in);
+	if(drag_start)
+		m_drag_pos_axis_start = pos_ax;
+	auto pos_drag = pos_cur - pos_startcur + m_drag_pos_axis_start;
+	//t_real angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_ax - pos_ax_prev);
+	t_real new_angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_drag - pos_ax_prev);
 
-	std::cout << angle/tl2::pi<t_real>*180. << " -> " << new_angle/tl2::pi<t_real>*180. << std::endl;
-	//ax_prev->SetAxisAngleOut(new_angle);
-
-	using namespace tl2_ops;
-	std::cout << pos_cur << "\t" << pos_ax << "\t" << pos_ax_prev << "\t" << pos_ax_prev_in << std::endl;
+	//std::cout << angle/tl2::pi<t_real>*180. << " -> " << new_angle/tl2::pi<t_real>*180. << std::endl;
+	ax_prev->SetAxisAngleOut(new_angle);
 }
 // ----------------------------------------------------------------------------
 
@@ -705,11 +706,12 @@ bool InstrumentSpace::CheckCollision2D() const
 }
 
 
-void InstrumentSpace::DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y)
+void InstrumentSpace::DragObject(bool drag_start, const std::string& obj, 
+	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	// cases concerning instrument axes
 	if(obj=="monochromator" || obj=="sample" || obj=="analyser" || obj=="detector")
-		m_instr.DragObject(obj, x_start, y_start, x, y);
+		m_instr.DragObject(drag_start, obj, x_start, y_start, x, y);
 }
 // ----------------------------------------------------------------------------
 

@@ -115,7 +115,7 @@ public:
 	Axis& GetSample() { return m_sample; }
 	Axis& GetAnalyser() { return m_ana; }
 
-	void DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
+	void DragObject(bool drag_start, const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
 
 	// connection to update signal
 	template<class t_slot>
@@ -128,6 +128,8 @@ private:
 	Axis m_mono{"monochromator", nullptr, this};
 	Axis m_sample{"sample", &m_mono, this};
 	Axis m_ana{"analyser", &m_sample, this};
+
+	t_vec m_drag_pos_axis_start;
 
 	// update signal
 	using t_sig_update = boost::signals2::signal<void(const Instrument&)>;
@@ -163,7 +165,7 @@ public:
 	Instrument& GetInstrument() { return m_instr; }
 
 	bool CheckCollision2D() const;
-	void DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
+	void DragObject(bool drag_start, const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };
