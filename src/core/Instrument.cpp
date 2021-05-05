@@ -297,35 +297,59 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	Axis* ax = nullptr;
 	Axis* ax_prev = nullptr;
 	bool set_xtal_angle = false;
+	bool use_out_axis = false;
 
+	// move sample position around monochromator axis
 	if(obj == "sample")
 	{
 		ax = &m_sample;
 		ax_prev = &m_mono;
 		set_xtal_angle = true;
 	}
+
+	// move analyser position around sample axis
 	else if(obj == "analyser")
 	{
 		ax = &m_ana;
 		ax_prev = &m_sample;
 	}
 
+	// move detector around analyser axis
+	else if(obj == "detector")
+	{
+		ax = &m_ana;
+		ax_prev = &m_ana;
+		use_out_axis = true;
+		set_xtal_angle = true;
+	}
+
 	if(!ax || !ax_prev)
 		return;
 
-	auto pos_startcur = tl2::create<t_vec>({ x_start, y_start });
-	auto pos_cur = tl2::create<t_vec>({ x, y });
+	t_vec pos_startcur = tl2::create<t_vec>({ x_start, y_start });
+	t_vec pos_cur = tl2::create<t_vec>({ x, y });
 
-	auto pos_ax = ax->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
-	auto pos_ax_prev = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
-	auto pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ -1, 0, 0, 1 });
+	t_vec pos_ax;
+	if(!use_out_axis)
+	{
+		// get center of axis
+		pos_ax = ax->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+	}
+	else
+	{
+		// get a position on the outgoing vector of an axis
+		// TODO: replace the "2 0 0" with the actual centre of the "detector" object
+		pos_ax = ax->GetTrafo(AxisAngle::OUT) * tl2::create<t_vec>({ 2, 0, 0, 1 });
+	}
+	t_vec pos_ax_prev = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+	t_vec pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ -1, 0, 0, 1 });
 	pos_ax.resize(2);
 	pos_ax_prev.resize(2);
 	pos_ax_prev_in.resize(2);
 
 	if(drag_start)
 		m_drag_pos_axis_start = pos_ax;
-	auto pos_drag = pos_cur - pos_startcur + m_drag_pos_axis_start;
+	t_vec pos_drag = pos_cur - pos_startcur + m_drag_pos_axis_start;
 
 	t_real new_angle = tl2::angle<t_vec>(pos_ax_prev - pos_ax_prev_in, pos_drag - pos_ax_prev);
 	new_angle = tl2::mod_pos(new_angle, t_real(2)*tl2::pi<t_real>);
@@ -333,9 +357,18 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 		new_angle -= t_real(2)*tl2::pi<t_real>;
 
 	// set scattering and crystal angle
-	ax_prev->SetAxisAngleOut(new_angle);
-	if(set_xtal_angle)
-		ax_prev->SetAxisAngleInternal(new_angle * t_real(0.5));
+	if(!use_out_axis)
+	{
+		ax_prev->SetAxisAngleOut(new_angle);
+		if(set_xtal_angle)
+			ax_prev->SetAxisAngleInternal(new_angle * t_real(0.5));
+	}
+	else
+	{
+		ax->SetAxisAngleOut(new_angle);
+		if(set_xtal_angle)
+			ax->SetAxisAngleInternal(new_angle * t_real(0.5));
+	}
 }
 // ----------------------------------------------------------------------------
 
