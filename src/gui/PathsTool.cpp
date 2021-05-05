@@ -402,17 +402,22 @@ void PathsTool::PickerIntersection(const t_vec3_gl* pos, std::string obj_name, c
  */
 void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bool right)
 {
-	std::cout << "Clicked on " << obj << "." << std::endl;
-	m_renderer->CentreCam(obj);
+	if(middle || right)
+		m_renderer->CentreCam(obj);
 }
 
 
 /**
  * dragging an object
  */
-void PathsTool::ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y)
+void PathsTool::ObjectDragged(const std::string& obj, 
+	t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y)
 {
-	std::cout << "Dragging " << obj << " to (" << x << ", " << y << ")." << std::endl;
+	/*std::cout << "Dragging " << obj 
+		<< " from (" << x_start << ", " << y_start << ")"
+		<< " to (" << x << ", " << y << ")." << std::endl;*/
+
+	m_instrspace.DragObject(obj, 0, 0, m_mouseX, m_mouseY);
 }
 
 

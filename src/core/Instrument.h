@@ -115,6 +115,8 @@ public:
 	Axis& GetSample() { return m_sample; }
 	Axis& GetAnalyser() { return m_ana; }
 
+	void DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
+
 	// connection to update signal
 	template<class t_slot>
 	void AddUpdateSlot(const t_slot& slot)
@@ -161,6 +163,7 @@ public:
 	Instrument& GetInstrument() { return m_instr; }
 
 	bool CheckCollision2D() const;
+	void DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };

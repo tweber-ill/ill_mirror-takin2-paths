@@ -289,6 +289,46 @@ pt::ptree Instrument::Save() const
 
 	return prop;
 }
+
+
+void Instrument::DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y)
+{
+	Axis* ax = nullptr;
+	Axis* ax_prev = nullptr;
+
+	if(obj=="sample")
+	{
+		ax = &m_sample;
+		ax_prev = &m_mono;
+	}
+	else if(obj=="analyser")
+	{
+		ax = &m_ana;
+		ax_prev = &m_sample;
+	}
+
+	if(!ax || !ax_prev)
+		return;
+
+	auto pos_startcur = tl2::create<t_vec>({ x_start, y_start });
+	auto pos_cur = tl2::create<t_vec>({ x, y });
+
+	auto pos_ax = ax->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+	auto pos_ax_prev = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+	auto pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ -1, 0, 0, 1 });
+	pos_ax.resize(2);
+	pos_ax_prev.resize(2);
+	pos_ax_prev_in.resize(2);
+
+	t_real angle = tl2::angle<t_vec>(pos_ax - pos_ax_prev, pos_ax_prev - pos_ax_prev_in);
+	t_real new_angle = tl2::angle<t_vec>(pos_cur - pos_ax_prev, pos_ax_prev - pos_ax_prev_in);
+
+	std::cout << angle/tl2::pi<t_real>*180. << " -> " << new_angle/tl2::pi<t_real>*180. << std::endl;
+	//ax_prev->SetAxisAngleOut(new_angle);
+
+	using namespace tl2_ops;
+	std::cout << pos_cur << "\t" << pos_ax << "\t" << pos_ax_prev << "\t" << pos_ax_prev_in << std::endl;
+}
 // ----------------------------------------------------------------------------
 
 
@@ -662,6 +702,14 @@ bool InstrumentSpace::CheckCollision2D() const
 	//	return true;
 
 	return false;
+}
+
+
+void InstrumentSpace::DragObject(const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y)
+{
+	// cases concerning instrument axes
+	if(obj=="monochromator" || obj=="sample" || obj=="analyser" || obj=="detector")
+		m_instr.DragObject(obj, x_start, y_start, x, y);
 }
 // ----------------------------------------------------------------------------
 

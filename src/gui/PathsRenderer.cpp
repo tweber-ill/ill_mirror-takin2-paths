@@ -1079,7 +1079,9 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	// an object is being dragged
 	if(m_draggedObj != "")
 	{
-		emit ObjectDragged(m_draggedObj, m_cursor[0], m_cursor[1]);
+		emit ObjectDragged(m_draggedObj, 
+			m_dragstartcursor[0], m_dragstartcursor[1], 
+			m_cursor[0], m_cursor[1]);
 	}
 
 	m_mouseMovedBetweenDownAndUp = true;
@@ -1096,9 +1098,11 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 	if(pEvt->buttons() & Qt::RightButton) m_mouseDown[2] = 1;
 
 	// left mouse button pressed
-	if(m_mouseDown[0])
+	if(m_mouseDown[0] && m_draggedObj == "")
 	{
 		m_draggedObj = m_curObj;
+		m_dragstartcursor[0] = m_cursor[0];
+		m_dragstartcursor[1] = m_cursor[1];
 	}
 
 	// middle mouse button pressed

@@ -142,7 +142,7 @@ protected slots:
 	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right);
 
 	// dragging an object
-	void ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y);
+	void ObjectDragged(const std::string& obj, t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
 
 	void UpdateStatusLabel();
 

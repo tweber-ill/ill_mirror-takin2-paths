@@ -114,7 +114,7 @@ signals:
 	void AfterGLInitialisation();
 
 	void ObjectClicked(const std::string& obj, bool left, bool mid, bool right);
-	void ObjectDragged(const std::string& obj, t_real_gl x, t_real_gl y);
+	void ObjectDragged(const std::string& obj, t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
@@ -153,6 +153,7 @@ protected:
 
 	// cursor uv coordinates and object under cursor
 	GLfloat m_cursor[2] = {0., 0.};
+	GLfloat m_dragstartcursor[2] = {0., 0.};
 	std::string m_curObj, m_draggedObj;
 	bool m_curActive = false;
 
