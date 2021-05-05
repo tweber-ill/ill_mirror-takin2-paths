@@ -209,6 +209,31 @@ void Axis::SetAxisAngleInternal(t_real angle)
 		m_instr->EmitUpdate();
 }
 
+
+bool Axis::IsObjectOnAxis(const std::string& obj, AxisAngle ax) const
+{
+	// get component collection depending on axis angle type
+	const std::vector<std::shared_ptr<Geometry>>* comps = nullptr;
+
+	if(ax == AxisAngle::IN)
+		comps = &m_comps_in;
+	else if(ax == AxisAngle::INTERNAL)
+		comps = &m_comps_internal;
+	else if(ax == AxisAngle::OUT)
+		comps = &m_comps_out;
+	
+	if(!comps)
+		return false;
+
+	for(const auto& comp : *comps)
+	{
+		if(comp->GetId() == obj)
+			return true;
+	}
+
+	return false;
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -300,7 +325,9 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	bool use_out_axis = false;
 
 	// move sample position around monochromator axis
-	if(obj == "sample")
+	if(m_sample.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
+		/*|| m_sample.IsObjectOnAxis(obj, AxisAngle::OUT)
+		|| m_sample.IsObjectOnAxis(obj, AxisAngle::IN)*/)
 	{
 		ax = &m_sample;
 		ax_prev = &m_mono;
@@ -308,14 +335,15 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	}
 
 	// move analyser position around sample axis
-	else if(obj == "analyser")
+	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
+		/*|| m_ana.IsObjectOnAxis(obj, AxisAngle::IN)*/)
 	{
 		ax = &m_ana;
 		ax_prev = &m_sample;
 	}
 
 	// move detector around analyser axis
-	else if(obj == "detector")
+	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::OUT))
 	{
 		ax = &m_ana;
 		ax_prev = &m_ana;
@@ -750,8 +778,7 @@ void InstrumentSpace::DragObject(bool drag_start, const std::string& obj,
 	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	// cases concerning instrument axes
-	if(obj=="monochromator" || obj=="sample" || obj=="analyser" || obj=="detector")
-		m_instr.DragObject(drag_start, obj, x_start, y_start, x, y);
+	m_instr.DragObject(drag_start, obj, x_start, y_start, x, y);
 }
 // ----------------------------------------------------------------------------
 

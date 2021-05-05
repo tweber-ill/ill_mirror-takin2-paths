@@ -64,6 +64,8 @@ public:
 	const std::vector<std::shared_ptr<Geometry>>& 
 		GetComps(AxisAngle which=AxisAngle::IN) const;
 
+	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
+
 private:
 	// identifier
 	std::string m_id;
