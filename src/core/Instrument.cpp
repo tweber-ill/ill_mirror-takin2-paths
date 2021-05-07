@@ -92,6 +92,9 @@ pt::ptree Instrument::Save() const
 }
 
 
+/**
+ * an instrument component is requested to be dragged from the gui
+ */
 void Instrument::DragObject(bool drag_start, const std::string& obj, 
 	t_real x_start, t_real y_start, t_real x, t_real y)
 {
@@ -145,6 +148,7 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 		// TODO: replace the "2 0 0" with the actual centre of the "detector" object
 		pos_ax = ax->GetTrafo(AxisAngle::OUT) * tl2::create<t_vec>({ 2, 0, 0, 1 });
 	}
+
 	t_vec pos_ax_prev = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
 	t_vec pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ -1, 0, 0, 1 });
 	pos_ax.resize(2);

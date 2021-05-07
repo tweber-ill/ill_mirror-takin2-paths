@@ -110,7 +110,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	for(const auto* axis : {&mono, &sample, &ana})
+	for(const auto* axis : { &mono, &sample, &ana })
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
@@ -161,6 +161,21 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 
 
 /**
+ * instrument space has been changed (e.g. walls have been moved)
+ */
+void PathsRenderer::UpdateInstrumentSpace(const InstrumentSpace& instr)
+{
+	// update wall matrices
+	for(const auto& wall : instr.GetWalls())
+	{
+		m_objs[wall->GetId()].m_mat = wall->GetTrafo();
+	}
+
+	update();
+}
+
+
+/**
  * move the instrument to a new position
  */
 void PathsRenderer::UpdateInstrument(const Instrument& instr)
@@ -170,7 +185,7 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	for(const auto* axis : {&mono, &sample, &ana})
+	for(const auto* axis : { &mono, &sample, &ana })
 	{
 		// get geometries both relative to incoming and to outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})

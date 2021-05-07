@@ -143,6 +143,30 @@ void BoxGeometry::Clear()
 }
 
 
+t_vec BoxGeometry::GetCentre() const
+{
+	using namespace tl2_ops;
+
+	t_vec centre = GetTrafo() * tl2::create<t_vec>({0, 0, 0, 1});
+	centre.resize(3);
+
+	return centre;
+}
+
+
+void BoxGeometry::SetCentre(const t_vec& vec)
+{
+	using namespace tl2_ops;
+
+	t_vec oldcentre = GetCentre();
+	t_vec newcentre = vec;
+	newcentre.resize(3);
+
+	m_pos1 += (newcentre - oldcentre);
+	m_pos2 += (newcentre - oldcentre);
+}
+
+
 bool BoxGeometry::Load(const pt::ptree& prop)
 {
 	if(!Geometry::Load(prop))
@@ -196,7 +220,7 @@ t_mat BoxGeometry::GetTrafo() const
 	t_vec preTranslate = 0.5*(m_pos1 + m_pos2);
 	t_vec postTranslate = tl2::create<t_vec>({0, 0, m_height*0.5});
 
-	auto mat = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
+	t_mat mat = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
 		vecTo, 1., postTranslate, vecFrom, 1., preTranslate);
 	return mat;
 }
@@ -232,6 +256,29 @@ CylinderGeometry::~CylinderGeometry()
 
 void CylinderGeometry::Clear()
 {
+}
+
+
+t_vec CylinderGeometry::GetCentre() const
+{
+	using namespace tl2_ops;
+
+	t_vec centre = GetTrafo() * tl2::create<t_vec>({0, 0, 0, 1});
+	centre.resize(3);
+
+	return centre;
+}
+
+
+void CylinderGeometry::SetCentre(const t_vec& vec)
+{
+	using namespace tl2_ops;
+
+	t_vec oldcentre = GetCentre();
+	t_vec newcentre = vec;
+	newcentre.resize(3);
+
+	m_pos += (newcentre - oldcentre);
 }
 
 
@@ -272,7 +319,7 @@ pt::ptree CylinderGeometry::Save() const
 
 t_mat CylinderGeometry::GetTrafo() const
 {
-	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
+	t_mat mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
 	return mat;
 }
 
@@ -307,6 +354,41 @@ SphereGeometry::~SphereGeometry()
 
 void SphereGeometry::Clear()
 {
+}
+
+
+t_vec SphereGeometry::GetCentre() const
+{
+	using namespace tl2_ops;
+
+	t_vec centre = GetTrafo() * tl2::create<t_vec>({0, 0, 0, 1});
+	centre.resize(3);
+
+	return centre;
+}
+
+
+void SphereGeometry::SetCentre(const t_vec& vec)
+{
+	using namespace tl2_ops;
+
+	t_vec oldcentre = GetCentre();
+	t_vec newcentre = vec;
+	newcentre.resize(3);
+
+	m_pos += (newcentre - oldcentre);
+
+	/*t_mat trafo = GetTrafo();
+	if(auto [trafo_inv, ok] = tl2::inv(trafo); ok)
+	{
+		t_vec vec4 = vec;
+		if(vec4.size() < 4)
+			vec4.push_back(1);
+
+		t_vec newpos = trafo_inv * vec4;
+		newpos.resize(3);
+		SetPos(newpos);
+	}*/
 }
 
 
@@ -345,7 +427,7 @@ pt::ptree SphereGeometry::Save() const
 
 t_mat SphereGeometry::GetTrafo() const
 {
-	auto mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
+	t_mat mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
 	return mat;
 }
 

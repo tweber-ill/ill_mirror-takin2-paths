@@ -157,7 +157,7 @@ bool PathsTool::OpenFile(const QString &file)
 
 		// load instrument definition file
 		if(auto [instrok, msg] = 
-			load_instrumentspace(file.toStdString(), m_instrspace); !instrok)
+			InstrumentSpace::load(file.toStdString(), m_instrspace); !instrok)
 		{
 			QMessageBox::critical(this, "Error", msg.c_str());
 			return false;
@@ -174,8 +174,18 @@ bool PathsTool::OpenFile(const QString &file)
 		AddRecentFile(file);
 
 		m_renderer->LoadInstrument(m_instrspace);
+
+		// update slot for instrument space (e.g. walls) changes
+		m_instrspace.AddUpdateSlot(
+			[this](const InstrumentSpace& instrspace)
+			{
+				if(m_renderer)
+					m_renderer->UpdateInstrumentSpace(instrspace);
+			});
+
+		// update slot for instrument movements
 		m_instrspace.GetInstrument().AddUpdateSlot(
-			[this](const Instrument& instr)->void
+			[this](const Instrument& instr)
 			{
 				// get scattering angles
 				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();

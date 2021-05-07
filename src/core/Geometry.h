@@ -62,6 +62,9 @@ public:
 	virtual const std::string& GetId() const { return m_id; }
 	virtual void SetId(const std::string& id) { m_id = id; }
 
+	virtual t_vec GetCentre() const = 0;
+	virtual void SetCentre(const t_vec& vec) = 0;
+
 	virtual const t_vec& GetColour() const { return m_colour; }
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
@@ -95,6 +98,9 @@ public:
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
+	virtual t_vec GetCentre() const override;
+	virtual void SetCentre(const t_vec& vec) override;
+
 	t_real GetHeight() const { return m_height; }
 	t_real GetDepth() const { return m_depth; }
 	t_real GetLength() const { return m_length; }
@@ -123,13 +129,21 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 	virtual boost::property_tree::ptree Save() const override;
 
+	virtual t_vec GetCentre() const override;
+	virtual void SetCentre(const t_vec& vec) override;
+
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
+	void SetPos(const t_vec& vec) { m_pos = vec; }
+
 	t_real GetHeight() const { return m_height; }
+	void SetHeight(t_real h) { m_height = h; }
+
 	t_real GetRadius() const { return m_radius; }
+	void SetRadius(t_real rad) { m_radius = rad; }
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
@@ -154,12 +168,18 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 	virtual boost::property_tree::ptree Save() const override;
 
+	virtual t_vec GetCentre() const override;
+	virtual void SetCentre(const t_vec& vec) override;
+
 	virtual t_mat GetTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
+	void SetPos(const t_vec& vec) { m_pos = vec; }
+
 	t_real GetRadius() const { return m_radius; }
+	void SetRadius(t_real rad) { m_radius = rad; }
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});

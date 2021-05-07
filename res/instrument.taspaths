@@ -68,11 +68,24 @@
 			</wall>
 
 
-			<wall id="obstacle">
+			<wall id="obstacle 1">
 				<geometry>
 					<box id="">
 						<pos1> -3 -1 </pos1>
 						<pos2> 1 -1 </pos2>
+						<height> 3 </height>
+						<depth> 1 </depth>
+						<colour> 1 0 0 </colour>
+					</box>
+				</geometry>
+			</wall>
+
+
+			<wall id="obstacle 2">
+				<geometry>
+					<box id="">
+						<pos1> 1 -3 </pos1>
+						<pos2> 1 1 </pos2>
 						<height> 3 </height>
 						<depth> 1 </depth>
 						<colour> 1 0 0 </colour>

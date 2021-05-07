@@ -17,11 +17,8 @@
 namespace pt = boost::property_tree;
 
 
-// ----------------------------------------------------------------------------
-// instrument space
-// ----------------------------------------------------------------------------
-
 InstrumentSpace::InstrumentSpace()
+	: m_sigUpdate{std::make_shared<t_sig_update>()}
 {
 }
 
@@ -45,6 +42,7 @@ const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
 	this->m_walls = instr.m_walls;
 	this->m_instr = instr.m_instr;
 
+	this->m_sigUpdate = std::make_shared<t_sig_update>();
 	return *this;
 }
 
@@ -57,6 +55,8 @@ void InstrumentSpace::Clear()
 	// clear
 	m_walls.clear();
 	m_instr.Clear();
+
+	m_sigUpdate = std::make_shared<t_sig_update>();
 }
 
 
@@ -390,24 +390,51 @@ bool InstrumentSpace::CheckCollision2D() const
 }
 
 
+/**
+ * an object is requested to be dragged from the gui
+ */
 void InstrumentSpace::DragObject(bool drag_start, const std::string& obj, 
 	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	// cases concerning instrument axes
 	m_instr.DragObject(drag_start, obj, x_start, y_start, x, y);
+
+
+	// cases involving walls
+	bool wall_dragged = false;
+
+	for(auto& wall : GetWalls())
+	{
+		if(wall->GetId() != obj)
+			continue;
+
+		t_vec pos_startcur = tl2::create<t_vec>({ x_start, y_start });
+		t_vec pos_cur = tl2::create<t_vec>({ x, y });
+
+		t_vec pos_obj3 = wall->GetCentre();
+		t_vec pos_obj = pos_obj3;
+		pos_obj.resize(2);
+
+		if(drag_start)
+			m_drag_pos_axis_start = pos_obj;
+
+		t_vec pos_drag = pos_cur - pos_startcur + m_drag_pos_axis_start;
+		pos_obj3[0] = pos_drag[0];
+		pos_obj3[1] = pos_drag[1];
+
+		wall->SetCentre(pos_obj3);
+		wall_dragged = true;
+	}
+
+	if(wall_dragged)
+		EmitUpdate();
 }
-// ----------------------------------------------------------------------------
 
-
-
-// ----------------------------------------------------------------------------
-// functions
-// ----------------------------------------------------------------------------
 
 /**
  * load an instrument space definition from an xml file
  */
-std::tuple<bool, std::string> load_instrumentspace(
+std::tuple<bool, std::string> InstrumentSpace::load(
 	const std::string& filename, InstrumentSpace& instrspace)
 {
 	if(filename == "" || !fs::exists(fs::path(filename)))
@@ -463,4 +490,3 @@ std::tuple<bool, std::string> load_instrumentspace(
 
 	return std::make_tuple(true, timestamp.str());
 }
-// ----------------------------------------------------------------------------

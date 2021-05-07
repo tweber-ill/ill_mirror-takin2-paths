@@ -62,6 +62,9 @@ public:
 
 	void Clear();
 	void LoadInstrument(const InstrumentSpace& instr);
+
+	// receivers for instrument (space) update signals
+	void UpdateInstrumentSpace(const InstrumentSpace& instr);
 	void UpdateInstrument(const Instrument& instr);
 
 

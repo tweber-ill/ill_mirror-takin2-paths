@@ -16,6 +16,10 @@
 #include "Geometry.h"
 
 
+#define FILE_BASENAME "taspaths."
+#define PROG_IDENT "takin_taspaths"
+
+
 
 // ----------------------------------------------------------------------------
 // instrument axis
@@ -131,6 +135,7 @@ private:
 	Axis m_sample{"sample", &m_mono, this};
 	Axis m_ana{"analyser", &m_sample, this};
 
+	// starting position for drag operation
 	t_vec m_drag_pos_axis_start;
 
 	// update signal
@@ -167,7 +172,19 @@ public:
 	Instrument& GetInstrument() { return m_instr; }
 
 	bool CheckCollision2D() const;
-	void DragObject(bool drag_start, const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
+	void DragObject(bool drag_start, const std::string& obj, 
+		t_real x_start, t_real y_start, t_real x, t_real y);
+
+	// connection to update signal
+	template<class t_slot>
+	void AddUpdateSlot(const t_slot& slot)
+		{ m_sigUpdate->connect(slot); }
+
+	void EmitUpdate() { (*m_sigUpdate)(*this); }
+
+public:
+	static std::tuple<bool, std::string> load(
+		const std::string& filename, InstrumentSpace& instrspace);
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };
@@ -176,20 +193,13 @@ private:
 	std::vector<std::shared_ptr<Geometry>> m_walls;
 	// instrument geometry
 	Instrument m_instr;
+
+	// starting position for drag operation
+	t_vec m_drag_pos_axis_start;
+
+	// update signal
+	using t_sig_update = boost::signals2::signal<void(const InstrumentSpace&)>;
+	std::shared_ptr<t_sig_update> m_sigUpdate;
 };
 // ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// functions
-// ----------------------------------------------------------------------------
-#define FILE_BASENAME "taspaths."
-#define PROG_IDENT "takin_taspaths"
-
-extern std::tuple<bool, std::string> load_instrumentspace(
-	const std::string& filename, InstrumentSpace& instrspace);
-// ----------------------------------------------------------------------------
-
-
 #endif
