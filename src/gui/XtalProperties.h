@@ -12,6 +12,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QPlainTextEdit>
 
 #include "src/core/types.h"
 
@@ -61,6 +62,36 @@ public:
 
 private:
     std::shared_ptr<XtalPropertiesWidget> m_widget;
+};
+
+
+// ----------------------------------------------------------------------------
+
+
+class XtalInfoWidget : public QWidget
+{Q_OBJECT
+public:
+	XtalInfoWidget(QWidget *parent=nullptr);
+	virtual ~XtalInfoWidget();
+
+public slots:
+	void SetUB(const t_mat& matB, const t_mat& matUB);
+
+private:
+	QPlainTextEdit *m_txt{nullptr};
+};
+
+
+class XtalInfoDockWidget : public QDockWidget
+{
+public:
+	XtalInfoDockWidget(QWidget *parent=nullptr);
+	virtual ~XtalInfoDockWidget();
+
+	std::shared_ptr<XtalInfoWidget> GetWidget() { return m_widget; }
+
+private:
+    std::shared_ptr<XtalInfoWidget> m_widget;
 };
 
 

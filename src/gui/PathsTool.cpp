@@ -31,16 +31,28 @@ namespace pt = boost::property_tree;
 
 
 // ----------------------------------------------------------------------------
+/**
+ * event signalling that the crystal UB matrix needs an update
+ */
 void PathsTool::UpdateUB()
 {
 	m_UB = tl2::UB_matrix<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1], m_plane_rlu[2]);
 
-	using namespace tl2_ops;
+	/*using namespace tl2_ops;
+	std::cout << "vec1: " << m_plane_rlu[0] << std::endl;
+	std::cout << "vec2: " << m_plane_rlu[1] << std::endl;
+	std::cout << "vec3: " << m_plane_rlu[2] << std::endl;
 	std::cout << "B matrix: " << m_B << std::endl;
-	std::cout << "UB matrix: " << m_UB << std::endl;
+	std::cout << "UB matrix: " << m_UB << std::endl;*/
+
+	if(m_xtalInfos)
+		m_xtalInfos->GetWidget()->SetUB(m_B, m_UB);
 }
 
 
+/**
+ * the window is being shown
+ */
 void PathsTool::showEvent(QShowEvent *evt)
 {
 	m_renderer->EnableTimer(true);
@@ -48,6 +60,9 @@ void PathsTool::showEvent(QShowEvent *evt)
 }
 
 
+/**
+ * the window is being hidden
+ */
 void PathsTool::hideEvent(QHideEvent *evt)
 {
 	m_renderer->EnableTimer(false);
@@ -55,6 +70,9 @@ void PathsTool::hideEvent(QHideEvent *evt)
 }
 
 
+/**
+ * the window is being closed
+ */
 void PathsTool::closeEvent(QCloseEvent *evt)
 {
 	// save window size, position, and state
@@ -146,8 +164,10 @@ bool PathsTool::OpenFile(const QString &file)
 		}
 		else
 		{
-			std::cout << "Loaded instrument file \"" << file.toStdString() << "\" "
-				<< "dated " << msg << "." << std::endl;
+			std::ostringstream ostr;
+			ostr << "Loaded \"" << QFileInfo{file}.fileName().toStdString() << "\" "
+				<< "dated " << msg << ".";
+			m_statusbar->showMessage(ostr.str().c_str());
 		}
 
 		SetCurrentFile(file);
@@ -173,7 +193,18 @@ bool PathsTool::OpenFile(const QString &file)
 				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
 
-				SetCollisionStatus(m_instrspace.CheckCollision2D());
+				// get crystal coordinates corresponding to current instrument position
+				t_real ki = tl2::calc_tas_k<t_real>(monoXtalAngle, m_dspacings[0]);
+				t_real kf = tl2::calc_tas_k<t_real>(anaXtalAngle, m_dspacings[1]);
+				t_real Q = tl2::calc_tas_Q_len<t_real>(ki, kf, sampleScAngle);
+				t_real E = tl2::calc_tas_E<t_real>(ki, kf);
+
+				auto Qrlu = tl2::calc_tas_hkl<t_mat, t_vec, t_real>(
+					m_B, ki, kf, Q, sampleXtalAngle,
+					m_plane_rlu[0], m_plane_rlu[2],
+					m_sensesCCW[1], g_a3_offs);
+
+				SetInstrumentStatus(Qrlu, E, m_instrspace.CheckCollision2D());
 
 				if(m_renderer)
 					m_renderer->UpdateInstrument(instr);
@@ -212,7 +243,7 @@ bool PathsTool::SaveFile(const QString &file)
 		return false;
 	}
 
-	ofstr.precision(6);
+	ofstr.precision(g_prec);
 	pt::write_xml(ofstr, prop, pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
 
 	SetCurrentFile(file);
@@ -290,9 +321,6 @@ void PathsTool::RebuildRecentFiles()
  */
 void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf)
 {
-	// TODO
-	t_real a3_offs = tl2::pi<t_real>*0.5;
-
 	std::optional<t_real> a1 = tl2::calc_tas_a1<t_real>(ki, m_dspacings[0]);
 	std::optional<t_real> a5 = tl2::calc_tas_a1<t_real>(kf, m_dspacings[1]);
 
@@ -314,7 +342,8 @@ void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real 
 	t_vec Q = tl2::create<t_vec>({h, k, l});
 	auto [ok, a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
 		m_B, ki, kf, Q,
-		m_plane_rlu[0], m_plane_rlu[2], m_sensesCCW[1], a3_offs);
+		m_plane_rlu[0], m_plane_rlu[2], 
+		m_sensesCCW[1], g_a3_offs);
 
 	if(!ok)
 	{
@@ -424,7 +453,7 @@ void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
 void PathsTool::UpdateStatusLabel()
 {
 	std::ostringstream ostr;
-	ostr.precision(4);
+	ostr.precision(g_prec_gui);
 	ostr << "x = " << m_mouseX << " m, y = " << m_mouseY << " m";
 	if(m_curObj != "")
 		ostr << ", object: " << m_curObj;
@@ -432,14 +461,29 @@ void PathsTool::UpdateStatusLabel()
 }
 
 
-void PathsTool::SetCollisionStatus(bool colliding)
+void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E, bool colliding)
 {
+	using namespace tl2_ops;
+
 	std::ostringstream ostr;
+	ostr.precision(g_prec_gui);
+	ostr << "Position: ";
+	if(Qopt)
+	{
+		t_vec Q = *Qopt;
+		tl2::set_eps_0<t_vec>(Q, g_eps_gui);
+		ostr << std::fixed << "Q = (" << Q << ") rlu, ";
+	}
+	else
+		ostr << "Q invalid, ";
+
+	tl2::set_eps_0<t_real>(E, g_eps_gui);
+	ostr << std::fixed << "E = " << E << " meV, ";
 
 	if(colliding)
-		ostr << "Collision detected!";
+		ostr << "collision detected!";
 	else
-		ostr << "Position ok.";
+		ostr << "no collision.";
 
 	m_labelCollisionStatus->setText(ostr.str().c_str());
 }
@@ -506,11 +550,13 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
 	m_xtalProperties = std::make_shared<XtalPropertiesDockWidget>(this);
+	m_xtalInfos = std::make_shared<XtalInfoDockWidget>(this);
 	m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 	m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
+	addDockWidget(Qt::LeftDockWidgetArea, m_xtalInfos.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
 
@@ -622,6 +668,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
 		{
 			m_B = tl2::B_matrix<t_mat>(a, b, c, alpha, beta, gamma);
+			m_plane_rlu[2] = tl2::cross<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1]);
 
 			UpdateUB();
 		});
@@ -691,6 +738,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	menuView->addAction(m_tasProperties->toggleViewAction());
 	menuView->addAction(m_xtalProperties->toggleViewAction());
+	menuView->addAction(m_xtalInfos->toggleViewAction());
 	menuView->addAction(m_pathProperties->toggleViewAction());
 	menuView->addAction(m_camProperties->toggleViewAction());
 	//menuView->addSeparator();

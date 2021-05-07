@@ -6,6 +6,7 @@
  */
 
 #include "XtalProperties.h"
+#include "Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>
@@ -13,6 +14,9 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QFrame>
+#include <QtGui/QFontDatabase>
+
+#include <sstream>
 
 
 // --------------------------------------------------------------------------------
@@ -29,13 +33,13 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		m_spinLatticeConsts[i]->setMinimum(0);
 		m_spinLatticeConsts[i]->setMaximum(999);
 		m_spinLatticeConsts[i]->setSingleStep(0.1);
-		m_spinLatticeConsts[i]->setDecimals(3);
+		m_spinLatticeConsts[i]->setDecimals(g_prec_gui);
 		m_spinLatticeConsts[i]->setValue(5);
 		m_spinLatticeConsts[i]->setSuffix(" Å");
 
 		m_spinLatticeAngles[i]->setMinimum(0);
 		m_spinLatticeAngles[i]->setMaximum(180);
-		m_spinLatticeAngles[i]->setDecimals(2);
+		m_spinLatticeAngles[i]->setDecimals(g_prec_gui/2);
 		m_spinLatticeAngles[i]->setValue(90);
 		m_spinLatticeAngles[i]->setSuffix("°");
 	}
@@ -46,7 +50,7 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 
 		m_spinPlane[i]->setMinimum(-999);
 		m_spinPlane[i]->setMaximum(999);
-		m_spinPlane[i]->setDecimals(2);
+		m_spinPlane[i]->setDecimals(g_prec_gui/2);
 		m_spinPlane[i]->setValue((i==0 || i==4) ? 1 : 0);
 		m_spinPlane[i]->setSuffix(" rlu");
 	}
@@ -239,6 +243,88 @@ XtalPropertiesDockWidget::XtalPropertiesDockWidget(QWidget *parent)
 
 
 XtalPropertiesDockWidget::~XtalPropertiesDockWidget()
+{
+}
+// --------------------------------------------------------------------------------
+
+
+
+
+// --------------------------------------------------------------------------------
+// xtal info widget
+// --------------------------------------------------------------------------------
+XtalInfoWidget::XtalInfoWidget(QWidget *parent)
+	: QWidget{parent}
+{
+	auto *grid = new QGridLayout(this);
+	grid->setHorizontalSpacing(2);
+	grid->setVerticalSpacing(2);
+	grid->setContentsMargins(4,4,4,4);
+
+	m_txt = new QPlainTextEdit(this);
+	m_txt->setReadOnly(true);
+	m_txt->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+	grid->addWidget(m_txt, 0, 0, 1, 1);
+}
+
+
+XtalInfoWidget::~XtalInfoWidget()
+{
+}
+
+
+void XtalInfoWidget::SetUB(const t_mat& matB, const t_mat& matUB)
+{
+	if(!m_txt)
+		return;
+
+	std::ostringstream ostr;
+	ostr.precision(g_prec_gui);
+
+	auto print_mat = [&ostr](const t_mat& mat)
+	{
+		for(std::size_t i=0; i<mat.size1(); ++i)
+		{
+			for(std::size_t j=0; j<mat.size2(); ++j)
+			{
+				auto val = mat(i, j);
+				if(tl2::equals_0<decltype(val)>(val, g_eps_gui))
+					val = 0;
+				ostr << std::left << std::setw(ostr.precision()*2) << val;
+			}
+			ostr << "\n";
+		}
+	};
+
+	ostr << "B matrix:\n";
+	print_mat(matB);
+
+	ostr << "\nUB matrix:\n";
+	print_mat(matUB);
+
+	//std::cout << ostr.str() << std::endl;
+	m_txt->setPlainText(ostr.str().c_str());
+}
+
+// --------------------------------------------------------------------------------
+
+
+
+// --------------------------------------------------------------------------------
+// xtal info dock widget
+// --------------------------------------------------------------------------------
+XtalInfoDockWidget::XtalInfoDockWidget(QWidget *parent)
+	: QDockWidget{parent}, 
+		m_widget{std::make_shared<XtalInfoWidget>(this)}
+{
+	setObjectName("XtalInfoDockWidget");
+	setWindowTitle("Crystal Matrices");
+
+	setWidget(m_widget.get());
+}
+
+
+XtalInfoDockWidget::~XtalInfoDockWidget()
 {
 }
 // --------------------------------------------------------------------------------

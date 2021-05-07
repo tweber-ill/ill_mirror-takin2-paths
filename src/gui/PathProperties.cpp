@@ -6,6 +6,7 @@
  */
 
 #include "PathProperties.h"
+#include "Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>
@@ -30,8 +31,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinStart[i]->setMinimum(-999);
 		m_spinStart[i]->setMaximum(999);
 		m_spinStart[i]->setSingleStep(0.1);
-		m_spinStart[i]->setDecimals(3);
+		m_spinStart[i]->setDecimals(g_prec_gui);
 		m_spinStart[i]->setValue(0);
+
 		if(i==3 || i==4)
 			m_spinStart[i]->setSuffix(" Å⁻¹");
 		else if(i==5)
@@ -42,8 +44,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinFinish[i]->setMinimum(-999);
 		m_spinFinish[i]->setMaximum(999);
 		m_spinFinish[i]->setSingleStep(0.1);
-		m_spinFinish[i]->setDecimals(3);
+		m_spinFinish[i]->setDecimals(g_prec_gui);
 		m_spinFinish[i]->setValue(0);
+
 		if(i==3 || i==4)
 			m_spinFinish[i]->setSuffix(" Å⁻¹");
 		else if(i==5)
@@ -176,7 +179,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			if(m_checkStartKfFixed->isChecked())
 			{
 				t_real kf = m_spinStart[4]->value();
-				t_real E = m_spinStart[5]->value();
 				t_real ki = tl2::calc_tas_ki<t_real>(kf, E);
 
 				// set ki
@@ -187,7 +189,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			else
 			{
 				t_real ki = m_spinStart[3]->value();
-				t_real E = m_spinStart[5]->value();
 				t_real kf = tl2::calc_tas_kf<t_real>(ki, E);
 
 				// set kf
@@ -205,7 +206,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			if(m_checkFinishKfFixed->isChecked())
 			{
 				t_real kf = m_spinFinish[4]->value();
-				t_real E = m_spinFinish[5]->value();
 				t_real ki = tl2::calc_tas_ki<t_real>(kf, E);
 
 				// set ki
@@ -216,7 +216,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			else
 			{
 				t_real ki = m_spinFinish[3]->value();
-				t_real E = m_spinFinish[5]->value();
 				t_real kf = tl2::calc_tas_kf<t_real>(ki, E);
 
 				// set kf

@@ -8,7 +8,7 @@
  *   - https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/reference/thread_pool.html
  *   - https://github.com/boostorg/gil/tree/develop/example
  *
- * g++-10 -O2 -DNDEBUG -std=c++20 -I.. -o configspace configspace.cpp ../src/core/Geometry.cpp ../src/core/Instrument.cpp -lboost_filesystem-mt -lboost_system-mt -lpng -lpthread
+ * g++-10 -O2 -DNDEBUG -std=c++20 -I.. -o configspace configspace.cpp ../src/core/Geometry.cpp ../src/core/Axis.cpp ../src/core/Instrument.cpp ../src/core/InstrumentSpace.cpp -lboost_filesystem-mt -lboost_system-mt -lpng -lpthread
  */
 
 #include <iostream>

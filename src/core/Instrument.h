@@ -1,5 +1,5 @@
 /**
- * instrument and walls
+ * instrument space and walls
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
  * @license GPLv3, see 'LICENSE' file

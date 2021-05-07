@@ -6,6 +6,7 @@
  */
 
 #include "TASProperties.h"
+#include "Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>
@@ -47,7 +48,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	{
 		spin->setMinimum(-180);
 		spin->setMaximum(180);
-		spin->setDecimals(3);
+		spin->setDecimals(g_prec_gui);
 		spin->setValue(90);
 		spin->setSingleStep(1);
 		spin->setSuffix("°");
@@ -57,7 +58,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	{
 		spin->setMinimum(-360);
 		spin->setMaximum(360);
-		spin->setDecimals(3);
+		spin->setDecimals(g_prec_gui);
 		spin->setValue(90);
 		spin->setSingleStep(1);
 		spin->setSuffix("°");
@@ -67,7 +68,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	{
 		spin->setMinimum(0);
 		spin->setMaximum(999);
-		spin->setDecimals(4);
+		spin->setDecimals(g_prec_gui);
 		spin->setValue(3.355);
 		spin->setSingleStep(0.1);
 		spin->setSuffix(" Å");

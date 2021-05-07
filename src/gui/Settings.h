@@ -10,6 +10,8 @@
 
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
+#include "src/core/types.h"
+
 
 // application binary path
 extern std::string g_apppath;
@@ -22,6 +24,15 @@ extern tl2::t_real_gl g_move_scale;
 
 // camera rotation scaling factor
 extern tl2::t_real_gl g_rotation_scale;
+
+// number precisions
+extern int g_prec, g_prec_gui;
+
+// epsilons
+extern t_real g_eps, g_eps_gui;
+
+// crystal angle offset
+extern t_real g_a3_offs;
 
 
 /**

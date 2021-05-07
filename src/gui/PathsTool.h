@@ -50,6 +50,7 @@ private:
 	std::shared_ptr<AboutDlg> m_dspacingslgAbout;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
+	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos;
 	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 
@@ -147,8 +148,8 @@ protected slots:
 
 	void UpdateStatusLabel();
 
-	// set status flag indicating if the instrument is colliding
-	void SetCollisionStatus(bool colliding);
+	// set instrument status (coordinates, collision flag)
+	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E, bool colliding);
 
 
 public:
