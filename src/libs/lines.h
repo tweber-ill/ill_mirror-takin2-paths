@@ -123,7 +123,10 @@ std::pair<bool, t_vec> intersect_lines(
 	if(only_segments && (param1<0. || param1>=1. || param2<0. || param2>=1.))
 		return std::make_pair(false, tl2::create<t_vec>({}));
 
-	return std::make_pair(true, pt1);
+	// check if the intersection points on the two lines are the same
+	// to rule out numeric instability
+	bool intersects = tl2::equals<t_vec>(pt1, pt2, eps);
+	return std::make_pair(intersects, pt1);
 }
 
 
@@ -548,9 +551,9 @@ t_cont<t_vec> intersect_circle_circle(
 // @see (FUH 2020), ch. 2.3.2, pp. 69-80
 // ----------------------------------------------------------------------------
 
-template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>, class t_real = typename t_vec::value_type>
 std::vector<std::tuple<std::size_t, std::size_t, t_vec>>
-intersect_ineff(const std::vector<t_line>& lines)
+intersect_ineff(const std::vector<t_line>& lines, t_real eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
 	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
@@ -562,7 +565,7 @@ requires tl2::is_vec<t_vec>
 			const t_line& line1 = lines[i];
 			const t_line& line2 = lines[j];
 
-			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2);
+			if(auto [intersects, pt] = intersect_lines<t_line>(line1, line2, eps);
 				intersects)
 			{
 				intersections.emplace_back(std::make_tuple(i, j, pt));

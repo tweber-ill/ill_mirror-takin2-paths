@@ -221,7 +221,7 @@ void LinesScene::UpdateIntersections()
 	{
 		case IntersectionCalculationMethod::DIRECT:
 			intersections = 
-				geo::intersect_ineff<t_vec, std::pair<t_vec, t_vec>>(m_lines);
+				geo::intersect_ineff<t_vec, std::pair<t_vec, t_vec>>(m_lines, g_eps);
 			break;
 		case IntersectionCalculationMethod::SWEEP:
 			intersections = 
