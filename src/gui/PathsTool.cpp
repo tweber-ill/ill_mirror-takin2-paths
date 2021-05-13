@@ -464,9 +464,11 @@ void PathsTool::UpdateStatusLabel()
 {
 	std::ostringstream ostr;
 	ostr.precision(g_prec_gui);
-	ostr << "x = " << m_mouseX << " m, y = " << m_mouseY << " m";
+	ostr << std::fixed << std::showpos 
+		<< "Cursor: (" << m_mouseX << ", " << m_mouseY << ") m";
 	if(m_curObj != "")
 		ostr << ", object: " << m_curObj;
+	ostr << ".";
 	m_labelStatus->setText(ostr.str().c_str());
 }
 
@@ -477,7 +479,7 @@ void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E, 
 
 	std::ostringstream ostr;
 	ostr.precision(g_prec_gui);
-	ostr << "Position: ";
+	//ostr << "Position: ";
 	if(Qopt)
 	{
 		t_vec Q = *Qopt;
@@ -764,7 +766,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	std::size_t num_tools = 0;
 	if(fs::exists(hullpath))
 	{
-		QAction *acHullTool = new QAction("Hull Test...", menuTools);
+		QAction *acHullTool = new QAction("Convex Hull Test...", menuTools);
 		menuTools->addAction(acHullTool);
 		++num_tools;
 

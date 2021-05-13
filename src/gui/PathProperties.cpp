@@ -55,6 +55,12 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			m_spinFinish[i]->setSuffix(" rlu");
 	}
 
+	for(std::size_t i=1; i<m_num_coord_elems; ++i)
+		QWidget::setTabOrder(m_spinStart[i-1], m_spinStart[i]);
+	for(std::size_t i=1; i<m_num_coord_elems; ++i)
+		QWidget::setTabOrder(m_spinFinish[i-1], m_spinFinish[i]);
+
+
 	m_checkStartKfFixed = new QCheckBox(this);
 	m_checkFinishKfFixed = new QCheckBox(this);
 	m_checkStartKfFixed->setText("Keep kf = const.");

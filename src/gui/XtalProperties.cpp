@@ -55,6 +55,13 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		m_spinPlane[i]->setSuffix(" rlu");
 	}
 
+	for(std::size_t i=1; i<m_num_lattice_elems; ++i)
+		QWidget::setTabOrder(m_spinLatticeConsts[i-1], m_spinLatticeConsts[i]);
+	for(std::size_t i=1; i<m_num_lattice_elems; ++i)
+		QWidget::setTabOrder(m_spinLatticeAngles[i-1], m_spinLatticeAngles[i]);
+	for(std::size_t i=1; i<m_num_plane_elems; ++i)
+		QWidget::setTabOrder(m_spinPlane[i-1], m_spinPlane[i]);
+
 	auto *groupLattice = new QGroupBox("Lattice", this);
 	{
 		auto *layoutLattice = new QGridLayout(groupLattice);
