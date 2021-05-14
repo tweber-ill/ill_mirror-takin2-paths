@@ -21,7 +21,7 @@ UZIP=unzip
 # helper functions
 # -----------------------------------------------------------------------------
 get_filename_from_url() {
-        local url="$1"
+	local url="$1"
 
 	local filename=${url##*[/\\]}
 	echo "${filename}"

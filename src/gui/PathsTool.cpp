@@ -764,7 +764,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionConfigSpace, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgConfigSpace)
+		{
 			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
+			this->m_dlgConfigSpace->SetInstrumentSpace(&this->m_instrspace);
+		}
 
 		m_dlgConfigSpace->show();
 		m_dlgConfigSpace->activateWindow();

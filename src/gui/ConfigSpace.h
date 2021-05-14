@@ -12,6 +12,7 @@
 #include <QtCore/QSettings>
 #include <memory>
 
+#include "src/core/Instrument.h"
 #include "qcustomplot/qcustomplot.h"
 
 
@@ -21,12 +22,21 @@ public:
 	ConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~ConfigSpaceDlg();
 
+	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
+	void Calculate();
+
 protected:
 	virtual void accept() override;
 
+	void PlotMouseMove(QMouseEvent*);
+
 private:
 	QSettings *m_sett{nullptr};
+
 	std::shared_ptr<QCustomPlot> m_plot;
+	QCPColorMap* m_colourMap{};
+
+	const InstrumentSpace *m_instrspace{};
 };
 
 
