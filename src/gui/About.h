@@ -9,7 +9,7 @@
 #define __TAKIN_PATHS_ABOUT_H__
 
 
-#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QDialog>
 
 
 class AboutDlg : public QDialog

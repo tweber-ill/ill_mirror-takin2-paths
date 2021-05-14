@@ -25,6 +25,7 @@
 #include "XtalProperties.h"
 #include "PathProperties.h"
 #include "CamProperties.h"
+#include "ConfigSpace.h"
 #include "About.h"
 
 
@@ -47,7 +48,8 @@ private:
 	QMenu *m_menuOpenRecent{nullptr};
 	QMenuBar *m_menubar{nullptr};
 
-	std::shared_ptr<AboutDlg> m_dspacingslgAbout;
+	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
 	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos;

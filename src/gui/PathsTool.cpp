@@ -727,7 +727,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	acQuit->setMenuRole(QAction::QuitRole);
 
-
 	connect(acNew, &QAction::triggered, this, [this]() { this->NewFile(); });
 	connect(acOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
 	connect(acSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
@@ -755,6 +754,23 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuView->addAction(m_camProperties->toggleViewAction());
 	//menuView->addSeparator();
 	//menuView->addAction(acPersp);
+
+
+	// calculate menu
+	QMenu *menuCalc = new QMenu("Calculation", m_menubar);
+
+	QAction *actionConfigSpace = new QAction("Configuration Space...", menuCalc);
+
+	connect(actionConfigSpace, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgConfigSpace)
+			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
+
+		m_dlgConfigSpace->show();
+		m_dlgConfigSpace->activateWindow();
+	});
+
+	menuCalc->addAction(actionConfigSpace);
 
 
 	// tools menu
@@ -789,7 +805,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	}
 
 
-
 	// help menu
 	QMenu *menuHelp = new QMenu("Help", m_menubar);
 
@@ -815,11 +830,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	connect(actionAbout, &QAction::triggered, this, [this]()
 	{
-		if(!this->m_dspacingslgAbout)
-			this->m_dspacingslgAbout = std::make_shared<AboutDlg>(this);
+		if(!this->m_dlgAbout)
+			this->m_dlgAbout = std::make_shared<AboutDlg>(this);
 
-		m_dspacingslgAbout->show();
-		m_dspacingslgAbout->activateWindow();
+		m_dlgAbout->show();
+		m_dlgAbout->activateWindow();
 	});
 
 	menuHelp->addAction(actionAboutQt);
@@ -831,6 +846,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// menu bar
 	m_menubar->addMenu(menuFile);
 	m_menubar->addMenu(menuView);
+	m_menubar->addMenu(menuCalc);
 	if(num_tools)
 		m_menubar->addMenu(menuTools);
 	m_menubar->addMenu(menuHelp);
