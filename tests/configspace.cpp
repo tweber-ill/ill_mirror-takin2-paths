@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 		std::string filename = argv[1];
 		InstrumentSpace instrspace;
 
-		if(auto [ok, msg] = load_instrumentspace(filename, instrspace); !ok)
+		if(auto [ok, msg] = InstrumentSpace::load(filename, instrspace); !ok)
 		{
 			std::cerr << "Error: " << msg << std::endl;
 			return -1;

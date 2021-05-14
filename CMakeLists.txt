@@ -89,9 +89,9 @@ endif()
 
 
 if(QT_VER EQUAL 6)
-	find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL OpenGLWidgets)
+	find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL OpenGLWidgets PrintSupport)
 elseif(QT_VER EQUAL 5)
-	find_package(Qt5 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL)
+	find_package(Qt5 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL PrintSupport)
 else()
 	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
@@ -110,6 +110,7 @@ add_compile_options(${Boost_CXX_FLAGS})
 add_compile_options(-Wall -Wextra)
 
 add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
+#add_definitions(-DQCUSTOMPLOT_USE_OPENGL )
 # -----------------------------------------------------------------------------
 
 
@@ -132,6 +133,8 @@ add_executable(taspaths
 	src/core/types.h
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
+
+	qcustomplot/qcustomplot.cpp qcustomplot/qcustomplot.h
 )
 
 
@@ -161,7 +164,7 @@ if(QT_VER EQUAL 6)
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
-		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
+		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidget Qt6::PrintSupport
 	)
 
 
@@ -187,7 +190,7 @@ elseif(QT_VER EQUAL 5)
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
-		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
+		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL Qt5::PrintSupport
 	)
 
 

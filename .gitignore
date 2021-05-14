@@ -37,6 +37,7 @@ unittests/build/**
 *.pyc
 .DS_Store
 *.csv
+*.1
 
 # Temporary tex files
 *.log
@@ -49,6 +50,12 @@ unittests/build/**
 *.fls
 *.fdb_latexmk
 
+# Archives
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+
 # Pictures
 *.jpg
 *.png
@@ -57,3 +64,7 @@ unittests/build/**
 
 # Libraries
 tlibs2
+tlibs2/**
+qcustomplot
+qcustomplot/**
+
