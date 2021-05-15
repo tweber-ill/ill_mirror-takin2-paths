@@ -10,6 +10,9 @@
 
 #include "ConfigSpace.h"
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QProgressDialog>
 
 #include <iostream>
 #include <thread>
@@ -22,6 +25,8 @@ namespace asio = boost::asio;
 
 #include "tlibs2/libs/maths.h"
 #include "src/core/types.h"
+
+#include "Settings.h"
 
 using t_task = std::packaged_task<void()>;
 using t_taskptr = std::shared_ptr<t_task>;
@@ -46,6 +51,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_plot->xAxis->setRange(0., 180.);
 	m_plot->yAxis->setLabel("2θ_M (deg)");
 	m_plot->yAxis->setRange(0., 180.);
+	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);
 	m_colourMap->setGradient(QCPColorGradient::gpGrayscale);
@@ -54,13 +60,63 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->data()->setRange(QCPRange{0., 180.}, QCPRange{0., 180.});
 	m_colourMap->setInterpolate(false);
 
-	connect(m_plot.get(), &QCustomPlot::mouseMove, this, &ConfigSpaceDlg::PlotMouseMove);
+	// status label
+	QLabel *status = new QLabel(this);
+	status->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	status->setFrameStyle(QFrame::Sunken);
+	status->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+
+	// spin boxes
+	m_spinDelta2ThS = new QDoubleSpinBox(this);
+	m_spinDelta2ThM = new QDoubleSpinBox(this);
+
+	m_spinDelta2ThS->setPrefix("Δθ_S = ");
+	m_spinDelta2ThS->setSuffix(" deg");
+	m_spinDelta2ThS->setValue(0.5);
+	m_spinDelta2ThS->setMinimum(0.001);
+	m_spinDelta2ThS->setMaximum(180.);
+	m_spinDelta2ThS->setSingleStep(0.1);
+
+	m_spinDelta2ThM->setPrefix("Δθ_M = ");
+	m_spinDelta2ThM->setSuffix(" deg");
+	m_spinDelta2ThM->setValue(0.5);
+	m_spinDelta2ThM->setMinimum(0.001);
+	m_spinDelta2ThM->setMaximum(180.);
+	m_spinDelta2ThM->setSingleStep(0.1);
+
+	// buttons
+	QPushButton *btnCalc = new QPushButton("Calculate", this);
+	QPushButton *btnClose = new QPushButton("Close", this);
 
 	// grid
 	auto grid = new QGridLayout(this);
 	grid->setSpacing(4);
 	grid->setContentsMargins(16, 16, 16, 16);
-	grid->addWidget(m_plot.get(), 0, 0, 1, 1);
+	int y = 0;
+	grid->addWidget(m_plot.get(), y++, 0, 1, 4);
+	grid->addWidget(m_spinDelta2ThS, y, 0, 1, 1);
+	grid->addWidget(m_spinDelta2ThM, y, 1, 1, 1);
+	grid->addWidget(btnCalc, y, 2, 1, 1);
+	grid->addWidget(btnClose, y++, 3, 1, 1);
+	grid->addWidget(status, y++, 0, 1, 4);
+
+	// connections
+	connect(m_plot.get(), &QCustomPlot::mouseMove, 
+		[this, status](QMouseEvent* evt)
+		{
+			if(!this->m_plot)
+				return;
+			const t_real x = this->m_plot->xAxis->pixelToCoord(evt->x());
+			const t_real y = this->m_plot->yAxis->pixelToCoord(evt->y());
+
+			std::ostringstream ostr;
+			ostr.precision(g_prec_gui);
+			ostr << "2θ_S = " << x << " deg, 2θ_M = " << y << " deg.";
+			status->setText(ostr.str().c_str());
+		});
+
+	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
+	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
 }
 
 
@@ -69,34 +125,28 @@ ConfigSpaceDlg::~ConfigSpaceDlg()
 }
 
 
-void ConfigSpaceDlg::PlotMouseMove(QMouseEvent* evt)
-{
-	const t_real x = m_plot->xAxis->pixelToCoord(evt->x());
-	const t_real y = m_plot->yAxis->pixelToCoord(evt->y());
-
-	//std::cout << "(" << x << ", " << y << ")" << std::endl;
-}
-
-
 void ConfigSpaceDlg::accept()
 {
 	if(m_sett)
 		m_sett->setValue("configspace/geo", saveGeometry());
+	QDialog::accept();
 }
 
 
 void ConfigSpaceDlg::Calculate()
 {
 	// angles and ranges
+	// TODO: get a5 and a6
 	t_real a6 = 83.957 / 180. * tl2::pi<t_real>;
 
-	t_real da2 = 0.5 / 180. * tl2::pi<t_real>;
-	t_real starta2 = 0.;
-	t_real enda2 = tl2::pi<t_real>;
-
-	t_real da4 = -0.5 / 180. * tl2::pi<t_real>;
+	// TODO: use correct scattering senses
+	t_real da4 = -m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
 	t_real starta4 = 0.;
 	t_real enda4 = -tl2::pi<t_real>;
+
+	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
+	t_real starta2 = 0.;
+	t_real enda2 = tl2::pi<t_real>;
 
 	std::size_t img_w = (enda4-starta4) / da4;
 	std::size_t img_h = (enda2-starta2) / da2;
@@ -145,12 +195,25 @@ void ConfigSpaceDlg::Calculate()
 		asio::post(pool, [taskptr]() { (*taskptr)(); });
 	}
 
+
+	QProgressDialog progress(this);
+	progress.setWindowModality(Qt::WindowModal);
+	progress.setLabelText(QString{"Calculating configuration space in %1 threads..."}.arg(num_threads));
+	progress.setMinimum(0);
+	progress.setMaximum(tasks.size());
+	progress.setValue(0);
+
 	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 	{
-		tasks[taskidx]->get_future().get();
+		if(progress.wasCanceled())
+		{
+			pool.stop();
+			break;
+		}
 
-		std::cout << "Task " << taskidx+1 << " of " 
-			<< tasks.size() << " finished." << std::endl;
+		tasks[taskidx]->get_future().get();
+		progress.setValue(taskidx+1);
+		m_plot->replot();
 	}
 
 	pool.join();

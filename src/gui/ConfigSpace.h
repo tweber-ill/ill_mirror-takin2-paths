@@ -10,6 +10,8 @@
 
 #include <QtWidgets/QDialog>
 #include <QtCore/QSettings>
+#include <QtWidgets/QDoubleSpinBox>
+
 #include <memory>
 
 #include "src/core/Instrument.h"
@@ -28,13 +30,13 @@ public:
 protected:
 	virtual void accept() override;
 
-	void PlotMouseMove(QMouseEvent*);
-
 private:
 	QSettings *m_sett{nullptr};
 
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
+	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
+
 
 	const InstrumentSpace *m_instrspace{};
 };
