@@ -105,7 +105,7 @@ void PathsTool::NewFile()
  */
 void PathsTool::OpenFile()
 {
-	QString dirLast = m_sett.value("cur_dir", "").toString();
+	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
 	QString filename = QFileDialog::getOpenFileName(
 		this, "Open File", dirLast, "Paths Files (*.taspaths)");
@@ -134,7 +134,7 @@ void PathsTool::SaveFile()
  */
 void PathsTool::SaveFileAs()
 {
-	QString dirLast = m_sett.value("cur_dir", "").toString();
+	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
 	QString filename = QFileDialog::getSaveFileName(
 		this, "Save File", dirLast, "Paths Files (*.taspaths)");
@@ -767,6 +767,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		{
 			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
 			this->m_dlgConfigSpace->SetInstrumentSpace(&this->m_instrspace);
+			this->m_dlgConfigSpace->SetScatteringSenses(this->m_sensesCCW);
 		}
 
 		m_dlgConfigSpace->show();

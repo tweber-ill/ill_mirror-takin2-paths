@@ -13,6 +13,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QProgressDialog>
+#include <QtWidgets/QFileDialog>
 
 #include <iostream>
 #include <thread>
@@ -24,8 +25,6 @@
 namespace asio = boost::asio;
 
 #include "tlibs2/libs/maths.h"
-#include "src/core/types.h"
-
 #include "Settings.h"
 
 using t_task = std::packaged_task<void()>;
@@ -86,6 +85,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// buttons
 	QPushButton *btnCalc = new QPushButton("Calculate", this);
+	QPushButton *btnSave = new QPushButton("Save PDF...", this);
 	QPushButton *btnClose = new QPushButton("Close", this);
 
 	// grid
@@ -93,12 +93,13 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->setSpacing(4);
 	grid->setContentsMargins(16, 16, 16, 16);
 	int y = 0;
-	grid->addWidget(m_plot.get(), y++, 0, 1, 4);
+	grid->addWidget(m_plot.get(), y++, 0, 1, 5);
 	grid->addWidget(m_spinDelta2ThS, y, 0, 1, 1);
 	grid->addWidget(m_spinDelta2ThM, y, 1, 1, 1);
 	grid->addWidget(btnCalc, y, 2, 1, 1);
-	grid->addWidget(btnClose, y++, 3, 1, 1);
-	grid->addWidget(status, y++, 0, 1, 4);
+	grid->addWidget(btnSave, y, 3, 1, 1);
+	grid->addWidget(btnClose, y++, 4, 1, 1);
+	grid->addWidget(status, y++, 0, 1, 5);
 
 	// connections
 	connect(m_plot.get(), &QCustomPlot::mouseMove, 
@@ -113,6 +114,20 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			ostr.precision(g_prec_gui);
 			ostr << "2θ_S = " << x << " deg, 2θ_M = " << y << " deg.";
 			status->setText(ostr.str().c_str());
+		});
+
+	connect(btnSave, &QPushButton::clicked, 
+		[this]()
+		{
+			QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+
+			QString filename = QFileDialog::getSaveFileName(
+				this, "Save File", dirLast, "PDF Files (*.pdf)");
+			if(filename=="")
+				return;
+
+			if(this->m_plot->savePdf(filename))
+				this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
 		});
 
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
@@ -136,21 +151,31 @@ void ConfigSpaceDlg::accept()
 void ConfigSpaceDlg::Calculate()
 {
 	// angles and ranges
-	// TODO: get a5 and a6
-	t_real a6 = 83.957 / 180. * tl2::pi<t_real>;
+	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
 
-	// TODO: use correct scattering senses
-	t_real da4 = -m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
+	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
 	t_real starta4 = 0.;
-	t_real enda4 = -tl2::pi<t_real>;
+	t_real enda4 = tl2::pi<t_real>;
 
 	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
 	t_real starta2 = 0.;
 	t_real enda2 = tl2::pi<t_real>;
 
+	// include scattering senses
+	if(m_sensesCCW)
+	{
+		da4 *= m_sensesCCW[1];
+		starta4 *= m_sensesCCW[1];
+		enda4 *= m_sensesCCW[1];
+
+		da2 *= m_sensesCCW[0];
+		starta2 *= m_sensesCCW[0];
+		enda2 *= m_sensesCCW[0];
+	}
+
+	// create colour map
 	std::size_t img_w = (enda4-starta4) / da4;
 	std::size_t img_h = (enda2-starta2) / da2;
-
 	m_colourMap->data()->setSize(img_w, img_h);
 
 	// create thread pool
@@ -195,7 +220,7 @@ void ConfigSpaceDlg::Calculate()
 		asio::post(pool, [taskptr]() { (*taskptr)(); });
 	}
 
-
+	// progress dialog
 	QProgressDialog progress(this);
 	progress.setWindowModality(Qt::WindowModal);
 	progress.setLabelText(QString{"Calculating configuration space in %1 threads..."}.arg(num_threads));
@@ -203,6 +228,7 @@ void ConfigSpaceDlg::Calculate()
 	progress.setMaximum(tasks.size());
 	progress.setValue(0);
 
+	// get results
 	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 	{
 		if(progress.wasCanceled())

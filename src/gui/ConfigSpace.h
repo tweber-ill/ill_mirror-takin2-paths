@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "src/core/types.h"
 #include "src/core/Instrument.h"
 #include "qcustomplot/qcustomplot.h"
 
@@ -25,6 +26,7 @@ public:
 	virtual ~ConfigSpaceDlg();
 
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
+	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
 	void Calculate();
 
 protected:
@@ -37,8 +39,8 @@ private:
 	QCPColorMap* m_colourMap{};
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
 
-
 	const InstrumentSpace *m_instrspace{};
+	const t_real* m_sensesCCW{nullptr};
 };
 
 
