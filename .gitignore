@@ -26,8 +26,12 @@
 *.exe
 *.out
 *.app
+
+# Packages
 *.dmg
+*.deb
 TASPaths.app/**
+TASPaths/**
 
 # Temporary files
 tmp/**
@@ -67,4 +71,3 @@ tlibs2
 tlibs2/**
 qcustomplot
 qcustomplot/**
-
