@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# create an app bundle and a dmg file
+# creates an app bundle and a dmg file
 # @author Tobias Weber <tweber@ill.fr>
 # @date jan-2019, apr-2021
 # @license GPLv3, see 'LICENSE' file

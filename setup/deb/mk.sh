@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# create a debian package
+# creates a debian package
 # @author Tobias Weber <tweber@ill.fr>
 # @date 23-may-2021
 # @license GPLv3

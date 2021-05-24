@@ -8,7 +8,7 @@
 #ifndef __TAKIN_PATHS_MINGW_HACKS_H__
 #define __TAKIN_PATHS_MINGW_HACKS_H__
 
-#if defined(__MINGW64__) || defined(__MINGW64__)
+#if defined(__MINGW32__) || defined(__MINGW64__)
 	// for boost.asio
 	#include <winsock2.h>
 #endif
