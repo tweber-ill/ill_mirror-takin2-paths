@@ -42,8 +42,6 @@ QT_PLUGINS=( \
 # create directories
 mkdir -p ${APPDIRNAME}
 mkdir -p ${APPDIRNAME}/res
-mkdir -p ${APPDIRNAME}/qt_plugins/platforms/
-mkdir -p ${APPDIRNAME}/qt_plugins/styles/
 
 # copy program files
 cp -v build/*.exe          ${APPDIRNAME}/
@@ -61,6 +59,7 @@ done
 # copy qt plugins
 for THELIB in ${QT_PLUGINS[@]}; do
 	LIBDIRNAME=$(dirname ${THELIB})
+	mkdir -p ${APPDIRNAME}/qt_plugins/${LIBDIRNAME}
 	cp -v /usr/x86_64-w64-mingw32/sys-root/mingw/lib/qt5/plugins/${THELIB} ${APPDIRNAME}/qt_plugins/${LIBDIRNAME}
 done
 
