@@ -53,9 +53,15 @@ message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 # -----------------------------------------------------------------------------
 message("Building for ${CMAKE_SYSTEM_NAME} systems.")
 
+set(BOOST_SUFFIX)
+set(MINGW_WINSOCK)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# pass linker --subsystem option
 	add_compile_options(-Wl,--subsystem,windows)
+
+	set(BOOST_SUFFIX -x64)
+	set(MINGW_WINSOCK "ws2_32")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 	add_compile_options(-mmacosx-version-min=10.14)
 endif()
@@ -71,7 +77,9 @@ find_package(Threads REQUIRED)
 
 set(Boost_NO_BOOST_CMAKE FALSE)
 set(Boost_USE_MULTITHREADED TRUE)
-find_package(Boost REQUIRED COMPONENTS filesystem)
+set(Boost_FIND_QUIETLY FALSE)
+
+find_package(Boost REQUIRED COMPONENTS filesystem${BOOST_SUFFIX})
 message("Using Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}.")
 include_directories("${Boost_INCLUDE_DIRS}/..")
 
@@ -165,6 +173,7 @@ if(QT_VER EQUAL 6)
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
+		"${MINGW_WINSOCK}"
 		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidget Qt6::PrintSupport
 	)
 
@@ -191,6 +200,7 @@ elseif(QT_VER EQUAL 5)
 	target_link_libraries(taspaths
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
+		"${MINGW_WINSOCK}"
 		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL Qt5::PrintSupport
 	)
 

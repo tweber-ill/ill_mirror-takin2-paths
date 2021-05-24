@@ -105,8 +105,8 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 
 	// move sample position around monochromator axis
 	if(m_sample.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
-		/*|| m_sample.IsObjectOnAxis(obj, AxisAngle::OUT)
-		|| m_sample.IsObjectOnAxis(obj, AxisAngle::IN)*/)
+		/*|| m_sample.IsObjectOnAxis(obj, AxisAngle::OUTGOING)
+		|| m_sample.IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
 	{
 		ax = &m_sample;
 		ax_prev = &m_mono;
@@ -115,14 +115,14 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 
 	// move analyser position around sample axis
 	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
-		/*|| m_ana.IsObjectOnAxis(obj, AxisAngle::IN)*/)
+		/*|| m_ana.IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
 	{
 		ax = &m_ana;
 		ax_prev = &m_sample;
 	}
 
 	// move detector around analyser axis
-	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::OUT))
+	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::OUTGOING))
 	{
 		ax = &m_ana;
 		ax_prev = &m_ana;
@@ -140,17 +140,17 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	if(!use_out_axis)
 	{
 		// get center of axis
-		pos_ax = ax->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+		pos_ax = ax->GetTrafo(AxisAngle::INCOMING) * tl2::create<t_vec>({ 0, 0, 0, 1 });
 	}
 	else
 	{
 		// get a position on the outgoing vector of an axis
 		// TODO: replace the "2 0 0" with the actual centre of the "detector" object
-		pos_ax = ax->GetTrafo(AxisAngle::OUT) * tl2::create<t_vec>({ 2, 0, 0, 1 });
+		pos_ax = ax->GetTrafo(AxisAngle::OUTGOING) * tl2::create<t_vec>({ 2, 0, 0, 1 });
 	}
 
-	t_vec pos_ax_prev = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ 0, 0, 0, 1 });
-	t_vec pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::IN) * tl2::create<t_vec>({ -1, 0, 0, 1 });
+	t_vec pos_ax_prev = ax_prev->GetTrafo(AxisAngle::INCOMING) * tl2::create<t_vec>({ 0, 0, 0, 1 });
+	t_vec pos_ax_prev_in = ax_prev->GetTrafo(AxisAngle::INCOMING) * tl2::create<t_vec>({ -1, 0, 0, 1 });
 	pos_ax.resize(2);
 	pos_ax_prev.resize(2);
 	pos_ax_prev_in.resize(2);

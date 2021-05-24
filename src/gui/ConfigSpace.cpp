@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @license GPLv3, see 'LICENSE' file
- * 
+ *
  * References:
  *   - https://www.qcustomplot.com/documentation/classQCPColorMap.html
  */
@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cstdint>
 
+#include "mingw_hacks.h"
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 

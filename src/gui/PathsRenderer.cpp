@@ -113,7 +113,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	for(const auto* axis : { &mono, &sample, &ana })
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
+		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
 
@@ -188,7 +188,7 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 	for(const auto* axis : { &mono, &sample, &ana })
 	{
 		// get geometries both relative to incoming and to outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
+		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
 

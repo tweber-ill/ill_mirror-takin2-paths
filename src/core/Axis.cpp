@@ -151,7 +151,7 @@ t_mat Axis::GetTrafo(AxisAngle which) const
 	// trafo of previous axis
 	t_mat matPrev = tl2::unit<t_mat>(4);
 	if(m_prev)
-		matPrev = m_prev->GetTrafo(AxisAngle::OUT);
+		matPrev = m_prev->GetTrafo(AxisAngle::OUTGOING);
 
 	// local trafos
 	t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
@@ -164,7 +164,7 @@ t_mat Axis::GetTrafo(AxisAngle which) const
 	auto matTotal = matPrev * matTrans * matRotIn;
 	if(which==AxisAngle::INTERNAL)
 		matTotal *= matRotInternal;
-	if(which==AxisAngle::OUT)
+	if(which==AxisAngle::OUTGOING)
 		matTotal *= matRotOut;
 	return matTotal;
 }
@@ -174,8 +174,8 @@ const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) co
 {
 	switch(which)
 	{
-		case AxisAngle::IN: return m_comps_in;
-		case AxisAngle::OUT: return m_comps_out;
+		case AxisAngle::INCOMING: return m_comps_in;
+		case AxisAngle::OUTGOING: return m_comps_out;
 		case AxisAngle::INTERNAL: return m_comps_internal;
 	}
 
@@ -212,11 +212,11 @@ bool Axis::IsObjectOnAxis(const std::string& obj, AxisAngle ax) const
 	// get component collection depending on axis angle type
 	const std::vector<std::shared_ptr<Geometry>>* comps = nullptr;
 
-	if(ax == AxisAngle::IN)
+	if(ax == AxisAngle::INCOMING)
 		comps = &m_comps_in;
 	else if(ax == AxisAngle::INTERNAL)
 		comps = &m_comps_internal;
-	else if(ax == AxisAngle::OUT)
+	else if(ax == AxisAngle::OUTGOING)
 		comps = &m_comps_out;
 	
 	if(!comps)

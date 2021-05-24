@@ -195,7 +195,7 @@ bool InstrumentSpace::CheckCollision2D() const
 		std::vector<std::tuple<t_vec, t_real>>& circles)
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
+		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			const t_mat matAxis = axis.GetTrafo(axisangle);
 			get_comp_circles(axis.GetComps(axisangle), circles, &matAxis);
@@ -243,7 +243,7 @@ bool InstrumentSpace::CheckCollision2D() const
 		std::vector<std::vector<t_vec>>& polys)
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::IN, AxisAngle::INTERNAL, AxisAngle::OUT})
+		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			const t_mat matAxis = axis.GetTrafo(axisangle);
 			get_comp_polys(axis.GetComps(axisangle), polys, &matAxis);

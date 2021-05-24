@@ -26,9 +26,9 @@
 // ----------------------------------------------------------------------------
 enum class AxisAngle
 {
-	IN,		// defined with respect to incoming axis
+	INCOMING,	// defined with respect to incoming axis
 	INTERNAL,	// defined with respect to local rotation
-	OUT		// defined with respect to outgoing axis
+	OUTGOING	// defined with respect to outgoing axis
 };
 
 class Instrument;
@@ -63,10 +63,10 @@ public:
 	void SetAxisAngleInternal(t_real angle);
 
 	// which==1: in, which==2: internal, which==3: out
-	t_mat GetTrafo(AxisAngle which=AxisAngle::IN) const;
+	t_mat GetTrafo(AxisAngle which=AxisAngle::INCOMING) const;
 
 	const std::vector<std::shared_ptr<Geometry>>& 
-		GetComps(AxisAngle which=AxisAngle::IN) const;
+		GetComps(AxisAngle which=AxisAngle::INCOMING) const;
 
 	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
 
