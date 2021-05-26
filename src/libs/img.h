@@ -10,6 +10,7 @@
  */
 
 #include <cstdlib>
+#include "tlibs2/libs/maths.h"
 
 
 namespace geo {
@@ -35,7 +36,8 @@ get_pixel(const t_imageview& img, int x, int y)
  * set a pixel in an image view
  */
 template<class t_imageview>
-void set_pixel(t_imageview& img, int x, int y, typename gil::channel_type<t_imageview>::type pixel)
+void set_pixel(t_imageview& img, int x, int y, 
+	typename gil::channel_type<t_imageview>::type pixel)
 {
 	if(x >= img.width() || y >= img.height())
 		return;
@@ -48,11 +50,19 @@ void set_pixel(t_imageview& img, int x, int y, typename gil::channel_type<t_imag
  * boundary tracing
  * @see http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/ray.html
  */
-template<class t_imageview, class t_boundaryview>
-void trace_boundary(const t_imageview& img, t_boundaryview& boundary)
+template<class t_vec, 
+	class t_imageview, class t_boundaryview>
+requires tl2::is_vec<t_vec>
+std::vector<std::vector<t_vec>> trace_boundary(
+	const t_imageview& img, t_boundaryview& boundary)
 {
+	// contour polygons
+	std::vector<std::vector<t_vec>> contours;
+	std::vector<t_vec> contour;
+
+
 	// find start pixel
-	int start[2] = {0, 0};
+	t_vec start = tl2::create<t_vec>({0, 0});
 	bool start_found = 0;
 
 	for(int y=0; y<img.height(); ++y)
@@ -73,39 +83,39 @@ void trace_boundary(const t_imageview& img, t_boundaryview& boundary)
 	}
 
 	if(!start_found)
-		return;
-	else
-		set_pixel(boundary, start[0], start[1], 0xff);
+		return contours;
+
+	contour.push_back(start);
+	set_pixel(boundary, start[0], start[1], 0xff);
 
 
 	// trace boundary
-	int pos[2] = { start[0], start[1] };
-	int dir[2] = {1, 0};
-	int next_dir[2] = {0, 0};
-
+	t_vec pos = start;
+	t_vec dir = tl2::create<t_vec>({1, 0});
+	t_vec next_dir = tl2::create<t_vec>({0, 0});
 
 	// next possible position depending on direction
-	auto get_next_dir = [](const int* dir, int* next_dir, int iter=0) -> bool
+	auto get_next_dir = [](const t_vec& dir, t_vec& next_dir, int iter=0) -> bool
 	{
-		const int next_dirs[][2] = 
+		const t_vec next_dirs[] = 
 		{
-			{ -1, -1 }, // 0
-			{  0, -1 }, // 1
-			{  1, -1 }, // 2
-			{  1,  0 }, // 3
-			{  1,  1 }, // 4
-			{  0,  1 }, // 5
-			{ -1,  1 }, // 6
-			{ -1,  0 }, // 7
+			tl2::create<t_vec>({ -1, -1 }), // 0
+			tl2::create<t_vec>({  0, -1 }), // 1
+			tl2::create<t_vec>({  1, -1 }), // 2
+			tl2::create<t_vec>({  1,  0 }), // 3
+			tl2::create<t_vec>({  1,  1 }), // 4
+			tl2::create<t_vec>({  0,  1 }), // 5
+			tl2::create<t_vec>({ -1,  1 }), // 6
+			tl2::create<t_vec>({ -1,  0 }), // 7
 		};
 		
-		const int back_dir[2] = { -dir[0], -dir[1] };
+		const t_vec back_dir = -dir;
 		std::size_t idx = 0;
 		bool has_next_dir = false;
 
 		for(int i=0; i<8; ++i)
 		{
-			if(back_dir[0] == next_dirs[i][0] && back_dir[1] == next_dirs[i][1])
+			if(back_dir == next_dirs[i])
 			{
 				idx = (iter + i+1) % 8;
 				has_next_dir = true;
@@ -116,8 +126,7 @@ void trace_boundary(const t_imageview& img, t_boundaryview& boundary)
 		if(!has_next_dir)
 			return false;
 
-		next_dir[0] = next_dirs[idx][0];
-		next_dir[1] = next_dirs[idx][1];
+		next_dir = next_dirs[idx];
 		return true;
 	};
 
@@ -143,6 +152,7 @@ void trace_boundary(const t_imageview& img, t_boundaryview& boundary)
 			pos[0] += dir[0];
 			pos[1] += dir[1];
 
+			contour.push_back(pos);
 			set_pixel(boundary, pos[0], pos[1], 0xff);
 		}
 		else
@@ -154,5 +164,8 @@ void trace_boundary(const t_imageview& img, t_boundaryview& boundary)
 		if(pos[0] == start[0] && pos[1] == start[1])
 			break;
 	}
+
+	contours.emplace_back(std::move(contour));
+	return contours;
 }
 }

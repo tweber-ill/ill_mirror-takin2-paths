@@ -4,15 +4,19 @@
  * @date may-2021
  * @license see 'LICENSE' file
  * 
- * g++-10 -std=c++20 -o 0 contour.cpp -lpng
+ * g++-10 -I.. -std=c++20 -o contour contour.cpp -lpng
  */
 
 #include <iostream>
+#include <vector>
 #include <boost/gil/image.hpp>
 #include <boost/gil/extension/io/png.hpp>
 namespace gil = boost::gil;
 
 #include "../src/libs/img.h"
+
+using t_int = int;
+using t_vec = tl2::vec<t_int, std::vector>;
 
 
 int main(int argc, char** argv)
@@ -27,7 +31,7 @@ int main(int argc, char** argv)
 	gil::read_image(argv[1], img, gil::png_tag{});
 	gil::gray8_image_t boundary(img.width(), img.height());
 
-	geo::trace_boundary(gil::view(img), gil::view(boundary));
+	geo::trace_boundary<t_vec>(gil::view(img), gil::view(boundary));
 	gil::write_view("contour.png", gil::view(boundary), gil::png_tag{});
 
 	return 0;

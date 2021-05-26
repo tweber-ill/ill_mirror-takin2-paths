@@ -149,23 +149,26 @@ pt::ptree Axis::Save() const
 t_mat Axis::GetTrafo(AxisAngle which) const
 {
 	// trafo of previous axis
-	t_mat matPrev = tl2::unit<t_mat>(4);
-	if(m_prev)
-		matPrev = m_prev->GetTrafo(AxisAngle::OUTGOING);
+	t_mat matPrev = m_prev ? m_prev->GetTrafo(AxisAngle::OUTGOING) : tl2::unit<t_mat>(4);
 
 	// local trafos
-	t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
+	const t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
 	t_mat matRotIn = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_in);
-	t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out);
-	t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal);
 	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
-	auto [matTransInv, transinvok] = tl2::inv<t_mat>(matTrans);
+	t_mat matTotal = matPrev * matTrans * matRotIn;
+	//auto [matTransInv, transinvok] = tl2::inv<t_mat>(matTrans);
 
-	auto matTotal = matPrev * matTrans * matRotIn;
 	if(which==AxisAngle::INTERNAL)
+	{
+		t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal);
 		matTotal *= matRotInternal;
+	}
 	if(which==AxisAngle::OUTGOING)
+	{
+		t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out);
 		matTotal *= matRotOut;
+	}
+
 	return matTotal;
 }
 
