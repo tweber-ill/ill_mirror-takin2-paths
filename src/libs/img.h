@@ -26,7 +26,7 @@ get_pixel(const t_imageview& img, int x, int y)
 {
 	using t_pixel = typename gil::channel_type<t_imageview>::type;
 
-	if(x >= img.width() || y >= img.height())
+	if(x >= img.width() || y >= img.height() || x<0 || y<0)
 		return t_pixel{};
 
 	return img.row_begin(y)[x];
@@ -40,7 +40,7 @@ template<class t_imageview>
 void set_pixel(t_imageview& img, int x, int y, 
 	typename gil::channel_type<t_imageview>::type pixel)
 {
-	if(x >= img.width() || y >= img.height())
+	if(x >= img.width() || y >= img.height() || x<0 || y<0)
 		return;
 
 	img.row_begin(y)[x] = pixel;
