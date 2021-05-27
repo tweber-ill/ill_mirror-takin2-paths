@@ -205,8 +205,42 @@ bool InstrumentSpace::CheckCollision2D() const
 	};
 
 
-	// extract 2d polygons from box geometry
+	// extract 2d polygon from box geometry
 	auto get_comp_polys = [](
+		const std::shared_ptr<Geometry>& comp,
+		std::vector<t_vec>& poly,
+		const t_mat* matAxis = nullptr)
+	{
+		const t_mat& matGeo = comp->GetTrafo();
+		t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
+
+		if(comp->GetType() == GeometryType::BOX)
+		{
+			auto cyl = std::dynamic_pointer_cast<BoxGeometry>(comp);
+
+			t_real lx = cyl->GetLength() * t_real(0.5);
+			t_real ly = cyl->GetDepth() * t_real(0.5);
+			t_real lz = cyl->GetHeight() * t_real(0.5);
+
+			std::vector<t_vec> vertices =
+			{
+				mat * tl2::create<t_vec>({ +lx, -ly, -lz, 1 }),	// vertex 0
+				mat * tl2::create<t_vec>({ -lx, -ly, -lz, 1 }),	// vertex 1
+				mat * tl2::create<t_vec>({ -lx, +ly, -lz, 1 }),	// vertex 2
+				mat * tl2::create<t_vec>({ +lx, +ly, -lz, 1 }),	// vertex 3
+			};
+
+			// only two dimensions needed
+			for(t_vec& vec : vertices)
+				vec.resize(2);
+
+			poly = std::move(vertices);
+		}
+	};
+
+
+	// extract 2d polygons from box geometries
+	auto get_comps_polys = [&get_comp_polys](
 		const std::vector<std::shared_ptr<Geometry>>& comps,
 		std::vector<std::vector<t_vec>>& polys,
 		const t_mat* matAxis = nullptr)
@@ -215,42 +249,22 @@ bool InstrumentSpace::CheckCollision2D() const
 
 		for(const auto& comp : comps)
 		{
-			const t_mat& matGeo = comp->GetTrafo();
-			t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
-
-			if(comp->GetType() == GeometryType::BOX)
-			{
-				auto cyl = std::dynamic_pointer_cast<BoxGeometry>(comp);
-
-				t_real lx = cyl->GetLength() * t_real(0.5);
-				t_real ly = cyl->GetDepth() * t_real(0.5);
-				t_real lz = cyl->GetHeight() * t_real(0.5);
-
-				std::vector<t_vec> vertices =
-				{
-					mat * tl2::create<t_vec>({ +lx, -ly, -lz, 1 }),	// vertex 0
-					mat * tl2::create<t_vec>({ -lx, -ly, -lz, 1 }),	// vertex 1
-					mat * tl2::create<t_vec>({ -lx, +ly, -lz, 1 }),	// vertex 2
-					mat * tl2::create<t_vec>({ +lx, +ly, -lz, 1 }),	// vertex 3
-				};
-
-				// only two dimensions needed
-				for(t_vec& vec : vertices)
-					vec.resize(2);
-				polys.emplace_back(std::move(vertices));
-			}
+			std::vector<t_vec> poly;
+			get_comp_polys(comp, poly, matAxis);
+			if(poly.size())
+				polys.emplace_back(std::move(poly));
 		}
 	};
 
 
-	auto get_polys = [&get_comp_polys](const Axis& axis, 
+	auto get_polys = [&get_comps_polys](const Axis& axis, 
 		std::vector<std::vector<t_vec>>& polys)
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			const t_mat& matAxis = axis.GetTrafo(axisangle);
-			get_comp_polys(axis.GetComps(axisangle), polys, &matAxis);
+			get_comps_polys(axis.GetComps(axisangle), polys, &matAxis);
 		}
 	};
 
@@ -258,8 +272,13 @@ bool InstrumentSpace::CheckCollision2D() const
 	// check if two polygonal objects collide
 	auto check_collision_poly_poly = [](
 		const std::vector<std::vector<t_vec>>& polys1,
-		const std::vector<std::vector<t_vec>>& polys2) -> bool
+		const std::vector<std::vector<t_vec>>& polys2,
+		const std::tuple<t_vec, t_vec>& bb1,
+		const std::tuple<t_vec, t_vec>& bb2) -> bool
 	{
+		if(!tl2::collide_bounding_boxes(bb1, bb2))
+			return false;
+
 		for(std::size_t idx1=0; idx1<polys1.size(); ++idx1)
 		{
 			const auto& poly1 = polys1[idx1];
@@ -272,6 +291,7 @@ bool InstrumentSpace::CheckCollision2D() const
 					return true;
 			}
 		}
+
 		return false;
 	};
 
@@ -299,6 +319,7 @@ bool InstrumentSpace::CheckCollision2D() const
 					return true;
 			}
 		}
+
 		return false;
 	};
 
@@ -321,6 +342,7 @@ bool InstrumentSpace::CheckCollision2D() const
 					return true;
 			}
 		}
+
 		return false;
 	};
 
@@ -334,7 +356,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	std::vector<std::tuple<t_vec, t_real>> 
 		monoCircles, sampleCircles, anaCircles, wallCircles;
 	std::vector<std::vector<t_vec>> 
-		monoPolys, samplePolys, anaPolys, wallPolys;
+		monoPolys, samplePolys, anaPolys;
 
 	get_circles(mono, monoCircles);
 	get_circles(sample, sampleCircles);
@@ -344,17 +366,43 @@ bool InstrumentSpace::CheckCollision2D() const
 	get_polys(mono, monoPolys);
 	get_polys(sample, samplePolys);
 	get_polys(ana, anaPolys);
-	get_comp_polys(walls, wallPolys);
 
-	// check for collisions
-	// TODO: exclude checks for objects that are already colliding
-	//       in the instrument definition file
-	//if(check_collision_poly_poly(monoPolys, wallPolys))
-	//	return true;
-	if(check_collision_poly_poly(samplePolys, wallPolys))
-		return true;
-	if(check_collision_poly_poly(anaPolys, wallPolys))
-		return true;
+	// get bounding boxes
+	auto monoBB = tl2::bounding_box<t_vec, std::vector>(monoPolys, 2);
+	auto sampleBB = tl2::bounding_box<t_vec, std::vector>(samplePolys, 2);
+	auto anaBB = tl2::bounding_box<t_vec, std::vector>(anaPolys, 2);
+
+
+	// check for collisions with the walls
+	for(const auto& wall : walls)
+	{
+		std::vector<t_vec> wallPoly;
+		get_comp_polys(wall, wallPoly);
+		std::vector<std::vector<t_vec>> wallPolys;
+		if(wallPoly.size() == 0)
+			continue;
+		wallPolys.emplace_back(std::move(wallPoly));
+
+		auto wallBB = tl2::bounding_box<t_vec, std::vector>(wallPolys);
+
+		// check for collisions
+		// TODO: exclude checks for objects that are already colliding
+		//       in the instrument definition file
+
+		//if(check_collision_poly_poly(monoPolys, wallPolys, monoBB, wallBB))
+		//	return true;
+		if(check_collision_poly_poly(samplePolys, wallPolys, sampleBB, wallBB))
+			return true;
+		if(check_collision_poly_poly(anaPolys, wallPolys, anaBB, wallBB))
+			return true;
+
+		//if(check_collision_circle_poly(monoCircles, wallPolys))
+		//	return true;
+		if(check_collision_circle_poly(sampleCircles, wallPolys))
+			return true;
+		if(check_collision_circle_poly(anaCircles, wallPolys))
+			return true;
+	}
 
 	//if(check_collision_circle_circle(monoCircles, wallCircles))
 	//	return true;
@@ -368,13 +416,6 @@ bool InstrumentSpace::CheckCollision2D() const
 	if(check_collision_circle_circle(sampleCircles, anaCircles))
 		return true;
 	if(check_collision_circle_circle(monoCircles, anaCircles))
-		return true;
-
-	//if(check_collision_circle_poly(monoCircles, wallPolys))
-	//	return true;
-	if(check_collision_circle_poly(sampleCircles, wallPolys))
-		return true;
-	if(check_collision_circle_poly(anaCircles, wallPolys))
 		return true;
 
 	if(check_collision_circle_poly(monoCircles, anaPolys))
