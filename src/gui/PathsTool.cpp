@@ -771,6 +771,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		}
 
 		m_dlgConfigSpace->show();
+		m_dlgConfigSpace->raise();
 		m_dlgConfigSpace->activateWindow();
 	});
 
@@ -838,6 +839,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->m_dlgAbout = std::make_shared<AboutDlg>(this);
 
 		m_dlgAbout->show();
+		m_dlgAbout->raise();
 		m_dlgAbout->activateWindow();
 	});
 
@@ -963,6 +965,7 @@ int main(int argc, char** argv)
 	if(argc > 1)
 		dlg->SetInitialInstrumentFile(argv[1]);
 	dlg->show();
+
 	return app->exec();
 }
 // ----------------------------------------------------------------------------
