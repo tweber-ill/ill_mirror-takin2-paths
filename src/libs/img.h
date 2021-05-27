@@ -10,6 +10,7 @@
  */
 
 #include <cstdlib>
+
 #include "tlibs2/libs/maths.h"
 
 
@@ -61,38 +62,18 @@ std::vector<std::vector<t_vec>> trace_boundary(
 	std::vector<t_vec> contour;
 
 
-	// find start pixel
-	t_vec start = tl2::create<t_vec>({0, 0});
-	bool start_found = 0;
-
-	for(int y=0; y<img.height(); ++y)
+	// contour already seen?
+	auto already_seen = [&contours](const t_vec& vec) -> bool
 	{
-		for(int x=0; x<img.width(); ++x)
+		for(const auto& contour : contours)
 		{
-			if(get_pixel(img, x, y))
-			{
-				start[0] = x;
-				start[1] = y;
-				start_found = 1;
-				break;
-			}
-
-			if(start_found)
-				break;
+			if(std::find(contour.begin(), contour.end(), vec) != contour.end())
+				return true;
 		}
-	}
 
-	if(!start_found)
-		return contours;
+		return false;
+	};
 
-	contour.push_back(start);
-	set_pixel(boundary, start[0], start[1], 0xff);
-
-
-	// trace boundary
-	t_vec pos = start;
-	t_vec dir = tl2::create<t_vec>({1, 0});
-	t_vec next_dir = tl2::create<t_vec>({0, 0});
 
 	// next possible position depending on direction
 	auto get_next_dir = [](const t_vec& dir, t_vec& next_dir, int iter=0) -> bool
@@ -131,41 +112,89 @@ std::vector<std::vector<t_vec>> trace_boundary(
 	};
 
 
-	while(1)
-	{
-		bool has_next_dir = false;
+	// find multiple contours
+	t_vec start = tl2::create<t_vec>({0, 0});
 
-		for(int i=0; i<8; ++i)
+	while(true)
+	{
+		// find start pixel
+		bool start_found = 0;
+
+		for(int y=start[1]; y<img.height(); ++y)
 		{
-			if(get_next_dir(dir, next_dir, i) && get_pixel(img, pos[0]+next_dir[0], pos[1]+next_dir[1]))
+			for(int x=0; x<img.width(); ++x)
 			{
-				has_next_dir = true;
+				if(get_pixel(img, x, y))
+				{
+					// for multiple contours: inside a contour
+					if(get_pixel(img, x-1, y))
+						continue;
+
+					t_vec vec = tl2::create<t_vec>({x, y});
+
+					if(already_seen(vec))
+						continue;
+
+					start = vec;
+					start_found = 1;
+					break;
+				}
+			}
+
+			if(start_found)
+				break;
+		}
+
+		if(!start_found)
+			return contours;
+
+		contour.push_back(start);
+		set_pixel(boundary, start[0], start[1], 0xff);
+
+
+		// trace boundary
+		t_vec pos = start;
+		t_vec dir = tl2::create<t_vec>({1, 0});
+		t_vec next_dir = tl2::create<t_vec>({0, 0});
+
+
+		while(1)
+		{
+			bool has_next_dir = false;
+
+			for(int i=0; i<8; ++i)
+			{
+				if(get_next_dir(dir, next_dir, i) && get_pixel(img, pos[0]+next_dir[0], pos[1]+next_dir[1]))
+				{
+					has_next_dir = true;
+					break;
+				}
+			}
+
+			if(has_next_dir)
+			{
+				dir[0] = next_dir[0];
+				dir[1] = next_dir[1];
+
+				pos[0] += dir[0];
+				pos[1] += dir[1];
+
+				contour.push_back(pos);
+				set_pixel(boundary, pos[0], pos[1], 0xff);
+			}
+			else
+			{
 				break;
 			}
+
+			// back at start
+			if(pos[0] == start[0] && pos[1] == start[1])
+				break;
 		}
 
-		if(has_next_dir)
-		{
-			dir[0] = next_dir[0];
-			dir[1] = next_dir[1];
-
-			pos[0] += dir[0];
-			pos[1] += dir[1];
-
-			contour.push_back(pos);
-			set_pixel(boundary, pos[0], pos[1], 0xff);
-		}
-		else
-		{
-			break;
-		}
-
-		// back at start
-		if(pos[0] == start[0] && pos[1] == start[1])
-			break;
+		contours.emplace_back(std::move(contour));
 	}
 
-	contours.emplace_back(std::move(contour));
 	return contours;
 }
 }
