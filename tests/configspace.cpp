@@ -9,6 +9,15 @@
  *   - https://github.com/boostorg/gil/tree/develop/example
  *
  * g++-10 -O2 -DNDEBUG -std=c++20 -I.. -o configspace configspace.cpp ../src/core/Geometry.cpp ../src/core/Axis.cpp ../src/core/Instrument.cpp ../src/core/InstrumentSpace.cpp -lboost_filesystem-mt -lboost_system-mt -lpng -lpthread
+ *
+ * profile:
+ *   g++-10 -DDEBUG -ggdb -pg -std=c++20 -I.. -o configspace configspace.cpp ../src/core/Geometry.cpp ../src/core/Axis.cpp ../src/core/Instrument.cpp ../src/core/InstrumentSpace.cpp -lboost_filesystem -lboost_system -lpng -lpthread
+ *
+ *   valgrind -v --tool=callgrind ./configspace ../res/instrument.taspaths
+ *   kcachegrind ...
+ *
+ *   ./configspace ../res/instrument.taspaths
+ *   gprof configspace > configspace.prof  &&  gprof2dot configspace.prof > configspace.dot  &&  dot -Tsvg configspace.dot > configspace.svg
  */
 
 #include <iostream>
@@ -54,11 +63,11 @@ int main(int argc, char** argv)
 		// angles and ranges
 		t_real a6 = 83.957 / 180. * tl2::pi<t_real>;
 
-		t_real da2 = 0.5 / 180. * tl2::pi<t_real>;
+		t_real da2 = 5. / 180. * tl2::pi<t_real>;
 		t_real starta2 = 0.;
 		t_real enda2 = tl2::pi<t_real>;
 
-		t_real da4 = -0.5 / 180. * tl2::pi<t_real>;
+		t_real da4 = -5. / 180. * tl2::pi<t_real>;
 		t_real starta4 = 0.;
 		t_real enda4 = -tl2::pi<t_real>;
 
@@ -131,7 +140,7 @@ int main(int argc, char** argv)
 		{
 			auto img_iter = img_view.row_begin(img_row);
 			for(std::size_t img_col=0; img_col<img_w; ++img_col)
-				(*img_iter)[img_col] = img_buf[img_row*img_w + img_col];
+				*(img_iter + img_col) = img_buf[img_row*img_w + img_col];
 		}
 
 		delete[] img_buf;

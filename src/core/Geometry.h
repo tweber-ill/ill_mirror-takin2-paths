@@ -55,7 +55,8 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop);
 	virtual boost::property_tree::ptree Save() const;
 
-	virtual t_mat GetTrafo() const = 0;
+	virtual void UpdateTrafo() = 0;
+	virtual const t_mat& GetTrafo() const { return m_trafo; }
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 		GetTriangles() const = 0;
 
@@ -74,6 +75,7 @@ public:
 protected:
 	std::string m_id;
 	t_vec m_colour = tl2::create<t_vec>({1, 0, 0});
+	t_mat m_trafo = tl2::unit<t_mat>(3);
 };
 // ----------------------------------------------------------------------------
 
@@ -94,7 +96,7 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 	virtual boost::property_tree::ptree Save() const override;
 
-	virtual t_mat GetTrafo() const override;
+	virtual void UpdateTrafo() override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
@@ -132,12 +134,12 @@ public:
 	virtual t_vec GetCentre() const override;
 	virtual void SetCentre(const t_vec& vec) override;
 
-	virtual t_mat GetTrafo() const override;
+	virtual void UpdateTrafo() override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
-	void SetPos(const t_vec& vec) { m_pos = vec; }
+	void SetPos(const t_vec& vec) { m_pos = vec; UpdateTrafo(); }
 
 	t_real GetHeight() const { return m_height; }
 	void SetHeight(t_real h) { m_height = h; }
@@ -171,12 +173,12 @@ public:
 	virtual t_vec GetCentre() const override;
 	virtual void SetCentre(const t_vec& vec) override;
 
-	virtual t_mat GetTrafo() const override;
+	virtual void UpdateTrafo() override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
-	void SetPos(const t_vec& vec) { m_pos = vec; }
+	void SetPos(const t_vec& vec) { m_pos = vec; UpdateTrafo(); }
 
 	t_real GetRadius() const { return m_radius; }
 	void SetRadius(t_real rad) { m_radius = rad; }

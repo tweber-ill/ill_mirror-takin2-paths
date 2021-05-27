@@ -25,6 +25,7 @@
 # Executables
 *.exe
 *.out
+*.out.*
 *.app
 
 # Packages
@@ -42,6 +43,7 @@ unittests/build/**
 .DS_Store
 *.csv
 *.1
+*.prof
 
 # Temporary tex files
 *.log
@@ -65,6 +67,7 @@ unittests/build/**
 *.png
 *.pdf
 *.svg
+*.dot
 
 # Libraries
 tlibs2

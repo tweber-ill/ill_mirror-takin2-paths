@@ -52,6 +52,7 @@ std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 Geometry::load(const pt::ptree& prop)
 {
 	std::vector<std::shared_ptr<Geometry>> geo_objs;
+	geo_objs.reserve(prop.size());
 
 	// iterate geometry items
 	for(const auto& geo : prop)
@@ -164,6 +165,8 @@ void BoxGeometry::SetCentre(const t_vec& vec)
 
 	m_pos1 += (newcentre - oldcentre);
 	m_pos2 += (newcentre - oldcentre);
+
+	UpdateTrafo();
 }
 
 
@@ -194,6 +197,7 @@ bool BoxGeometry::Load(const pt::ptree& prop)
 	m_depth = prop.get<t_real>("depth", 0.1);
 	m_length = tl2::norm<t_vec>(m_pos1 - m_pos2);
 
+	UpdateTrafo();
 	return true;
 }
 
@@ -213,16 +217,15 @@ pt::ptree BoxGeometry::Save() const
 }
 
 
-t_mat BoxGeometry::GetTrafo() const
+void BoxGeometry::UpdateTrafo()
 {
 	t_vec vecFrom = tl2::create<t_vec>({1, 0, 0});
 	t_vec vecTo = m_pos2 - m_pos1;
 	t_vec preTranslate = 0.5*(m_pos1 + m_pos2);
 	t_vec postTranslate = tl2::create<t_vec>({0, 0, m_height*0.5});
 
-	t_mat mat = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
+	m_trafo = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
 		vecTo, 1., postTranslate, vecFrom, 1., preTranslate);
-	return mat;
 }
 
 
@@ -279,6 +282,8 @@ void CylinderGeometry::SetCentre(const t_vec& vec)
 	newcentre.resize(3);
 
 	m_pos += (newcentre - oldcentre);
+
+	UpdateTrafo();
 }
 
 
@@ -299,6 +304,7 @@ bool CylinderGeometry::Load(const pt::ptree& prop)
 	m_height = prop.get<t_real>("height", 1.);
 	m_radius = prop.get<t_real>("radius", 0.1);
 
+	UpdateTrafo();
 	return true;
 }
 
@@ -317,10 +323,9 @@ pt::ptree CylinderGeometry::Save() const
 }
 
 
-t_mat CylinderGeometry::GetTrafo() const
+void CylinderGeometry::UpdateTrafo()
 {
-	t_mat mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
-	return mat;
+	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
 }
 
 
@@ -378,17 +383,7 @@ void SphereGeometry::SetCentre(const t_vec& vec)
 
 	m_pos += (newcentre - oldcentre);
 
-	/*t_mat trafo = GetTrafo();
-	if(auto [trafo_inv, ok] = tl2::inv(trafo); ok)
-	{
-		t_vec vec4 = vec;
-		if(vec4.size() < 4)
-			vec4.push_back(1);
-
-		t_vec newpos = trafo_inv * vec4;
-		newpos.resize(3);
-		SetPos(newpos);
-	}*/
+	UpdateTrafo();
 }
 
 
@@ -408,6 +403,7 @@ bool SphereGeometry::Load(const pt::ptree& prop)
 
 	m_radius = prop.get<t_real>("radius", 0.1);
 
+	UpdateTrafo();
 	return true;
 }
 
@@ -425,10 +421,9 @@ pt::ptree SphereGeometry::Save() const
 }
 
 
-t_mat SphereGeometry::GetTrafo() const
+void SphereGeometry::UpdateTrafo()
 {
-	t_mat mat = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
-	return mat;
+	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
 }
 
 

@@ -150,9 +150,11 @@ bool InstrumentSpace::CheckCollision2D() const
 		std::vector<std::tuple<t_vec, t_real>>& circles,
 		const t_mat* matAxis = nullptr)
 	{
+		circles.reserve(circles.size() + comps.size());
+
 		for(const auto& comp : comps)
 		{
-			auto matGeo = comp->GetTrafo();
+			const t_mat& matGeo = comp->GetTrafo();
 			t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
 
 			if(comp->GetType() == GeometryType::CYLINDER)
@@ -209,9 +211,11 @@ bool InstrumentSpace::CheckCollision2D() const
 		std::vector<std::vector<t_vec>>& polys,
 		const t_mat* matAxis = nullptr)
 	{
+		polys.reserve(polys.size() + comps.size());
+
 		for(const auto& comp : comps)
 		{
-			auto matGeo = comp->GetTrafo();
+			const t_mat& matGeo = comp->GetTrafo();
 			t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
 
 			if(comp->GetType() == GeometryType::BOX)
