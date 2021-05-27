@@ -965,6 +965,8 @@ int main(int argc, char** argv)
 	if(argc > 1)
 		dlg->SetInitialInstrumentFile(argv[1]);
 	dlg->show();
+	dlg->raise();
+	dlg->activateWindow();
 
 	return app->exec();
 }
