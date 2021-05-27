@@ -17,15 +17,13 @@
 namespace pt = boost::property_tree;
 
 
-Axis::Axis(const std::string& id, const Axis* prev, Instrument *instr)
-	: m_id{id}, m_prev{prev}, m_instr{instr}
-{
-}
+Axis::Axis(const std::string& id, const Axis* prev, const Axis* next, Instrument *instr)
+	: m_id{id}, m_prev{prev}, m_next{next}, m_instr{instr}
+{}
 
 
 Axis::~Axis()
-{
-}
+{}
 
 
 Axis::Axis(const Axis& axis)
@@ -40,6 +38,7 @@ const Axis& Axis::operator=(const Axis& axis)
 
 	// has to be set separately from the instrument
 	this->m_prev = nullptr;
+	this->m_next = nullptr;
 	this->m_instr = nullptr;
 
 	this->m_pos = axis.m_pos;
@@ -52,6 +51,11 @@ const Axis& Axis::operator=(const Axis& axis)
 	this->m_comps_out = axis.m_comps_out;
 	this->m_comps_internal = axis.m_comps_internal;
 
+	this->m_trafos_need_update = axis.m_trafos_need_update;
+	this->m_trafoIncoming = axis.m_trafoIncoming;
+	this->m_trafoInternal = axis.m_trafoInternal;
+	this->m_trafoOutgoing = axis.m_trafoOutgoing;
+
 	return *this;
 }
 
@@ -61,6 +65,8 @@ void Axis::Clear()
 	m_comps_in.clear();
 	m_comps_out.clear();
 	m_comps_internal.clear();
+
+	m_trafos_need_update = true;
 }
 
 
@@ -109,6 +115,7 @@ bool Axis::Load(const pt::ptree& prop)
 	// geometry relative to outgoing axis
 	load_geo("geometry_out", m_comps_out);
 
+	TrafosNeedUpdate();
 	return true;
 }
 
@@ -146,7 +153,15 @@ pt::ptree Axis::Save() const
 }
 
 
-t_mat Axis::GetTrafo(AxisAngle which) const
+void Axis::TrafosNeedUpdate() const
+{
+	m_trafos_need_update = true;
+	if(m_next)
+		m_next->TrafosNeedUpdate();
+}
+
+
+void Axis::UpdateTrafos() const
 {
 	// trafo of previous axis
 	t_mat matPrev = m_prev ? m_prev->GetTrafo(AxisAngle::OUTGOING) : tl2::unit<t_mat>(4);
@@ -155,21 +170,32 @@ t_mat Axis::GetTrafo(AxisAngle which) const
 	const t_vec upaxis = tl2::create<t_vec>({0, 0, 1});
 	t_mat matRotIn = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_in);
 	t_mat matTrans = tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], 0.);
-	t_mat matTotal = matPrev * matTrans * matRotIn;
-	//auto [matTransInv, transinvok] = tl2::inv<t_mat>(matTrans);
+	m_trafoIncoming = matPrev * matTrans * matRotIn;
 
-	if(which==AxisAngle::INTERNAL)
+	t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal);
+	m_trafoInternal = m_trafoIncoming * matRotInternal;
+
+	t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out);
+	m_trafoOutgoing = m_trafoIncoming * matRotOut;
+}
+
+
+const t_mat& Axis::GetTrafo(AxisAngle which) const
+{
+	if(m_trafos_need_update)
 	{
-		t_mat matRotInternal = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_internal);
-		matTotal *= matRotInternal;
-	}
-	if(which==AxisAngle::OUTGOING)
-	{
-		t_mat matRotOut = tl2::hom_rotation<t_mat, t_vec>(upaxis, m_angle_out);
-		matTotal *= matRotOut;
+		UpdateTrafos();
+		m_trafos_need_update = false;
 	}
 
-	return matTotal;
+	switch(which)
+	{
+		case AxisAngle::INCOMING: return m_trafoIncoming;
+		case AxisAngle::INTERNAL: return m_trafoInternal;
+		case AxisAngle::OUTGOING: return m_trafoOutgoing;
+	}
+
+	return m_trafoIncoming;
 }
 
 
@@ -189,6 +215,8 @@ const std::vector<std::shared_ptr<Geometry>>& Axis::GetComps(AxisAngle which) co
 void Axis::SetAxisAngleIn(t_real angle)
 {
 	m_angle_in = angle;
+	TrafosNeedUpdate();
+
 	if(m_instr)
 		m_instr->EmitUpdate();
 }
@@ -197,6 +225,8 @@ void Axis::SetAxisAngleIn(t_real angle)
 void Axis::SetAxisAngleOut(t_real angle)
 {
 	m_angle_out = angle;
+	TrafosNeedUpdate();
+
 	if(m_instr)
 		m_instr->EmitUpdate();
 }
@@ -205,6 +235,8 @@ void Axis::SetAxisAngleOut(t_real angle)
 void Axis::SetAxisAngleInternal(t_real angle)
 {
 	m_angle_internal = angle;
+	TrafosNeedUpdate();
+
 	if(m_instr)
 		m_instr->EmitUpdate();
 }

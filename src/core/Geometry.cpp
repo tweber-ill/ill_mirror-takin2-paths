@@ -48,6 +48,18 @@ Geometry::~Geometry()
 }
 
 
+const t_mat& Geometry::GetTrafo() const
+{
+	if(m_trafo_needs_update)
+	{
+		UpdateTrafo();
+		m_trafo_needs_update = false;
+	}
+
+	return m_trafo;
+}
+
+
 std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 Geometry::load(const pt::ptree& prop)
 {
@@ -166,7 +178,7 @@ void BoxGeometry::SetCentre(const t_vec& vec)
 	m_pos1 += (newcentre - oldcentre);
 	m_pos2 += (newcentre - oldcentre);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 }
 
 
@@ -197,7 +209,7 @@ bool BoxGeometry::Load(const pt::ptree& prop)
 	m_depth = prop.get<t_real>("depth", 0.1);
 	m_length = tl2::norm<t_vec>(m_pos1 - m_pos2);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 	return true;
 }
 
@@ -217,7 +229,7 @@ pt::ptree BoxGeometry::Save() const
 }
 
 
-void BoxGeometry::UpdateTrafo()
+void BoxGeometry::UpdateTrafo() const
 {
 	t_vec vecFrom = tl2::create<t_vec>({1, 0, 0});
 	t_vec vecTo = m_pos2 - m_pos1;
@@ -283,7 +295,7 @@ void CylinderGeometry::SetCentre(const t_vec& vec)
 
 	m_pos += (newcentre - oldcentre);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 }
 
 
@@ -304,7 +316,7 @@ bool CylinderGeometry::Load(const pt::ptree& prop)
 	m_height = prop.get<t_real>("height", 1.);
 	m_radius = prop.get<t_real>("radius", 0.1);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 	return true;
 }
 
@@ -323,7 +335,7 @@ pt::ptree CylinderGeometry::Save() const
 }
 
 
-void CylinderGeometry::UpdateTrafo()
+void CylinderGeometry::UpdateTrafo() const
 {
 	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
 }
@@ -383,7 +395,7 @@ void SphereGeometry::SetCentre(const t_vec& vec)
 
 	m_pos += (newcentre - oldcentre);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 }
 
 
@@ -403,7 +415,7 @@ bool SphereGeometry::Load(const pt::ptree& prop)
 
 	m_radius = prop.get<t_real>("radius", 0.1);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 	return true;
 }
 
@@ -421,7 +433,7 @@ pt::ptree SphereGeometry::Save() const
 }
 
 
-void SphereGeometry::UpdateTrafo()
+void SphereGeometry::UpdateTrafo() const
 {
 	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
 }

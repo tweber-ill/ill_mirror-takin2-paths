@@ -37,15 +37,16 @@ class Axis
 {
 public:
 	// constructor and destructor
-	Axis(const std::string &id="", const Axis *prev=nullptr, Instrument *instr=nullptr);
+	Axis(const std::string &id="", const Axis *prev=nullptr, const Axis *next=nullptr, Instrument *instr=nullptr);
 	~Axis();
 
 	// copy constructor and operator
 	Axis(const Axis& axis);
 	const Axis& operator=(const Axis& axis);
 
-	void SetPreviousAxis(const Axis* axis) { m_prev = axis; }
-	void SetParentInstrument(Instrument* instr) { m_instr = instr; }
+	void SetPreviousAxis(const Axis* axis) { m_prev = axis; m_trafos_need_update = true; }
+	void SetNextAxis(const Axis* axis) { m_next = axis; m_trafos_need_update = true; }
+	void SetParentInstrument(Instrument* instr) { m_instr = instr; m_trafos_need_update = true; }
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
@@ -63,7 +64,9 @@ public:
 	void SetAxisAngleInternal(t_real angle);
 
 	// which==1: in, which==2: internal, which==3: out
-	t_mat GetTrafo(AxisAngle which=AxisAngle::INCOMING) const;
+	const t_mat& GetTrafo(AxisAngle which=AxisAngle::INCOMING) const;
+	void UpdateTrafos() const;
+	void TrafosNeedUpdate() const;
 
 	const std::vector<std::shared_ptr<Geometry>>& 
 		GetComps(AxisAngle which=AxisAngle::INCOMING) const;
@@ -73,10 +76,16 @@ public:
 private:
 	// identifier
 	std::string m_id;
-	// previous axis
-	const Axis *m_prev{nullptr};
+	// previous and next axis
+	const Axis *m_prev{nullptr}, *m_next{nullptr};;
 	// parent instrument
 	Instrument *m_instr{nullptr};
+
+	// trafo matrices
+	mutable t_mat m_trafoIncoming = tl2::unit<t_mat>(4);
+	mutable t_mat m_trafoInternal = tl2::unit<t_mat>(4);
+	mutable t_mat m_trafoOutgoing = tl2::unit<t_mat>(4);
+	mutable bool m_trafos_need_update = true;
 
 	// coordinate origin
 	t_vec m_pos = tl2::create<t_vec>({0,0});
@@ -121,7 +130,8 @@ public:
 	Axis& GetSample() { return m_sample; }
 	Axis& GetAnalyser() { return m_ana; }
 
-	void DragObject(bool drag_start, const std::string& obj, t_real x_start, t_real y_start, t_real x, t_real y);
+	void DragObject(bool drag_start, const std::string& obj, 
+		t_real x_start, t_real y_start, t_real x, t_real y);
 
 	// connection to update signal
 	template<class t_slot>
@@ -131,9 +141,9 @@ public:
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
 private:
-	Axis m_mono{"monochromator", nullptr, this};
-	Axis m_sample{"sample", &m_mono, this};
-	Axis m_ana{"analyser", &m_sample, this};
+	Axis m_mono{"monochromator", nullptr, &m_sample, this};
+	Axis m_sample{"sample", &m_mono, &m_ana, this};
+	Axis m_ana{"analyser", &m_sample, nullptr, this};
 
 	// starting position for drag operation
 	t_vec m_drag_pos_axis_start;

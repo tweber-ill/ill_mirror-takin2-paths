@@ -110,7 +110,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	for(const auto* axis : { &mono, &sample, &ana })
+	for(const Axis* axis : { &mono, &sample, &ana })
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
@@ -129,7 +129,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 				AddTriangleObject(comp->GetId(), verts, norms, uvs,
 					cols[0], cols[1], cols[2], 1);
 
-				auto _matGeo = comp->GetTrafo();
+				const t_mat& _matGeo = comp->GetTrafo();
 				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
 				t_mat_gl mat = matAxis * matGeo;
 
@@ -151,7 +151,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 		AddTriangleObject(wall->GetId(), verts, norms, uvs,
 			cols[0], cols[1], cols[2], 1);
 
-		auto _mat = wall->GetTrafo();
+		const t_mat& _mat = wall->GetTrafo();
 		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
 		m_objs[wall->GetId()].m_mat = mat;
 	}
@@ -185,7 +185,7 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 	const auto& sample = instr.GetSample();
 	const auto& ana = instr.GetAnalyser();
 
-	for(const auto* axis : { &mono, &sample, &ana })
+	for(const Axis* axis : { &mono, &sample, &ana })
 	{
 		// get geometries both relative to incoming and to outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
@@ -198,7 +198,7 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 				if(iter == m_objs.end())
 					continue;
 
-				auto _matGeo = comp->GetTrafo();
+				const t_mat& _matGeo = comp->GetTrafo();
 				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
 				t_mat_gl mat = matAxis * matGeo;
 

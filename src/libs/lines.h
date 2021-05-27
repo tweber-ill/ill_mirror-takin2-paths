@@ -142,6 +142,7 @@ t_cont<t_vec> intersect_line_polylines(
 requires tl2::is_vec<t_vec>
 {
 	t_cont<t_vec> inters;
+	inters.reserve(poly.size());
 
 	for(std::size_t idx=0; idx<poly.size(); ++idx)
 	{
@@ -177,6 +178,7 @@ t_cont<t_vec> intersect_circle_polylines(
 requires tl2::is_vec<t_vec>
 {
 	t_cont<t_vec> inters;
+	inters.reserve(poly.size());
 
 	for(std::size_t idx=0; idx<poly.size(); ++idx)
 	{
@@ -557,6 +559,7 @@ intersect_ineff(const std::vector<t_line>& lines, t_real eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
 	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
+	intersections.reserve(lines.size()*lines.size()/2);
 
 	for(std::size_t i=0; i<lines.size(); ++i)
 	{
@@ -808,6 +811,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 	// results
 	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
+	intersections.reserve(lines.size() * lines.size() / 2);
 
 	t_real curX = 0.;
 	while(events.size())
@@ -1064,6 +1068,7 @@ requires tl2::is_vec<t_vec>
 
 	t_real eps = 1e-6;
 	std::vector<t_line> lines;
+	lines.reserve(poly1.size() + poly2.size());
 
 	// add first polygon line segments
 	for(std::size_t idx1=0; idx1<poly1.size(); ++idx1)

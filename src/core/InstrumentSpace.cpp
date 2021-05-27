@@ -199,7 +199,7 @@ bool InstrumentSpace::CheckCollision2D() const
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
-			const t_mat matAxis = axis.GetTrafo(axisangle);
+			const t_mat& matAxis = axis.GetTrafo(axisangle);
 			get_comp_circles(axis.GetComps(axisangle), circles, &matAxis);
 		}
 	};
@@ -249,7 +249,7 @@ bool InstrumentSpace::CheckCollision2D() const
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
-			const t_mat matAxis = axis.GetTrafo(axisangle);
+			const t_mat& matAxis = axis.GetTrafo(axisangle);
 			get_comp_polys(axis.GetComps(axisangle), polys, &matAxis);
 		}
 	};

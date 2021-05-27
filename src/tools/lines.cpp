@@ -844,6 +844,8 @@ int main(int argc, char** argv)
 
 		auto vis = std::make_unique<LinesWnd>();
 		vis->show();
+		vis->raise();
+		vis->activateWindow();
 
 		return app->exec();
 	}

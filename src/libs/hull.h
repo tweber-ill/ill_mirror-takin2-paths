@@ -60,6 +60,8 @@ requires tl2::is_vec<t_vec>
 	if(verts.size() <= 3)
 	{
 		std::vector<t_vec> hullverts;
+		hullverts.reserve(verts.size());
+
 		for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
 			hullverts.push_back(verts[vertidx]);
 
@@ -410,6 +412,8 @@ requires tl2::is_vec<t_vec>
 
 	// cleanups
 	std::vector<t_vec> finalhull;
+	finalhull.reserve(hull.size());
+
 	for(auto iter = hull.begin(); iter != hull.end();)
 	{
 		finalhull.push_back(iter->vert);
@@ -441,6 +445,7 @@ requires tl2::is_vec<t_vec>
 	// contour determination
 	{
 		std::list<t_vec> contour_left_top, contour_left_bottom;
+
 		std::pair<t_real, t_real> minmax_y_left
 			= std::make_pair(std::numeric_limits<t_real>::max(), -std::numeric_limits<t_real>::max());
 
@@ -577,6 +582,12 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 
 		qh::QhullFacetList facets{qh.facetList()};
 		std::vector<void*> facetHandles{};
+
+		facetHandles.reserve(facets.size());
+		voronoi.reserve(facets.size());
+		triags.reserve(facets.size());
+		neighbours.reserve(facets.size());
+
 
 		// get all triangles
 		for(auto iterFacet=facets.begin(); iterFacet!=facets.end(); ++iterFacet)
@@ -778,7 +789,12 @@ requires tl2::is_vec<t_vec>
 	triags.emplace_back(std::vector<t_vec>{{ verts[0], verts[1], verts[2] }});
 
 	// currently inserted vertices
-	std::vector<t_vec> curverts{{ verts[0], verts[1], verts[2] }};
+	std::vector<t_vec> curverts;
+	curverts.reserve(verts.size());
+
+	curverts.push_back(verts[0]);
+	curverts.push_back(verts[1]);
+	curverts.push_back(verts[2]);
 
 	// insert vertices iteratively
 	for(std::size_t newvertidx=3; newvertidx<verts.size(); ++newvertidx)
@@ -857,6 +873,7 @@ requires tl2::is_vec<t_vec>
 
 	// find neighbouring triangles and voronoi vertices
 	neighbours.resize(triags.size());
+	voronoi.reserve(triags.size());
 
 	for(std::size_t triagidx=0; triagidx<triags.size(); ++triagidx)
 	{
@@ -898,6 +915,7 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 	using t_real_qhull = coordT;
 
 	const int dim = 2;
+
 	std::vector<t_vec> voronoi;						// voronoi vertices
 	std::vector<std::vector<t_vec>> triags;			// delaunay triangles
 	std::vector<std::set<std::size_t>> neighbours;	// neighbour triangle indices
@@ -906,6 +924,7 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 	{
 		std::vector<t_real_qhull> _verts;
 		_verts.reserve(verts.size()*(dim+1));
+
 		for(const t_vec& vert : verts)
 		{
 			_verts.push_back(t_real_qhull{vert[0]});
@@ -920,6 +939,11 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 
 		qh::QhullFacetList facets{qh.facetList()};
 		std::vector<void*> facetHandles{};
+
+		facetHandles.reserve(facets.size());
+		voronoi.reserve(facets.size());
+		triags.reserve(facets.size());
+		neighbours.reserve(facets.size());
 
 
 		auto facetAllowed = [](auto iterFacet) -> bool
@@ -1025,6 +1049,7 @@ std::vector<t_edge> get_edges(
 
 
 	std::vector<t_edge> edges;
+	edges.reserve(triags.size()*3*2);
 
 	for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
 	{

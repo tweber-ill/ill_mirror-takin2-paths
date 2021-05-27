@@ -55,8 +55,8 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop);
 	virtual boost::property_tree::ptree Save() const;
 
-	virtual void UpdateTrafo() = 0;
-	virtual const t_mat& GetTrafo() const { return m_trafo; }
+	virtual void UpdateTrafo() const = 0;
+	virtual const t_mat& GetTrafo() const;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 		GetTriangles() const = 0;
 
@@ -75,7 +75,9 @@ public:
 protected:
 	std::string m_id;
 	t_vec m_colour = tl2::create<t_vec>({1, 0, 0});
-	t_mat m_trafo = tl2::unit<t_mat>(3);
+
+	mutable bool m_trafo_needs_update = true;
+	mutable t_mat m_trafo = tl2::unit<t_mat>(4);
 };
 // ----------------------------------------------------------------------------
 
@@ -96,7 +98,7 @@ public:
 	virtual bool Load(const boost::property_tree::ptree& prop) override;
 	virtual boost::property_tree::ptree Save() const override;
 
-	virtual void UpdateTrafo() override;
+	virtual void UpdateTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
@@ -134,18 +136,18 @@ public:
 	virtual t_vec GetCentre() const override;
 	virtual void SetCentre(const t_vec& vec) override;
 
-	virtual void UpdateTrafo() override;
+	virtual void UpdateTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
-	GetTriangles() const override;
+		GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
-	void SetPos(const t_vec& vec) { m_pos = vec; UpdateTrafo(); }
+	void SetPos(const t_vec& vec) { m_pos = vec; m_trafo_needs_update = true; }
 
 	t_real GetHeight() const { return m_height; }
-	void SetHeight(t_real h) { m_height = h; }
+	void SetHeight(t_real h) { m_height = h; m_trafo_needs_update = true; }
 
 	t_real GetRadius() const { return m_radius; }
-	void SetRadius(t_real rad) { m_radius = rad; }
+	void SetRadius(t_real rad) { m_radius = rad; m_trafo_needs_update = true; }
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
@@ -173,15 +175,15 @@ public:
 	virtual t_vec GetCentre() const override;
 	virtual void SetCentre(const t_vec& vec) override;
 
-	virtual void UpdateTrafo() override;
+	virtual void UpdateTrafo() const override;
 	virtual std::tuple<std::vector<t_vec>, std::vector<t_vec>, std::vector<t_vec>>
 	GetTriangles() const override;
 
 	const t_vec& GetPos() const { return m_pos; }
-	void SetPos(const t_vec& vec) { m_pos = vec; UpdateTrafo(); }
+	void SetPos(const t_vec& vec) { m_pos = vec; m_trafo_needs_update = true; }
 
 	t_real GetRadius() const { return m_radius; }
-	void SetRadius(t_real rad) { m_radius = rad; }
+	void SetRadius(t_real rad) { m_radius = rad; m_trafo_needs_update = true; }
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});

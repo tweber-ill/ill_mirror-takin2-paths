@@ -48,6 +48,10 @@ const Instrument& Instrument::operator=(const Instrument& instr)
 	this->m_sample.SetPreviousAxis(&this->m_mono);
 	this->m_ana.SetPreviousAxis(&this->m_sample);
 
+	this->m_mono.SetNextAxis(&this->m_sample);
+	this->m_sample.SetNextAxis(&this->m_ana);
+	this->m_ana.SetNextAxis(nullptr);
+
 	this->m_sigUpdate = std::make_shared<t_sig_update>();
 	return *this;
 }

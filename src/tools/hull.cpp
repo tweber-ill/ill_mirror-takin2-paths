@@ -780,13 +780,14 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		{ this->close(); });
 
 
-	QAction *actionHullDlg = new QAction{"Convex Hull...", this};
+	QAction *actionHullDlg = new QAction{"General Convex Hull...", this};
 	connect(actionHullDlg, &QAction::triggered, [this]()
 		{
 			if(!m_hulldlg)
 				m_hulldlg = std::make_shared<HullDlg>(this);
 
 			m_hulldlg->show();
+			m_hulldlg->raise();
 			m_hulldlg->activateWindow();
 		});
 
@@ -1424,6 +1425,8 @@ int main(int argc, char** argv)
 
 		auto hullwnd = std::make_unique<HullWnd>();
 		hullwnd->show();
+		hullwnd->raise();
+		hullwnd->activateWindow();
 
 		return app->exec();
 	}
