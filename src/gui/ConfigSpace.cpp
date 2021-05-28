@@ -174,10 +174,11 @@ void ConfigSpaceDlg::Calculate()
 		enda2 *= m_sensesCCW[0];
 	}
 
-	// create colour map
+	// create colour map and image
 	std::size_t img_w = (enda4-starta4) / da4;
 	std::size_t img_h = (enda2-starta2) / da2;
 	m_colourMap->data()->setSize(img_w, img_h);
+	m_img.Init(img_w, img_h);
 
 	// create thread pool
 	unsigned int num_threads = std::max<unsigned int>(
@@ -211,8 +212,10 @@ void ConfigSpaceDlg::Calculate()
 				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
 				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
 
+				// set plot and image value
 				t_real val = instrspace_cpy.CheckCollision2D() ? 0. : 1.;
 				m_colourMap->data()->setCell(img_col, img_row, val);
+				m_img.SetPixel(img_col, img_row, val);
 			}
 		};
 

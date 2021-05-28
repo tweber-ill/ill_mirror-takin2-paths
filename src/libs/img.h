@@ -11,11 +11,111 @@
 
 #include <cstdlib>
 #include <concepts>
+#include <boost/gil/image.hpp>
 
 #include "tlibs2/libs/maths.h"
 
 
 namespace geo {
+
+// ----------------------------------------------------------------------------
+// classes
+// ----------------------------------------------------------------------------
+/**
+ * simple image class
+ */
+template<class t_pixel = bool>
+class Image
+{
+public:
+	using value_type = t_pixel;
+
+public:
+	Image() = default;
+	~Image() = default;
+
+
+	Image(std::size_t w, std::size_t h)
+	{
+		Init(w, h);
+	}
+
+
+	Image(const Image<t_pixel>& img)
+		: Image(img.GetWidth(), img.GetHeight())
+	{
+		SetImage(img.m_img.get());
+	}
+
+
+	void Init(std::size_t w, std::size_t h)
+	{
+		m_width = w;
+		m_height = h;
+		m_img = std::make_unique<t_pixel[]>(w*h);
+	}
+
+
+	std::size_t GetWidth() const
+	{
+		return m_width;
+	}
+
+
+	std::size_t GetHeight() const
+	{
+		return m_height;
+	}
+
+
+	t_pixel GetPixel(std::size_t x, std::size_t y) const
+	{
+		if(x < GetWidth() && y < GetHeight())
+			return m_img[y*m_width + x];
+		return t_pixel{};
+	}
+
+
+	void SetPixel(std::size_t x, std::size_t y, t_pixel pix)
+	{
+		if(x < GetWidth() && y < GetHeight())
+			m_img[y*m_width + x] = pix;
+	}
+
+
+	void SetImage(const t_pixel* img)
+	{
+		for(std::size_t y = 0; y < GetHeight(); ++y)
+			for(std::size_t x = 0; x < GetWidth(); ++x)
+				SetPixel(x, y, img[y*GetWidth() + x]);
+	}
+
+
+private:
+	std::size_t m_width{}, m_height{};
+	std::unique_ptr<t_pixel[]> m_img;
+};
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// concepts
+// ----------------------------------------------------------------------------
+/**
+ * requirements for the Image class
+ */
+template<class t_image>
+concept is_image = requires(const t_image& img, std::size_t y, std::size_t x)
+{
+	typename t_image::value_type;
+
+	x = img.GetWidth()();
+	y = img.GetHeight();
+
+	img.SetPixel(x, y, 0);
+	img.GetPixel(x, y);
+};
+
 
 /**
  * requirements for a gil image view
@@ -28,16 +128,60 @@ concept is_imageview = requires(const t_imageview& img, std::size_t y, std::size
 
 	img.row_begin(y)[x];
 };
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// interface wrapper functions
+// ----------------------------------------------------------------------------
+/**
+ * get a pixel from an image
+ */
+template<class t_image> requires is_image<t_image>
+typename t_image::value_type 
+get_pixel(const t_image& img, int x, int y)
+{
+	using t_pixel = typename t_image::value_type;
+
+	if(x >= (int)img.GetWidth() || y >= (int)img.GetHeight() || x<0 || y<0)
+		return t_pixel{};
+
+	return img.GetPixel(x, y);
+}
+
+
+/**
+ * set a pixel in an image
+ */
+template<class t_image> requires is_imageview<t_image>
+void set_pixel(t_image& img, int x, int y, 
+	typename t_image::value_type pixel)
+{
+	if(x >= (int)img.GetWidth() || y >= (int)img.GetHeight() || x<0 || y<0)
+		return;
+
+	img.SetPixel(x, y, pixel);
+}
+
+
+/**
+ * get the width and height from an image
+ */
+template<class t_image> requires is_image<t_image>
+std::pair<std::size_t, std::size_t> get_image_dims(const t_image& img)
+{
+	return std::make_pair(img.GetWidth(), img.GetHeight());
+}
 
 
 /**
  * get a pixel from an image view
  */
 template<class t_imageview> requires is_imageview<t_imageview>
-typename gil::channel_type<t_imageview>::type 
+typename boost::gil::channel_type<t_imageview>::type 
 get_pixel(const t_imageview& img, int x, int y)
 {
-	using t_pixel = typename gil::channel_type<t_imageview>::type;
+	using t_pixel = typename boost::gil::channel_type<t_imageview>::type;
 
 	if(x >= img.width() || y >= img.height() || x<0 || y<0)
 		return t_pixel{};
@@ -51,7 +195,7 @@ get_pixel(const t_imageview& img, int x, int y)
  */
 template<class t_imageview> requires is_imageview<t_imageview>
 void set_pixel(t_imageview& img, int x, int y, 
-	typename gil::channel_type<t_imageview>::type pixel)
+	typename boost::gil::channel_type<t_imageview>::type pixel)
 {
 	if(x >= img.width() || y >= img.height() || x<0 || y<0)
 		return;
@@ -68,8 +212,12 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_imageview& img)
 {
 	return std::make_pair(img.width(), img.height());
 }
+// ----------------------------------------------------------------------------
 
 
+// ----------------------------------------------------------------------------
+// algorithms
+// ----------------------------------------------------------------------------
 /**
  * boundary tracing
  * @see http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/ray.html
@@ -221,4 +369,6 @@ std::vector<std::vector<t_vec>> trace_boundary(
 
 	return contours;
 }
-}
+// ----------------------------------------------------------------------------
+
+} // geo

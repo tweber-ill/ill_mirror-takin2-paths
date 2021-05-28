@@ -12,8 +12,10 @@
 #include <QtCore/QSettings>
 #include <QtWidgets/QDoubleSpinBox>
 
+#include <cstdint>
 #include <memory>
 
+#include "src/libs/img.h"
 #include "src/core/types.h"
 #include "src/core/Instrument.h"
 #include "qcustomplot/qcustomplot.h"
@@ -35,8 +37,10 @@ protected:
 private:
 	QSettings *m_sett{nullptr};
 
+	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
+
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
 
 	const InstrumentSpace *m_instrspace{};

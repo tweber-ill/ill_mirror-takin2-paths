@@ -63,11 +63,11 @@ int main(int argc, char** argv)
 		// angles and ranges
 		t_real a6 = 83.957 / 180. * tl2::pi<t_real>;
 
-		t_real da2 = 5. / 180. * tl2::pi<t_real>;
+		t_real da2 = 0.25 / 180. * tl2::pi<t_real>;
 		t_real starta2 = 0.;
 		t_real enda2 = tl2::pi<t_real>;
 
-		t_real da4 = -5. / 180. * tl2::pi<t_real>;
+		t_real da4 = -0.25 / 180. * tl2::pi<t_real>;
 		t_real starta4 = 0.;
 		t_real enda4 = -tl2::pi<t_real>;
 
