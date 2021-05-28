@@ -144,8 +144,56 @@ pt::ptree InstrumentSpace::Save() const
  */
 bool InstrumentSpace::CheckCollision2D() const
 {
-	// extract circles from cylinder and sphere geometries
+	// extract circle from cylinder and sphere geometry
 	auto get_comp_circles = [](
+		const std::shared_ptr<Geometry>& comp,
+		std::tuple<t_vec, t_real>& circle,
+		const t_mat* matAxis = nullptr)
+	{
+		const t_mat& matGeo = comp->GetTrafo();
+		t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
+
+		if(comp->GetType() == GeometryType::CYLINDER)
+		{
+			auto cyl = std::dynamic_pointer_cast<CylinderGeometry>(comp);
+
+			t_vec pos = cyl->GetPos();
+			t_real rad = cyl->GetRadius();
+
+			// trafo in homogeneous coordinates
+			if(pos.size() < 4)
+				pos.push_back(1);
+			pos = mat * pos;
+
+			// only two dimensions needed
+			pos.resize(2);
+
+			std::get<0>(circle) = pos;
+			std::get<1>(circle) = rad;
+		}
+		else if(comp->GetType() == GeometryType::SPHERE)
+		{
+			auto sph = std::dynamic_pointer_cast<SphereGeometry>(comp);
+
+			t_vec pos = sph->GetPos();
+			t_real rad = sph->GetRadius();
+
+			// trafo in homogeneous coordinates
+			if(pos.size() < 4)
+				pos.push_back(1);
+			pos = mat * pos;
+
+			// only two dimensions needed
+			pos.resize(2);
+
+			std::get<0>(circle) = pos;
+			std::get<1>(circle) = rad;
+		}
+	};
+
+
+	// extract circles from cylinder and sphere geometries
+	auto get_comps_circles = [&get_comp_circles](
 		const std::vector<std::shared_ptr<Geometry>>& comps,
 		std::vector<std::tuple<t_vec, t_real>>& circles,
 		const t_mat* matAxis = nullptr)
@@ -154,53 +202,23 @@ bool InstrumentSpace::CheckCollision2D() const
 
 		for(const auto& comp : comps)
 		{
-			const t_mat& matGeo = comp->GetTrafo();
-			t_mat mat = matAxis ? (*matAxis) * matGeo : matGeo;
+			std::tuple<t_vec, t_real> circle;
+			get_comp_circles(comp, circle, matAxis);
 
-			if(comp->GetType() == GeometryType::CYLINDER)
-			{
-				auto cyl = std::dynamic_pointer_cast<CylinderGeometry>(comp);
-
-				t_vec pos = cyl->GetPos();
-				t_real rad = cyl->GetRadius();
-
-				// trafo in homogeneous coordinates
-				if(pos.size() < 4)
-					pos.push_back(1);
-				pos = mat * pos;
-
-				// only two dimensions needed
-				pos.resize(2);
-				circles.emplace_back(std::make_tuple(pos, rad));
-			}
-			else if(comp->GetType() == GeometryType::SPHERE)
-			{
-				auto sph = std::dynamic_pointer_cast<SphereGeometry>(comp);
-
-				t_vec pos = sph->GetPos();
-				t_real rad = sph->GetRadius();
-
-				// trafo in homogeneous coordinates
-				if(pos.size() < 4)
-					pos.push_back(1);
-				pos = mat * pos;
-
-				// only two dimensions needed
-				pos.resize(2);
-				circles.emplace_back(std::make_tuple(pos, rad));
-			}
+			if(std::get<0>(circle).size())
+				circles.emplace_back(std::move(circle));
 		}
 	};
-	
 
-	auto get_circles = [&get_comp_circles](const Axis& axis, 
+
+	auto get_circles = [&get_comps_circles](const Axis& axis, 
 		std::vector<std::tuple<t_vec, t_real>>& circles)
 	{
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
 			const t_mat& matAxis = axis.GetTrafo(axisangle);
-			get_comp_circles(axis.GetComps(axisangle), circles, &matAxis);
+			get_comps_circles(axis.GetComps(axisangle), circles, &matAxis);
 		}
 	};
 
@@ -327,8 +345,13 @@ bool InstrumentSpace::CheckCollision2D() const
 	// check if a circular and a polygonal object collide
 	auto check_collision_circle_poly = [](
 		const std::vector<std::tuple<t_vec, t_real>>& circles,
-		const std::vector<std::vector<t_vec>>& polys) -> bool
+		const std::vector<std::vector<t_vec>>& polys,
+		const std::tuple<t_vec, t_vec>& bbCircles,
+		const std::tuple<t_vec, t_vec>& bbPolys) -> bool
 	{
+		if(!tl2::collide_bounding_boxes(bbCircles, bbPolys))
+			return false;
+
 		for(std::size_t idx1=0; idx1<circles.size(); ++idx1)
 		{
 			const auto& circle = circles[idx1];
@@ -354,14 +377,13 @@ bool InstrumentSpace::CheckCollision2D() const
 	const auto& walls = GetWalls();
 
 	std::vector<std::tuple<t_vec, t_real>> 
-		monoCircles, sampleCircles, anaCircles, wallCircles;
+		monoCircles, sampleCircles, anaCircles;
 	std::vector<std::vector<t_vec>> 
 		monoPolys, samplePolys, anaPolys;
 
 	get_circles(mono, monoCircles);
 	get_circles(sample, sampleCircles);
 	get_circles(ana, anaCircles);
-	get_comp_circles(walls, wallCircles);
 
 	get_polys(mono, monoPolys);
 	get_polys(sample, samplePolys);
@@ -372,44 +394,62 @@ bool InstrumentSpace::CheckCollision2D() const
 	auto sampleBB = tl2::bounding_box<t_vec, std::vector>(samplePolys, 2);
 	auto anaBB = tl2::bounding_box<t_vec, std::vector>(anaPolys, 2);
 
+	auto monoCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(monoCircles, 2);
+	auto sampleCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(sampleCircles, 2);
+	auto anaCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(anaCircles, 2);
+
 
 	// check for collisions with the walls
 	for(const auto& wall : walls)
 	{
-		std::vector<t_vec> wallPoly;
-		get_comp_polys(wall, wallPoly);
+		// wall polygons
 		std::vector<std::vector<t_vec>> wallPolys;
-		if(wallPoly.size() == 0)
-			continue;
-		wallPolys.emplace_back(std::move(wallPoly));
+		std::vector<t_vec> wallPoly;
 
-		auto wallBB = tl2::bounding_box<t_vec, std::vector>(wallPolys);
+		get_comp_polys(wall, wallPoly);
+		if(wallPoly.size())
+		{
+			wallPolys.emplace_back(std::move(wallPoly));
 
-		// check for collisions
-		// TODO: exclude checks for objects that are already colliding
-		//       in the instrument definition file
+			auto wallBB = tl2::bounding_box<t_vec, std::vector>(wallPolys);
 
-		//if(check_collision_poly_poly(monoPolys, wallPolys, monoBB, wallBB))
-		//	return true;
-		if(check_collision_poly_poly(samplePolys, wallPolys, sampleBB, wallBB))
-			return true;
-		if(check_collision_poly_poly(anaPolys, wallPolys, anaBB, wallBB))
-			return true;
+			// check for collisions
+			// TODO: exclude checks for objects that are already colliding
+			//       in the instrument definition file
 
-		//if(check_collision_circle_poly(monoCircles, wallPolys))
-		//	return true;
-		if(check_collision_circle_poly(sampleCircles, wallPolys))
-			return true;
-		if(check_collision_circle_poly(anaCircles, wallPolys))
-			return true;
+			//if(check_collision_poly_poly(monoPolys, wallPolys, monoBB, wallBB))
+			//	return true;
+			if(check_collision_poly_poly(samplePolys, wallPolys, sampleBB, wallBB))
+				return true;
+			if(check_collision_poly_poly(anaPolys, wallPolys, anaBB, wallBB))
+				return true;
+
+			//if(check_collision_circle_poly(monoCircles, wallPolys, monoCircleBB, wallBB))
+			//	return true;
+			if(check_collision_circle_poly(sampleCircles, wallPolys, sampleCircleBB, wallBB))
+				return true;
+			if(check_collision_circle_poly(anaCircles, wallPolys, anaCircleBB, wallBB))
+				return true;
+		}
+
+
+		// wall circles
+		std::vector<std::tuple<t_vec, t_real>> wallCircles;
+		std::tuple<t_vec, t_real> wallCircle;
+
+		get_comp_circles(wall, wallCircle);
+		if(std::get<0>(wallCircle).size())
+		{
+			wallCircles.emplace_back(std::move(wallCircle));
+
+			//if(check_collision_circle_circle(monoCircles, wallCircles))
+			//	return true;
+			if(check_collision_circle_circle(sampleCircles, wallCircles))
+				return true;
+			if(check_collision_circle_circle(anaCircles, wallCircles))
+				return true;
+		}
 	}
-
-	//if(check_collision_circle_circle(monoCircles, wallCircles))
-	//	return true;
-	if(check_collision_circle_circle(sampleCircles, wallCircles))
-		return true;
-	if(check_collision_circle_circle(anaCircles, wallCircles))
-		return true;
 
 	if(check_collision_circle_circle(monoCircles, sampleCircles))
 		return true;
@@ -418,17 +458,17 @@ bool InstrumentSpace::CheckCollision2D() const
 	if(check_collision_circle_circle(monoCircles, anaCircles))
 		return true;
 
-	if(check_collision_circle_poly(monoCircles, anaPolys))
+	if(check_collision_circle_poly(monoCircles, anaPolys, monoCircleBB, anaBB))
 		return true;
-	if(check_collision_circle_poly(monoCircles, samplePolys))
+	if(check_collision_circle_poly(monoCircles, samplePolys, monoCircleBB, sampleBB))
 		return true;
-	//if(check_collision_circle_poly(sampleCircles, monoPolys))
+	//if(check_collision_circle_poly(sampleCircles, monoPolys, sampleCircleBB, monoBB))
 	//	return true;
-	if(check_collision_circle_poly(sampleCircles, anaPolys))
+	if(check_collision_circle_poly(sampleCircles, anaPolys, sampleCircleBB, anaBB))
 		return true;
-	if(check_collision_circle_poly(anaCircles, monoPolys))
+	if(check_collision_circle_poly(anaCircles, monoPolys, anaCircleBB, monoBB))
 		return true;
-	//if(check_collision_circle_poly(anaCircles, samplePolys))
+	//if(check_collision_circle_poly(anaCircles, samplePolys, anaCircleBB, sampleBB))
 	//	return true;
 
 	return false;
