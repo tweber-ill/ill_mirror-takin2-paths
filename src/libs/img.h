@@ -10,17 +10,30 @@
  */
 
 #include <cstdlib>
+#include <concepts>
 
 #include "tlibs2/libs/maths.h"
 
 
 namespace geo {
 
+/**
+ * requirements for a gil image view
+ */
+template<class t_imageview>
+concept is_imageview = requires(const t_imageview& img, std::size_t y, std::size_t x)
+{
+	x = img.width();
+	y = img.height();
+
+	img.row_begin(y)[x];
+};
+
 
 /**
  * get a pixel from an image view
  */
-template<class t_imageview>
+template<class t_imageview> requires is_imageview<t_imageview>
 typename gil::channel_type<t_imageview>::type 
 get_pixel(const t_imageview& img, int x, int y)
 {
@@ -36,7 +49,7 @@ get_pixel(const t_imageview& img, int x, int y)
 /**
  * set a pixel in an image view
  */
-template<class t_imageview>
+template<class t_imageview> requires is_imageview<t_imageview>
 void set_pixel(t_imageview& img, int x, int y, 
 	typename gil::channel_type<t_imageview>::type pixel)
 {
@@ -44,6 +57,16 @@ void set_pixel(t_imageview& img, int x, int y,
 		return;
 
 	img.row_begin(y)[x] = pixel;
+}
+
+
+/**
+ * get the width and height from an image view
+ */
+template<class t_imageview> requires is_imageview<t_imageview>
+std::pair<std::size_t, std::size_t> get_image_dims(const t_imageview& img)
+{
+	return std::make_pair(img.width(), img.height());
 }
 
 
@@ -119,10 +142,11 @@ std::vector<std::vector<t_vec>> trace_boundary(
 	{
 		// find start pixel
 		bool start_found = 0;
+		auto [width, height] = get_image_dims(img);
 
-		for(int y=start[1]; y<img.height(); ++y)
+		for(int y=start[1]; y<(int)height; ++y)
 		{
-			for(int x=0; x<img.width(); ++x)
+			for(int x=0; x<(int)width; ++x)
 			{
 				if(get_pixel(img, x, y))
 				{
