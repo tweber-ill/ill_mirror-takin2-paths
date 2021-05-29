@@ -2,7 +2,7 @@
 #
 # creates a debian package
 # @author Tobias Weber <tweber@ill.fr>
-# @date 23-may-2021
+# @date 2016, 23-may-2021
 # @license GPLv3
 #
 

@@ -2,7 +2,7 @@
 #
 # creates a mingw distribution
 # @author Tobias Weber <tweber@ill.fr>
-# @date may-2021
+# @date 2016, may-2021
 # @license GPLv3, see 'LICENSE' file
 #
 

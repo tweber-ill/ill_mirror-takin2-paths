@@ -54,17 +54,17 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);
-	m_colourMap->setGradient(QCPColorGradient::gpGrayscale);
+	m_colourMap->setGradient(QCPColorGradient::gpJet);
 	m_colourMap->setDataRange(QCPRange{0, 1});
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
 	m_colourMap->data()->setRange(QCPRange{0., 180.}, QCPRange{0., 180.});
 	m_colourMap->setInterpolate(false);
 
 	// status label
-	QLabel *status = new QLabel(this);
-	status->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	status->setFrameStyle(QFrame::Sunken);
-	status->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+	m_status = new QLabel(this);
+	m_status->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	m_status->setFrameStyle(QFrame::Sunken);
+	m_status->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
 	// spin boxes
 	m_spinDelta2ThS = new QDoubleSpinBox(this);
@@ -100,11 +100,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(btnCalc, y, 2, 1, 1);
 	grid->addWidget(btnSave, y, 3, 1, 1);
 	grid->addWidget(btnClose, y++, 4, 1, 1);
-	grid->addWidget(status, y++, 0, 1, 5);
+	grid->addWidget(m_status, y++, 0, 1, 5);
 
 	// connections
 	connect(m_plot.get(), &QCustomPlot::mouseMove, 
-		[this, status](QMouseEvent* evt)
+		[this](QMouseEvent* evt)
 		{
 			if(!this->m_plot)
 				return;
@@ -114,7 +114,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			std::ostringstream ostr;
 			ostr.precision(g_prec_gui);
 			ostr << "2θ_S = " << x << " deg, 2θ_M = " << y << " deg.";
-			status->setText(ostr.str().c_str());
+			m_status->setText(ostr.str().c_str());
 		});
 
 	connect(btnSave, &QPushButton::clicked, 
@@ -213,9 +213,9 @@ void ConfigSpaceDlg::Calculate()
 				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
 
 				// set plot and image value
-				t_real val = instrspace_cpy.CheckCollision2D() ? 0. : 1.;
-				m_colourMap->data()->setCell(img_col, img_row, val);
-				m_img.SetPixel(img_col, img_row, val);
+				bool colliding = instrspace_cpy.CheckCollision2D();
+				m_colourMap->data()->setCell(img_col, img_row, colliding ? 1. : 0.);
+				m_img.SetPixel(img_col, img_row, colliding ? 255 : 0);
 			}
 		};
 
@@ -248,5 +248,17 @@ void ConfigSpaceDlg::Calculate()
 
 	pool.join();
 	m_plot->rescaleAxes();
+	m_plot->replot();
+
+
+	// calculate contour lines
+	using t_contourvec = tl2::vec<int, std::vector>;
+	auto contours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
+	m_status->setText(QString("%1 contour lines found.").arg(contours.size()));
+
+	// draw contour lines
+	for(const auto& contour : contours)
+		for(const t_contourvec& vec : contour)
+			m_colourMap->data()->setCell(vec[0], vec[1], 0.5);
 	m_plot->replot();
 }

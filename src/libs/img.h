@@ -105,11 +105,11 @@ private:
  * requirements for the Image class
  */
 template<class t_image>
-concept is_image = requires(const t_image& img, std::size_t y, std::size_t x)
+concept is_image = requires(t_image& img, std::size_t y, std::size_t x)
 {
 	typename t_image::value_type;
 
-	x = img.GetWidth()();
+	x = img.GetWidth();
 	y = img.GetHeight();
 
 	img.SetPixel(x, y, 0);
@@ -153,7 +153,7 @@ get_pixel(const t_image& img, int x, int y)
 /**
  * set a pixel in an image
  */
-template<class t_image> requires is_imageview<t_image>
+template<class t_image> requires is_image<t_image>
 void set_pixel(t_image& img, int x, int y, 
 	typename t_image::value_type pixel)
 {
@@ -223,10 +223,10 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_imageview& img)
  * @see http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/ray.html
  */
 template<class t_vec, 
-	class t_imageview, class t_boundaryview>
+	class t_imageview, class t_boundaryview = t_imageview>
 requires tl2::is_vec<t_vec>
 std::vector<std::vector<t_vec>> trace_boundary(
-	const t_imageview& img, t_boundaryview& boundary)
+	const t_imageview& img, t_boundaryview* boundary = nullptr)
 {
 	// contour polygons
 	std::vector<std::vector<t_vec>> contours;
@@ -321,7 +321,8 @@ std::vector<std::vector<t_vec>> trace_boundary(
 			return contours;
 
 		contour.push_back(start);
-		set_pixel(boundary, start[0], start[1], 0xff);
+		if(boundary)
+			set_pixel<t_boundaryview>(*boundary, start[0], start[1], 0xff);
 
 
 		// trace boundary
@@ -352,7 +353,8 @@ std::vector<std::vector<t_vec>> trace_boundary(
 				pos[1] += dir[1];
 
 				contour.push_back(pos);
-				set_pixel(boundary, pos[0], pos[1], 0xff);
+				if(boundary)
+					set_pixel<t_boundaryview>(*boundary, pos[0], pos[1], 0xff);
 			}
 			else
 			{

@@ -31,7 +31,8 @@ int main(int argc, char** argv)
 	gil::read_image(argv[1], img, gil::png_tag{});
 	gil::gray8_image_t boundary(img.width(), img.height());
 
-	geo::trace_boundary<t_vec>(gil::view(img), gil::view(boundary));
+	auto boundaryview = gil::view(boundary);
+	geo::trace_boundary<t_vec>(gil::view(img), &boundaryview);
 	gil::write_view("contour.png", gil::view(boundary), gil::png_tag{});
 
 	return 0;

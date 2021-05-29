@@ -41,6 +41,7 @@ private:
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
 
+	QLabel *m_status{};
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
 
 	const InstrumentSpace *m_instrspace{};
