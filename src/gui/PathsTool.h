@@ -132,6 +132,11 @@ protected slots:
 	// go to crystal coordinates
 	void GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 
+	// go to instrument angles
+	void GotoAngles(std::optional<t_real> a1,
+		std::optional<t_real> a3, std::optional<t_real> a4,
+		std::optional<t_real> a5);
+
 	// called after the plotter has initialised
 	void AfterGLInitialisation();
 

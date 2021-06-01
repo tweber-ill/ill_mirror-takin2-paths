@@ -22,7 +22,7 @@
 
 
 class ConfigSpaceDlg : public QDialog
-{
+{ Q_OBJECT
 public:
 	ConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~ConfigSpaceDlg();
@@ -30,6 +30,15 @@ public:
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
 	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
 	void Calculate();
+
+	void EmitGotoAngles(std::optional<t_real> a1,
+		std::optional<t_real> a3, std::optional<t_real> a4,
+		std::optional<t_real> a5);
+
+signals:
+	void GotoAngles(std::optional<t_real> a1,
+		std::optional<t_real> a3, std::optional<t_real> a4,
+		std::optional<t_real> a5);
 
 protected:
 	virtual void accept() override;

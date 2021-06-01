@@ -103,17 +103,30 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(m_status, y++, 0, 1, 5);
 
 	// connections
+	connect(m_plot.get(), &QCustomPlot::mousePress,
+		[this](QMouseEvent* evt)
+		{
+			if(!this->m_plot)
+				return;
+			const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
+			const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+
+			std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
+			std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
+			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+		});
+
 	connect(m_plot.get(), &QCustomPlot::mouseMove, 
 		[this](QMouseEvent* evt)
 		{
 			if(!this->m_plot)
 				return;
-			const t_real x = this->m_plot->xAxis->pixelToCoord(evt->x());
-			const t_real y = this->m_plot->yAxis->pixelToCoord(evt->y());
+			const t_real a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
+			const t_real a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
 
 			std::ostringstream ostr;
 			ostr.precision(g_prec_gui);
-			ostr << "2θ_S = " << x << " deg, 2θ_M = " << y << " deg.";
+			ostr << "2θ_S = " << a4 << " deg, 2θ_M = " << a2 << " deg.";
 			m_status->setText(ostr.str().c_str());
 		});
 
@@ -146,6 +159,17 @@ void ConfigSpaceDlg::accept()
 	if(m_sett)
 		m_sett->setValue("configspace/geo", saveGeometry());
 	QDialog::accept();
+}
+
+
+/**
+ * set instrument angles to the specified ones
+ */
+void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
+	std::optional<t_real> a3, std::optional<t_real> a4,
+	std::optional<t_real> a5)
+{
+	emit GotoAngles(a1, a3, a4, a5);
 }
 
 

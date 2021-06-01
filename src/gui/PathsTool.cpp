@@ -362,20 +362,51 @@ void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real 
 	}
 
 	// set scattering angles
-	m_instrspace.GetInstrument().GetMonochromator().
-		SetAxisAngleOut(t_real{2} * *a1);
-	m_instrspace.GetInstrument().GetSample().
-		SetAxisAngleOut(a4);
-	m_instrspace.GetInstrument().GetAnalyser().
-		SetAxisAngleOut(t_real{2} * *a5);
+	m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
+	m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(a4);
+	m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
 
 	// set crystal angles
-	m_instrspace.GetInstrument().GetMonochromator().
-		SetAxisAngleInternal(*a1);
-	m_instrspace.GetInstrument().GetSample().
-		SetAxisAngleInternal(a3);
-	m_instrspace.GetInstrument().GetAnalyser().
-		SetAxisAngleInternal(*a5);
+	m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
+	m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(a3);
+	m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+}
+
+
+/**
+ * set the instrument angles to the specified ones
+ * (angles have to be positive as scattering senses are applied in the function)
+ */
+void PathsTool::GotoAngles(std::optional<t_real> a1,
+	std::optional<t_real> a3, std::optional<t_real> a4,
+	std::optional<t_real> a5)
+{
+	// set scattering angles
+	if(a1)
+	{
+		*a1 *= m_sensesCCW[0];
+		m_instrspace.GetInstrument().GetMonochromator(). SetAxisAngleOut(t_real{2} * *a1);
+		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
+	}
+	if(a4)
+	{
+		*a4 *= m_sensesCCW[1];
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(*a4);
+	}
+	if(a5)
+	{
+		*a5 *= m_sensesCCW[2];
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+	}
+
+	// set sample angle
+	if(a3)
+	{
+		*a3 *= m_sensesCCW[1];
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(*a3);
+	}
+		
 }
 
 
@@ -768,6 +799,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
 			this->m_dlgConfigSpace->SetInstrumentSpace(&this->m_instrspace);
 			this->m_dlgConfigSpace->SetScatteringSenses(this->m_sensesCCW);
+
+			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::GotoAngles, this, &PathsTool::GotoAngles);
 		}
 
 		m_dlgConfigSpace->show();
