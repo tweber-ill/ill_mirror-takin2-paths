@@ -352,13 +352,13 @@ void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real 
 	t_vec Q = tl2::create<t_vec>({h, k, l});
 	auto [ok, a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
 		m_B, ki, kf, Q,
-		m_plane_rlu[0], m_plane_rlu[2], 
+		m_plane_rlu[0], m_plane_rlu[2],
 		m_sensesCCW[1], g_a3_offs);
 
 	if(!ok)
 	{
 		QMessageBox::critical(this, "Error", "Invalid scattering angles.");
-		return;		
+		return;
 	}
 
 	// set scattering angles
@@ -381,18 +381,29 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 	std::optional<t_real> a3, std::optional<t_real> a4,
 	std::optional<t_real> a5)
 {
-	// set scattering angles
+	// set mono angle
 	if(a1)
 	{
 		*a1 *= m_sensesCCW[0];
 		m_instrspace.GetInstrument().GetMonochromator(). SetAxisAngleOut(t_real{2} * *a1);
 		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
 	}
+
+	// set sample crystal angle
+	if(a3)
+	{
+		*a3 *= m_sensesCCW[1];
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(*a3);
+	}
+
+	// set sample scattering angle
 	if(a4)
 	{
 		*a4 *= m_sensesCCW[1];
 		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(*a4);
 	}
+
+	// set ana angle
 	if(a5)
 	{
 		*a5 *= m_sensesCCW[2];
@@ -400,13 +411,6 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
 	}
 
-	// set sample angle
-	if(a3)
-	{
-		*a3 *= m_sensesCCW[1];
-		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(*a3);
-	}
-		
 }
 
 
