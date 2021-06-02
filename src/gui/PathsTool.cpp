@@ -800,10 +800,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionAddCuboidWall, &QAction::triggered, this, [this]()
 	{
 		auto wall = std::make_shared<BoxGeometry>();
-		wall->SetHeight(5.);
+		wall->SetHeight(4.);
 		wall->SetDepth(0.5);
-		wall->SetLength(5.);
-		wall->SetCentre(tl2::create<t_vec>({0, 0, 0}));
+		wall->SetLength(4.);
+		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+		wall->UpdateTrafo();
 
 		static std::size_t wallcnt = 1;
 		std::ostringstream ostrId;
@@ -817,9 +818,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionAddCylindricalWall, &QAction::triggered, this, [this]()
 	{
 		auto wall = std::make_shared<CylinderGeometry>();
-		wall->SetHeight(5.);
+		wall->SetHeight(4.);
 		wall->SetRadius(0.5);
-		wall->SetCentre(tl2::create<t_vec>({0, 0, 0}));
+		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+		wall->UpdateTrafo();
 
 		static std::size_t wallcnt = 1;
 		std::ostringstream ostrId;
