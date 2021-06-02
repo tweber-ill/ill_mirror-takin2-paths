@@ -38,7 +38,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	setWindowTitle("Configuration Space");
 
 	// restore dialog geometry
-	if(m_sett->contains("configspace/geo"))
+	if(m_sett && m_sett->contains("configspace/geo"))
 		restoreGeometry(m_sett->value("configspace/geo").toByteArray());
 	else
 		resize(800, 600);
@@ -92,7 +92,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// grid
 	auto grid = new QGridLayout(this);
 	grid->setSpacing(4);
-	grid->setContentsMargins(16, 16, 16, 16);
+	grid->setContentsMargins(12, 12, 12, 12);
 	int y = 0;
 	grid->addWidget(m_plot.get(), y++, 0, 1, 5);
 	grid->addWidget(m_spinDelta2ThS, y, 0, 1, 1);

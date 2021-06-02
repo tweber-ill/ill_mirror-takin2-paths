@@ -96,7 +96,11 @@ void PathsTool::NewFile()
 	SetCurrentFile("");
 
 	m_instrspace.Clear();
-	m_renderer->LoadInstrument(m_instrspace);
+
+	if(m_dlgGeoBrowser)
+		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+	if(m_renderer)
+		m_renderer->LoadInstrument(m_instrspace);
 }
 
 
@@ -173,7 +177,10 @@ bool PathsTool::OpenFile(const QString &file)
 		SetCurrentFile(file);
 		AddRecentFile(file);
 
-		m_renderer->LoadInstrument(m_instrspace);
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+		if(m_renderer)
+			m_renderer->LoadInstrument(m_instrspace);
 
 		// update slot for instrument space (e.g. walls) changes
 		m_instrspace.AddUpdateSlot(
@@ -796,6 +803,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	QAction *actionAddCuboidWall = new QAction("Add Wall", menuGeo);
 	QAction *actionAddCylindricalWall = new QAction("Add Pillar", menuGeo);
+	QAction *actionGeoBrowser = new QAction("Geometries Browser...", menuGeo);
 
 	connect(actionAddCuboidWall, &QAction::triggered, this, [this]()
 	{
@@ -811,6 +819,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		ostrId << "new wall " << wallcnt++;
 
 		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
 		if(m_renderer)
 			m_renderer->AddWall(*wall, true);
 	});
@@ -828,12 +840,32 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		ostrId << "new pillar " << wallcnt++;
 
 		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
 		if(m_renderer)
 			m_renderer->AddWall(*wall, true);
 	});
 
+	connect(actionGeoBrowser, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgGeoBrowser)
+		{
+			this->m_dlgGeoBrowser = std::make_shared<GeometriesBrowser>(this, &m_sett);
+			this->m_dlgGeoBrowser->UpdateGeoTree(this->m_instrspace);
+		}
+
+		m_dlgGeoBrowser->show();
+		m_dlgGeoBrowser->raise();
+		m_dlgGeoBrowser->activateWindow();
+	});
+
 	menuGeo->addAction(actionAddCuboidWall);
 	menuGeo->addAction(actionAddCylindricalWall);
+	menuGeo->addSeparator();
+	menuGeo->addAction(actionGeoBrowser);
+	
 
 
 	// calculate menu
@@ -918,7 +950,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionAbout, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgAbout)
-			this->m_dlgAbout = std::make_shared<AboutDlg>(this);
+			this->m_dlgAbout = std::make_shared<AboutDlg>(this, &m_sett);
 
 		m_dlgAbout->show();
 		m_dlgAbout->raise();

@@ -16,13 +16,18 @@
 #include <boost/version.hpp>
 
 
-AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
+AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
+	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("About");
 
+	// restore dialog geometry
+	if(m_sett && m_sett->contains("about/geo"))
+		restoreGeometry(m_sett->value("about/geo").toByteArray());
+
 	auto grid = new QGridLayout(this);
 	grid->setSpacing(4);
-	grid->setContentsMargins(16, 16, 16, 16);
+	grid->setContentsMargins(12, 12, 12, 12);
 
 	int y = 0;
 
@@ -109,4 +114,12 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog{parent}
 
 AboutDlg::~AboutDlg()
 {
+}
+
+
+void AboutDlg::accept()
+{
+	if(m_sett)
+		m_sett->setValue("about/geo", saveGeometry());
+	QDialog::accept();
 }

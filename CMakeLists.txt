@@ -135,6 +135,7 @@ add_executable(taspaths
 	src/gui/PathProperties.cpp src/gui/PathProperties.h
 	src/gui/CamProperties.cpp src/gui/CamProperties.h
 	src/gui/ConfigSpace.cpp src/gui/ConfigSpace.h
+	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
 
 	src/core/Geometry.cpp src/core/Geometry.h
 	src/core/Axis.cpp src/core/Instrument.cpp

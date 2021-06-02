@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 
+#include "src/core/Instrument.h"
 #include "tlibs2/libs/maths.h"
 
 #include "PathsRenderer.h"
@@ -26,6 +27,7 @@
 #include "PathProperties.h"
 #include "CamProperties.h"
 #include "ConfigSpace.h"
+#include "GeoBrowser.h"
 #include "About.h"
 
 
@@ -49,6 +51,7 @@ private:
 	QMenuBar *m_menubar{nullptr};
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser;
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
