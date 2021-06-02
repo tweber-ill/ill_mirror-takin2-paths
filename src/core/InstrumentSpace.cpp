@@ -528,8 +528,12 @@ void InstrumentSpace::DragObject(bool drag_start, const std::string& obj,
 		wall_dragged = true;
 	}
 
+
 	if(wall_dragged)
+	{
 		EmitUpdate();
+		GetInstrument().EmitUpdate();	// needed to trigger collision detection
+	}
 }
 
 

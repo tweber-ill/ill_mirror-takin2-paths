@@ -182,6 +182,22 @@ void BoxGeometry::SetCentre(const t_vec& vec)
 }
 
 
+void BoxGeometry::SetLength(t_real l)
+{
+	m_length = l;
+
+	t_vec dir = m_pos2 - m_pos1;
+	dir /= tl2::norm(dir);
+
+	t_vec centre = GetCentre();
+	centre[2] = 0;
+	m_pos1 = centre - dir*m_length*0.5;
+	m_pos2 = centre + dir*m_length*0.5;
+
+	m_trafo_needs_update = true;
+}
+
+
 bool BoxGeometry::Load(const pt::ptree& prop)
 {
 	if(!Geometry::Load(prop))

@@ -111,12 +111,12 @@ public:
 
 	void SetHeight(t_real h) { m_height = h; m_trafo_needs_update = true; }
 	void SetDepth(t_real d) { m_depth = d; m_trafo_needs_update = true; }
-	void SetLength(t_real l) { m_length = l; m_trafo_needs_update = true; }
+	void SetLength(t_real l);
 
 private:
-	t_vec m_pos1 = tl2::create<t_vec>({0, 0, 0});
-	t_vec m_pos2 = tl2::create<t_vec>({0, 0, 0});
-	t_real m_height{}, m_depth{}, m_length{};
+	t_vec m_pos1 = tl2::create<t_vec>({-0.5, 0, 0});
+	t_vec m_pos2 = tl2::create<t_vec>({0.5, 0, 0});
+	t_real m_height{}, m_depth{}, m_length{1};
 };
 // ----------------------------------------------------------------------------
 

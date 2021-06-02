@@ -802,8 +802,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		auto wall = std::make_shared<BoxGeometry>();
 		wall->SetHeight(4.);
 		wall->SetDepth(0.5);
-		wall->SetLength(4.);
 		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+		wall->SetLength(4.);
 		wall->UpdateTrafo();
 
 		static std::size_t wallcnt = 1;
@@ -819,8 +819,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	{
 		auto wall = std::make_shared<CylinderGeometry>();
 		wall->SetHeight(4.);
-		wall->SetRadius(0.5);
 		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+		wall->SetRadius(0.5);
 		wall->UpdateTrafo();
 
 		static std::size_t wallcnt = 1;
