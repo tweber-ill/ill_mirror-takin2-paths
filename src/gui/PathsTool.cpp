@@ -791,6 +791,49 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	//menuView->addAction(acPersp);
 
 
+	// geometry menu
+	QMenu *menuGeo = new QMenu("Geometry", m_menubar);
+
+	QAction *actionAddCuboidWall = new QAction("Add Wall", menuGeo);
+	QAction *actionAddCylindricalWall = new QAction("Add Pillar", menuGeo);
+
+	connect(actionAddCuboidWall, &QAction::triggered, this, [this]()
+	{
+		auto wall = std::make_shared<BoxGeometry>();
+		wall->SetHeight(5.);
+		wall->SetDepth(0.5);
+		wall->SetLength(5.);
+		wall->SetCentre(tl2::create<t_vec>({0, 0, 0}));
+
+		static std::size_t wallcnt = 1;
+		std::ostringstream ostrId;
+		ostrId << "new wall " << wallcnt++;
+
+		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+		if(m_renderer)
+			m_renderer->AddWall(*wall, true);
+	});
+
+	connect(actionAddCylindricalWall, &QAction::triggered, this, [this]()
+	{
+		auto wall = std::make_shared<CylinderGeometry>();
+		wall->SetHeight(5.);
+		wall->SetRadius(0.5);
+		wall->SetCentre(tl2::create<t_vec>({0, 0, 0}));
+
+		static std::size_t wallcnt = 1;
+		std::ostringstream ostrId;
+		ostrId << "new pillar " << wallcnt++;
+
+		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+		if(m_renderer)
+			m_renderer->AddWall(*wall, true);
+	});
+
+	menuGeo->addAction(actionAddCuboidWall);
+	menuGeo->addAction(actionAddCylindricalWall);
+
+
 	// calculate menu
 	QMenu *menuCalc = new QMenu("Calculation", m_menubar);
 
@@ -889,6 +932,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// menu bar
 	m_menubar->addMenu(menuFile);
 	m_menubar->addMenu(menuView);
+	m_menubar->addMenu(menuGeo);
 	m_menubar->addMenu(menuCalc);
 	if(num_tools)
 		m_menubar->addMenu(menuTools);
@@ -951,60 +995,70 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
  */
 int main(int argc, char** argv)
 {
-	// qt log handler
-	QLoggingCategory::setFilterRules("*=true\n*.debug=false\n*.info=false\n");
-	qInstallMessageHandler([](QtMsgType ty, const QMessageLogContext& ctx, const QString& log) -> void
+	try
 	{
-		auto get_msg_type = [](const QtMsgType& _ty) -> std::string
+		// qt log handler
+		QLoggingCategory::setFilterRules("*=true\n*.debug=false\n*.info=false\n");
+		qInstallMessageHandler([](QtMsgType ty, const QMessageLogContext& ctx, const QString& log) -> void
 		{
-			switch(_ty)
+			auto get_msg_type = [](const QtMsgType& _ty) -> std::string
 			{
-				case QtDebugMsg: return "debug";
-				case QtWarningMsg: return "warning";
-				case QtCriticalMsg: return "critical error";
-				case QtFatalMsg: return "fatal error";
-				case QtInfoMsg: return "info";
-				default: return "<n/a>";
+				switch(_ty)
+				{
+					case QtDebugMsg: return "debug";
+					case QtWarningMsg: return "warning";
+					case QtCriticalMsg: return "critical error";
+					case QtFatalMsg: return "fatal error";
+					case QtInfoMsg: return "info";
+					default: return "<n/a>";
+				}
+			};
+
+			auto get_str = [](const char* pc) -> std::string
+			{
+				if(!pc) return "<n/a>";
+				return std::string{"\""} + std::string{pc} + std::string{"\""};
+			};
+
+			std::cerr << "Qt " << get_msg_type(ty);
+			if(ctx.function)
+			{
+				std::cerr << " in "
+					<< "file " << get_str(ctx.file) << ", "
+					<< "function " << get_str(ctx.function) << ", "
+					<< "line " << ctx.line;
 			}
-		};
+			std::cerr << ": " << log.toStdString() << std::endl;
+		});
 
-		auto get_str = [](const char* pc) -> std::string
-		{
-			if(!pc) return "<n/a>";
-			return std::string{"\""} + std::string{pc} + std::string{"\""};
-		};
+		tl2::set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
+		tl2::set_locales();
 
-		std::cerr << "Qt " << get_msg_type(ty);
-		if(ctx.function)
-		{
-			std::cerr << " in "
-				<< "file " << get_str(ctx.file) << ", "
-				<< "function " << get_str(ctx.function) << ", "
-				<< "line " << ctx.line;
-		}
-		std::cerr << ": " << log.toStdString() << std::endl;
-	});
+		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
+		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
+		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
 
-	tl2::set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
-	tl2::set_locales();
+		auto app = std::make_unique<QApplication>(argc, argv);
+		g_apppath = app->applicationDirPath().toStdString();
+		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." + 
+			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
+		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
 
-	//QApplication::setAttribute(Qt::AA_NativeWindows, true);
-	QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
-	QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
+		auto dlg = std::make_unique<PathsTool>(nullptr);
+		if(argc > 1)
+			dlg->SetInitialInstrumentFile(argv[1]);
+		dlg->show();
+		dlg->raise();
+		dlg->activateWindow();
 
-	auto app = std::make_unique<QApplication>(argc, argv);
-	g_apppath = app->applicationDirPath().toStdString();
-	app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." + 
-		QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
-	std::cout << "Application binary path: " << g_apppath << "." << std::endl;
+		return app->exec();
+	}
+	catch(const std::exception& ex)
+	{
+		std::cerr << "Error: " << ex.what() << std::endl;
+		return -1;
+	}
 
-	auto dlg = std::make_unique<PathsTool>(nullptr);
-	if(argc > 1)
-		dlg->SetInitialInstrumentFile(argv[1]);
-	dlg->show();
-	dlg->raise();
-	dlg->activateWindow();
-
-	return app->exec();
+	return 0;
 }
 // ----------------------------------------------------------------------------

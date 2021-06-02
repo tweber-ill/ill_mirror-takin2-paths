@@ -109,6 +109,10 @@ public:
 	t_real GetDepth() const { return m_depth; }
 	t_real GetLength() const { return m_length; }
 
+	void SetHeight(t_real h) { m_height = h; m_trafo_needs_update = true; }
+	void SetDepth(t_real d) { m_depth = d; m_trafo_needs_update = true; }
+	void SetLength(t_real l) { m_length = l; m_trafo_needs_update = true; }
+
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({0, 0, 0});
 	t_vec m_pos2 = tl2::create<t_vec>({0, 0, 0});

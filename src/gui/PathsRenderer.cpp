@@ -141,22 +141,36 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	// walls
 	for(const auto& wall : instrspace.GetWalls())
 	{
-		auto [_verts, _norms, _uvs] = wall->GetTriangles();
-
-		auto verts = tl2::convert<t_vec3_gl>(_verts);
-		auto norms = tl2::convert<t_vec3_gl>(_norms);
-		auto uvs = tl2::convert<t_vec3_gl>(_uvs);
-		auto cols = tl2::convert<t_vec3_gl>(wall->GetColour());
-
-		AddTriangleObject(wall->GetId(), verts, norms, uvs,
-			cols[0], cols[1], cols[2], 1);
-
-		const t_mat& _mat = wall->GetTrafo();
-		t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
-		m_objs[wall->GetId()].m_mat = mat;
+		if(!wall)
+			continue;
+		AddWall(*wall, false);
 	}
 
 	update();
+}
+
+
+/**
+ * insert a wall into the scene
+ */
+void PathsRenderer::AddWall(const Geometry& wall, bool update_scene)
+{
+	auto [_verts, _norms, _uvs] = wall.GetTriangles();
+
+	auto verts = tl2::convert<t_vec3_gl>(_verts);
+	auto norms = tl2::convert<t_vec3_gl>(_norms);
+	auto uvs = tl2::convert<t_vec3_gl>(_uvs);
+	auto cols = tl2::convert<t_vec3_gl>(wall.GetColour());
+
+	AddTriangleObject(wall.GetId(), verts, norms, uvs,
+		cols[0], cols[1], cols[2], 1);
+
+	const t_mat& _mat = wall.GetTrafo();
+	t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
+	m_objs[wall.GetId()].m_mat = mat;
+
+	if(update_scene)
+		update();
 }
 
 

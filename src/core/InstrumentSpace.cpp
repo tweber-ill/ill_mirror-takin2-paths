@@ -88,15 +88,7 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 				continue;
 
 			if(auto geoobj = Geometry::load(*geo); std::get<0>(geoobj))
-			{
-				// get individual 3d primitives that comprise this wall
-				for(auto& wallseg : std::get<1>(geoobj))
-				{
-					if(wallseg->GetId() == "")
-						wallseg->SetId(id);
-					m_walls.emplace_back(std::move(wallseg));
-				}
-			}
+				AddWall(std::get<1>(geoobj), id);
 		}
 	}
 
@@ -140,6 +132,21 @@ pt::ptree InstrumentSpace::Save() const
 
 
 /**
+ * add a wall to the instrument space
+ */
+void InstrumentSpace::AddWall(const std::vector<std::shared_ptr<Geometry>>& wallsegs, const std::string& id)
+{
+	// get individual 3d primitives that comprise this wall
+	for(auto& wallseg : wallsegs)
+	{
+		if(wallseg->GetId() == "")
+			wallseg->SetId(id);
+		m_walls.push_back(wallseg);
+	}
+}
+
+
+/**
  * check for collisions, using a 2d representation of the instrument space
  */
 bool InstrumentSpace::CheckCollision2D() const
@@ -157,7 +164,8 @@ bool InstrumentSpace::CheckCollision2D() const
 		{
 			auto cyl = std::dynamic_pointer_cast<CylinderGeometry>(comp);
 
-			t_vec pos = cyl->GetPos();
+			// position already considered in trafo matrix
+			t_vec pos = tl2::create<t_vec>({0,0,0,1}); //cyl->GetPos();
 			t_real rad = cyl->GetRadius();
 
 			// trafo in homogeneous coordinates
@@ -175,7 +183,8 @@ bool InstrumentSpace::CheckCollision2D() const
 		{
 			auto sph = std::dynamic_pointer_cast<SphereGeometry>(comp);
 
-			t_vec pos = sph->GetPos();
+			// position already considered in trafo matrix
+			t_vec pos = tl2::create<t_vec>({0,0,0,1}); //sph->GetPos();
 			t_real rad = sph->GetRadius();
 
 			// trafo in homogeneous coordinates
@@ -436,17 +445,25 @@ bool InstrumentSpace::CheckCollision2D() const
 		// wall circles
 		std::vector<std::tuple<t_vec, t_real>> wallCircles;
 		std::tuple<t_vec, t_real> wallCircle;
-
 		get_comp_circles(wall, wallCircle);
+
 		if(std::get<0>(wallCircle).size())
 		{
 			wallCircles.emplace_back(std::move(wallCircle));
+			auto wallCirclesBB = tl2::sphere_bounding_box<t_vec, std::vector>(wallCircles, 2);
 
 			//if(check_collision_circle_circle(monoCircles, wallCircles))
 			//	return true;
 			if(check_collision_circle_circle(sampleCircles, wallCircles))
 				return true;
 			if(check_collision_circle_circle(anaCircles, wallCircles))
+				return true;
+			
+			if(check_collision_circle_poly(wallCircles, monoPolys, wallCirclesBB, monoBB))
+				return true;
+			if(check_collision_circle_poly(wallCircles, samplePolys, wallCirclesBB, sampleBB))
+				return true;
+			if(check_collision_circle_poly(wallCircles, anaPolys, wallCirclesBB, anaBB))
 				return true;
 		}
 	}

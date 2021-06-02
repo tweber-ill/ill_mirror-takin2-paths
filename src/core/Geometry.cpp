@@ -338,6 +338,7 @@ pt::ptree CylinderGeometry::Save() const
 void CylinderGeometry::UpdateTrafo() const
 {
 	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_height*0.5);
+	m_trafo *= tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], m_pos[2]);
 }
 
 
@@ -436,6 +437,7 @@ pt::ptree SphereGeometry::Save() const
 void SphereGeometry::UpdateTrafo() const
 {
 	m_trafo = tl2::hom_translation<t_mat, t_real>(0, 0, m_radius*0.5);
+	m_trafo *= tl2::hom_translation<t_mat, t_real>(m_pos[0], m_pos[1], m_pos[2]);
 }
 
 
