@@ -278,7 +278,7 @@ void ConfigSpaceDlg::Calculate()
 	// calculate contour lines
 	using t_contourvec = tl2::vec<int, std::vector>;
 	auto contours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
-	m_status->setText(QString("%1 contour lines found.").arg(contours.size()));
+	m_status->setText(QString("%1 contour outlines found.").arg(contours.size()));
 
 	// draw contour lines
 	for(const auto& contour : contours)

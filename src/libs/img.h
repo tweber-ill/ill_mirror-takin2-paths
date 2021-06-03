@@ -9,8 +9,8 @@
  *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
  */
 
-#include <cstdlib>
 #include <concepts>
+#include <cstdlib>
 #include <boost/gil/image.hpp>
 
 #include "tlibs2/libs/maths.h"

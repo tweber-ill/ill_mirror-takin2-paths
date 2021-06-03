@@ -22,7 +22,6 @@
 #include <stack>
 #include <set>
 #include <algorithm>
-#include <concepts>
 #include <iostream>
 
 #include <boost/graph/adjacency_list.hpp>

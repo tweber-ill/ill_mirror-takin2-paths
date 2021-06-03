@@ -16,22 +16,23 @@
 #ifndef __GEO_CONTAINERS_H__
 #define __GEO_CONTAINERS_H__
 
-#include "tlibs2/libs/maths.h"
-
-#include <iostream>
+#include <type_traits>
+#include <concepts>
 #include <string>
 #include <sstream>
 #include <memory>
 #include <optional>
 #include <unordered_map>
-#include <concepts>
 #include <cstdint>
+#include <iostream>
 
 #include <boost/intrusive/bstree_algorithms.hpp>
 #include <boost/intrusive/avltree_algorithms.hpp>
 #include <boost/intrusive/rbtree_algorithms.hpp>
 #include <boost/intrusive/splaytree_algorithms.hpp>
 #include <boost/intrusive/treap_algorithms.hpp>
+
+#include "tlibs2/libs/maths.h"
 
 
 /**
@@ -52,6 +53,18 @@ namespace geo {
 // concepts
 // ----------------------------------------------------------------------------
 
+// hack for standard libraries where this concept is not yet available
+#define __GEO_NO_CONVERTIBLE__
+
+#ifdef __GEO_NO_CONVERTIBLE__
+	template<class t_1, class t_2>
+	concept convertible_to = std::is_convertible<t_1, t_2>::value;
+#else
+	template<class t_1, class t_2>
+	concept convertible_to = requires std::convertible_to<t1, t2>;
+#endif
+
+
 /**
  * requirements for a basic vector container like std::vector
  */
@@ -65,17 +78,20 @@ concept is_tree_node = requires(const T& a)
 };
 
 
-
 /**
  * requirements for the graph container interface
  */
 template<class t_graph>
 concept is_graph = requires(t_graph& graph, std::size_t vertidx)
 {
-	{ graph.GetNumVertices() } -> std::convertible_to<std::size_t>;
-	{ graph.GetVertexIdent(vertidx) } -> std::convertible_to<std::string>;
+	{ graph.GetNumVertices() }
+		-> convertible_to<std::size_t>;
 
-	{ graph.GetWeight(vertidx, vertidx) } -> std::convertible_to<typename t_graph::t_weight>;
+	{ graph.GetVertexIdent(vertidx) }
+		-> convertible_to<std::string>;
+
+	{ graph.GetWeight(vertidx, vertidx) }
+		-> convertible_to<typename t_graph::t_weight>;
 
 	graph.GetNeighbours(vertidx);
 
