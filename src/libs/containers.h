@@ -61,7 +61,7 @@ namespace geo {
 	concept convertible_to = std::is_convertible<t_1, t_2>::value;
 #else
 	template<class t_1, class t_2>
-	concept convertible_to = requires std::convertible_to<t1, t2>;
+	concept convertible_to = requires { std::convertible_to<t_1, t_2>; };
 #endif
 
 
