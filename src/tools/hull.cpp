@@ -19,7 +19,6 @@
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QMessageBox>
-#include <QSettings>
 #include <QActionGroup>
 
 #include <locale>
@@ -33,7 +32,8 @@
 namespace ptree = boost::property_tree;
 
 #include "src/libs/hull.h"
-#include "src/libs/span.h"
+#include "src/libs/graphs.h"
+
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
@@ -635,33 +635,31 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 {
 	// ------------------------------------------------------------------------
 	// restore settings
-	QSettings settings{this};
-
-	if(settings.contains("wnd_geo"))
+	if(m_sett.contains("wnd_geo"))
 	{
-		QByteArray arr{settings.value("wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
 	{
 		resize(1024, 768);
 	}
-	if(settings.contains("wnd_state"))
+	if(m_sett.contains("wnd_state"))
 	{
-		QByteArray arr{settings.value("wnd_state").toByteArray()};
+		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
 		this->restoreState(arr);
 	}
 
 	m_scene->SetCalculateHull(
-		settings.value("calc_hull", m_scene->GetCalculateHull()).toBool());
+		m_sett.value("calc_hull", m_scene->GetCalculateHull()).toBool());
 	m_scene->SetCalculateVoronoiVertices(
-		settings.value("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices()).toBool());
+		m_sett.value("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices()).toBool());
 	m_scene->SetCalculateVoronoiRegions(
-		settings.value("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions()).toBool());
+		m_sett.value("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions()).toBool());
 	m_scene->SetCalculateDelaunay(
-		settings.value("calc_delaunay", m_scene->GetCalculateDelaunay()).toBool());
+		m_sett.value("calc_delaunay", m_scene->GetCalculateDelaunay()).toBool());
 	m_scene->SetCalculateKruskal(
-		settings.value("calc_kruskal", m_scene->GetCalculateKruskal()).toBool());
+		m_sett.value("calc_kruskal", m_scene->GetCalculateKruskal()).toBool());
 	// ------------------------------------------------------------------------
 
 
@@ -776,6 +774,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	});
 
 	QAction *actionQuit = new QAction{"Quit", this};
+	actionQuit->setMenuRole(QAction::QuitRole);
 	connect(actionQuit, &QAction::triggered, [this]()
 		{ this->close(); });
 
@@ -873,7 +872,6 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionSpanBoost, &QAction::toggled, [this]()
 		{ m_scene->SetSpanCalculationMethod(SpanCalculationMethod::BOOST); });
 
-
 	QActionGroup *groupHullBack = new QActionGroup{this};
 	groupHullBack->addAction(actionHullQHull);
 	groupHullBack->addAction(actionHullContour);
@@ -889,12 +887,31 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	groupSpanBack->addAction(actionSpanKruskal);
 	groupSpanBack->addAction(actionSpanBoost);
 
+	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", this);
+	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", this);
+
+	actionAboutQt->setMenuRole(QAction::AboutQtRole);
+	actionAbout->setMenuRole(QAction::AboutRole);
+
+	connect(actionAboutQt, &QAction::triggered, this, []() { qApp->aboutQt(); });
+
+	connect(actionAbout, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgAbout)
+			this->m_dlgAbout = std::make_shared<AboutDlg>(this, &m_sett);
+
+		m_dlgAbout->show();
+		m_dlgAbout->raise();
+		m_dlgAbout->activateWindow();
+	});
+
 
 	// menu
 	QMenu *menuFile = new QMenu{"File", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuBack = new QMenu{"Backends", this};
 	QMenu *menuTools = new QMenu{"Tools", this};
+	QMenu *menuHelp = new QMenu("Help", this);
 
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
@@ -935,6 +952,10 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBack->addMenu(menuDelaunay);
 	menuBack->addMenu(menuSpan);
 
+	menuHelp->addAction(actionAboutQt);
+	menuHelp->addSeparator();
+	menuHelp->addAction(actionAbout);
+
 
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
@@ -951,6 +972,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuBack);
 	menuBar->addMenu(menuTools);
+	menuBar->addMenu(menuHelp);
 	setMenuBar(menuBar);
 
 
@@ -976,16 +998,14 @@ void HullWnd::closeEvent(QCloseEvent *e)
 {
 	// ------------------------------------------------------------------------
 	// save settings
-	QSettings settings{this};
-
 	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
-	settings.setValue("wnd_geo", geo);
-	settings.setValue("wnd_state", state);
-	settings.setValue("calc_hull", m_scene->GetCalculateHull());
-	settings.setValue("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices());
-	settings.setValue("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions());
-	settings.setValue("calc_delaunay", m_scene->GetCalculateDelaunay());
-	settings.setValue("calc_kruskal", m_scene->GetCalculateKruskal());
+	m_sett.setValue("wnd_geo", geo);
+	m_sett.setValue("wnd_state", state);
+	m_sett.setValue("calc_hull", m_scene->GetCalculateHull());
+	m_sett.setValue("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices());
+	m_sett.setValue("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions());
+	m_sett.setValue("calc_delaunay", m_scene->GetCalculateDelaunay());
+	m_sett.setValue("calc_kruskal", m_scene->GetCalculateKruskal());
 	// ------------------------------------------------------------------------
 
 	QMainWindow::closeEvent(e);
@@ -1007,11 +1027,9 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 	// ------------------------------------------------------------------------
 	// restore settings
-	QSettings settings{this};
-
-	if(settings.contains("hullwnd_geo"))
+	if(m_sett.contains("hullwnd_geo"))
 	{
-		QByteArray arr{settings.value("hullwnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("hullwnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
@@ -1127,10 +1145,8 @@ void HullDlg::closeEvent(QCloseEvent *e)
 {
 	// ------------------------------------------------------------------------
 	// save settings
-	QSettings settings{this};
-
 	QByteArray geo{this->saveGeometry()};
-	settings.setValue("hullwnd_geo", geo);
+	m_sett.setValue("hullwnd_geo", geo);
 	// ------------------------------------------------------------------------
 
 	QDialog::closeEvent(e);

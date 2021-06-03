@@ -21,10 +21,13 @@
 #include <QToolButton>
 #include <QPlainTextEdit>
 #include <QCheckBox>
+#include <QSettings>
 
 #include <memory>
 #include <unordered_set>
 #include <vector>
+
+#include "about.h"
 
 
 class Vertex : public QGraphicsItem
@@ -182,6 +185,8 @@ private:
 	std::vector<int> GetSelectedRows(bool sort_reversed = false) const;
 
 private:
+	QSettings m_sett{"geo_tools", "hull"};
+
 	int m_iCursorRow{-1};
 
 };
@@ -205,6 +210,9 @@ protected:
 	virtual void closeEvent(QCloseEvent *) override;
 
 private:
+	QSettings m_sett{"geo_tools", "hull"};
+
+	std::shared_ptr<AboutDlg> m_dlgAbout;
 	std::shared_ptr<HullDlg> m_hulldlg;
 	std::shared_ptr<HullScene> m_scene;
 	std::shared_ptr<HullView> m_view;

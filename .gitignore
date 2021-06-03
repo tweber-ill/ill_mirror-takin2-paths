@@ -72,5 +72,7 @@ unittests/build/**
 # Libraries
 tlibs2
 tlibs2/**
+externals
+externals/**
 qcustomplot
 qcustomplot/**

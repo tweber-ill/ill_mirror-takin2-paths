@@ -34,6 +34,7 @@ get_filename_from_url() {
 # -----------------------------------------------------------------------------
 TLIBS2=https://code.ill.fr/scientific-software/takin/tlibs2/-/archive/master/tlibs2-master.zip
 PLOTTER=https://www.qcustomplot.com/release/2.1.0fixed/QCustomPlot-source.tar.gz
+BOOST_POLY_UTIL=https://raw.githubusercontent.com/boostorg/polygon/develop/example/voronoi_visual_utils.hpp
 # -----------------------------------------------------------------------------
 
 
@@ -48,8 +49,8 @@ function clean_dirs()
 		rm -rfv tlibs2
 	fi
 
-	if [ ! -L qcustomplot ]; then
-		rm -rfv qcustomplot
+	if [ ! -L externals ]; then
+		rm -rfv externals
 	fi
 }
 
@@ -111,7 +112,21 @@ function setup_plotter()
 		exit -1;
 	fi
 
-	mv -v qcustomplot-source qcustomplot
+	mv -v qcustomplot-source externals/qcustomplot
+}
+
+
+function setup_boostpoly()
+{
+	local BOOST_POLY_UTIL_LOCAL=$(get_filename_from_url ${BOOST_POLY_UTIL})
+
+	if ! ${WGET} ${BOOST_POLY_UTIL}
+	then
+		echo -e "Error downloading Boost.Polygon utils.";
+		exit -1;
+	fi
+
+	mv -v ${BOOST_POLY_UTIL_LOCAL} externals/
 }
 # -----------------------------------------------------------------------------
 
@@ -120,6 +135,7 @@ echo -e "-----------------------------------------------------------------------
 echo -e "Removing old files and directories...\n"
 clean_dirs
 clean_files
+mkdir externals
 echo -e "--------------------------------------------------------------------------------\n"
 
 echo -e "--------------------------------------------------------------------------------"
@@ -130,6 +146,11 @@ echo -e "-----------------------------------------------------------------------
 echo -e "--------------------------------------------------------------------------------"
 echo -e "Downloading and setting up QCustomPlot...\n"
 setup_plotter
+echo -e "--------------------------------------------------------------------------------\n"
+
+echo -e "--------------------------------------------------------------------------------"
+echo -e "Downloading and setting up Boost.Polygon utilities...\n"
+setup_boostpoly
 echo -e "--------------------------------------------------------------------------------\n"
 
 echo -e "--------------------------------------------------------------------------------"

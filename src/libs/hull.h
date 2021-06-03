@@ -2,7 +2,7 @@
  * convex hull / delaunay triangulation / voronoi diagrams
  * @author Tobias Weber <tweber@ill.fr>
  * @date Oct/Nov-2020
- * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
+ * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license see 'LICENSE' file
  *
  * References for the algorithms:
@@ -23,6 +23,9 @@
 #include <iostream>
 
 #include <boost/intrusive/bstree.hpp>
+#include <boost/polygon/polygon.hpp>
+#include <boost/polygon/voronoi.hpp>
+#include <voronoi_visual_utils.hpp>
 
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
@@ -31,9 +34,61 @@
 #include <libqhullcpp/QhullFacetSet.h>
 #include <libqhullcpp/QhullVertexSet.h>
 
-#include "lines.h"
 #include "tlibs2/libs/maths.h"
+
+#include "lines.h"
+#include "graphs.h"
 #include "circular_iterator.h"
+
+
+// ----------------------------------------------------------------------------
+// make point and line segment classes known for boost.polygon
+// @see https://www.boost.org/doc/libs/1_75_0/libs/polygon/doc/gtl_custom_point.htm
+// @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_basic_tutorial.cpp
+// ----------------------------------------------------------------------------
+template<class t_vec> requires tl2::is_vec<t_vec>
+struct boost::polygon::geometry_concept<t_vec>
+{
+	using type = boost::polygon::point_concept;
+};
+
+
+template<class t_vec> requires tl2::is_vec<t_vec>
+struct boost::polygon::geometry_concept<std::pair<t_vec, t_vec>>
+{
+	using type = boost::polygon::segment_concept;
+};
+
+
+template<class t_vec> requires tl2::is_vec<t_vec>
+struct boost::polygon::point_traits<t_vec>
+{
+	using coordinate_type = typename t_vec::value_type;
+
+	static coordinate_type get(const t_vec& vec, boost::polygon::orientation_2d orientation)
+	{
+		return vec[orientation.to_int()];
+	}
+};
+
+
+template<class t_vec> requires tl2::is_vec<t_vec>
+struct boost::polygon::segment_traits<std::pair<t_vec, t_vec>>
+{
+	using coordinate_type = typename t_vec::value_type;
+	using point_type = t_vec;
+	using line_type = std::pair<t_vec, t_vec>; // for convenience, not part of interface
+
+	static const point_type& get(const line_type& line, boost::polygon::direction_1d direction)
+	{
+		switch(direction.to_int())
+		{
+			case 1: return std::get<1>(line);
+			case 0: default: return std::get<0>(line);
+		}
+	}
+};
+// ----------------------------------------------------------------------------
 
 
 namespace geo {
@@ -1080,6 +1135,237 @@ std::vector<t_edge> get_edges(
 }
 
 // ----------------------------------------------------------------------------
+
+
+
+/**
+ * voronoi diagram for line segments
+ * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_basic_tutorial.cpp
+ * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visual_utils.hpp
+ * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visualizer.cpp
+ * @see https://www.boost.org/doc/libs/1_75_0/libs/polygon/doc/voronoi_diagram.htm
+ */
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>, class t_graph=AdjacencyMatrix<typename t_vec::value_type>>
+std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
+calc_voro(const std::vector<t_line>& lines)
+requires tl2::is_vec<t_vec> && is_graph<t_graph>
+{
+	using t_real = typename t_vec::value_type;
+	namespace poly = boost::polygon;
+
+	t_real parabola_eps = 1e-3;
+
+	// length of infinite edges
+	t_real infline_len = 1.;
+	for(const t_line& line : lines)
+	{
+		t_vec dir = std::get<1>(line) - std::get<0>(line);
+		t_real len = tl2::norm(dir);
+		infline_len = std::max(infline_len, len);
+	}
+	infline_len *= 10.;
+
+	using t_vorotraits = poly::voronoi_diagram_traits<t_real>;
+	poly::voronoi_diagram<t_real, t_vorotraits> voro;
+	poly::construct_voronoi(lines.begin(), lines.end(), &voro);
+
+	// graph of voronoi vertices
+	t_graph graph;
+
+	//vertices
+	std::vector<t_vec> vertices;
+	for(const auto& vert : voro.vertices())
+	{
+		vertices.emplace_back(tl2::create<t_vec>({ vert.x(), vert.y() }));
+		graph.AddVertex(std::to_string(vertices.size()));
+	}
+
+
+	auto get_vertex_idx = [&voro](const typename t_vorotraits::vertex_type* vert) -> std::optional<std::size_t>
+	{
+		// infinite edge?
+		if(!vert)
+			return std::nullopt;
+
+		std::size_t idx = 0;
+		for(const auto& vertex : voro.vertices())
+		{
+			if(&vertex == vert)
+				return idx;
+			++idx;
+		}
+
+		return std::nullopt;
+	};
+
+
+	// edges
+	std::vector<std::vector<t_vec>> all_parabolic_edges;
+	std::vector<t_line> linear_edges;
+	linear_edges.reserve(voro.edges().size());
+
+	for(const auto& edge : voro.edges())
+	{
+		// only bisectors, no internal edges
+		if(edge.is_secondary())
+			continue;
+
+		// add graph edges
+		const auto* vert0 = edge.vertex0();
+		const auto* vert1 = edge.vertex1();
+		auto vert0idx = get_vertex_idx(vert0);
+		auto vert1idx = get_vertex_idx(vert1);
+		if(vert0idx && vert1idx)
+		{
+			// TODO: arc length of parabolic edges
+			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+			graph.AddEdge(*vert0idx, *vert1idx, len);
+			graph.AddEdge(*vert1idx, *vert0idx, len);
+		}
+
+		// get line segment
+		auto get_segment = [&edge, &lines](bool twin) -> const t_line*
+		{
+			const auto* cell = twin ? edge.twin()->cell() : edge.cell();
+			if(!cell)
+				return nullptr;
+
+			const t_line& line = lines[cell->source_index()];
+			return &line;
+		};
+
+
+		// get line segment endpoint
+		auto get_segment_point = [&edge, &get_segment](bool twin) -> const t_vec*
+		{
+			const auto* cell = twin ? edge.twin()->cell() : edge.cell();
+			if(!cell)
+				return nullptr;
+
+			const t_line* line = get_segment(twin);
+			const t_vec* vec = nullptr;
+			if(!line)
+				return nullptr;
+
+			switch(cell->source_category())
+			{
+				case poly::SOURCE_CATEGORY_SEGMENT_START_POINT:
+					vec = &std::get<0>(*line);
+					break;
+				case poly::SOURCE_CATEGORY_SEGMENT_END_POINT:
+					vec = &std::get<1>(*line);
+					break;
+				default:
+					break;
+			}
+
+			return vec;
+		};
+
+
+		// converter functions
+		auto to_point_data = [](const t_vec& vec) -> poly::point_data<t_real>
+		{
+			return poly::point_data<t_real>{vec[0], vec[1]};
+		};
+
+		auto vertex_to_point_data = [](const typename t_vorotraits::vertex_type& vec) -> poly::point_data<t_real>
+		{
+			return poly::point_data<t_real>{vec.x(), vec.y()};
+		};
+
+		auto to_vec = [](const poly::point_data<t_real>& pt) -> t_vec
+		{
+			return tl2::create<t_vec>({ pt.x(), pt.y() });
+		};
+
+		auto vertex_to_vec = [](const typename t_vorotraits::vertex_type& vec) -> t_vec
+		{
+			return tl2::create<t_vec>({ vec.x(), vec.y() });
+		};
+
+		auto to_segment_data = [&to_point_data](const t_line& line) -> poly::segment_data<t_real>
+		{
+			auto pt1 = to_point_data(std::get<0>(line));
+			auto pt2 = to_point_data(std::get<1>(line));
+
+			return poly::segment_data<t_real>{pt1, pt2};
+		};
+
+
+		// parabolic edge
+		if(edge.is_curved())
+		{
+			const t_line* seg = get_segment(edge.cell()->contains_point());
+			const t_vec* pt = get_segment_point(!edge.cell()->contains_point());
+			if(!seg || !pt)
+				continue;
+
+			std::vector<poly::point_data<t_real>> parabola
+				{{ vertex_to_point_data(*edge.vertex0()), vertex_to_point_data(*edge.vertex1()) }};
+
+			poly::voronoi_visual_utils<t_real>::discretize(
+				to_point_data(*pt), to_segment_data(*seg),
+				parabola_eps, &parabola);
+
+			std::vector<t_vec> parabolic_edges;
+			parabolic_edges.reserve(parabola.size());
+			for(const auto& parabola_pt : parabola)
+				parabolic_edges.emplace_back(to_vec(parabola_pt));
+			all_parabolic_edges.emplace_back(std::move(parabolic_edges));
+		}
+
+		// linear edge
+		else
+		{
+			// finite edge
+			if(edge.is_finite())
+			{
+				linear_edges.push_back(std::make_pair(
+					vertex_to_vec(*edge.vertex0()), vertex_to_vec(*edge.vertex1())));
+			}
+
+			// infinite edge
+			else
+			{
+				t_vec lineorg;
+				bool inverted = false;
+				if(edge.vertex0())
+				{
+					lineorg = vertex_to_vec(*edge.vertex0());
+					inverted = false;
+				}
+				else if(edge.vertex1())
+				{
+					lineorg = vertex_to_vec(*edge.vertex1());
+					inverted = true;
+				}
+				else
+				{
+					continue;
+				}
+
+				const t_vec* vec = get_segment_point(false);
+				const t_vec* twinvec = get_segment_point(true);
+
+				if(!vec || !twinvec)
+					continue;
+
+				t_vec perpdir = *vec - *twinvec;
+				if(inverted)
+					perpdir = -perpdir;
+				t_vec linedir = tl2::create<t_vec>({ perpdir[1], -perpdir[0] });
+
+				linedir /= tl2::norm(linedir);
+				linedir *= infline_len;
+
+				linear_edges.push_back(std::make_pair(lineorg, lineorg + linedir));
+			}
+		}
+	}
+
+	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
+}
 
 }
 #endif

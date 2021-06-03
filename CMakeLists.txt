@@ -66,7 +66,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 	add_compile_options(-mmacosx-version-min=10.14)
 endif()
 
-include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/externals")
 # -----------------------------------------------------------------------------
 
 
@@ -144,18 +144,20 @@ add_executable(taspaths
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 
-	qcustomplot/qcustomplot.cpp qcustomplot/qcustomplot.h
+	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
 )
 
 
 if(BUILD_TEST_TOOLS)
 	add_executable(hull
 		src/tools/hull.cpp src/tools/hull.h
+		src/tools/about.cpp src/tools/about.h
 		src/libs/hull.h
 	)
 
 	add_executable(lines
 		src/tools/lines.cpp src/tools/lines.h
+		src/tools/about.cpp src/tools/about.h
 		src/libs/lines.h
 	)
 endif()

@@ -15,15 +15,20 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <QSettings>
 #include <QImage>
 
 #include <memory>
 #include <vector>
 
 #include "src/libs/lines.h"
+#include "src/libs/graphs.h"
 #include "src/libs/trapezoid.h"
-using t_real = double;
 
+#include "about.h"
+
+
+using t_real = double;
 
 
 class Vertex : public QGraphicsItem
@@ -53,6 +58,7 @@ class LinesScene : public QGraphicsScene
 public:
 	using t_vec = tl2::vec<t_real, std::vector>;
 	using t_mat = tl2::mat<t_real, std::vector>;
+	using t_graph = geo::AdjacencyList<t_real>;
 
 	static const constexpr t_real g_eps = 1e-5;
 
@@ -67,6 +73,9 @@ public:
 	bool GetCalculateTrapezoids() const { return m_calctrapezoids; }
 	void SetCalculateTrapezoids(bool);
 
+	bool GetCalculateVoro() const { return m_calcvoro; }
+	void SetCalculateVoro(bool);
+
 	void AddVertex(const QPointF& pos);
 	void ClearVertices();
 	const std::vector<Vertex*>& GetVertexElems() const { return m_elems_vertices; }
@@ -80,8 +89,11 @@ public:
 	void SetIntersectionCalculationMethod(IntersectionCalculationMethod m);
 
 	void CreateVoroImage(int width, int height);
-	void UpdateVoro(const QTransform& trafoSceneToVP);
+	void UpdateVoroImage(const QTransform& trafoSceneToVP);
 	const QImage* GetVoroImage() const { return m_elem_voro; }
+
+	void UpdateVoro();
+	const t_graph& GetVoroGraph() const { return m_vorograph; }
 
 private:
 	QWidget *m_parent = nullptr;
@@ -90,8 +102,12 @@ private:
 	std::vector<QGraphicsItem*> m_elems_lines{};
 	std::vector<QGraphicsItem*> m_elems_inters{};
 	std::vector<QGraphicsItem*> m_elems_trap{};
+	std::vector<QGraphicsItem*> m_elems_voro{};
 	QImage *m_elem_voro = nullptr;
 	std::vector<std::pair<t_vec, t_vec>> m_lines{};
+
+	t_graph m_vorograph{};
+	bool m_calcvoro = true;
 
 	IntersectionCalculationMethod m_intersectioncalculationmethod
 		= IntersectionCalculationMethod::SWEEP;
@@ -146,6 +162,9 @@ private:
 	virtual void closeEvent(QCloseEvent *) override;
 
 private:
+	QSettings m_sett{"geo_tools", "lines"};
+	std::shared_ptr<AboutDlg> m_dlgAbout;
+
 	std::shared_ptr<LinesScene> m_scene;
 	std::shared_ptr<LinesView> m_view;
 	std::shared_ptr<QLabel> m_statusLabel;

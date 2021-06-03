@@ -38,6 +38,7 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 #include "tlibs2/libs/helper.h"
+#include "src/libs/hull.h"
 
 
 // ----------------------------------------------------------------------------
@@ -154,6 +155,7 @@ void LinesScene::UpdateAll()
 	UpdateLines();
 	UpdateIntersections();
 	UpdateTrapezoids();
+	UpdateVoro();
 }
 
 
@@ -261,6 +263,13 @@ void LinesScene::SetCalculateTrapezoids(bool b)
 }
 
 
+void LinesScene::SetCalculateVoro(bool b)
+{
+	m_calcvoro = b;
+	UpdateVoro();
+}
+
+
 void LinesScene::UpdateTrapezoids()
 {
 	// remove previous trapezoids
@@ -307,7 +316,7 @@ void LinesScene::UpdateTrapezoids()
 }
 
 
-void LinesScene::UpdateVoro(const QTransform& trafoSceneToVP)
+void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 {
 	QTransform trafoVPToScene = trafoSceneToVP.inverted();
 
@@ -411,6 +420,76 @@ std::size_t LinesScene::GetClosestLineIdx(const t_vec& pt) const
 	}
 
 	return minidx;
+}
+
+
+void LinesScene::UpdateVoro()
+{
+	// remove previous voronoi diagram
+	for(QGraphicsItem* item : m_elems_voro)
+	{
+		removeItem(item);
+		delete item;
+	}
+	m_elems_voro.clear();
+
+	if(!m_calcvoro)
+		return;
+
+	// get vertices and bisectors
+	auto [vertices, linear_edges, all_parabolic_edges, graph]
+		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines);
+	m_vorograph = std::move(graph);
+
+	// linear voronoi edges
+	QPen penLinEdge;
+	penLinEdge.setStyle(Qt::SolidLine);
+	penLinEdge.setWidthF(1.);
+	penLinEdge.setColor(QColor::fromRgbF(0.,0.,0.));
+
+	for(const auto& linear_edge : linear_edges)
+	{
+		QLineF line{
+			QPointF{std::get<0>(linear_edge)[0], std::get<0>(linear_edge)[1]},
+			QPointF{std::get<1>(linear_edge)[0], std::get<1>(linear_edge)[1]} };
+		QGraphicsItem *item = addLine(line, penLinEdge);
+		m_elems_voro.push_back(item);
+	}
+
+	// parabolic voronoi edges
+	QPen penParaEdge = penLinEdge;
+
+	for(const auto& parabolic_edges : all_parabolic_edges)
+	{
+		QPolygonF poly;
+		poly.reserve(parabolic_edges.size());
+		for(const auto& parabolic_edge : parabolic_edges)
+			poly << QPointF{parabolic_edge[0], parabolic_edge[1]};
+
+		QPainterPath path;
+		path.addPolygon(poly);
+
+		QGraphicsItem *item = addPath(path, penParaEdge);
+		m_elems_voro.push_back(item);
+	}
+
+	// voronoi vertices
+	QPen penVertex;
+	penVertex.setStyle(Qt::SolidLine);
+	penVertex.setWidthF(1.);
+	penVertex.setColor(QColor::fromRgbF(0.25, 0., 0.));
+
+	QBrush brushVertex;
+	brushVertex.setStyle(Qt::SolidPattern);
+	brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
+
+	for(const auto& vertex : vertices)
+	{
+		const t_real width = 8.;
+		QRectF rect{vertex[0]-width/2, vertex[1]-width/2, width, width};
+		QGraphicsItem *item = addEllipse(rect, penVertex, brushVertex);
+		m_elems_voro.push_back(item);
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -587,20 +666,18 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 {
 	// ------------------------------------------------------------------------
 	// restore settings
-	QSettings settings{this};
-
-	if(settings.contains("wnd_geo"))
+	if(m_sett.contains("wnd_geo"))
 	{
-		QByteArray arr{settings.value("wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
 	{
 		resize(1024, 768);
 	}
-	if(settings.contains("wnd_state"))
+	if(m_sett.contains("wnd_state"))
 	{
-		QByteArray arr{settings.value("wnd_state").toByteArray()};
+		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
 		this->restoreState(arr);
 	}
 	// ------------------------------------------------------------------------
@@ -716,21 +793,40 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
+	QAction *actionExportGraph = new QAction{"Export Voronoi Graph...", this};
+	connect(actionExportGraph, &QAction::triggered, [this]()
+	{
+		if(QString file = QFileDialog::getSaveFileName(this, "Export DOT", "",
+			"DOT Files (*.dot);;All Files (* *.*)"); file!="")
+		{
+			const auto& graph = m_scene->GetVoroGraph();
+
+			std::ofstream ofstr(file.toStdString());
+			print_graph(graph, ofstr);
+			ofstr << std::endl;
+		}
+	});
+
 	QAction *actionQuit = new QAction{"Quit", this};
+	actionQuit->setMenuRole(QAction::QuitRole);
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
 
 
-	QAction *actionVoro = new QAction{"Voronoi Regions", this};
-	connect(actionVoro, &QAction::triggered, [this]()
-	{
-		m_scene->UpdateVoro(m_view->viewportTransform());
-	});
+	QAction *actionVoronoiRegions = new QAction{"Voronoi Bisectors", this};
+	actionVoronoiRegions->setCheckable(true);
+	actionVoronoiRegions->setChecked(m_scene->GetCalculateVoro());
+	connect(actionVoronoiRegions, &QAction::toggled, [this](bool b)
+	{ m_scene->SetCalculateVoro(b); });
+
+	QAction *actionVoroBitmap = new QAction{"Voronoi Regions", this};
+	connect(actionVoroBitmap, &QAction::triggered, [this]()
+	{ m_scene->UpdateVoroImage(m_view->viewportTransform()); });
 
 	QAction *actionTrap = new QAction{"Trapezoid Map", this};
 	actionTrap->setCheckable(true);
 	actionTrap->setChecked(m_scene->GetCalculateTrapezoids());
 	connect(actionTrap, &QAction::toggled, [this](bool b)
-		{ m_scene->SetCalculateTrapezoids(b); });
+	{ m_scene->SetCalculateTrapezoids(b); });
 
 
 	QAction *actionIntersDirect = new QAction{"Direct", this};
@@ -750,6 +846,24 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	groupInters->addAction(actionIntersDirect);
 	groupInters->addAction(actionIntersSweep);
 
+	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", this);
+	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", this);
+
+	actionAboutQt->setMenuRole(QAction::AboutQtRole);
+	actionAbout->setMenuRole(QAction::AboutRole);
+
+	connect(actionAboutQt, &QAction::triggered, this, []() { qApp->aboutQt(); });
+
+	connect(actionAbout, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgAbout)
+			this->m_dlgAbout = std::make_shared<AboutDlg>(this, &m_sett);
+
+		m_dlgAbout->show();
+		m_dlgAbout->raise();
+		m_dlgAbout->activateWindow();
+	});
+
 
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
@@ -763,6 +877,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenu *menuFile = new QMenu{"File", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuBack = new QMenu{"Backend", this};
+	QMenu *menuHelp = new QMenu("Help", this);
 
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
@@ -770,15 +885,21 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
+	menuFile->addAction(actionExportGraph);
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
 
+	menuCalc->addAction(actionVoronoiRegions);
 	menuCalc->addAction(actionTrap);
 	menuCalc->addSeparator();
-	menuCalc->addAction(actionVoro);
+	menuCalc->addAction(actionVoroBitmap);
 
 	menuBack->addAction(actionIntersDirect);
 	menuBack->addAction(actionIntersSweep);
+
+	menuHelp->addAction(actionAboutQt);
+	menuHelp->addSeparator();
+	menuHelp->addAction(actionAbout);
 
 
 	// menu bar
@@ -787,6 +908,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuFile);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuBack);
+	menuBar->addMenu(menuHelp);
 	setMenuBar(menuBar);
 
 
@@ -813,11 +935,9 @@ void LinesWnd::closeEvent(QCloseEvent *e)
 {
 	// ------------------------------------------------------------------------
 	// save settings
-	QSettings settings{this};
-
 	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
-	settings.setValue("wnd_geo", geo);
-	settings.setValue("wnd_state", state);
+	m_sett.setValue("wnd_geo", geo);
+	m_sett.setValue("wnd_state", state);
 	// ------------------------------------------------------------------------
 
 	QMainWindow::closeEvent(e);
