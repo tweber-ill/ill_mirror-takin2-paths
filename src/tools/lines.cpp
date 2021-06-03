@@ -8,17 +8,15 @@
 
 #include "lines.h"
 
-#include <QApplication>
-#include <QMenuBar>
-#include <QLabel>
-#include <QStatusBar>
-#include <QMouseEvent>
-#include <QFileDialog>
-#include <QSvgGenerator>
-#include <QMessageBox>
-#include <QSettings>
-#include <QActionGroup>
-#include <QProgressDialog>
+#include <QtGui/QMouseEvent>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QStatusBar>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QActionGroup>
+#include <QtWidgets/QProgressDialog>
+#include <QtSvg/QSvgGenerator>
 
 #include <locale>
 #include <memory>

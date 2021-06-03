@@ -13,6 +13,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QTableWidget>
 
 #include "src/core/Instrument.h"
 
@@ -32,6 +33,7 @@ private:
 	QSettings *m_sett{nullptr};
 
 	QTreeWidget *m_geotree{nullptr};
+	QTableWidget *m_geosettings{nullptr};
 	QSplitter *m_splitter{nullptr};
 };
 

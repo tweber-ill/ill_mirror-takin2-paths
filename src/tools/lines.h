@@ -9,14 +9,13 @@
 #ifndef __LINES_GUI_H__
 #define __LINES_GUI_H__
 
-
-#include <QMainWindow>
-#include <QLabel>
-#include <QGraphicsView>
-#include <QGraphicsScene>
-#include <QGraphicsItem>
-#include <QSettings>
-#include <QImage>
+#include <QtCore/QSettings>
+#include <QtGui/QImage>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsItem>
 
 #include <memory>
 #include <vector>
@@ -43,6 +42,7 @@ public:
 private:
 	double m_rad = 15.;
 };
+
 
 
 enum class IntersectionCalculationMethod

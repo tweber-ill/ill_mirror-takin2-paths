@@ -11,6 +11,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QHeaderView>
 
 
 GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
@@ -19,6 +20,7 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	setWindowTitle("Geometries Browser");
 
 
+	// geometry object tree
 	m_geotree = new QTreeWidget(this);
 	m_geotree->headerItem()->setText(0, "Instrument Space");
 
@@ -28,18 +30,32 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	m_geotree->setSizePolicy(sptree);
 
 
-	auto *geosettings = new QWidget(this);
+	// geometry settings table
+	m_geosettings = new QTableWidget(this);
+	m_geosettings->setShowGrid(true);
+	m_geosettings->setSortingEnabled(true);
+	m_geosettings->setMouseTracking(true);
+	m_geosettings->setSelectionBehavior(QTableWidget::SelectItems);
+	m_geosettings->setSelectionMode(QTableWidget::SingleSelection);
+	m_geosettings->horizontalHeader()->setDefaultSectionSize(200);
+	m_geosettings->verticalHeader()->setDefaultSectionSize(32);
+	m_geosettings->verticalHeader()->setVisible(false);
+	m_geosettings->setColumnCount(2);
+	m_geosettings->setColumnWidth(0, 200);
+	m_geosettings->setColumnWidth(1, 200);
+	m_geosettings->setHorizontalHeaderItem(0, new QTableWidgetItem{"Key"});
+	m_geosettings->setHorizontalHeaderItem(1, new QTableWidgetItem{"Value"});
 
  	QSizePolicy spsettings(QSizePolicy::Preferred, QSizePolicy::Expanding, QSizePolicy::Frame);
     spsettings.setHorizontalStretch(2);
     spsettings.setVerticalStretch(1);
-	geosettings->setSizePolicy(spsettings);
+	m_geosettings->setSizePolicy(spsettings);
 
 
 	// splitter
 	m_splitter = new QSplitter(Qt::Horizontal, this);
 	m_splitter->addWidget(m_geotree);
-	m_splitter->addWidget(geosettings);
+	m_splitter->addWidget(m_geosettings);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);

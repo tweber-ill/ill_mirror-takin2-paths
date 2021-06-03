@@ -8,18 +8,18 @@
 
 #include "hull.h"
 
-#include <QApplication>
-#include <QMenuBar>
-#include <QLabel>
-#include <QSpinBox>
-#include <QStatusBar>
-#include <QMouseEvent>
-#include <QFileDialog>
-#include <QSvgGenerator>
-#include <QGridLayout>
-#include <QHeaderView>
-#include <QMessageBox>
-#include <QActionGroup>
+#include <QtGui/QMouseEvent>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QActionGroup>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QStatusBar>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QSplitter>
+#include <QtSvg/QSvgGenerator>
 
 #include <locale>
 #include <memory>
@@ -1023,7 +1023,7 @@ HullWnd::~HullWnd()
 // ----------------------------------------------------------------------------
 HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 {
-	setWindowTitle("Convex Hull");
+	setWindowTitle("Convex Hull Calculation");
 
 	// ------------------------------------------------------------------------
 	// restore settings
@@ -1090,13 +1090,18 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_checkDelaunay->setText("Delaunay");
 
 
+	// splitter
+	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
+	splitter->addWidget(m_tab);
+	splitter->addWidget(m_editResults);
+
+
 	// grid
 	int y = 0;
 	auto pTabGrid = new QGridLayout(this);
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
-	pTabGrid->addWidget(m_tab, y++,0,1,8);
-	pTabGrid->addWidget(m_editResults, y++,0,1,8);
+	pTabGrid->addWidget(splitter, y++,0,1,8);
 	pTabGrid->addWidget(m_tabBtnAdd, y,0,1,1);
 	pTabGrid->addWidget(m_tabBtnDel, y,1,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
@@ -1240,7 +1245,8 @@ void HullDlg::CalculateHull()
 				<< vertices[vertidx] << "\n";
 		}
 
-		ostr << "\n";
+		if(voro.size())
+			ostr << "\n";
 
 		// voronoi vertices
 		for(std::size_t voroidx=0; voroidx<voro.size(); ++voroidx)
@@ -1249,13 +1255,17 @@ void HullDlg::CalculateHull()
 				<< voro[voroidx] << "\n";
 		}
 
-		ostr << "\n";
+		if(triags.size())
+			ostr << "\n";
 
 		// hull or delaunay triangles
 		for(std::size_t polyidx=0; polyidx<triags.size(); ++polyidx)
 		{
 			const auto& poly = triags[polyidx];
-			ostr << "Polygon " << (polyidx+1) << ":\n";
+			if(poly.size() <= 2)
+				ostr << "Edge " << (polyidx+1) << ":\n";
+			else
+				ostr << "Polygon " << (polyidx+1) << ":\n";
 			ostr << "\tVertices:\n";
 			for(const auto& vertex : poly)
 				ostr << "\t\t" << vertex << "\n";

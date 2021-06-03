@@ -9,19 +9,19 @@
 #ifndef __HULL_GUI_H__
 #define __HULL_GUI_H__
 
-
-#include <QMainWindow>
-#include <QDialog>
-#include <QMenu>
-#include <QLabel>
-#include <QGraphicsView>
-#include <QGraphicsScene>
-#include <QGraphicsItem>
-#include <QTableWidget>
-#include <QToolButton>
-#include <QPlainTextEdit>
-#include <QCheckBox>
-#include <QSettings>
+#include <QtCore/QSettings>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsItem>
+#include <QtWidgets/QTableWidget>
+#include <QtWidgets/QToolButton>
+#include <QtWidgets/QPlainTextEdit>
+#include <QtWidgets/QCheckBox>
+#include <QtSvg/QSvgGenerator>
 
 #include <memory>
 #include <unordered_set>
