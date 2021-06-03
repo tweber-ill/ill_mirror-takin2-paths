@@ -19,6 +19,7 @@
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QDialogButtonBox>
 #include <QtSvg/QSvgGenerator>
 
 #include <locale>
@@ -1075,6 +1076,9 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	m_tabBtnUp->setToolTip("Move vertex up.");
 	m_tabBtnDown->setToolTip("Move vertex down.");
 
+	QDialogButtonBox *buttons = new QDialogButtonBox(this);
+	buttons->setStandardButtons(QDialogButtonBox::Ok);
+
 
 	// dimension spin box
 	QSpinBox *spin = new QSpinBox(this);
@@ -1101,17 +1105,18 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	auto pTabGrid = new QGridLayout(this);
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
-	pTabGrid->addWidget(splitter, y++,0,1,8);
+	pTabGrid->addWidget(splitter, y++,0,1,9);
 	pTabGrid->addWidget(m_tabBtnAdd, y,0,1,1);
 	pTabGrid->addWidget(m_tabBtnDel, y,1,1,1);
+	pTabGrid->addWidget(m_tabBtnUp, y,2,1,1);
+	pTabGrid->addWidget(m_tabBtnDown, y,3,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
-		QSizePolicy::Expanding, QSizePolicy::Minimum), y,2,1,1);
-	pTabGrid->addWidget(spin, y,3,1,1);
-	pTabGrid->addWidget(m_checkDelaunay, y,4,1,1);
+		QSizePolicy::Expanding, QSizePolicy::Minimum), y,4,1,1);
+	pTabGrid->addWidget(spin, y,5,1,1);
+	pTabGrid->addWidget(m_checkDelaunay, y,6,1,1);
 	pTabGrid->addItem(new QSpacerItem(4, 4, 
-		QSizePolicy::Expanding, QSizePolicy::Minimum), y,5,1,1);
-	pTabGrid->addWidget(m_tabBtnUp, y,6,1,1);
-	pTabGrid->addWidget(m_tabBtnDown, y++,7,1,1);
+		QSizePolicy::Expanding, QSizePolicy::Minimum), y,7,1,1);
+	pTabGrid->addWidget(buttons, y++,8,1,1);
 
 
 	// table context CustomContextMenu
@@ -1141,12 +1146,13 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 		this, &HullDlg::SetDim);
 	connect(m_checkDelaunay, &QCheckBox::stateChanged,
 		[this]() { CalculateHull(); });
+	connect(buttons, &QDialogButtonBox::accepted, this, &HullDlg::accept);
 
 	SetDim(3);
 }
 
 
-void HullDlg::closeEvent(QCloseEvent *e)
+void HullDlg::accept()
 {
 	// ------------------------------------------------------------------------
 	// save settings
@@ -1154,7 +1160,7 @@ void HullDlg::closeEvent(QCloseEvent *e)
 	m_sett.setValue("hullwnd_geo", geo);
 	// ------------------------------------------------------------------------
 
-	QDialog::closeEvent(e);
+	QDialog::accept();
 }
 
 

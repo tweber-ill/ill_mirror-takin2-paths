@@ -431,7 +431,8 @@ void LinesScene::UpdateVoro()
 	}
 	m_elems_voro.clear();
 
-	if(!m_calcvoro)
+	// don't calculate if disabled or if there are intersections
+	if(!m_calcvoro || m_elems_inters.size())
 		return;
 
 	// get vertices and bisectors

@@ -82,7 +82,7 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 
 	// connections
-	connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	connect(buttons, &QDialogButtonBox::accepted, this, &GeometriesBrowser::accept);
 }
 
 

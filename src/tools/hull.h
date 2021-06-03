@@ -167,7 +167,7 @@ protected:
 	QMenu *m_contextMenuTab{};
 
 protected:
-	virtual void closeEvent(QCloseEvent *) override;
+	virtual void accept() override;
 
 protected:
 	void AddTabItem(int row = -1);
