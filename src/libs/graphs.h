@@ -241,17 +241,64 @@ t_mat floyd(const t_graph& graph)
 }
 
 
+/**
+ * removes the first N elements of a edge tuple
+ */
+template<std::size_t N, class... t_args, std::size_t... indices>
+auto _tuple_tail(const std::tuple<t_args...>& tup, std::index_sequence<indices...>)
+{
+	return std::make_tuple( std::get<indices + N>(tup) ... );
+}
 
-// ----------------------------------------------------------------------------
-// spanning tree
-// ----------------------------------------------------------------------------
+
+/**
+ * removes the first N elements of a edge tuple
+ */
+template<std::size_t N, class... t_args>
+auto tuple_tail(const std::tuple<t_args...>& tup)
+{
+	return _tuple_tail<N, t_args...>(
+		tup, std::make_index_sequence<sizeof...(t_args) - N>());
+}
+
+
+/**
+ * gets the tuple elements specified in the index sequence
+ */
+template<class... t_args, std::size_t... indices>
+auto _tuple_elems(const std::tuple<t_args...>& tup, std::index_sequence<indices...>)
+{
+	return std::make_tuple( std::get<indices>(tup) ... );
+}
+
+
+/**
+ * removes the last N elements of a edge tuple
+ */
+template<std::size_t N, class... t_args>
+auto tuple_head(const std::tuple<t_args...>& tup)
+{
+	return _tuple_elems<t_args...>(
+		tup, std::make_index_sequence<sizeof...(t_args) - N>());
+}
+
+
+/**
+ * converts a tuple to a pair
+ */
+template<class t_1, class t_2>
+std::pair<t_1, t_2> to_pair(const std::tuple<t_1, t_2>& tup)
+{
+	return std::make_pair(std::get<0>(tup), std::get<1>(tup));
+}
+
 
 /**
  * finds loops in an undirected graph
  */
 template<class t_edge = std::tuple<std::size_t, std::size_t, unsigned int>>
 bool has_loops(
-	const std::vector<t_edge>& edges, 
+	const std::vector<t_edge>& edges,
 	std::size_t start_from, std::size_t start_to)
 {
 	// [from, to]
@@ -262,7 +309,7 @@ bool has_loops(
 	visitedverts.insert(start_from);
 
 	using t_simpleedge = std::pair<
-		typename std::tuple_element<0, t_edge>::type, 
+		typename std::tuple_element<0, t_edge>::type,
 		typename std::tuple_element<1, t_edge>::type>;
 	std::set<t_simpleedge> visitededges;
 
@@ -289,13 +336,21 @@ bool has_loops(
 		// get all edges from current vertex
 		for(auto iter=edges.begin(); iter!=edges.end(); ++iter)
 		{
+			auto resttup = tuple_tail<2>(*iter);
+
 			// forward direction
 			if(std::get<0>(*iter) == vertto)
-				tovisit.push(std::make_tuple(std::get<0>(*iter), std::get<1>(*iter), std::get<2>(*iter)));
+			{
+				auto tup = std::tuple_cat(std::make_tuple(std::get<0>(*iter), std::get<1>(*iter)), resttup);
+				tovisit.emplace(std::move(tup));
+			}
 
 			// backward direction
 			if(std::get<1>(*iter) == vertto)
-				tovisit.push(std::make_tuple(std::get<1>(*iter), std::get<0>(*iter), std::get<2>(*iter)));
+			{
+				auto tup = std::tuple_cat(std::make_tuple(std::get<1>(*iter), std::get<0>(*iter)), resttup);
+				tovisit.emplace(std::move(tup));
+			}
 		}
 	}
 
@@ -342,7 +397,7 @@ std::vector<t_edge> calc_min_spantree(const std::vector<t_edge>& _edges)
  */
 template<class t_vec, class t_edge = std::pair<std::size_t, std::size_t>>
 std::vector<t_edge> calc_min_spantree(
-	const std::vector<t_vec>& verts, 
+	const std::vector<t_vec>& verts,
 	const std::vector<t_edge>& _edges)
 requires tl2::is_vec<t_vec>
 {
@@ -368,7 +423,7 @@ requires tl2::is_vec<t_vec>
 		simpleedges.reserve(edges.size());
 
 		for(const auto& edge : edges)
-			simpleedges.emplace_back(std::make_pair(std::get<0>(edge), std::get<1>(edge)));
+			simpleedges.emplace_back(to_pair(tuple_head<1>(edge)));
 
 		return simpleedges;
 	};
@@ -427,9 +482,6 @@ requires tl2::is_vec<t_vec>
 
 	return span;
 }
-
-// ----------------------------------------------------------------------------
-
 
 }
 #endif
