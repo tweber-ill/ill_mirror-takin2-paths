@@ -273,13 +273,12 @@ auto _tuple_elems(const std::tuple<t_args...>& tup, std::index_sequence<indices.
 
 
 /**
- * removes the last N elements of a edge tuple
+ * keeps the first N elements of a edge tuple
  */
 template<std::size_t N, class... t_args>
 auto tuple_head(const std::tuple<t_args...>& tup)
 {
-	return _tuple_elems<t_args...>(
-		tup, std::make_index_sequence<sizeof...(t_args) - N>());
+	return _tuple_elems<t_args...>(tup, std::make_index_sequence<N>());
 }
 
 
@@ -423,7 +422,7 @@ requires tl2::is_vec<t_vec>
 		simpleedges.reserve(edges.size());
 
 		for(const auto& edge : edges)
-			simpleedges.emplace_back(to_pair(tuple_head<1>(edge)));
+			simpleedges.emplace_back(to_pair(tuple_head<2>(edge)));
 
 		return simpleedges;
 	};
