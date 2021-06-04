@@ -952,6 +952,24 @@ public:
 	}
 
 
+	std::vector<std::tuple<std::size_t, std::size_t, t_weight>> GetEdges() const
+	{
+		std::vector<std::tuple<std::size_t, std::size_t, t_weight>> edges;
+		edges.reserve(m_mat.size1() * m_mat.size2());
+
+		for(std::size_t i=0; i<m_mat.size1(); ++i)
+		{
+			for(std::size_t j=0; j<m_mat.size2(); ++j)
+			{
+				if(GetWeight(i, j))
+					edges.emplace_back(std::make_tuple(i, j, m_mat(i, j)));
+			}
+		}
+
+		return edges;
+	}
+
+
 	void RemoveEdge(const std::string& vert1, const std::string& vert2)
 	{
 		SetWeight(vert1, vert2, t_weight{0});

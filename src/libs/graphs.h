@@ -249,31 +249,35 @@ t_mat floyd(const t_graph& graph)
 /**
  * finds loops in an undirected graph
  */
-template<class t_edge = std::pair<std::size_t, std::size_t>>
+template<class t_edge = std::tuple<std::size_t, std::size_t, unsigned int>>
 bool has_loops(
 	const std::vector<t_edge>& edges, 
 	std::size_t start_from, std::size_t start_to)
 {
 	// [from, to]
 	std::stack<t_edge> tovisit;
-	tovisit.push(std::make_pair(start_from, start_to));
+	tovisit.push(std::make_tuple(start_from, start_to, 0));
 
 	std::set<std::size_t> visitedverts;
 	visitedverts.insert(start_from);
 
-	std::set<t_edge> visitededges;
+	using t_simpleedge = std::pair<
+		typename std::tuple_element<0, t_edge>::type, 
+		typename std::tuple_element<1, t_edge>::type>;
+	std::set<t_simpleedge> visitededges;
 
 	// visit connected vertices
 	while(!tovisit.empty())
 	{
-		auto topedge = tovisit.top();
-		auto [vertfrom, vertto] = topedge;
+		auto [vertfrom, vertto, weight] = tovisit.top();
 		tovisit.pop();
+
+		auto topedge = std::make_pair(vertfrom, vertto);
 
 		if(visitededges.find(topedge) != visitededges.end())
 			continue;
 
-		visitededges.insert(std::make_pair(vertfrom, vertto));
+		visitededges.emplace(std::move(topedge));
 		visitededges.insert(std::make_pair(vertto, vertfrom));
 
 		// has this vertex already been visited? => loop in graph
@@ -286,11 +290,12 @@ bool has_loops(
 		for(auto iter=edges.begin(); iter!=edges.end(); ++iter)
 		{
 			// forward direction
-			if(iter->first == vertto)
-				tovisit.push(std::make_pair(iter->first, iter->second));
+			if(std::get<0>(*iter) == vertto)
+				tovisit.push(std::make_tuple(std::get<0>(*iter), std::get<1>(*iter), std::get<2>(*iter)));
+
 			// backward direction
-			if(iter->second == vertto)
-				tovisit.push(std::make_pair(iter->second, iter->first));
+			if(std::get<1>(*iter) == vertto)
+				tovisit.push(std::make_tuple(std::get<1>(*iter), std::get<0>(*iter), std::get<2>(*iter)));
 		}
 	}
 
@@ -303,27 +308,15 @@ bool has_loops(
  * @see (FUH 2020), ch. 5.2.3, pp. 221-224
  * @see https://de.wikipedia.org/wiki/Algorithmus_von_Kruskal
  */
-template<class t_vec, class t_edge = std::pair<std::size_t, std::size_t>>
-std::vector<t_edge> calc_min_spantree(
-	const std::vector<t_vec>& verts, 
-	const std::vector<t_edge>& _edges)
-requires tl2::is_vec<t_vec>
+template<class t_edge = std::tuple<std::size_t, std::size_t, unsigned int>>
+std::vector<t_edge> calc_min_spantree(const std::vector<t_edge>& _edges)
 {
-	using t_real = typename t_vec::value_type;
-
+	// sort edges by weight
 	std::vector<t_edge> edges = _edges;
-
-	std::stable_sort(edges.begin(), edges.end(), [&verts](const t_edge& edge1, const t_edge& edge2) -> bool
+	std::stable_sort(edges.begin(), edges.end(), [](const t_edge& edge1, const t_edge& edge2) -> bool
 	{
-		t_vec dir1 = verts[edge1.first] - verts[edge1.second];
-		t_vec dir2 = verts[edge2.first] - verts[edge2.second];
-
-		t_real len1sq = tl2::inner(dir1, dir1);
-		t_real len2sq = tl2::inner(dir2, dir2);
-
-		return len1sq >= len2sq;
+		return std::get<2>(edge1) >= std::get<2>(edge2);
 	});
-
 
 	std::vector<t_edge> span;
 	span.reserve(edges.size());
@@ -334,11 +327,53 @@ requires tl2::is_vec<t_vec>
 		edges.pop_back();
 
 		span.push_back(edge);
-		if(has_loops<t_edge>(span, edge.first, edge.second))
+		if(has_loops<t_edge>(span, std::get<0>(edge), std::get<1>(edge)))
 			span.pop_back();
 	}
 
 	return span;
+}
+
+
+/**
+ * minimal spanning tree for vectors
+ * @see (FUH 2020), ch. 5.2.3, pp. 221-224
+ * @see https://de.wikipedia.org/wiki/Algorithmus_von_Kruskal
+ */
+template<class t_vec, class t_edge = std::pair<std::size_t, std::size_t>>
+std::vector<t_edge> calc_min_spantree(
+	const std::vector<t_vec>& verts, 
+	const std::vector<t_edge>& _edges)
+requires tl2::is_vec<t_vec>
+{
+	using t_real = typename t_vec::value_type;
+	using t_weighted_edge = std::tuple<typename t_edge::first_type, typename t_edge::second_type, t_real>;
+
+	// get weights from edge lengths
+	std::vector<t_weighted_edge> edges;
+	edges.reserve(_edges.size());
+	for(std::size_t i=0; i<_edges.size(); ++i)
+	{
+		t_vec dir = verts[_edges[i].first] - verts[_edges[i].second];
+		t_real lensq = tl2::inner(dir, dir);
+
+		t_weighted_edge edge = std::make_tuple(_edges[i].first, _edges[i].second, lensq);
+		edges.emplace_back(std::move(edge));
+	}
+
+	// convert to t_edge vector
+	auto to_simple_edges = [](const std::vector<t_weighted_edge>& edges) -> std::vector<t_edge>
+	{
+		std::vector<t_edge> simpleedges;
+		simpleedges.reserve(edges.size());
+
+		for(const auto& edge : edges)
+			simpleedges.emplace_back(std::make_pair(std::get<0>(edge), std::get<1>(edge)));
+
+		return simpleedges;
+	};
+
+	return to_simple_edges(calc_min_spantree<t_weighted_edge>(edges));
 }
 
 
