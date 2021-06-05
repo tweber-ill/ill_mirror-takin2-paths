@@ -16,7 +16,6 @@
 #define __GRAPH_ALGOS_H__
 
 #include <vector>
-#include <queue>
 #include <limits>
 #include <stack>
 #include <set>
@@ -96,23 +95,28 @@ dijk(const t_graph& graph, const std::string& startvert)
 		dists[vertidx] = (vertidx==startidx ? 0 : infinity);
 
 
-	// distance priority queue and comparator
+	// comparator for distances heap
 	auto vert_cmp = [&dists](std::size_t idx1, std::size_t idx2) -> bool
 	{
 		return dists[idx1] > dists[idx2];
 	};
 
-	std::priority_queue<std::size_t, std::vector<std::size_t>, decltype(vert_cmp)>
-		prio{vert_cmp};
+	// vertex distances heap
+	std::vector<std::size_t> distheap;
+	distheap.reserve(N);
 
 	for(std::size_t vertidx=0; vertidx<N; ++vertidx)
-		prio.push(vertidx);
+		distheap.push_back(vertidx);
+
+	std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
 
 
-	while(prio.size())
+	while(!distheap.empty())
 	{
-		std::size_t vertidx = prio.top();
-		prio.pop();
+
+		std::size_t vertidx = distheap.front();
+		std::pop_heap(distheap.begin(), distheap.end(), vert_cmp);
+		distheap.pop_back();
 
 		std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx);
 		for(std::size_t neighbouridx : neighbours)
@@ -124,8 +128,12 @@ dijk(const t_graph& graph, const std::string& startvert)
 			// is the path from startidx to neighbouridx over vertidx shorter than from startidx to neighbouridx?
 			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
+				// update distance
 				dists[neighbouridx] = dists[vertidx] + *w;
 				predecessors[neighbouridx] = vertidx;
+
+				// resort the heap after the distance changes
+				std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
 			}
 		}
 	}
