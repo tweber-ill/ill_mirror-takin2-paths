@@ -54,11 +54,11 @@ void print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
 	{
 		for(std::size_t j=0; j<N; ++j)
 		{
-			typename t_graph::t_weight w = graph.GetWeight(i, j);
+			auto w = graph.GetWeight(i, j);
 			if(!w)
 				continue;
 
-			ostr << "\t" << i << " -> " << j << " [label=\"" << w << "\"];\n";
+			ostr << "\t" << i << " -> " << j << " [label=\"" << *w << "\"];\n";
 		}
 	}
 
@@ -117,12 +117,14 @@ dijk(const t_graph& graph, const std::string& startvert)
 		std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx);
 		for(std::size_t neighbouridx : neighbours)
 		{
-			t_weight w = graph.GetWeight(vertidx, neighbouridx);
+			auto w = graph.GetWeight(vertidx, neighbouridx);
+			if(!w)
+				continue;
 
 			// is the path from startidx to neighbouridx over vertidx shorter than from startidx to neighbouridx?
-			if(dists[vertidx] + w < dists[neighbouridx])
+			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
-				dists[neighbouridx] = dists[vertidx] + w;
+				dists[neighbouridx] = dists[vertidx] + *w;
 				predecessors[neighbouridx] = vertidx;
 			}
 		}
@@ -169,12 +171,12 @@ t_mat bellman(const t_graph& graph, const std::string& startvert)
 			std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx, false);
 			for(std::size_t neighbouridx : neighbours)
 			{
-				t_weight w = graph.GetWeight(neighbouridx, vertidx);
+				auto w = graph.GetWeight(neighbouridx, vertidx);
+				if(!w)
+					continue;
 
-				if(dists(i-1, neighbouridx) + w < dists(i, vertidx))
-				{
-					dists(i, vertidx) = dists(i-1, neighbouridx) + w;
-				}
+				if(dists(i-1, neighbouridx) + *w < dists(i, vertidx))
+					dists(i, vertidx) = dists(i-1, neighbouridx) + *w;
 			}
 		}
 	}
@@ -213,7 +215,7 @@ t_mat floyd(const t_graph& graph)
 
 			// is vertidx2 a direct neighbour of vertidx1?
 			if(std::find(neighbours.begin(), neighbours.end(), vertidx2) != neighbours.end())
-				dists(vertidx1, vertidx2) = graph.GetWeight(vertidx1, vertidx2);
+				dists(vertidx1, vertidx2) = *graph.GetWeight(vertidx1, vertidx2);
 			else
 				dists(vertidx1, vertidx2) = infinity;
 		}
