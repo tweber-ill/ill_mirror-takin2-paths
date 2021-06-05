@@ -99,7 +99,7 @@ dijk(const t_graph& graph, const std::string& startvert)
 	// distance priority queue and comparator
 	auto vert_cmp = [&dists](std::size_t idx1, std::size_t idx2) -> bool
 	{
-		return dists[idx1] > dists[idx2];
+		return dists[idx1] >= dists[idx2];
 	};
 
 	std::priority_queue<std::size_t, std::vector<std::size_t>, decltype(vert_cmp)>
