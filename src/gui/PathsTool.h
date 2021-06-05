@@ -22,13 +22,13 @@
 #include "tlibs2/libs/maths.h"
 
 #include "PathsRenderer.h"
-#include "TASProperties.h"
-#include "XtalProperties.h"
-#include "PathProperties.h"
-#include "CamProperties.h"
 #include "ConfigSpace.h"
 #include "GeoBrowser.h"
 #include "About.h"
+#include "dock/TASProperties.h"
+#include "dock/XtalProperties.h"
+#include "dock/PathProperties.h"
+#include "dock/CamProperties.h"
 
 
 // ----------------------------------------------------------------------------

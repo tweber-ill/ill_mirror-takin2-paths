@@ -6,7 +6,7 @@
  */
 
 #include "TASProperties.h"
-#include "Settings.h"
+#include "../Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>
