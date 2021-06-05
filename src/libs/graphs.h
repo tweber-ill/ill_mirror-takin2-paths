@@ -98,7 +98,7 @@ dijk(const t_graph& graph, const std::string& startvert)
 	// comparator for distances heap
 	auto vert_cmp = [&dists](std::size_t idx1, std::size_t idx2) -> bool
 	{
-		return dists[idx1] > dists[idx2];
+		return dists[idx1] >= dists[idx2];
 	};
 
 	// vertex distances heap
