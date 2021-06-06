@@ -15,9 +15,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "src/libs/img.h"
-#include "src/core/types.h"
-#include "src/core/Instrument.h"
+#include "src/core/PathsBuilder.h"
 #include "qcustomplot/qcustomplot.h"
 
 

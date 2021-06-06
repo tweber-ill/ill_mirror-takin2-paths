@@ -140,6 +140,7 @@ add_executable(taspaths
 	src/core/Geometry.cpp src/core/Geometry.h
 	src/core/Axis.cpp src/core/Instrument.cpp
 	src/core/InstrumentSpace.cpp src/core/Instrument.h
+	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
 	src/core/types.h
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
