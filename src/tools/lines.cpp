@@ -268,6 +268,13 @@ void LinesScene::SetCalculateVoro(bool b)
 }
 
 
+void LinesScene::SetCalculateVoroVertex(bool b)
+{
+	m_calcvorovertex = b;
+	UpdateVoro();
+}
+
+
 void LinesScene::SetStopOnInters(bool b)
 {
 	m_stoponinters = b;
@@ -486,21 +493,24 @@ void LinesScene::UpdateVoro()
 	}
 
 	// voronoi vertices
-	QPen penVertex;
-	penVertex.setStyle(Qt::SolidLine);
-	penVertex.setWidthF(1.);
-	penVertex.setColor(QColor::fromRgbF(0.25, 0., 0.));
-
-	QBrush brushVertex;
-	brushVertex.setStyle(Qt::SolidPattern);
-	brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
-
-	for(const auto& vertex : vertices)
+	if(m_calcvorovertex)
 	{
-		const t_real width = 8.;
-		QRectF rect{vertex[0]-width/2, vertex[1]-width/2, width, width};
-		QGraphicsItem *item = addEllipse(rect, penVertex, brushVertex);
-		m_elems_voro.push_back(item);
+		QPen penVertex;
+		penVertex.setStyle(Qt::SolidLine);
+		penVertex.setWidthF(1.);
+		penVertex.setColor(QColor::fromRgbF(0.25, 0., 0.));
+
+		QBrush brushVertex;
+		brushVertex.setStyle(Qt::SolidPattern);
+		brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
+
+		for(const auto& vertex : vertices)
+		{
+			const t_real width = 8.;
+			QRectF rect{vertex[0]-width/2, vertex[1]-width/2, width, width};
+			QGraphicsItem *item = addEllipse(rect, penVertex, brushVertex);
+			m_elems_voro.push_back(item);
+		}
 	}
 }
 
@@ -830,6 +840,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionVoronoiRegions, &QAction::toggled, [this](bool b)
 	{ m_scene->SetCalculateVoro(b); });
 
+	QAction *actionVoronoiVertices = new QAction{"Voronoi Vertices", this};
+	actionVoronoiVertices->setCheckable(true);
+	actionVoronoiVertices->setChecked(m_scene->GetCalculateVoroVertex());
+	connect(actionVoronoiVertices, &QAction::toggled, [this](bool b)
+	{ m_scene->SetCalculateVoroVertex(b); });
+
 	QAction *actionVoroBitmap = new QAction{"Voronoi Regions", this};
 	connect(actionVoroBitmap, &QAction::triggered, [this]()
 	{ m_scene->UpdateVoroImage(m_view->viewportTransform()); });
@@ -910,6 +926,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionQuit);
 
 	menuCalc->addAction(actionVoronoiRegions);
+	menuCalc->addAction(actionVoronoiVertices);
+	menuCalc->addSeparator();
 	menuCalc->addAction(actionTrap);
 	menuCalc->addSeparator();
 	menuCalc->addAction(actionVoroBitmap);

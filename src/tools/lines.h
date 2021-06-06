@@ -76,6 +76,9 @@ public:
 	bool GetCalculateVoro() const { return m_calcvoro; }
 	void SetCalculateVoro(bool);
 
+	bool GetCalculateVoroVertex() const { return m_calcvorovertex; }
+	void SetCalculateVoroVertex(bool);
+
 	bool GetStopOnInters() const { return m_stoponinters; }
 	void SetStopOnInters(bool);
 
@@ -111,6 +114,7 @@ private:
 
 	t_graph m_vorograph{};
 	bool m_calcvoro = true;
+	bool m_calcvorovertex = false;
 	bool m_stoponinters = true;
 
 	IntersectionCalculationMethod m_intersectioncalculationmethod
