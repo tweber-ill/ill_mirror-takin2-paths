@@ -268,6 +268,14 @@ void LinesScene::SetCalculateVoro(bool b)
 }
 
 
+void LinesScene::SetStopOnInters(bool b)
+{
+	m_stoponinters = b;
+	UpdateTrapezoids();
+	UpdateVoro();
+}
+
+
 void LinesScene::UpdateTrapezoids()
 {
 	// remove previous trapezoids
@@ -278,7 +286,10 @@ void LinesScene::UpdateTrapezoids()
 	}
 	m_elems_trap.clear();
 
+	// don't calculate if disabled or if there are intersections
 	if(!m_calctrapezoids)
+		return;
+	if(m_stoponinters && m_elems_inters.size())
 		return;
 
 	// calculate trapezoids
@@ -432,7 +443,9 @@ void LinesScene::UpdateVoro()
 	m_elems_voro.clear();
 
 	// don't calculate if disabled or if there are intersections
-	if(!m_calcvoro || m_elems_inters.size())
+	if(!m_calcvoro)
+		return;
+	if(m_stoponinters && m_elems_inters.size())
 		return;
 
 	// get vertices and bisectors
@@ -841,6 +854,13 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	{ m_scene->SetIntersectionCalculationMethod(IntersectionCalculationMethod::SWEEP); });
 
 
+	QAction *actionStopOnInters = new QAction{"Stop on Intersections", this};
+	actionStopOnInters->setCheckable(true);
+	actionStopOnInters->setChecked(m_scene->GetStopOnInters());
+	connect(actionStopOnInters, &QAction::toggled, [this](bool b)
+	{ m_scene->SetStopOnInters(b); });
+
+
 	QActionGroup *groupInters = new QActionGroup{this};
 	groupInters->addAction(actionIntersDirect);
 	groupInters->addAction(actionIntersSweep);
@@ -875,7 +895,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	// menu
 	QMenu *menuFile = new QMenu{"File", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
-	QMenu *menuBack = new QMenu{"Backend", this};
+	QMenu *menuOptions = new QMenu{"Options", this};
+	QMenu *menuBack = new QMenu{"Intersection Backend", this};
 	QMenu *menuHelp = new QMenu("Help", this);
 
 	menuFile->addAction(actionNew);
@@ -896,6 +917,10 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBack->addAction(actionIntersDirect);
 	menuBack->addAction(actionIntersSweep);
 
+	menuOptions->addAction(actionStopOnInters);
+	menuOptions->addSeparator();
+	menuOptions->addMenu(menuBack);
+
 	menuHelp->addAction(actionAboutQt);
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionAbout);
@@ -906,7 +931,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->setNativeMenuBar(false);
 	menuBar->addMenu(menuFile);
 	menuBar->addMenu(menuCalc);
-	menuBar->addMenu(menuBack);
+	menuBar->addMenu(menuOptions);
+	//menuBar->addMenu(menuBack);
 	menuBar->addMenu(menuHelp);
 	setMenuBar(menuBar);
 

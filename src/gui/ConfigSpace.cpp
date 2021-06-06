@@ -280,6 +280,37 @@ void ConfigSpaceDlg::Calculate()
 	auto contours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
 	m_status->setText(QString("%1 contour outlines found.").arg(contours.size()));
 
+
+	// for debugging: save contour lines
+	std::ofstream ofstrContour("contour.xml");
+	ofstrContour << "<lines2d>\n<vertices>\n";
+
+	std::size_t vertctr = 0;
+	for(const auto& contour : contours)
+	{
+		for(std::size_t vert1=0; vert1<contour.size(); ++vert1)
+		{
+			std::size_t vert2 = (vert1 + 1) % contour.size();
+
+			const t_contourvec& vec1 = contour[vert1];
+			const t_contourvec& vec2 = contour[vert2];
+
+			ofstrContour << "\t<" << vertctr;
+			ofstrContour << " x=\"" << vec1[0] << "\"";
+			ofstrContour << " y=\"" << vec1[1] << "\"";
+			ofstrContour << "/>\n";
+			++vertctr;
+
+			ofstrContour << "\t<" << vertctr;
+			ofstrContour << " x=\"" << vec2[0] << "\"";
+			ofstrContour << " y=\"" << vec2[1] << "\"";
+			ofstrContour << "/>\n\n";
+			++vertctr;
+		}
+	}
+	ofstrContour << "\n</vertices>\n</lines2d>" << std::endl;
+
+
 	// draw contour lines
 	for(const auto& contour : contours)
 		for(const t_contourvec& vec : contour)

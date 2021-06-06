@@ -76,6 +76,9 @@ public:
 	bool GetCalculateVoro() const { return m_calcvoro; }
 	void SetCalculateVoro(bool);
 
+	bool GetStopOnInters() const { return m_stoponinters; }
+	void SetStopOnInters(bool);
+
 	void AddVertex(const QPointF& pos);
 	void ClearVertices();
 	const std::vector<Vertex*>& GetVertexElems() const { return m_elems_vertices; }
@@ -108,6 +111,7 @@ private:
 
 	t_graph m_vorograph{};
 	bool m_calcvoro = true;
+	bool m_stoponinters = true;
 
 	IntersectionCalculationMethod m_intersectioncalculationmethod
 		= IntersectionCalculationMethod::SWEEP;
