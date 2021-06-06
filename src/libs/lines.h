@@ -341,6 +341,47 @@ bool pt_inside_triag(
 
 
 /**
+ * tests if a point is inside a polygon using the raycasting algo:
+ * @see https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm
+ */
+template<class t_vec, class t_line = std::tuple<t_vec, t_vec>, 
+	class t_real = typename t_vec::value_type>
+requires tl2::is_vec<t_vec>
+bool pt_inside_poly(
+	const std::vector<t_vec>& poly, const t_vec& pt,
+	t_real eps = 1e-6)
+{
+	std::size_t num_inters = 0;
+
+	// some point outside the polygon
+	t_vec pt2 = pt;
+	for(const t_vec& vec : poly)
+		pt2[0] = std::abs(std::max(vec[0], pt2[0])) * t_real{2};
+
+	t_line line = std::make_tuple(pt, pt2);
+
+	// check intersection with polygon line segments
+	for(std::size_t vert1=0; vert1<poly.size(); ++vert1)
+	{
+		std::size_t vert2 = (vert1 + 1) % poly.size();
+
+		const t_vec& vec1 = poly[vert1];
+		const t_vec& vec2 = poly[vert2];
+
+		t_line polyline = std::make_tuple(vec1, vec2);
+
+		if(auto [intersects, inters_pt] = 
+			intersect_lines<t_line>(line, polyline, eps); intersects)
+		{
+			++num_inters;
+		}
+	}
+
+	return num_inters % 2;
+}
+
+
+/**
  * get triangle containing point pt
  */
 template<class t_vec> requires tl2::is_vec<t_vec>
@@ -637,7 +678,7 @@ struct IntersTreeNode : public CommonTreeNode<IntersTreeNode<t_vec, t_line>>
 
 /**
  * line segment intersection via sweep
- * @returns [idx1, idx2, point]
+ * @returns a vector of [line_idx1, line_idx2, intersection point]
  * @see (FUH 2020), ch. 2.3.2, pp. 69-80
  */
 template<class t_vec, class t_line = std::tuple<t_vec, t_vec>,
