@@ -25,6 +25,7 @@ Instrument::Instrument()
 
 Instrument::~Instrument()
 {
+	Clear();
 }
 
 

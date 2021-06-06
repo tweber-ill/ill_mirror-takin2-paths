@@ -19,6 +19,8 @@
 #include <memory>
 
 #include "src/core/Instrument.h"
+#include "src/core/PathsBuilder.h"
+
 #include "tlibs2/libs/maths.h"
 
 #include "PathsRenderer.h"
@@ -67,6 +69,7 @@ private:
 
 	// instrument configuration
 	InstrumentSpace m_instrspace;
+	PathsBuilder m_pathsbuilder;
 
 	// mouse picker
 	t_real m_mouseX, m_mouseY;

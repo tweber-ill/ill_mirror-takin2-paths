@@ -25,8 +25,7 @@ public:
 	ConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~ConfigSpaceDlg();
 
-	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
-	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
+	void SetPathsBuilder(PathsBuilder* builder) { m_pathsbuilder = builder; }
 	void Calculate();
 
 	void EmitGotoAngles(std::optional<t_real> a1,
@@ -51,8 +50,7 @@ private:
 	QLabel *m_status{};
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
 
-	const InstrumentSpace *m_instrspace{};
-	const t_real* m_sensesCCW{nullptr};
+	PathsBuilder *m_pathsbuilder{};
 };
 
 

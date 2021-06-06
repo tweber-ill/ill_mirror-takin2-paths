@@ -8,7 +8,10 @@
 #ifndef __GEO_PATHS_BUILDER_H__
 #define __GEO_PATHS_BUILDER_H__
 
+#include <memory>
 #include <iostream>
+
+#include <boost/signals2/signal.hpp>
 
 #include "types.h"
 #include "Instrument.h"
@@ -18,6 +21,10 @@
 class PathsBuilder
 {
 public:
+	using t_contourvec = tl2::vec<int, std::vector>;
+
+
+public:
 	PathsBuilder();
 	~PathsBuilder();
 
@@ -26,20 +33,34 @@ public:
 	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
 
 	// calculation workflow
-	void CalculateConfigSpace();
+	void CalculateConfigSpace(t_real da2, t_real da4);
 	void CalculateWallContours();
 	void SimplifyWallContours();
 	void CalculateVoronoi();
 	void SimplifyVoronoi();
 
-	// output results
+	// outputs
+	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
+	const std::vector<std::vector<t_contourvec>>& GetWallContours() const 
+	{ return m_wallcontours; }
 	void SaveToLinesTool(std::ostream& ostr);
+
+	// connection to progress signal
+	template<class t_slot>
+	void AddProgressSlot(const t_slot& slot)
+		{ m_sigProgress->connect(slot); }
+
 
 private:
 	const InstrumentSpace *m_instrspace{};
 	const t_real* m_sensesCCW{nullptr};
 
+	// calculation progress signal
+	using t_sig_progress = boost::signals2::signal<bool(bool start, bool end, t_real progress)>;
+	std::shared_ptr<t_sig_progress> m_sigProgress;
+
 	geo::Image<std::uint8_t> m_img;
+	std::vector<std::vector<t_contourvec>> m_wallcontours;
 };
 
 #endif

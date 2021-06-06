@@ -878,8 +878,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		if(!this->m_dlgConfigSpace)
 		{
 			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
-			this->m_dlgConfigSpace->SetInstrumentSpace(&this->m_instrspace);
-			this->m_dlgConfigSpace->SetScatteringSenses(this->m_sensesCCW);
+			this->m_dlgConfigSpace->SetPathsBuilder(&this->m_pathsbuilder);
 
 			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::GotoAngles, this, &PathsTool::GotoAngles);
 		}
@@ -1016,6 +1015,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// initialisations
 	// --------------------------------------------------------------------
+	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
+	m_pathsbuilder.SetScatteringSenses(this->m_sensesCCW);
+
 	UpdateUB();
 	// --------------------------------------------------------------------
 }
