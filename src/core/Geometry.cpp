@@ -45,6 +45,7 @@ Geometry::Geometry()
 
 Geometry::~Geometry()
 {
+	//Clear();
 }
 
 

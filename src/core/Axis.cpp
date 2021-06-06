@@ -23,7 +23,9 @@ Axis::Axis(const std::string& id, const Axis* prev, const Axis* next, Instrument
 
 
 Axis::~Axis()
-{}
+{
+	Clear();
+}
 
 
 Axis::Axis(const Axis& axis)

@@ -25,6 +25,7 @@ InstrumentSpace::InstrumentSpace()
 
 InstrumentSpace::~InstrumentSpace()
 {
+	Clear();
 }
 
 
