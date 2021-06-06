@@ -1,5 +1,5 @@
 /**
- * image processing
+ * image processing concepts, containers and algorithms
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @note Forked on 26-may-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
@@ -17,6 +17,40 @@
 
 
 namespace geo {
+
+// ----------------------------------------------------------------------------
+// concepts
+// ----------------------------------------------------------------------------
+/**
+ * requirements for the Image class
+ */
+template<class t_image>
+concept is_image = requires(t_image& img, std::size_t y, std::size_t x)
+{
+	typename t_image::value_type;
+
+	x = img.GetWidth();
+	y = img.GetHeight();
+
+	img.SetPixel(x, y, 0);
+	img.GetPixel(x, y);
+};
+
+
+/**
+ * requirements for a gil image view
+ */
+template<class t_imageview>
+concept is_imageview = requires(const t_imageview& img, std::size_t y, std::size_t x)
+{
+	x = img.width();
+	y = img.height();
+
+	img.row_begin(y)[x];
+};
+// ----------------------------------------------------------------------------
+
+
 
 // ----------------------------------------------------------------------------
 // classes
@@ -97,38 +131,6 @@ private:
 };
 // ----------------------------------------------------------------------------
 
-
-// ----------------------------------------------------------------------------
-// concepts
-// ----------------------------------------------------------------------------
-/**
- * requirements for the Image class
- */
-template<class t_image>
-concept is_image = requires(t_image& img, std::size_t y, std::size_t x)
-{
-	typename t_image::value_type;
-
-	x = img.GetWidth();
-	y = img.GetHeight();
-
-	img.SetPixel(x, y, 0);
-	img.GetPixel(x, y);
-};
-
-
-/**
- * requirements for a gil image view
- */
-template<class t_imageview>
-concept is_imageview = requires(const t_imageview& img, std::size_t y, std::size_t x)
-{
-	x = img.width();
-	y = img.height();
-
-	img.row_begin(y)[x];
-};
-// ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
@@ -213,6 +215,7 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_imageview& img)
 	return std::make_pair(img.width(), img.height());
 }
 // ----------------------------------------------------------------------------
+
 
 
 // ----------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /**
- * graph algorithms
+ * graph containers, concepts and algorithms
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
@@ -15,6 +15,8 @@
 #ifndef __GRAPH_ALGOS_H__
 #define __GRAPH_ALGOS_H__
 
+#include <type_traits>
+#include <concepts>
 #include <vector>
 #include <limits>
 #include <stack>
@@ -26,10 +28,580 @@
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 
 #include "tlibs2/libs/maths.h"
-#include "containers.h"
 
 
 namespace geo {
+
+// ----------------------------------------------------------------------------
+// concepts
+// ----------------------------------------------------------------------------
+
+// hack for standard libraries where this concept is not yet available
+#define __GEO_NO_CONVERTIBLE__
+
+#ifdef __GEO_NO_CONVERTIBLE__
+	template<class t_1, class t_2>
+	concept convertible_to = std::is_convertible<t_1, t_2>::value;
+#else
+	template<class t_1, class t_2>
+	concept convertible_to = requires { std::convertible_to<t_1, t_2>; };
+#endif
+
+
+/**
+ * requirements for the graph container interface
+ */
+template<class t_graph>
+concept is_graph = requires(t_graph& graph, std::size_t vertidx)
+{
+	{ graph.GetNumVertices() }
+		-> convertible_to<std::size_t>;
+
+	{ graph.GetVertexIdent(vertidx) }
+		-> convertible_to<std::string>;
+
+	{ graph.GetWeight(vertidx, vertidx) }
+		-> convertible_to<std::optional<typename t_graph::t_weight>>;
+
+	graph.GetNeighbours(vertidx);
+
+	graph.AddVertex("123");
+	graph.AddEdge(0, 1);
+	graph.AddEdge("1", "2");
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// containers
+// ----------------------------------------------------------------------------
+
+/**
+ * adjacency matrix
+ * @see (FUH 2021), Kurseinheit 4, pp. 3-5
+ * @see https://en.wikipedia.org/wiki/Adjacency_matrix
+ */
+template<class _t_weight = unsigned int>
+class AdjacencyMatrix
+{
+public:
+	using t_weight = _t_weight;
+	using t_mat = tl2::mat<std::optional<t_weight>, std::vector>;
+
+
+public:
+	AdjacencyMatrix() = default;
+	~AdjacencyMatrix() = default;
+
+
+	std::size_t GetNumVertices() const
+	{
+		return m_mat.size1();
+	}
+
+
+	const std::string& GetVertexIdent(std::size_t i) const
+	{
+		return m_vertexidents[i];
+	}
+
+
+	std::optional<std::size_t> GetVertexIndex(const std::string& vert) const
+	{
+		auto iter = std::find(m_vertexidents.begin(), m_vertexidents.end(), vert);
+		if(iter == m_vertexidents.end())
+			return std::nullopt;
+
+		return iter - m_vertexidents.begin();
+	}
+
+
+	void AddVertex(const std::string& id)
+	{
+		const std::size_t N = GetNumVertices();
+		t_mat matNew = tl2::create<t_mat>(N+1, N+1);
+
+		for(std::size_t i=0; i<N+1; ++i)
+			for(std::size_t j=0; j<N+1; ++j)
+				matNew(i,j) = (i<N && j<N) ? m_mat(i,j) : std::nullopt;
+
+		m_mat = std::move(matNew);
+		m_vertexidents.push_back(id);
+	}
+
+
+	void RemoveVertex(std::size_t idx)
+	{
+		m_mat = tl2::submat<t_mat>(m_mat, idx, idx);
+		m_vertexidents.erase(m_vertexidents.begin() + idx);
+	}
+
+
+	void RemoveVertex(const std::string& id)
+	{
+		if(auto idx = GetVertexIndex(id); idx)
+			RemoveVertex(*idx);
+	}
+
+
+	void SetWeight(std::size_t idx1, std::size_t idx2, t_weight w)
+	{
+		m_mat(idx1, idx2) = w;
+	}
+
+
+	void SetWeight(const std::string& vert1, const std::string& vert2, t_weight w)
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(idx1 && idx2)
+			SetWeight(*idx1, *idx2, w);
+	}
+
+
+	std::optional<t_weight> GetWeight(std::size_t idx1, std::size_t idx2) const
+	{
+		return m_mat(idx1, idx2);
+	}
+
+
+	std::optional<t_weight> GetWeight(const std::string& vert1, const std::string& vert2) const
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(idx1 && idx2)
+			return GetWeight(*idx1, *idx2);
+
+		return std::nullopt;
+	}
+
+
+	void AddEdge(std::size_t idx1, std::size_t idx2, t_weight w=0)
+	{
+		SetWeight(idx1, idx2, w);
+	}
+
+
+	void AddEdge(const std::string& vert1, const std::string& vert2, t_weight w=0)
+	{
+		SetWeight(vert1, vert2, w);
+	}
+
+
+	std::vector<std::tuple<std::size_t, std::size_t, t_weight>> GetEdges() const
+	{
+		const std::size_t N = GetNumVertices();
+
+		std::vector<std::tuple<std::size_t, std::size_t, t_weight>> edges;
+		edges.reserve(N * N);
+
+		for(std::size_t i=0; i<N; ++i)
+		{
+			for(std::size_t j=0; j<N; ++j)
+			{
+				if(auto w = m_mat(i,j); w)
+					edges.emplace_back(std::make_tuple(i, j, *w));
+			}
+		}
+
+		return edges;
+	}
+
+
+	void RemoveEdge(std::size_t idx1, std::size_t idx2)
+	{
+		m_mat(idx1, idx2).reset();
+	}
+
+
+	void RemoveEdge(const std::string& vert1, const std::string& vert2)
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(!idx1 || !idx2)
+			return;
+
+		RemoveEdge(idx1, idx2);
+	}
+
+
+	bool IsAdjacent(std::size_t idx1, std::size_t idx2) const
+	{
+		return GetWeight(idx1, idx2).has_value();
+	}
+
+
+	bool IsAdjacent(const std::string& vert1, const std::string& vert2) const
+	{
+		return GetWeight(vert1, vert2).has_value();;
+	}
+
+
+	std::vector<std::size_t> GetNeighbours(std::size_t idx, bool outgoing_edges=true) const
+	{
+		std::vector<std::size_t> neighbours;
+		const std::size_t N = GetNumVertices();
+
+		// neighbour vertices on outgoing edges
+		if(outgoing_edges)
+		{
+			for(std::size_t idxOther=0; idxOther<N; ++idxOther)
+			{
+				if(GetWeight(idx, idxOther))
+					neighbours.push_back(idxOther);
+			}
+		}
+
+		// neighbour vertices on incoming edges
+		else
+		{
+			for(std::size_t idxOther=0; idxOther<N; ++idxOther)
+			{
+				if(GetWeight(idxOther, idx))
+					neighbours.push_back(idxOther);
+			}
+		}
+
+		return neighbours;
+	}
+
+
+	std::vector<std::string> GetNeighbours(const std::string& vert, bool outgoing_edges=true) const
+	{
+		auto iter = std::find(m_vertexidents.begin(), m_vertexidents.end(), vert);
+		if(iter == m_vertexidents.end())
+			return {};
+		std::size_t idx = iter - m_vertexidents.begin();
+
+		std::vector<std::string> neighbours;
+		const std::size_t N = GetNumVertices();
+
+		// neighbour vertices on outgoing edges
+		if(outgoing_edges)
+		{
+			for(std::size_t idxOther=0; idxOther<N; ++idxOther)
+			{
+				if(GetWeight(idx, idxOther))
+					neighbours.push_back(m_vertexidents[idxOther]);
+			}
+		}
+
+		// neighbour vertices on incoming edges
+		else
+		{
+			for(std::size_t idxOther=0; idxOther<N; ++idxOther)
+			{
+				if(GetWeight(idxOther, idx))
+					neighbours.push_back(m_vertexidents[idxOther]);
+			}
+		}
+
+		return neighbours;
+	}
+
+
+private:
+	std::vector<std::string> m_vertexidents{};
+	t_mat m_mat{};
+};
+
+
+
+/**
+ * adjacency list
+ * @see (FUH 2021), Kurseinheit 4, pp. 3-5
+ * @see https://en.wikipedia.org/wiki/Adjacency_list
+ */
+template<class _t_weight = unsigned int>
+class AdjacencyList
+{
+public:
+	using t_weight = _t_weight;
+
+
+public:
+	AdjacencyList() = default;
+	~AdjacencyList() = default;
+
+
+	std::size_t GetNumVertices() const
+	{
+		return m_vertexidents.size();
+	}
+
+
+	const std::string& GetVertexIdent(std::size_t i) const
+	{
+		return m_vertexidents[i];
+	}
+
+
+	std::optional<std::size_t> GetVertexIndex(const std::string& vert) const
+	{
+		auto iter = std::find(m_vertexidents.begin(), m_vertexidents.end(), vert);
+		if(iter == m_vertexidents.end())
+			return std::nullopt;
+
+		return iter - m_vertexidents.begin();
+	}
+
+
+	void AddVertex(const std::string& id)
+	{
+		m_vertexidents.push_back(id);
+		m_nodes.push_back(nullptr);
+	}
+
+
+	void RemoveVertex(std::size_t idx)
+	{
+		m_vertexidents.erase(m_vertexidents.begin() + idx);
+		m_nodes.erase(m_nodes.begin() + idx);
+
+		for(std::size_t idx1=0; idx1<m_nodes.size(); ++idx1)
+		{
+			std::shared_ptr<AdjNode> node = m_nodes[idx1];
+			std::shared_ptr<AdjNode> node_prev;
+
+			while(node)
+			{
+				if(node->idx == idx)
+				{
+					if(node_prev)
+						node_prev->next = node->next;
+					else
+						m_nodes[idx1] = node->next;
+					break;
+				}
+
+				node_prev = node;
+				node = node->next;
+			}
+		}
+	}
+
+
+	void RemoveVertex(const std::string& id)
+	{
+		if(auto idx = GetVertexIndex(id); idx)
+			RemoveVertex(*idx);
+	}
+
+
+	void SetWeight(std::size_t idx1, std::size_t idx2, t_weight w)
+	{
+		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+
+		while(node)
+		{
+			if(node->idx == idx2)
+			{
+				node->weight = w;
+				break;
+			}
+
+			node = node->next;
+		}
+	}
+
+
+	void SetWeight(const std::string& vert1, const std::string& vert2, t_weight w)
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(idx1 && idx2)
+			SetWeight(*idx1, *idx2, w);
+	}
+
+
+	std::optional<t_weight> GetWeight(std::size_t idx1, std::size_t idx2) const
+	{
+		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+
+		while(node)
+		{
+			if(node->idx == idx2)
+				return node->weight;
+
+			node = node->next;
+		}
+
+		return std::nullopt;
+	}
+
+
+	std::optional<t_weight> GetWeight(const std::string& vert1, const std::string& vert2) const
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(idx1 && idx2)
+			return GetWeight(*idx1, *idx2);
+
+		return std::nullopt;
+	}
+
+
+	void AddEdge(std::size_t idx1, std::size_t idx2, t_weight w=0)
+	{
+		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+		m_nodes[idx1] = std::make_shared<AdjNode>();
+		m_nodes[idx1]->next = node;
+		m_nodes[idx1]->idx = idx2;
+		m_nodes[idx1]->weight = w;
+	}
+
+
+	void AddEdge(const std::string& vert1, const std::string& vert2, t_weight w=0)
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(!idx1 || !idx2)
+			return;
+
+		AddEdge(*idx1, *idx2, w);
+	}
+
+
+	void RemoveEdge(std::size_t idx1, std::size_t idx2)
+	{
+		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+		std::shared_ptr<AdjNode> node_prev;
+
+		while(node)
+		{
+			if(node->idx == idx2)
+			{
+				if(node_prev)
+					node_prev->next = node->next;
+				else
+					m_nodes[idx1] = node->next;
+				break;
+			}
+
+			node_prev = node;
+			node = node->next;
+		}
+	}
+
+
+	void RemoveEdge(const std::string& vert1, const std::string& vert2)
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(!idx1 || !idx2)
+			return;
+
+		RemoveEdge(*idx1, *idx2);
+	}
+
+
+	bool IsAdjacent(std::size_t idx1, std::size_t idx2) const
+	{
+		auto neighbours = GetNeighbours(idx1);
+		return std::find(neighbours.begin(), neighbours.end(), idx2) != neighbours.end();
+	}
+
+
+	bool IsAdjacent(const std::string& vert1, const std::string& vert2) const
+	{
+		auto idx1 = GetVertexIndex(vert1);
+		auto idx2 = GetVertexIndex(vert2);
+
+		if(!idx1 || !idx2)
+			return false;
+
+		return IsAdjacent(*idx1, *idx2);
+	}
+
+
+	std::vector<std::size_t> GetNeighbours(std::size_t idx, bool outgoing_edges=true) const
+	{
+		std::vector<std::size_t> neighbours;
+		neighbours.reserve(GetNumVertices());
+
+		// neighbour vertices on outgoing edges
+		if(outgoing_edges)
+		{
+			std::shared_ptr<AdjNode> node = m_nodes[idx];
+
+			while(node)
+			{
+				neighbours.push_back(node->idx);
+				node = node->next;
+			}
+		}
+
+		// neighbour vertices on incoming edges
+		else
+		{
+			for(std::size_t i=0; i<m_nodes.size(); ++i)
+			{
+				std::shared_ptr<AdjNode> node = m_nodes[i];
+
+				while(node)
+				{
+					if(node->idx == idx)
+					{
+						neighbours.push_back(i);
+						break;
+					}
+					node = node->next;
+				}
+			}
+		}
+
+		return neighbours;
+	}
+
+
+	std::vector<std::string> GetNeighbours(const std::string& vert, bool outgoing_edges=true) const
+	{
+		auto idx = GetVertexIndex(vert);
+		if(!idx)
+			return {};
+
+		std::vector<std::size_t> neighbour_indices = GetNeighbours(*idx, outgoing_edges);
+
+		std::vector<std::string> neighbours;
+		neighbours.reserve(neighbour_indices.size());
+
+		for(std::size_t neighbour_index : neighbour_indices)
+		{
+			const std::string& id = GetVertexIdent(neighbour_index);
+			neighbours.push_back(id);
+		}
+
+		return neighbours;
+	}
+
+
+private:
+	struct AdjNode
+	{
+		std::size_t idx{};
+		t_weight weight{};
+
+		std::shared_ptr<AdjNode> next{};
+	};
+
+	std::vector<std::string> m_vertexidents{};
+	std::vector<std::shared_ptr<AdjNode>> m_nodes{};
+};
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// algorithms
+// ----------------------------------------------------------------------------
 
 /**
  * export graph to the dot format
@@ -113,7 +685,6 @@ dijk(const t_graph& graph, const std::string& startvert)
 
 	while(!distheap.empty())
 	{
-
 		std::size_t vertidx = distheap.front();
 		std::pop_heap(distheap.begin(), distheap.end(), vert_cmp);
 		distheap.pop_back();
@@ -491,6 +1062,7 @@ requires tl2::is_vec<t_vec>
 
 	return span;
 }
+// ----------------------------------------------------------------------------
 
 }
 #endif

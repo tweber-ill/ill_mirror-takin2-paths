@@ -21,10 +21,6 @@
 #include "tlibs2/libs/maths.h"
 
 #include <boost/intrusive/avltree.hpp>
-
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-
 #include <boost/geometry.hpp>
 #include <boost/geometry/index/rtree.hpp>
 
