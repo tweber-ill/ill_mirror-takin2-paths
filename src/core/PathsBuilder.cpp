@@ -119,15 +119,17 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	progress.setMinimum(0);
 	progress.setMaximum(tasks.size());
 	progress.setValue(0);*/
+	(*m_sigProgress)(true, false, 0);
 
 	// get results
 	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 	{
-		/*if(progress.wasCanceled())
+		//if(progress.wasCanceled())
+		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size())))
 		{
 			pool.stop();
 			break;
-		}*/
+		}
 
 		tasks[taskidx]->get_future().get();
 		//progress.setValue(taskidx+1);
@@ -135,6 +137,7 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	}
 
 	pool.join();
+	(*m_sigProgress)(false, true, 1);
 }
 
 
