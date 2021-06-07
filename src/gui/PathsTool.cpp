@@ -1019,7 +1019,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetScatteringSenses(this->m_sensesCCW);
 	m_pathsbuilder.AddProgressSlot([](bool start, bool end, t_real progress)
 	{
-		std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
+		//std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
 		return true;
 	});
 

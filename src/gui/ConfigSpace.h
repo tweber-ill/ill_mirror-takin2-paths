@@ -8,8 +8,9 @@
 #ifndef __TAKIN_PATHS_CFGSPACE_H__
 #define __TAKIN_PATHS_CFGSPACE_H__
 
-#include <QtWidgets/QDialog>
 #include <QtCore/QSettings>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QDoubleSpinBox>
 
 #include <cstdint>
@@ -25,7 +26,9 @@ public:
 	ConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~ConfigSpaceDlg();
 
-	void SetPathsBuilder(PathsBuilder* builder) { m_pathsbuilder = builder; }
+	void SetPathsBuilder(PathsBuilder* builder);
+	void UnsetPathsBuilder();
+
 	void Calculate();
 
 	void EmitGotoAngles(std::optional<t_real> a1,
@@ -40,8 +43,12 @@ signals:
 protected:
 	virtual void accept() override;
 
+	bool PathsBuilderProgress(bool start, bool end, t_real progress);
+	void RedrawPlot();
+
 private:
 	QSettings *m_sett{nullptr};
+	std::unique_ptr<QProgressDialog> m_progress{};
 
 	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
@@ -51,6 +58,7 @@ private:
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};
 
 	PathsBuilder *m_pathsbuilder{};
+	boost::signals2::connection m_pathsbuilderslot{};
 };
 
 

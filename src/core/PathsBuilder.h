@@ -47,9 +47,8 @@ public:
 
 	// connection to progress signal
 	template<class t_slot>
-	void AddProgressSlot(const t_slot& slot)
-		{ m_sigProgress->connect(slot); }
-
+	boost::signals2::connection AddProgressSlot(const t_slot& slot)
+		{ return m_sigProgress->connect(slot); }
 
 private:
 	const InstrumentSpace *m_instrspace{};

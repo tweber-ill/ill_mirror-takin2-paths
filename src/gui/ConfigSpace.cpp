@@ -12,7 +12,6 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QFileDialog>
 
 #include "Settings.h"
@@ -137,6 +136,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 ConfigSpaceDlg::~ConfigSpaceDlg()
 {
+	UnsetPathsBuilder();
 }
 
 
@@ -170,8 +170,40 @@ void ConfigSpaceDlg::Calculate()
 
 	// calculate configuration space
 	m_pathsbuilder->CalculateConfigSpace(da2, da4);
-	const auto& img = m_pathsbuilder->GetImage();
 
+	// calculate contour lines
+	m_pathsbuilder->CalculateWallContours();
+
+	RedrawPlot();
+}
+
+
+void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
+{
+	UnsetPathsBuilder();
+
+	m_pathsbuilder = builder;
+	m_pathsbuilderslot = m_pathsbuilder->AddProgressSlot(
+		[this](bool start, bool end, t_real progress) -> bool
+		{
+			return this->PathsBuilderProgress(start, end, progress);
+		});
+}
+
+
+void ConfigSpaceDlg::UnsetPathsBuilder()
+{
+	if(m_pathsbuilder)
+	{
+		m_pathsbuilderslot.disconnect();
+		m_pathsbuilder = nullptr;
+	}
+}
+
+
+void ConfigSpaceDlg::RedrawPlot()
+{
+	const auto& img = m_pathsbuilder->GetImage();
 	m_colourMap->data()->setSize(img.GetWidth(), img.GetHeight());
 
 	for(std::size_t y=0; y<img.GetHeight(); ++y)
@@ -184,8 +216,6 @@ void ConfigSpaceDlg::Calculate()
 	}
 
 
-	// calculate contour lines
-	m_pathsbuilder->CalculateWallContours();
 	const auto& contours = m_pathsbuilder->GetWallContours();
 
 	for(const auto& contour : contours)
@@ -195,4 +225,32 @@ void ConfigSpaceDlg::Calculate()
 
 	m_plot->rescaleAxes();
 	m_plot->replot();
+}
+
+
+bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress)
+{
+	static const int max_progress = 1000;
+
+	if(start)
+	{
+		m_progress = std::make_unique<QProgressDialog>(this);
+		m_progress->setWindowModality(Qt::WindowModal);
+		m_progress->setLabelText("Calculating configuration space...");
+		m_progress->setMinimum(0);
+		m_progress->setMaximum(max_progress);
+	}
+
+	m_progress->setValue(int(progress*max_progress));
+	RedrawPlot();
+
+	bool ok = !m_progress->wasCanceled();
+
+	if(end)
+	{
+		if(m_progress)
+			m_progress.reset();
+	}
+
+	return ok;
 }
