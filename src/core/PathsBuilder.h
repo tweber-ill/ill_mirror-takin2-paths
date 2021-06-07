@@ -43,7 +43,7 @@ public:
 	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
 	const std::vector<std::vector<t_contourvec>>& GetWallContours() const 
 	{ return m_wallcontours; }
-	void SaveToLinesTool(std::ostream& ostr);
+	bool SaveToLinesTool(std::ostream& ostr);
 
 	// connection to progress signal
 	template<class t_slot>

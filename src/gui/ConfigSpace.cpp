@@ -9,6 +9,9 @@
  */
 
 #include "ConfigSpace.h"
+
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
@@ -72,7 +75,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// buttons
 	QPushButton *btnCalc = new QPushButton("Calculate", this);
 	QPushButton *btnSave = new QPushButton("Save PDF...", this);
-	QPushButton *btnClose = new QPushButton("Close", this);
+	QPushButton *btnClose = new QPushButton("OK", this);
 
 	// grid
 	auto grid = new QGridLayout(this);
@@ -86,6 +89,60 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(btnSave, y, 3, 1, 1);
 	grid->addWidget(btnClose, y++, 4, 1, 1);
 	grid->addWidget(m_status, y++, 0, 1, 5);
+
+
+	// menu
+	QMenu *menuFile = new QMenu("File", this);
+
+	QAction *acSavePDF = new QAction("Save PDF...", menuFile);
+	menuFile->addAction(acSavePDF);
+
+	QAction *acSaveLines = new QAction("Save Contour Lines...", menuFile);
+	menuFile->addAction(acSaveLines);
+
+	menuFile->addSeparator();
+
+	QAction *acQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
+	acQuit->setShortcut(QKeySequence::Quit);
+	acQuit->setMenuRole(QAction::QuitRole);
+	menuFile->addAction(acQuit);
+
+	auto* menuBar = new QMenuBar(this);
+	menuBar->addMenu(menuFile);
+	grid->setMenuBar(menuBar);
+
+
+	// functions
+	auto saveLines = [this]()
+	{
+		if(!this->m_pathsbuilder)
+			return;
+
+		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+
+		QString filename = QFileDialog::getSaveFileName(
+			this, "Save Line Segments", dirLast, "XML Files (*.xml)");
+		if(filename=="")
+			return;
+
+		std::ofstream ofstr{filename.toStdString()};
+		if(this->m_pathsbuilder->SaveToLinesTool(ofstr))
+			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
+	};
+
+	auto savePDF = [this]()
+	{
+		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+
+		QString filename = QFileDialog::getSaveFileName(
+			this, "Save PDF", dirLast, "PDF Files (*.pdf)");
+		if(filename=="")
+			return;
+
+		if(this->m_plot->savePdf(filename))
+			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
+	};
+
 
 	// connections
 	connect(m_plot.get(), &QCustomPlot::mousePress,
@@ -115,22 +172,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			m_status->setText(ostr.str().c_str());
 		});
 
-	connect(btnSave, &QPushButton::clicked, 
-		[this]()
-		{
-			QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
-
-			QString filename = QFileDialog::getSaveFileName(
-				this, "Save File", dirLast, "PDF Files (*.pdf)");
-			if(filename=="")
-				return;
-
-			if(this->m_plot->savePdf(filename))
-				this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
-		});
-
+	connect(acSaveLines, &QAction::triggered, this, saveLines);
+	connect(acSavePDF, &QAction::triggered, this, savePDF);
+	connect(btnSave, &QPushButton::clicked, savePDF);
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
+	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
 }
 
 

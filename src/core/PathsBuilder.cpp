@@ -160,7 +160,7 @@ void PathsBuilder::SimplifyVoronoi()
 /**
  * save the contour data to the lines tool
  */
-void PathsBuilder::SaveToLinesTool(std::ostream& ostr)
+bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 {
 	//std::ofstream ostr("contour.xml");
 	ostr << "<lines2d>\n<vertices>\n";
@@ -189,4 +189,5 @@ void PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 		}
 	}
 	ostr << "\n</vertices>\n</lines2d>" << std::endl;
+	return true;
 }
