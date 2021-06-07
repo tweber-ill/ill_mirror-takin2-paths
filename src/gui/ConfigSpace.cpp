@@ -203,6 +203,7 @@ void ConfigSpaceDlg::UnsetPathsBuilder()
 
 void ConfigSpaceDlg::RedrawPlot()
 {
+	// draw wall image
 	const auto& img = m_pathsbuilder->GetImage();
 	m_colourMap->data()->setSize(img.GetWidth(), img.GetHeight());
 
@@ -216,6 +217,7 @@ void ConfigSpaceDlg::RedrawPlot()
 	}
 
 
+	// draw wall contours
 	const auto& contours = m_pathsbuilder->GetWallContours();
 
 	for(const auto& contour : contours)
@@ -223,6 +225,7 @@ void ConfigSpaceDlg::RedrawPlot()
 			m_colourMap->data()->setCell(vec[0], vec[1], 0.5);
 
 
+	// replot
 	m_plot->rescaleAxes();
 	m_plot->replot();
 }
