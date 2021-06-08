@@ -220,8 +220,8 @@ void ConfigSpaceDlg::Calculate()
 	m_status->setText("Calculating obstacle contour lines.");
 	m_pathsbuilder->CalculateWallContours();
 
-	m_status->setText("Simplifying obstacle contour lines.");
-	m_pathsbuilder->SimplifyWallContours();
+	//m_status->setText("Simplifying obstacle contour lines.");
+	//m_pathsbuilder->SimplifyWallContours();
 
 	m_status->setText("Calculation finished.");
 	RedrawPlot();

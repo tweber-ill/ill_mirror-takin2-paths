@@ -138,6 +138,7 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *evt) override;
 	virtual void mouseReleaseEvent(QMouseEvent *evt) override;
 	virtual void mouseMoveEvent(QMouseEvent *evt) override;
+	virtual void wheelEvent(QWheelEvent *evt) override;
 
 	virtual void resizeEvent(QResizeEvent *evt) override;
 

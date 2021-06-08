@@ -622,6 +622,13 @@ void HullView::mouseMoveEvent(QMouseEvent *evt)
 	emit SignalMouseCoordinates(posScene.x(), posScene.y());
 }
 
+
+void HullView::wheelEvent(QWheelEvent *evt)
+{
+	//t_real s = std::pow(2., evt->angleDelta().y() / 1000.);
+	//scale(s, s);
+	QGraphicsView::wheelEvent(evt);
+}
 // ----------------------------------------------------------------------------
 
 
@@ -780,16 +787,31 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		{ this->close(); });
 
 
+	QAction *actionZoomIn = new QAction{"Zoom in", this};
+	connect(actionZoomIn, &QAction::triggered, [this]()
+	{
+		if(m_view)
+			m_view->scale(2., 2.);
+	});
+
+	QAction *actionZoomOut = new QAction{"Zoom out", this};
+	connect(actionZoomOut, &QAction::triggered, [this]()
+	{
+		if(m_view)
+			m_view->scale(0.5, 0.5);
+	});
+
+
 	QAction *actionHullDlg = new QAction{"General Convex Hull...", this};
 	connect(actionHullDlg, &QAction::triggered, [this]()
-		{
-			if(!m_hulldlg)
-				m_hulldlg = std::make_shared<HullDlg>(this);
+	{
+		if(!m_hulldlg)
+			m_hulldlg = std::make_shared<HullDlg>(this);
 
-			m_hulldlg->show();
-			m_hulldlg->raise();
-			m_hulldlg->activateWindow();
-		});
+		m_hulldlg->show();
+		m_hulldlg->raise();
+		m_hulldlg->activateWindow();
+	});
 
 
 	QAction *actionHull = new QAction{"Convex Hull", this};
@@ -909,6 +931,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// menu
 	QMenu *menuFile = new QMenu{"File", this};
+	QMenu *menuView = new QMenu{"View", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuBack = new QMenu{"Backends", this};
 	QMenu *menuTools = new QMenu{"Tools", this};
@@ -922,6 +945,9 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionExportSvg);
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
+
+	menuView->addAction(actionZoomIn);
+	menuView->addAction(actionZoomOut);
 
 	menuTools->addAction(actionHullDlg);
 
@@ -964,12 +990,15 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	//actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionQuit->setShortcut(QKeySequence::Quit);
+	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
+	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
 
 	// menu bar
 	QMenuBar *menuBar = new QMenuBar{this};
 	menuBar->setNativeMenuBar(false);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuBack);
 	menuBar->addMenu(menuTools);

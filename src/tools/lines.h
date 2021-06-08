@@ -109,7 +109,7 @@ private:
 	std::vector<QGraphicsItem*> m_elems_inters{};
 	std::vector<QGraphicsItem*> m_elems_trap{};
 	std::vector<QGraphicsItem*> m_elems_voro{};
-	QImage *m_elem_voro = nullptr;
+	QImage *m_elem_voro{nullptr};
 	std::vector<std::pair<t_vec, t_vec>> m_lines{};
 
 	t_graph m_vorograph{};
@@ -140,6 +140,7 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *evt) override;
 	virtual void mouseReleaseEvent(QMouseEvent *evt) override;
 	virtual void mouseMoveEvent(QMouseEvent *evt) override;
+	virtual void wheelEvent(QWheelEvent *evt) override;
 
 	virtual void resizeEvent(QResizeEvent *evt) override;
 

@@ -666,12 +666,20 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 }
 
 
+void LinesView::wheelEvent(QWheelEvent *evt)
+{
+	//t_real s = std::pow(2., evt->angleDelta().y() / 1000.);
+	//scale(s, s);
+	QGraphicsView::wheelEvent(evt);
+}
+
+
 void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 {
 	// hack, because the background brush is drawn with respect to scene (0,0), not vp (0,0)
 	// TODO: handle scene-viewport trafos other than translations
 	if(m_scene->GetVoroImage())
-		painter->drawImage(mapToScene(QPoint(0,0)), *m_scene->GetVoroImage()/*, mapFromScene(rect)*/);
+		painter->drawImage(mapToScene(QPoint(0,0)), *m_scene->GetVoroImage());
 	else
 		QGraphicsView::drawBackground(painter, rect);
 }
@@ -834,6 +842,21 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
 
 
+	QAction *actionZoomIn = new QAction{"Zoom in", this};
+	connect(actionZoomIn, &QAction::triggered, [this]()
+	{
+		if(m_view)
+			m_view->scale(2., 2.);
+	});
+
+	QAction *actionZoomOut = new QAction{"Zoom out", this};
+	connect(actionZoomOut, &QAction::triggered, [this]()
+	{
+		if(m_view)
+			m_view->scale(0.5, 0.5);
+	});
+
+
 	QAction *actionVoronoiRegions = new QAction{"Voronoi Bisectors", this};
 	actionVoronoiRegions->setCheckable(true);
 	actionVoronoiRegions->setChecked(m_scene->GetCalculateVoro());
@@ -906,10 +929,13 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	//actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionQuit->setShortcut(QKeySequence::Quit);
+	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
+	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
 
 	// menu
 	QMenu *menuFile = new QMenu{"File", this};
+	QMenu *menuView = new QMenu{"View", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuOptions = new QMenu{"Options", this};
 	QMenu *menuBack = new QMenu{"Intersection Backend", this};
@@ -924,6 +950,9 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionExportGraph);
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
+
+	menuView->addAction(actionZoomIn);
+	menuView->addAction(actionZoomOut);
 
 	menuCalc->addAction(actionVoronoiRegions);
 	menuCalc->addAction(actionVoronoiVertices);
@@ -948,6 +977,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenuBar *menuBar = new QMenuBar{this};
 	menuBar->setNativeMenuBar(false);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuOptions);
 	//menuBar->addMenu(menuBack);
