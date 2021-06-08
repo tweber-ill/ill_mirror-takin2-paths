@@ -67,6 +67,7 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	// create colour map and image
 	std::size_t img_w = (enda4-starta4) / da4;
 	std::size_t img_h = (enda2-starta2) / da2;
+	//std::cout << "Image size: " << img_w << " x " << img_h << "." << std::endl;
 	m_img.Init(img_w, img_h);
 
 	// create thread pool

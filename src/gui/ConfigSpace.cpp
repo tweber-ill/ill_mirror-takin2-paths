@@ -158,7 +158,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
 		});
 
-	connect(m_plot.get(), &QCustomPlot::mouseMove, 
+	connect(m_plot.get(), &QCustomPlot::mouseMove,
 		[this](QMouseEvent* evt)
 		{
 			if(!this->m_plot)
@@ -213,7 +213,6 @@ void ConfigSpaceDlg::Calculate()
 
 	t_real da2 = m_spinDelta2ThM->value();
 	t_real da4 = m_spinDelta2ThS->value();
-
 
 	// calculate configuration space
 	m_pathsbuilder->CalculateConfigSpace(da2, da4);
