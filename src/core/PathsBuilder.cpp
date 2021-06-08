@@ -17,6 +17,7 @@
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
+#include "src/libs/hull.h"
 #include "tlibs2/libs/maths.h"
 
 using t_task = std::packaged_task<void()>;
@@ -132,17 +133,19 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 }
 
 
+/**
+ * calculate contour lines
+ */
 void PathsBuilder::CalculateWallContours()
 {
-	// calculate contour lines
 	m_wallcontours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
-	//m_status->setText(QString("%1 contour outlines found.").arg(m_wallcontours.size()));
 }
 
 
 void PathsBuilder::SimplifyWallContours()
 {
-
+	for(auto& contour : m_wallcontours)
+		geo::simplify_contour<t_contourvec, t_real>(contour, 2.5/180.*tl2::pi<t_real>);
 }
 
 

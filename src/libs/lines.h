@@ -69,16 +69,24 @@ t_vec calc_circumcentre(const std::vector<t_vec>& triag)
 }
 
 
-template<class t_vec, class t_real=typename t_vec::value_type>
+/**
+ * angle of a line
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
 t_real line_angle(const t_vec& pt1, const t_vec& pt2)
 requires tl2::is_vec<t_vec>
 {
 	t_vec dir = pt2 - pt1;
-	return std::atan2(dir[1], dir[0]);
+	t_real angle = std::atan2(t_real(dir[1]), t_real(dir[0]));
+	//std::cout << "angle of [" << dir[0] << " " << dir[1] << "]: " << angle/tl2::pi<t_real>*180. << std::endl;
+	return angle;
 }
 
 
-template<class t_vec, class t_real=typename t_vec::value_type>
+/**
+ * angle between two lines
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
 t_real line_angle(const t_vec& line1vert1, const t_vec& line1vert2,
 	const t_vec& line2vert1, const t_vec& line2vert2)
 requires tl2::is_vec<t_vec>
@@ -104,6 +112,9 @@ std::ostream& print_line(std::ostream& ostr, const t_line& line)
 };
 
 
+/**
+ * checks if two line segments intersect and calculates the intersection point
+ */
 template<class t_vec, class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::pair<bool, t_vec> intersect_lines(

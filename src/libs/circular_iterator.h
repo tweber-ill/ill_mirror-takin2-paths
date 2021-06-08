@@ -206,6 +206,14 @@ public:
 	}
 
 
+	iterator erase(iterator iter)
+	{
+		std::ptrdiff_t idx = std::distance(m_cont->begin(), iter.GetIter());
+		auto newiter = m_cont->erase(std::next(m_cont->begin(), idx));
+		return iterator{m_cont, newiter};
+	}
+
+
 private:
 	t_cont* m_cont{nullptr};
 };

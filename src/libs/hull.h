@@ -593,6 +593,56 @@ requires tl2::is_vec<t_vec>
 	return verts;
 }
 
+
+/**
+ * simplify a closed contour line
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
+void simplify_contour(
+	std::vector<t_vec>& contour, t_real min_angle = 1./180.*tl2::pi<t_real>)
+requires tl2::is_vec<t_vec>
+{
+	circular_wrapper circularverts(contour);
+
+	/*for(std::size_t curidx = 2; curidx < contour.size(); ++curidx)
+	{
+		if(curidx < 2)
+			continue;
+
+		// skip one vertex in case of zigzag lines
+		const t_vec& vert1 = circularverts[curidx-2];
+		const t_vec& vert2 = circularverts[curidx];
+		const t_vec& vert3 = circularverts[curidx+2];
+
+		t_real angle = line_angle(vert1, vert2, vert2, vert3);
+
+		if(std::abs(angle) < min_angle)
+		{
+			circularverts.erase(circularverts.begin() + curidx-1, circularverts.begin() + curidx+2);
+			curidx -= 2;
+		}
+	}*/
+
+	for(std::size_t curidx = 1; curidx < contour.size()*2-1; ++curidx)
+	{
+		// remove vertices inside almost straight lines
+		const t_vec& vert1 = circularverts[curidx-1];
+		const t_vec& vert2 = circularverts[curidx];
+		const t_vec& vert3 = circularverts[curidx+1];
+
+		t_real angle = line_angle(vert1, vert2, vert2, vert3);
+
+		//using namespace tl2_ops;
+		//std::cout << "angle between " << vert1 << " ... " << vert2 << " ... " << vert3 << ": "
+		//	<< angle/tl2::pi<t_real> * 180. << std::endl;
+
+		if(std::abs(angle) < min_angle)
+		{
+			circularverts.erase(circularverts.begin() + curidx);
+			--curidx;
+		}
+	}
+}
 // ----------------------------------------------------------------------------
 
 

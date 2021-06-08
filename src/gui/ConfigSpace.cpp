@@ -214,12 +214,16 @@ void ConfigSpaceDlg::Calculate()
 	t_real da2 = m_spinDelta2ThM->value();
 	t_real da4 = m_spinDelta2ThS->value();
 
-	// calculate configuration space
+	m_status->setText("Calculating configuration space.");
 	m_pathsbuilder->CalculateConfigSpace(da2, da4);
 
-	// calculate contour lines
+	m_status->setText("Calculating obstacle contour lines.");
 	m_pathsbuilder->CalculateWallContours();
 
+	//m_status->setText("Simplifying obstacle contour lines.");
+	//m_pathsbuilder->SimplifyWallContours();
+
+	m_status->setText("Calculation finished.");
 	RedrawPlot();
 }
 
