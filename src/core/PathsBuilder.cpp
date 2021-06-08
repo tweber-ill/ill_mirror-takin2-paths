@@ -145,7 +145,7 @@ void PathsBuilder::CalculateWallContours()
 void PathsBuilder::SimplifyWallContours()
 {
 	for(auto& contour : m_wallcontours)
-		geo::simplify_contour<t_contourvec, t_real>(contour, 2.5/180.*tl2::pi<t_real>);
+		geo::simplify_contour<t_contourvec, t_real>(contour, 1./180.*tl2::pi<t_real>);
 }
 
 
@@ -192,6 +192,6 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 			++vertctr;
 		}
 	}
-	ostr << "\n</vertices>\n</lines2d>" << std::endl;
+	ostr << "</vertices>\n</lines2d>" << std::endl;
 	return true;
 }

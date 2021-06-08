@@ -614,9 +614,10 @@ requires tl2::is_vec<t_vec>
 		const t_vec& vert2 = circularverts[curidx];
 		const t_vec& vert3 = circularverts[curidx+2];
 
-		t_real angle = line_angle(vert1, vert2, vert2, vert3);
+		t_real angle = line_angle<t_vec, t_real>(vert1, vert2, vert2, vert3);
+		angle = tl2::mod_pos(angle, t_real{2}*tl2::pi<t_real>);
 
-		if(std::abs(angle) < min_angle)
+		if(angle < min_angle)
 		{
 			circularverts.erase(circularverts.begin() + curidx-1, circularverts.begin() + curidx+2);
 			curidx -= 2;
@@ -630,13 +631,14 @@ requires tl2::is_vec<t_vec>
 		const t_vec& vert2 = circularverts[curidx];
 		const t_vec& vert3 = circularverts[curidx+1];
 
-		t_real angle = line_angle(vert1, vert2, vert2, vert3);
+		t_real angle = line_angle<t_vec, t_real>(vert1, vert2, vert2, vert3);
+		angle = tl2::mod_pos(angle, t_real{2}*tl2::pi<t_real>);
 
 		//using namespace tl2_ops;
 		//std::cout << "angle between " << vert1 << " ... " << vert2 << " ... " << vert3 << ": "
 		//	<< angle/tl2::pi<t_real> * 180. << std::endl;
 
-		if(std::abs(angle) < min_angle)
+		if(angle < min_angle)
 		{
 			circularverts.erase(circularverts.begin() + curidx);
 			--curidx;
@@ -1319,7 +1321,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			return poly::point_data<t_real>{vec[0], vec[1]};
 		};
 
-		auto vertex_to_point_data = [](const typename t_vorotraits::vertex_type& vec) -> poly::point_data<t_real>
+		auto vertex_to_point_data = [](const typename t_vorotraits::vertex_type& vec) 
+			-> poly::point_data<t_real>
 		{
 			return poly::point_data<t_real>{vec.x(), vec.y()};
 		};
@@ -1329,12 +1332,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			return tl2::create<t_vec>({ pt.x(), pt.y() });
 		};
 
-		auto vertex_to_vec = [](const typename t_vorotraits::vertex_type& vec) -> t_vec
+		auto vertex_to_vec = [](const typename t_vorotraits::vertex_type& vec) 
+			-> t_vec
 		{
 			return tl2::create<t_vec>({ vec.x(), vec.y() });
 		};
 
-		auto to_segment_data = [&to_point_data](const t_line& line) -> poly::segment_data<t_real>
+		auto to_segment_data = [&to_point_data](const t_line& line) 
+			-> poly::segment_data<t_real>
 		{
 			auto pt1 = to_point_data(std::get<0>(line));
 			auto pt2 = to_point_data(std::get<1>(line));
@@ -1344,25 +1349,30 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 		// parabolic edge
-		if(edge.is_curved())
+		if(edge.is_curved() && edge.is_finite())
 		{
 			const t_line* seg = get_segment(edge.cell()->contains_point());
 			const t_vec* pt = get_segment_point(!edge.cell()->contains_point());
 			if(!seg || !pt)
 				continue;
 
-			std::vector<poly::point_data<t_real>> parabola
-				{{ vertex_to_point_data(*edge.vertex0()), vertex_to_point_data(*edge.vertex1()) }};
+			std::vector<poly::point_data<t_real>> parabola{{ 
+				vertex_to_point_data(*edge.vertex0()), 
+				vertex_to_point_data(*edge.vertex1()) 
+			}};
 
 			poly::voronoi_visual_utils<t_real>::discretize(
 				to_point_data(*pt), to_segment_data(*seg),
 				parabola_eps, &parabola);
 
-			std::vector<t_vec> parabolic_edges;
-			parabolic_edges.reserve(parabola.size());
-			for(const auto& parabola_pt : parabola)
-				parabolic_edges.emplace_back(to_vec(parabola_pt));
-			all_parabolic_edges.emplace_back(std::move(parabolic_edges));
+			if(parabola.size())
+			{
+				std::vector<t_vec> parabolic_edges;
+				parabolic_edges.reserve(parabola.size());
+				for(const auto& parabola_pt : parabola)
+					parabolic_edges.emplace_back(to_vec(parabola_pt));
+				all_parabolic_edges.emplace_back(std::move(parabolic_edges));
+			}
 		}
 
 		// linear edge
