@@ -604,26 +604,6 @@ requires tl2::is_vec<t_vec>
 {
 	circular_wrapper circularverts(contour);
 
-	/*for(std::size_t curidx = 2; curidx < contour.size(); ++curidx)
-	{
-		if(curidx < 2)
-			continue;
-
-		// skip one vertex in case of zigzag lines
-		const t_vec& vert1 = circularverts[curidx-2];
-		const t_vec& vert2 = circularverts[curidx];
-		const t_vec& vert3 = circularverts[curidx+2];
-
-		t_real angle = line_angle<t_vec, t_real>(vert1, vert2, vert2, vert3);
-		angle = tl2::mod_pos(angle, t_real{2}*tl2::pi<t_real>);
-
-		if(angle < min_angle)
-		{
-			circularverts.erase(circularverts.begin() + curidx-1, circularverts.begin() + curidx+2);
-			curidx -= 2;
-		}
-	}*/
-
 	for(std::size_t curidx = 1; curidx < contour.size()*2-1; ++curidx)
 	{
 		// remove vertices inside almost straight lines
@@ -633,12 +613,14 @@ requires tl2::is_vec<t_vec>
 
 		t_real angle = line_angle<t_vec, t_real>(vert1, vert2, vert2, vert3);
 		angle = tl2::mod_pos(angle, t_real{2}*tl2::pi<t_real>);
+		if(angle > tl2::pi<t_real>)
+			angle -= t_real(2)*tl2::pi<t_real>;
 
 		//using namespace tl2_ops;
 		//std::cout << "angle between " << vert1 << " ... " << vert2 << " ... " << vert3 << ": "
 		//	<< angle/tl2::pi<t_real> * 180. << std::endl;
 
-		if(angle < min_angle)
+		if(std::abs(angle) < min_angle)
 		{
 			circularverts.erase(circularverts.begin() + curidx);
 			--curidx;
@@ -1189,15 +1171,17 @@ std::vector<t_edge> get_edges(
 // ----------------------------------------------------------------------------
 
 
-
 /**
  * voronoi diagram for line segments
  * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_basic_tutorial.cpp
+ * @see https://www.boost.org/doc/libs/1_76_0/libs/polygon/example/voronoi_advanced_tutorial.cpp
  * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visual_utils.hpp
  * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visualizer.cpp
  * @see https://www.boost.org/doc/libs/1_75_0/libs/polygon/doc/voronoi_diagram.htm
  */
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, class t_graph=AdjacencyMatrix<typename t_vec::value_type>>
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
+	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
 calc_voro(const std::vector<t_line>& lines)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
@@ -1205,7 +1189,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	using t_real = typename t_vec::value_type;
 	namespace poly = boost::polygon;
 
-	t_real parabola_eps = 1e-3;
+	const t_real parabola_eps = 1e-3;
+	const t_real scale = 1000.; // internal scale for int-conversion
 
 	// length of infinite edges
 	t_real infline_len = 1.;
@@ -1217,9 +1202,41 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 	infline_len *= 10.;
 
-	using t_vorotraits = poly::voronoi_diagram_traits<t_real>;
+
+	// type traits
+	struct t_vorotraits
+	{
+		using coordinate_type = t_real;
+		using vertex_type = poly::voronoi_vertex<coordinate_type>;
+		using edge_type = poly::voronoi_edge<coordinate_type>;
+		using cell_type = poly::voronoi_cell<coordinate_type>;
+
+		struct vertex_equality_predicate_type
+		{
+			bool operator()(const vertex_type& vert1, const vertex_type& vert2) const
+			{
+				const t_real eps = 1e-3;
+				return tl2::equals(vert1.x(), vert2.x(), eps) 
+					&& tl2::equals(vert1.y(), vert2.y(), eps);
+			}
+		};
+	};
+
+
+	poly::voronoi_builder<t_int> vorobuilder;
+	for(const t_line& line : lines)
+	{
+		t_int x1 = t_int(std::get<0>(line)[0]*scale);
+		t_int y1 = t_int(std::get<0>(line)[1]*scale);
+		t_int x2 = t_int(std::get<1>(line)[0]*scale);
+		t_int y2 = t_int(std::get<1>(line)[1]*scale);
+
+		vorobuilder.insert_segment(x1, y1, x2, y2);
+	}
+
 	poly::voronoi_diagram<t_real, t_vorotraits> voro;
-	poly::construct_voronoi(lines.begin(), lines.end(), &voro);
+	vorobuilder.construct(&voro);
+
 
 	// graph of voronoi vertices
 	t_graph graph;
@@ -1228,7 +1245,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	std::vector<t_vec> vertices;
 	for(const auto& vert : voro.vertices())
 	{
-		vertices.emplace_back(tl2::create<t_vec>({ vert.x(), vert.y() }));
+		vertices.emplace_back(tl2::create<t_vec>({ vert.x()/scale, vert.y()/scale }));
 		graph.AddVertex(std::to_string(vertices.size()));
 	}
 
@@ -1267,13 +1284,16 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto* vert1 = edge.vertex1();
 		auto vert0idx = get_vertex_idx(vert0);
 		auto vert1idx = get_vertex_idx(vert1);
+
 		if(vert0idx && vert1idx)
 		{
 			// TODO: arc length of parabolic edges
 			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+
 			graph.AddEdge(*vert0idx, *vert1idx, len);
 			graph.AddEdge(*vert1idx, *vert0idx, len);
 		}
+
 
 		// get line segment
 		auto get_segment = [&edge, &lines](bool twin) -> const t_line*
@@ -1321,10 +1341,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			return poly::point_data<t_real>{vec[0], vec[1]};
 		};
 
-		auto vertex_to_point_data = [](const typename t_vorotraits::vertex_type& vec) 
+		auto vertex_to_point_data = [&scale](const typename t_vorotraits::vertex_type& vec) 
 			-> poly::point_data<t_real>
 		{
-			return poly::point_data<t_real>{vec.x(), vec.y()};
+			return poly::point_data<t_real>{vec.x()/scale, vec.y()/scale};
 		};
 
 		auto to_vec = [](const poly::point_data<t_real>& pt) -> t_vec
@@ -1381,8 +1401,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			// finite edge
 			if(edge.is_finite())
 			{
-				linear_edges.push_back(std::make_pair(
-					vertex_to_vec(*edge.vertex0()), vertex_to_vec(*edge.vertex1())));
+				linear_edges.emplace_back(std::make_pair(
+					vertex_to_vec(*edge.vertex0()) / scale, 
+					vertex_to_vec(*edge.vertex1()) / scale));
 			}
 
 			// infinite edge
@@ -1404,6 +1425,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				{
 					continue;
 				}
+
+				lineorg /= scale;
 
 				const t_vec* vec = get_segment_point(false);
 				const t_vec* twinvec = get_segment_point(true);
