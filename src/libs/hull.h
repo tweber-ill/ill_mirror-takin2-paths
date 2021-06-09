@@ -1183,7 +1183,9 @@ template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
-calc_voro(const std::vector<t_line>& lines, const std::vector<std::vector<t_vec>>& excluded_regions = {})
+calc_voro(const std::vector<t_line>& lines, 
+	const std::vector<std::vector<t_vec>>& excluded_regions = {},
+	bool group = true)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1239,6 +1241,56 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	vorobuilder.construct(&voro);
 
 
+	// get line segment index
+	auto get_segment_idx = 
+		[](const typename t_vorotraits::edge_type& edge, bool twin) 
+			-> std::optional<std::size_t>
+	{
+		const auto* cell = twin ? edge.twin()->cell() : edge.cell();
+		if(!cell)
+			return std::nullopt;
+
+		return cell->source_index();
+	};
+
+	// get the region index of the line segment
+	// TODO: use indices for regions instead of vectors
+	auto get_region_idx = [&excluded_regions, &lines, eps](std::size_t segidx)
+		-> std::optional<std::size_t>
+	{
+		const t_line& line = lines[segidx];
+		const t_vec& vec1 = std::get<0>(line);
+		const t_vec& vec2 = std::get<1>(line);
+
+		for(std::size_t regidx=0; regidx<excluded_regions.size(); ++regidx)
+		{
+			const auto& region = excluded_regions[regidx];
+
+			// is first vertex in this region?
+			auto iter1 = std::find_if(region.begin(), region.end(), 	
+				[eps, &vec1](const t_vec& vecregion) -> bool
+				{ return tl2::equals<t_vec>(vec1, vecregion, eps); });
+			bool found1 = (iter1 != region.end());
+			if(!found1)
+				continue;
+
+			// is second vertex in this region?
+			auto iter2 = std::find_if(region.begin(), region.end(), 	
+				[eps, &vec2](const t_vec& vecregion) -> bool
+				{ return tl2::equals<t_vec>(vec2, vecregion, eps); });
+			bool found2 = (iter2 != region.end());
+			if(!found2)
+				continue;
+
+			// line is in this region
+			return regidx;
+		}
+
+		// line is in neither region
+		return std::nullopt;
+	};
+
+
 	// graph of voronoi vertices
 	t_graph graph;
 
@@ -1285,7 +1337,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 
-	auto get_vertex_idx = [&vorovertices](const typename t_vorotraits::vertex_type* vert) -> std::optional<std::size_t>
+	auto get_vertex_idx = 
+		[&vorovertices](const typename t_vorotraits::vertex_type* vert) 
+			-> std::optional<std::size_t>
 	{
 		// infinite edge?
 		if(!vert)
@@ -1321,6 +1375,22 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		auto vert1idx = get_vertex_idx(vert1);
 		bool valid_vertices = vert0idx && vert1idx;
 
+		if(group)
+		{
+			auto seg1idx = get_segment_idx(edge, false);
+			auto seg2idx = get_segment_idx(edge, true);
+
+			if(seg1idx && seg2idx)
+			{
+				auto region1 = get_region_idx(*seg1idx);
+				auto region2 = get_region_idx(*seg2idx);
+
+				// are the generating line segments part of the same group?
+				if(region1 && region2 && *region1 == *region2)
+					continue;
+			}
+		}
+
 		if(valid_vertices)
 		{
 			// add to graoh, TODO: arc length of parabolic edges
@@ -1335,19 +1405,21 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 		// get line segment
-		auto get_segment = [&edge, &lines](bool twin) -> const t_line*
+		auto get_segment = [&get_segment_idx, &edge, &lines](bool twin) 
+			-> const t_line*
 		{
-			const auto* cell = twin ? edge.twin()->cell() : edge.cell();
-			if(!cell)
+			auto idx = get_segment_idx(edge, twin);
+			if(!idx)
 				return nullptr;
 
-			const t_line& line = lines[cell->source_index()];
+			const t_line& line = lines[*idx];
 			return &line;
 		};
 
 
 		// get line segment endpoint
-		auto get_segment_point = [&edge, &get_segment](bool twin) -> const t_vec*
+		auto get_segment_point = [&edge, &get_segment](bool twin) 
+			-> const t_vec*
 		{
 			const auto* cell = twin ? edge.twin()->cell() : edge.cell();
 			if(!cell)
