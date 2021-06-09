@@ -450,7 +450,7 @@ void LinesScene::UpdateVoro()
 	m_elems_voro.clear();
 
 	// don't calculate if disabled or if there are intersections
-	if(!m_calcvoro)
+	if(!m_calcvoro && !m_calcvorovertex)
 		return;
 	if(m_stoponinters && m_elems_inters.size())
 		return;
@@ -460,36 +460,39 @@ void LinesScene::UpdateVoro()
 		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines);
 	m_vorograph = std::move(graph);
 
-	// linear voronoi edges
-	QPen penLinEdge;
-	penLinEdge.setStyle(Qt::SolidLine);
-	penLinEdge.setWidthF(1.);
-	penLinEdge.setColor(QColor::fromRgbF(0.,0.,0.));
-
-	for(const auto& linear_edge : linear_edges)
+	if(m_calcvoro)
 	{
-		QLineF line{
-			QPointF{std::get<0>(linear_edge)[0], std::get<0>(linear_edge)[1]},
-			QPointF{std::get<1>(linear_edge)[0], std::get<1>(linear_edge)[1]} };
-		QGraphicsItem *item = addLine(line, penLinEdge);
-		m_elems_voro.push_back(item);
-	}
+		// linear voronoi edges
+		QPen penLinEdge;
+		penLinEdge.setStyle(Qt::SolidLine);
+		penLinEdge.setWidthF(1.);
+		penLinEdge.setColor(QColor::fromRgbF(0.,0.,0.));
 
-	// parabolic voronoi edges
-	QPen penParaEdge = penLinEdge;
+		for(const auto& linear_edge : linear_edges)
+		{
+			QLineF line{
+				QPointF{std::get<0>(linear_edge)[0], std::get<0>(linear_edge)[1]},
+				QPointF{std::get<1>(linear_edge)[0], std::get<1>(linear_edge)[1]} };
+			QGraphicsItem *item = addLine(line, penLinEdge);
+			m_elems_voro.push_back(item);
+		}
 
-	for(const auto& parabolic_edges : all_parabolic_edges)
-	{
-		QPolygonF poly;
-		poly.reserve(parabolic_edges.size());
-		for(const auto& parabolic_edge : parabolic_edges)
-			poly << QPointF{parabolic_edge[0], parabolic_edge[1]};
+		// parabolic voronoi edges
+		QPen penParaEdge = penLinEdge;
 
-		QPainterPath path;
-		path.addPolygon(poly);
+		for(const auto& parabolic_edges : all_parabolic_edges)
+		{
+			QPolygonF poly;
+			poly.reserve(parabolic_edges.size());
+			for(const auto& parabolic_edge : parabolic_edges)
+				poly << QPointF{parabolic_edge[0], parabolic_edge[1]};
 
-		QGraphicsItem *item = addPath(path, penParaEdge);
-		m_elems_voro.push_back(item);
+			QPainterPath path;
+			path.addPolygon(poly);
+
+			QGraphicsItem *item = addPath(path, penParaEdge);
+			m_elems_voro.push_back(item);
+		}
 	}
 
 	// voronoi vertices
