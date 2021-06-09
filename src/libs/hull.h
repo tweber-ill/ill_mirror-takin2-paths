@@ -1179,7 +1179,7 @@ std::vector<t_edge> get_edges(
  * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visualizer.cpp
  * @see https://www.boost.org/doc/libs/1_75_0/libs/polygon/doc/voronoi_diagram.htm
  */
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
@@ -1217,7 +1217,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			bool operator()(const vertex_type& vert1, const vertex_type& vert2) const
 			{
 				const t_real eps = 1e-3;
-				return tl2::equals(vert1.x(), vert2.x(), eps) 
+				return tl2::equals(vert1.x(), vert2.x(), eps)
 					&& tl2::equals(vert1.y(), vert2.y(), eps);
 			}
 		};
@@ -1319,16 +1319,19 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto* vert1 = edge.vertex1();
 		auto vert0idx = get_vertex_idx(vert0);
 		auto vert1idx = get_vertex_idx(vert1);
+		bool valid_vertices = vert0idx && vert1idx;
 
-		if(!vert0idx || !vert1idx)
+		if(valid_vertices)
+		{
+			// add to graoh, TODO: arc length of parabolic edges
+			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+
+			graph.AddEdge(*vert0idx, *vert1idx, len);
+			graph.AddEdge(*vert1idx, *vert0idx, len);
+		}
+
+		if(edge.is_finite() && !valid_vertices)
 			continue;
-
-
-		// add to graoh, TODO: arc length of parabolic edges
-		t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
-
-		graph.AddEdge(*vert0idx, *vert1idx, len);
-		graph.AddEdge(*vert1idx, *vert0idx, len);
 
 
 		// get line segment
