@@ -167,11 +167,16 @@ void PathsBuilder::SimplifyVoronoi()
 bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 {
 	//std::ofstream ostr("contour.xml");
-	ostr << "<lines2d>\n<vertices>\n";
+	ostr << "<lines2d>\n";
 
+	// contour vertices
 	std::size_t vertctr = 0;
-	for(const auto& contour : m_wallcontours)
+	ostr << "<vertices>\n";
+	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
 	{
+		const auto& contour = m_wallcontours[contouridx];
+		ostr << "\t<!-- contour " << contouridx << " -->\n";
+
 		for(std::size_t vert1=0; vert1<contour.size(); ++vert1)
 		{
 			std::size_t vert2 = (vert1 + 1) % contour.size();
@@ -192,6 +197,30 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 			++vertctr;
 		}
 	}
-	ostr << "</vertices>\n</lines2d>" << std::endl;
+	ostr << "</vertices>\n";
+
+	// contour regions
+	ostr << "<regions>\n";
+	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
+	{
+		const auto& contour = m_wallcontours[contouridx];
+		ostr << "\t<!-- contour " << contouridx << " -->\n";
+		ostr << "<" << contouridx << ">\n";
+
+		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
+		{
+			const t_contourvec& vec = contour[vertidx];
+
+			ostr << "\t<" << vertidx;
+			ostr << " x=\"" << vec[0] << "\"";
+			ostr << " y=\"" << vec[1] << "\"";
+			ostr << "/>\n";
+		}
+
+		ostr << "</" << contouridx << ">\n\n";
+	}
+	ostr << "</regions>\n";
+
+	ostr << "</lines2d>" << std::endl;
 	return true;
 }

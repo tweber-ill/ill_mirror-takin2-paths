@@ -89,6 +89,7 @@ void Vertex::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
 
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
+	ClearRegions();
 	ClearVertices();
 }
 
@@ -125,6 +126,12 @@ void LinesScene::AddVertex(const QPointF& pos)
 }
 
 
+void LinesScene::AddRegion(std::vector<t_vec>&& region)
+{
+	m_regions.emplace_back(std::forward<std::vector<t_vec>>(region));
+}
+
+
 void LinesScene::ClearVertices()
 {
 	for(Vertex* vertex : m_elems_vertices)
@@ -138,6 +145,12 @@ void LinesScene::ClearVertices()
 	if(m_elem_voro)
 		m_elem_voro->fill(backgroundBrush().color());
 	UpdateAll();
+}
+
+
+void LinesScene::ClearRegions()
+{
+	m_regions.clear();
 }
 
 
@@ -457,7 +470,7 @@ void LinesScene::UpdateVoro()
 
 	// get vertices and bisectors
 	auto [vertices, linear_edges, all_parabolic_edges, graph]
-		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines);
+		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_regions);
 	m_vorograph = std::move(graph);
 
 	if(m_calcvoro)
@@ -665,7 +678,21 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 
 	QPoint posVP = evt->pos();
 	QPointF posScene = mapToScene(posVP);
-	emit SignalMouseCoordinates(posScene.x(), posScene.y(), posVP.x(), posVP.y());
+
+	// get the regions the cursor is in
+	std::vector<std::size_t> cursor_regions;
+	for(std::size_t regionidx=0; regionidx<m_scene->GetRegions().size(); ++regionidx)
+	{
+		const auto& region = m_scene->GetRegions()[regionidx];
+
+		auto vec = tl2::create<typename LinesScene::t_vec>({ posScene.x(), posScene.y() });
+		bool in_region = geo::pt_inside_poly<typename LinesScene::t_vec>(region, vec, LinesScene::g_eps);
+
+		if(in_region)
+			cursor_regions.push_back(regionidx);
+	}
+
+	emit SignalMouseCoordinates(posScene.x(), posScene.y(), posVP.x(), posVP.y(), cursor_regions);
 }
 
 
@@ -729,12 +756,17 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	// menu actions
 	QAction *actionNew = new QAction{"New", this};
 	connect(actionNew, &QAction::triggered, [this]()
-	{ m_scene->ClearVertices(); });
+	{
+		m_scene->ClearRegions();
+		m_scene->ClearVertices();
+	});
 
 	QAction *actionLoad = new QAction{"Open...", this};
 	connect(actionLoad, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", "",
+		QString dirLast = m_sett.value("cur_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", dirLast,
 			"XML Files (*.xml);;All Files (* *.*)"); file!="")
 		{
 			std::ifstream ifstr(file.toStdString());
@@ -744,11 +776,13 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 				return;
 			}
 
+			m_scene->ClearRegions();
 			m_scene->ClearVertices();
 
 			ptree::ptree prop{};
 			ptree::read_xml(ifstr, prop);
 
+			// read vertices
 			std::size_t vertidx = 0;
 			while(true)
 			{
@@ -766,14 +800,55 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 					break;
 
 				m_scene->AddVertex(QPointF{*vertx, *verty});
-
 				++vertidx;
 			}
 
+			// read regions
+			std::size_t regionidx = 0;
+			while(true)
+			{
+				std::ostringstream ostrRegion;
+				ostrRegion << "lines2d.regions." << regionidx;
+
+				auto regionprop = prop.get_child_optional(ostrRegion.str());
+				if(!regionprop)
+					break;
+
+				std::size_t regionvertidx = 0;
+				std::vector<typename LinesScene::t_vec> region;
+				while(true)
+				{
+					std::ostringstream ostrVert;
+					ostrVert << regionvertidx;
+
+					auto vertprop = regionprop->get_child_optional(ostrVert.str());
+					if(!vertprop)
+						break;
+
+					auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
+					auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
+
+					if(!vertx || !verty)
+						break;
+
+					region.emplace_back(tl2::create<LinesScene::t_vec>({ *vertx, *verty }));
+					++regionvertidx;
+				}
+
+				//std::reverse(region.begin(), region.end());
+				m_scene->AddRegion(std::move(region));
+				++regionidx;
+			}
+
 			if(vertidx > 0)
+			{
 				m_scene->UpdateAll();
+				m_sett.setValue("cur_dir", QFileInfo(file).path());
+			}
 			else
+			{
 				QMessageBox::warning(this, "Warning", "File contains no data.");
+			}
 		}
 	});
 
@@ -990,10 +1065,26 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// connections
 	connect(m_view.get(), &LinesView::SignalMouseCoordinates,
-	[this](double x, double y, double vpx, double vpy)
+	[this](double x, double y, double vpx, double vpy, 
+		const std::vector<std::size_t>& cursor_regions)
 	{
-		SetStatusMessage(QString("Scene: x=%1, y=%2, Viewport: x=%3, y=%4.")
-			.arg(x, 5).arg(y, 5).arg(vpx, 5).arg(vpy, 5));
+		QString cursormsg = QString("Scene: x=%1, y=%2, Viewport: x=%3, y=%4.")
+			.arg(x, 5).arg(y, 5).arg(vpx, 5).arg(vpy, 5);
+
+		QString regionmsg;
+		if(cursor_regions.size())
+		{
+			regionmsg = QString(" Cursor is in region ");
+			for(std::size_t regionidx=0; regionidx<cursor_regions.size(); ++regionidx)
+			{
+				regionmsg += QString::number(cursor_regions[regionidx]);
+				if(regionidx < cursor_regions.size()-1)
+					regionmsg += ", ";
+			}
+			regionmsg += ".";
+		}
+
+		SetStatusMessage(cursormsg + regionmsg);
 	});
 
 

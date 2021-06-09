@@ -1183,12 +1183,13 @@ template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
-calc_voro(const std::vector<t_line>& lines)
+calc_voro(const std::vector<t_line>& lines, const std::vector<std::vector<t_vec>>& excluded_regions = {})
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
 	namespace poly = boost::polygon;
 
+	const t_real eps = 1e-3;
 	const t_real parabola_eps = 1e-3;
 	const t_real scale = 1000.; // internal scale for int-conversion
 
@@ -1241,25 +1242,59 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	// graph of voronoi vertices
 	t_graph graph;
 
-	//vertices
+	// voronoi vertices
+	std::vector<const typename t_vorotraits::vertex_type*> vorovertices;
 	std::vector<t_vec> vertices;
-	for(const auto& vert : voro.vertices())
+	vorovertices.reserve(voro.vertices().size());
+	vertices.reserve(voro.vertices().size());
+
+	// create excluded region bounding boxes
+	std::vector<std::tuple<t_vec, t_vec>> bounding_boxes;
+	bounding_boxes.reserve(excluded_regions.size());
+	for(const auto& region : excluded_regions)
+		bounding_boxes.emplace_back(tl2::bounding_box<t_vec, std::vector>({ region }, 2));
+
+	for(std::size_t vertidx=0; vertidx<voro.vertices().size(); ++vertidx)
 	{
-		vertices.emplace_back(tl2::create<t_vec>({ vert.x()/scale, vert.y()/scale }));
+		const typename t_vorotraits::vertex_type* vert = &voro.vertices()[vertidx];
+		t_vec vorovert = tl2::create<t_vec>({ vert->x()/scale, vert->y()/scale });
+		bool exclude = 0;
+
+		for(std::size_t regionidx=0; regionidx<excluded_regions.size(); ++regionidx)
+		{
+			const auto& region = excluded_regions[regionidx];
+
+			// is voronoi vertex in region bounding box?
+			if(!tl2::in_bounding_box(vorovert, bounding_boxes[regionidx]))
+				continue;
+
+			// is voronoi vertex in region?
+			if(pt_inside_poly<t_vec, t_line>(region, vorovert, eps))
+			{
+				exclude = 1;
+				break;
+			}
+		}
+
+		if(exclude)
+			continue;
+
+		vorovertices.push_back(vert);
+		vertices.emplace_back(std::move(vorovert));
 		graph.AddVertex(std::to_string(vertices.size()));
 	}
 
 
-	auto get_vertex_idx = [&voro](const typename t_vorotraits::vertex_type* vert) -> std::optional<std::size_t>
+	auto get_vertex_idx = [&vorovertices](const typename t_vorotraits::vertex_type* vert) -> std::optional<std::size_t>
 	{
 		// infinite edge?
 		if(!vert)
 			return std::nullopt;
 
 		std::size_t idx = 0;
-		for(const auto& vertex : voro.vertices())
+		for(const typename t_vorotraits::vertex_type* vertex : vorovertices)
 		{
-			if(&vertex == vert)
+			if(vertex == vert)
 				return idx;
 			++idx;
 		}
@@ -1285,14 +1320,15 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		auto vert0idx = get_vertex_idx(vert0);
 		auto vert1idx = get_vertex_idx(vert1);
 
-		if(vert0idx && vert1idx)
-		{
-			// TODO: arc length of parabolic edges
-			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+		if(!vert0idx || !vert1idx)
+			continue;
 
-			graph.AddEdge(*vert0idx, *vert1idx, len);
-			graph.AddEdge(*vert1idx, *vert0idx, len);
-		}
+
+		// add to graoh, TODO: arc length of parabolic edges
+		t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+
+		graph.AddEdge(*vert0idx, *vert1idx, len);
+		graph.AddEdge(*vert1idx, *vert0idx, len);
 
 
 		// get line segment

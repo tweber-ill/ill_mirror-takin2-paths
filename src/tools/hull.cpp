@@ -689,7 +689,9 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionLoad = new QAction{"Open...", this};
 	connect(actionLoad, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", "",
+		QString dirLast = m_sett.value("cur_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", dirLast,
 			"XML Files (*.xml);;All Files (* *.*)"); file!="")
 		{
 			std::ifstream ifstr(file.toStdString());
@@ -726,9 +728,14 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 			}
 
 			if(vertidx > 0)
+			{
+				m_sett.setValue("cur_dir", QFileInfo(file).path());
 				m_scene->UpdateAll();
+			}
 			else
+			{
 				QMessageBox::warning(this, "Warning", "File contains no data.");
+			}
 		}
 	});
 

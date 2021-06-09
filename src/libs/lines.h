@@ -106,8 +106,9 @@ std::ostream& print_line(std::ostream& ostr, const t_line& line)
 	const auto& pt0 = std::get<0>(line);
 	const auto& pt1 = std::get<1>(line);
 
-	using namespace tl2_ops;
-	ostr << "(" << pt0 << "), (" << pt1 << ")";
+	ostr << "(";
+	tl2_ops::operator<<(ostr, pt0) << "), (";
+	tl2_ops::operator<<(ostr, pt1) << ")";
 	return ostr;
 };
 
@@ -121,8 +122,19 @@ std::pair<bool, t_vec> intersect_lines(
 	const t_vec& pos1a, const t_vec& pos1b,
 	const t_vec& pos2a, const t_vec& pos2b,
 	bool only_segments = true,
-	t_real eps = std::numeric_limits<t_real>::epsilon())
+	t_real eps = std::numeric_limits<t_real>::epsilon(),
+	bool eps_ranges = false, bool check = true)
 {
+	// first check if line segment bounding boxes intersect
+	if(only_segments)
+	{
+		auto bb1 = tl2::bounding_box<t_vec, std::vector>({pos1a, pos1b});
+		auto bb2 = tl2::bounding_box<t_vec, std::vector>({pos2a, pos2b});
+		if(!tl2::collide_bounding_boxes<t_vec>(bb1, bb2))
+			return std::make_pair(false, tl2::create<t_vec>({}));
+	}
+
+	// check for line intersections
 	t_vec dir1 = pos1b - pos1a;
 	t_vec dir2 = pos2b - pos2a;
 
@@ -132,13 +144,22 @@ std::pair<bool, t_vec> intersect_lines(
 	if(!valid)
 		return std::make_pair(false, tl2::create<t_vec>({}));
 
-	if(only_segments && (param1<0. || param1>=1. || param2<0. || param2>=1.))
+	// include epsilon in parameter range check?
+	t_real minparam = eps_ranges ? -eps : t_real(0);
+	t_real maxparam = eps_ranges ? t_real(1)+eps : t_real(1);
+
+	if(only_segments && (param1<minparam || param1>=maxparam || param2<minparam || param2>=maxparam))
 		return std::make_pair(false, tl2::create<t_vec>({}));
 
-	// check if the intersection points on the two lines are the same
-	// to rule out numeric instability
-	bool intersects = tl2::equals<t_vec>(pt1, pt2, eps);
-	return std::make_pair(intersects, pt1);
+	if(check)
+	{
+		// check if the intersection points on the two lines are the same
+		// to rule out numeric instability
+		bool intersects = tl2::equals<t_vec>(pt1, pt2, eps);
+		return std::make_pair(intersects, pt1);
+	}
+
+	return std::make_pair(true, pt1);
 }
 
 
@@ -163,7 +184,7 @@ requires tl2::is_vec<t_vec>
 		const t_vec& pt2 = poly[idx2];
 
 		if(auto [has_inters, inters_pt] =
-			intersect_lines<t_vec>(linePt1, linePt2, pt1, pt2, only_segment, eps);
+			intersect_lines<t_vec>(linePt1, linePt2, pt1, pt2, only_segment, eps, true, true);
 			has_inters)
 		{
 			inters.emplace_back(std::move(inters_pt));
@@ -264,13 +285,14 @@ template<class t_line, class t_vec=typename std::tuple_element<0, t_line>::type,
 	class t_real = typename t_vec::value_type>
 std::tuple<bool, t_vec>
 intersect_lines(const t_line& line1, const t_line& line2,
-	t_real eps = std::numeric_limits<t_real>::epsilon())
+	t_real eps = std::numeric_limits<t_real>::epsilon(),
+	bool eps_ranges = false, bool check = true)
 requires tl2::is_vec<t_vec>
 {
 	return intersect_lines<t_vec>(
 		std::get<0>(line1), std::get<1>(line1),
 		std::get<0>(line2), std::get<1>(line2),
-		true, eps);
+		true, eps, eps_ranges, check);
 }
 
 
@@ -363,14 +385,31 @@ bool pt_inside_poly(
 	const std::vector<t_vec>& poly, const t_vec& pt,
 	t_real eps = 1e-6)
 {
+	// check if the point coincides with one of the polygon vertices
+	for(const auto& vert : poly)
+	{
+		if(tl2::equals<t_vec>(vert, pt, eps))
+			return false;
+	}
+
+
 	std::size_t num_inters = 0;
 
 	// some point outside the polygon
 	t_vec pt2 = pt;
 	for(const t_vec& vec : poly)
-		pt2[0] = std::abs(std::max(vec[0], pt2[0])) * t_real{2};
+	{
+		pt2[0] = std::abs(std::max(vec[0], pt2[0]));
+		pt2[1] = std::abs(std::max(vec[1], pt2[1]));
+	}
 
-	t_line line = std::make_tuple(pt, pt2);
+	// some arbitrary scales
+	pt2[0] *= t_real{4};
+	pt2[1] *= t_real{2};
+
+	// TODO: several runs with different line slopes, as the line can hit a vertex within epsilon
+	t_line line(pt, pt2);
+	//print_line<t_vec, t_line>(std::cout, line); std::cout << std::endl;
 
 	// check intersection with polygon line segments
 	for(std::size_t vert1=0; vert1<poly.size(); ++vert1)
@@ -380,10 +419,10 @@ bool pt_inside_poly(
 		const t_vec& vec1 = poly[vert1];
 		const t_vec& vec2 = poly[vert2];
 
-		t_line polyline = std::make_tuple(vec1, vec2);
+		t_line polyline(vec1, vec2);
 
 		if(auto [intersects, inters_pt] = 
-			intersect_lines<t_line>(line, polyline, eps); intersects)
+			intersect_lines<t_line>(line, polyline, eps, false, false); intersects)
 		{
 			++num_inters;
 		}
