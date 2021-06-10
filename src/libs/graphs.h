@@ -21,6 +21,7 @@
 #include <limits>
 #include <stack>
 #include <set>
+#include <unordered_set>
 #include <algorithm>
 #include <iostream>
 
@@ -211,6 +212,24 @@ public:
 	}
 
 
+	std::vector<std::tuple<std::string, std::string, t_weight>> GetEdgesIdent() const
+	{
+		auto edges = GetEdges();
+		std::vector<std::tuple<std::string, std::string, t_weight>> edgesident;
+		edgesident.reserve(edges.size());
+
+		for(const auto& edge : edges)
+		{
+			const std::string& ident1 = GetVertexIdent(std::get<0>(edge));
+			const std::string& ident2 = GetVertexIdent(std::get<1>(edge));
+
+			edgesident.emplace_back(std::make_tuple(ident1, ident2, std::get<2>(edge)));
+		}
+
+		return edgesident;
+	}
+
+
 	void RemoveEdge(std::size_t idx1, std::size_t idx2)
 	{
 		m_mat(idx1, idx2).reset();
@@ -359,6 +378,7 @@ public:
 
 	void RemoveVertex(std::size_t idx)
 	{
+		// remove nodes
 		m_vertexidents.erase(m_vertexidents.begin() + idx);
 		m_nodes.erase(m_nodes.begin() + idx);
 
@@ -379,6 +399,27 @@ public:
 				}
 
 				node_prev = node;
+				node = node->next;
+			}
+		}
+
+		// fix indices
+		std::unordered_set<std::shared_ptr<AdjNode>> seen_nodes;
+
+		for(std::size_t idx1=0; idx1<m_nodes.size(); ++idx1)
+		{
+			std::shared_ptr<AdjNode> node = m_nodes[idx1];
+
+			while(node)
+			{
+				if(seen_nodes.find(node) == seen_nodes.end())
+				{
+					seen_nodes.insert(node);
+
+					if(node->idx > idx)
+						--node->idx;
+				}
+
 				node = node->next;
 			}
 		}

@@ -122,7 +122,8 @@ private:
 
 	std::vector<std::pair<t_vec, t_vec>> m_lines{};
 	std::vector<std::vector<t_vec>> m_regions{};
-	std::vector<std::pair<std::size_t, std::size_t>> m_groups{};
+	std::vector<std::pair<std::size_t, std::size_t>> m_vertexgroups{};
+	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
 	t_graph m_vorograph{};
 	bool m_calcvoro = true;

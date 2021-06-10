@@ -1184,8 +1184,7 @@ template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
 calc_voro(const std::vector<t_line>& lines, 
-	const std::vector<std::vector<t_vec>>& excluded_regions = {},
-	bool group = true)
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups = {})
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1253,37 +1252,16 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		return cell->source_index();
 	};
 
-	// get the region index of the line segment
-	// TODO: use indices for regions instead of vectors
-	auto get_region_idx = [&excluded_regions, &lines, eps](std::size_t segidx)
+	// get the group index of the line segment
+	auto get_group_idx = [&line_groups, &lines, eps](std::size_t segidx)
 		-> std::optional<std::size_t>
 	{
-		const t_line& line = lines[segidx];
-		const t_vec& vec1 = std::get<0>(line);
-		const t_vec& vec2 = std::get<1>(line);
-
-		for(std::size_t regidx=0; regidx<excluded_regions.size(); ++regidx)
+		for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
 		{
-			const auto& region = excluded_regions[regidx];
+			auto [grp_beg, grp_end] = line_groups[grpidx];
 
-			// is first vertex in this region?
-			auto iter1 = std::find_if(region.begin(), region.end(), 	
-				[eps, &vec1](const t_vec& vecregion) -> bool
-				{ return tl2::equals<t_vec>(vec1, vecregion, eps); });
-			bool found1 = (iter1 != region.end());
-			if(!found1)
-				continue;
-
-			// is second vertex in this region?
-			auto iter2 = std::find_if(region.begin(), region.end(), 	
-				[eps, &vec2](const t_vec& vecregion) -> bool
-				{ return tl2::equals<t_vec>(vec2, vecregion, eps); });
-			bool found2 = (iter2 != region.end());
-			if(!found2)
-				continue;
-
-			// line is in this region
-			return regidx;
+			if(segidx >= grp_beg && segidx < grp_end)
+				return grpidx;
 		}
 
 		// line is in neither region
@@ -1300,36 +1278,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	vorovertices.reserve(voro.vertices().size());
 	vertices.reserve(voro.vertices().size());
 
-	// create excluded region bounding boxes
-	std::vector<std::tuple<t_vec, t_vec>> bounding_boxes;
-	bounding_boxes.reserve(excluded_regions.size());
-	for(const auto& region : excluded_regions)
-		bounding_boxes.emplace_back(tl2::bounding_box<t_vec, std::vector>({ region }, 2));
-
 	for(std::size_t vertidx=0; vertidx<voro.vertices().size(); ++vertidx)
 	{
 		const typename t_vorotraits::vertex_type* vert = &voro.vertices()[vertidx];
 		t_vec vorovert = tl2::create<t_vec>({ vert->x()/scale, vert->y()/scale });
-		bool exclude = 0;
-
-		for(std::size_t regionidx=0; regionidx<excluded_regions.size(); ++regionidx)
-		{
-			const auto& region = excluded_regions[regionidx];
-
-			// is voronoi vertex in region bounding box?
-			if(!tl2::in_bounding_box(vorovert, bounding_boxes[regionidx]))
-				continue;
-
-			// is voronoi vertex in region?
-			if(pt_inside_poly<t_vec, t_line>(region, vorovert, eps))
-			{
-				exclude = 1;
-				break;
-			}
-		}
-
-		if(exclude)
-			continue;
 
 		vorovertices.push_back(vert);
 		vertices.emplace_back(std::move(vorovert));
@@ -1375,15 +1327,16 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		auto vert1idx = get_vertex_idx(vert1);
 		bool valid_vertices = vert0idx && vert1idx;
 
-		if(group)
+		// group lines?
+		if(line_groups.size())
 		{
 			auto seg1idx = get_segment_idx(edge, false);
 			auto seg2idx = get_segment_idx(edge, true);
 
 			if(seg1idx && seg2idx)
 			{
-				auto region1 = get_region_idx(*seg1idx);
-				auto region2 = get_region_idx(*seg2idx);
+				auto region1 = get_group_idx(*seg1idx);
+				auto region2 = get_group_idx(*seg2idx);
 
 				// are the generating line segments part of the same group?
 				if(region1 && region2 && *region1 == *region2)
@@ -1555,6 +1508,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				linear_edges.push_back(std::make_pair(lineorg, lineorg + linedir));
 			}
+		}
+	}
+
+	// remove vertices with no connection
+	if(line_groups.size())
+	{
+		std::vector<std::string> verts;
+		verts.reserve(graph.GetNumVertices());
+
+		for(std::size_t vert=0; vert<graph.GetNumVertices(); ++vert)
+		{
+			const std::string& id = graph.GetVertexIdent(vert);
+			verts.push_back(id);
+		}
+
+		for(const std::string& id : verts)
+		{
+			auto neighbours_outgoing = graph.GetNeighbours(id, 1);
+
+			if(neighbours_outgoing.size()==0)
+				graph.RemoveVertex(id);
 		}
 	}
 

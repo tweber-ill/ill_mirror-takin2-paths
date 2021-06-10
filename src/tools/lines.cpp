@@ -135,7 +135,8 @@ void LinesScene::AddRegion(std::vector<t_vec>&& region)
 
 void LinesScene::AddGroup(std::pair<std::size_t, std::size_t>&& group)
 {
-	m_groups.emplace_back(std::forward<std::pair<std::size_t, std::size_t>>(group));
+	m_linegroups.emplace_back(std::make_pair(std::get<0>(group)/2, (std::get<1>(group)+1)/2));
+	m_vertexgroups.emplace_back(std::forward<std::pair<std::size_t, std::size_t>>(group));
 }
 
 
@@ -163,7 +164,8 @@ void LinesScene::ClearRegions()
 
 void LinesScene::ClearGroups()
 {
-	m_groups.clear();
+	m_linegroups.clear();
+	m_vertexgroups.clear();
 }
 
 
@@ -171,7 +173,7 @@ void LinesScene::MakeRegionsFromGroups()
 {
 	ClearRegions();
 
-	for(const auto& group : m_groups)
+	for(const auto& group : m_vertexgroups)
 	{
 		std::size_t beg = std::get<0>(group);
 		std::size_t end = std::get<1>(group);
@@ -516,7 +518,7 @@ void LinesScene::UpdateVoro()
 
 	// get vertices and bisectors
 	auto [vertices, linear_edges, all_parabolic_edges, graph]
-		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_regions);
+		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_linegroups);
 	m_vorograph = std::move(graph);
 
 	if(m_calcvoro)
