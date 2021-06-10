@@ -27,6 +27,8 @@
 #include <boost/polygon/voronoi.hpp>
 #include <voronoi_visual_utils.hpp>
 
+#include <openvoronoi/voronoidiagram.hpp>
+
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
 #include <libqhullcpp/QhullRidge.h>
@@ -1184,7 +1186,7 @@ template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_int = int>
 std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
 calc_voro(const std::vector<t_line>& lines, 
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups = {})
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1534,6 +1536,63 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
 }
+
+
+/**
+ * voronoi diagram for line segments
+ */
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
+	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
+	class t_int = int>
+std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
+calc_voro_ovd(const std::vector<t_line>& lines, 
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
+requires tl2::is_vec<t_vec> && is_graph<t_graph>
+{
+	using t_real = typename t_vec::value_type;
+
+	std::vector<t_vec> vertices;
+	std::vector<t_line> linear_edges;
+	std::vector<std::vector<t_vec>> all_parabolic_edges;
+	t_graph graph;
+
+	// get minimal and maximal extents of vertices
+	t_real maxRadSq = 1.;
+	for(const t_line& line : lines)
+	{
+		t_real d0 = tl2::inner<t_vec>(std::get<0>(line), std::get<0>(line));
+		t_real d1 = tl2::inner<t_vec>(std::get<1>(line), std::get<1>(line));
+
+		maxRadSq = std::max(maxRadSq, d0);
+		maxRadSq = std::max(maxRadSq, d1);
+	}
+
+	ovd::VoronoiDiagram voro(std::sqrt(maxRadSq) * 10., lines.size());
+
+	std::vector<std::pair<int, int>> linesites;
+	linesites.reserve(lines.size());
+
+	for(const t_line& line : lines)
+	{
+		const t_vec& vec1 = std::get<0>(line);
+		const t_vec& vec2 = std::get<1>(line);
+
+		int idx1 = voro.insert_point_site(ovd::Point(vec1[0], vec1[1]));
+		int idx2 = voro.insert_point_site(ovd::Point(vec2[0], vec2[1]));
+
+		linesites.emplace_back(std::make_pair(idx1, idx2));
+	}
+
+	for(const auto& line : linesites)
+	{
+		voro.insert_line_site(std::get<0>(line), std::get<1>(line));
+	}
+
+	// TODO
+
+	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
+}
+
 
 }
 #endif

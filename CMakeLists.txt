@@ -11,7 +11,9 @@ enable_language(CXX)
 
 
 list(APPEND CMAKE_MODULE_PATH
-	"${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/tlibs2/cmake"
+	"${PROJECT_SOURCE_DIR}" 
+	"${PROJECT_SOURCE_DIR}/cmake" 
+	"${PROJECT_SOURCE_DIR}/tlibs2/cmake"
 )
 
 #if(NOT "$ENV{LOCAL_BOOST_CMAKE_DIR}" STREQUAL "")
@@ -82,6 +84,19 @@ set(Boost_FIND_QUIETLY FALSE)
 find_package(Boost REQUIRED COMPONENTS filesystem${BOOST_SUFFIX})
 message("Using Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}.")
 include_directories("${Boost_INCLUDE_DIRS}/..")
+
+
+find_package(Qhull)
+if(Qhull_FOUND)
+	add_definitions(-DUSE_QHULL)
+	include_directories("${Qhull_INCLUDE_DIRS}")
+endif()
+
+
+find_package(OVD)
+if(OVD_FOUND)
+	include_directories("${OVD_INCLUDE_DIRS}")
+endif()
 
 
 if(USE_LAPACK)
@@ -188,13 +203,14 @@ if(QT_VER EQUAL 6)
 			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 			${Boost_LIBRARIES}
 			${Lapacke_LIBRARIES}
-			-lqhull_r -lqhullcpp
+			${Qhull_LIBRARIES}
 		)
 
 		target_link_libraries(lines
 			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 			${Boost_LIBRARIES}
 			${Lapacke_LIBRARIES}
+			${OVD_LIBRARIES}
 			Threads::Threads
 		)
 	endif()
@@ -216,13 +232,14 @@ elseif(QT_VER EQUAL 5)
 			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 			${Boost_LIBRARIES}
 			${Lapacke_LIBRARIES}
-			-lqhull_r -lqhullcpp
+			${Qhull_LIBRARIES}
 		)
 
 		target_link_libraries(lines
 			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 			${Boost_LIBRARIES}
 			${Lapacke_LIBRARIES}
+			${OVD_LIBRARIES}
 			Threads::Threads
 		)
 	endif()

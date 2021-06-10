@@ -519,6 +519,7 @@ void LinesScene::UpdateVoro()
 	// get vertices and bisectors
 	auto [vertices, linear_edges, all_parabolic_edges, graph]
 		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_linegroups);
+//		= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_linegroups);
 	m_vorograph = std::move(graph);
 
 	if(m_calcvoro)
