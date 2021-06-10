@@ -127,6 +127,10 @@ function setup_boostpoly()
 	fi
 
 	mv -v ${BOOST_POLY_UTIL_LOCAL} externals/
+
+	# add some checks to the header file
+	sed -i "103 a if(sqr_segment_length==0 || std::isnan(new_x) || std::isnan(new_y)) return;" \
+		externals/${BOOST_POLY_UTIL_LOCAL}
 }
 # -----------------------------------------------------------------------------
 
