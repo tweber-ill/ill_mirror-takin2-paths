@@ -84,9 +84,14 @@ public:
 
 	void AddVertex(const QPointF& pos);
 	void AddRegion(std::vector<t_vec>&& region);
-	const std::vector<std::vector<t_vec>>& GetRegions() const { return m_regions; }
+	void AddGroup(std::pair<std::size_t, std::size_t>&& group);
+
 	void ClearVertices();
 	void ClearRegions();
+	void ClearGroups();
+
+	const std::vector<std::vector<t_vec>>& GetRegions() const { return m_regions; }
+	void MakeRegionsFromGroups();
 
 	const std::vector<Vertex*>& GetVertexElems() const { return m_elems_vertices; }
 	std::vector<Vertex*>& GetVertexElems() { return m_elems_vertices; }
@@ -114,8 +119,10 @@ private:
 	std::vector<QGraphicsItem*> m_elems_trap{};
 	std::vector<QGraphicsItem*> m_elems_voro{};
 	QImage *m_elem_voro{nullptr};
+
 	std::vector<std::pair<t_vec, t_vec>> m_lines{};
 	std::vector<std::vector<t_vec>> m_regions{};
+	std::vector<std::pair<std::size_t, std::size_t>> m_groups{};
 
 	t_graph m_vorograph{};
 	bool m_calcvoro = true;

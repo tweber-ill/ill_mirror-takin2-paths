@@ -169,6 +169,9 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 	//std::ofstream ostr("contour.xml");
 	ostr << "<lines2d>\n";
 
+	std::vector<std::pair<std::size_t, std::size_t>> groups;
+	groups.reserve(m_wallcontours.size());
+
 	// contour vertices
 	std::size_t vertctr = 0;
 	ostr << "<vertices>\n";
@@ -176,6 +179,8 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 	{
 		const auto& contour = m_wallcontours[contouridx];
 		ostr << "\t<!-- contour " << contouridx << " -->\n";
+
+		std::size_t groupstart = vertctr;
 
 		for(std::size_t vert1=0; vert1<contour.size(); ++vert1)
 		{
@@ -196,30 +201,48 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 			ostr << "/>\n\n";
 			++vertctr;
 		}
+
+		std::size_t groupend = vertctr;
+		groups.emplace_back(std::make_pair(groupstart, groupend));
 	}
 	ostr << "</vertices>\n";
 
+	// contour groups
+	ostr << "\n<groups>\n";
+	for(std::size_t groupidx = 0; groupidx<groups.size(); ++groupidx)
+	{
+		const auto& group = groups[groupidx];
+		ostr << "\t<!-- contour " << groupidx << " -->\n";
+		ostr << "\t<" << groupidx << ">\n";
+
+		ostr << "\t\t<begin>" << std::get<0>(group) << "</begin>\n";
+		ostr << "\t\t<end>" << std::get<1>(group) << "</end>\n";
+
+		ostr << "\t</" << groupidx << ">\n\n";
+	}
+	ostr << "</groups>\n";
+
 	// contour regions
-	ostr << "<regions>\n";
+	/*ostr << "\n<regions>\n";
 	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
 	{
 		const auto& contour = m_wallcontours[contouridx];
 		ostr << "\t<!-- contour " << contouridx << " -->\n";
-		ostr << "<" << contouridx << ">\n";
+		ostr << "\t<" << contouridx << ">\n";
 
 		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
 		{
 			const t_contourvec& vec = contour[vertidx];
 
-			ostr << "\t<" << vertidx;
+			ostr << "\t\t<" << vertidx;
 			ostr << " x=\"" << vec[0] << "\"";
 			ostr << " y=\"" << vec[1] << "\"";
 			ostr << "/>\n";
 		}
 
-		ostr << "</" << contouridx << ">\n\n";
+		ostr << "\t</" << contouridx << ">\n\n";
 	}
-	ostr << "</regions>\n";
+	ostr << "</regions>\n";*/
 
 	ostr << "</lines2d>" << std::endl;
 	return true;

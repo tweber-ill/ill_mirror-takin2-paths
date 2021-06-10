@@ -90,6 +90,7 @@ void Vertex::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
 	ClearRegions();
+	ClearGroups();
 	ClearVertices();
 }
 
@@ -132,6 +133,12 @@ void LinesScene::AddRegion(std::vector<t_vec>&& region)
 }
 
 
+void LinesScene::AddGroup(std::pair<std::size_t, std::size_t>&& group)
+{
+	m_groups.emplace_back(std::forward<std::pair<std::size_t, std::size_t>>(group));
+}
+
+
 void LinesScene::ClearVertices()
 {
 	for(Vertex* vertex : m_elems_vertices)
@@ -151,6 +158,45 @@ void LinesScene::ClearVertices()
 void LinesScene::ClearRegions()
 {
 	m_regions.clear();
+}
+
+
+void LinesScene::ClearGroups()
+{
+	m_groups.clear();
+}
+
+
+void LinesScene::MakeRegionsFromGroups()
+{
+	ClearRegions();
+
+	for(const auto& group : m_groups)
+	{
+		std::size_t beg = std::get<0>(group);
+		std::size_t end = std::get<1>(group);
+
+		std::vector<t_vec> region;
+		region.reserve((end - beg) / 2);
+
+		for(std::size_t vertidx=beg; vertidx<end; vertidx+=2)
+		{
+			if(vertidx < m_elems_vertices.size())
+			{
+				//const auto& line = m_lines[vertidx];
+				//const t_vec& vec = std::get<0>(line);
+
+				const Vertex* vert = m_elems_vertices[vertidx];
+				t_vec vec = tl2::create<t_vec>({ vert->x(), vert->y() });
+				//tl2_ops::operator<<(std::cout, vec) << std::endl;
+
+				region.emplace_back(std::move(vec));
+			}
+		}
+
+		if(region.size())
+			AddRegion(std::move(region));
+	}
 }
 
 
@@ -758,6 +804,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionNew, &QAction::triggered, [this]()
 	{
 		m_scene->ClearRegions();
+		m_scene->ClearGroups();
 		m_scene->ClearVertices();
 	});
 
@@ -777,6 +824,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 			}
 
 			m_scene->ClearRegions();
+			m_scene->ClearGroups();
 			m_scene->ClearVertices();
 
 			ptree::ptree prop{};
@@ -803,7 +851,32 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 				++vertidx;
 			}
 
-			// read regions
+			// read groups
+			std::size_t groupidx = 0;
+			while(true)
+			{
+				std::ostringstream ostrGroup;
+				ostrGroup << "lines2d.groups." << groupidx;
+
+				auto groupprop = prop.get_child_optional(ostrGroup.str());
+				if(!groupprop)
+					break;
+
+				auto beg = groupprop->get_optional<t_real>("begin");
+				auto end = groupprop->get_optional<t_real>("end");
+
+				if(beg && end)
+				{
+					auto group = std::make_pair(*beg, *end);
+					m_scene->AddGroup(std::move(group));
+				}
+
+				++groupidx;
+			}
+
+			m_scene->MakeRegionsFromGroups();
+
+			// read regions (if groups is not defined)
 			std::size_t regionidx = 0;
 			while(true)
 			{
@@ -813,6 +886,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 				auto regionprop = prop.get_child_optional(ostrRegion.str());
 				if(!regionprop)
 					break;
+
+				if(regionidx==0 && m_scene->GetRegions().size())
+				{
+					std::cerr << "Warning: A vertex group is already defined, ignoring regions." << std::endl;
+					break;
+				}
 
 				std::size_t regionvertidx = 0;
 				std::vector<typename LinesScene::t_vec> region;
