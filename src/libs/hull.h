@@ -28,7 +28,9 @@
 #include <boost/polygon/voronoi.hpp>
 #include <voronoi_visual_utils.hpp>
 
-#include <openvoronoi/voronoidiagram.hpp>
+#ifdef USE_OVD
+	#include <openvoronoi/voronoidiagram.hpp>
+#endif
 
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
@@ -1348,7 +1350,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 		if(valid_vertices)
 		{
-			// add to graoh, TODO: arc length of parabolic edges
+			// add to graph, TODO: arc length of parabolic edges
 			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
 
 			graph.AddEdge(*vert0idx, *vert1idx, len);
@@ -1538,6 +1540,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 }
 
 
+#ifdef USE_OVD
 /**
  * voronoi diagram for line segments
  * @see https://github.com/aewallin/openvoronoi/blob/master/cpp_examples/random_line_segments/main.cpp
@@ -1570,7 +1573,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		maxRadSq = std::max(maxRadSq, d1);
 	}
 
-	ovd::VoronoiDiagram voro(std::sqrt(maxRadSq) * 10., lines.size());
+	ovd::VoronoiDiagram voro(std::sqrt(maxRadSq)*1.5, lines.size()*2);
 	//voro.debug_on();
 	//voro.set_silent(0);
 
@@ -1609,7 +1612,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 	}
 
-
 	const auto& vdgraph = voro.get_graph_reference();
 
 	// maps ovd graph vertex pointer to identifier for own graph
@@ -1623,13 +1625,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 		const auto& pos = vdgraph[vert].position;
 		vertices.emplace_back(tl2::create<t_vec>({ pos.x, pos.y }));
-
-		// add graph vertex
-		std::size_t vertid = vertices.size();
-		vert_to_idx.insert(std::make_pair(vert, vertid));
-		graph.AddVertex(std::to_string(vertid));
 	}
 
+	std::size_t curidx = 0;
 	linear_edges.reserve(vdgraph.edges().size());
 	for(const auto& edge : vdgraph.edges())
 	{
@@ -1672,18 +1670,46 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 		if(bisector_handled)
 		{
-			// add graph edge
+			// add graph vertex
 			auto iter1 = vert_to_idx.find(vert1);
-			auto iter2 = vert_to_idx.find(vert2);
+			if(iter1 == vert_to_idx.end())
+			{
+				iter1 = vert_to_idx.insert(std::make_pair(vert1, curidx)).first;
+				graph.AddVertex(std::to_string(curidx));
+				++curidx;
+			}
 
+			// add graph vertex
+			auto iter2 = vert_to_idx.find(vert2);
+			if(iter2 == vert_to_idx.end())
+			{
+				iter2 = vert_to_idx.insert(std::make_pair(vert2, curidx)).first;
+				graph.AddVertex(std::to_string(curidx));
+				++curidx;
+			}			
+
+			// add graph edge
 			if(iter1 != vert_to_idx.end() && iter2 != vert_to_idx.end())
-				graph.AddEdge(std::to_string(iter1->second), std::to_string(iter2->second));
+			{
+				// TODO: arc length of parabolic edges
+				const auto& pos1 = vdgraph[vert1].position;
+				const auto& pos2 = vdgraph[vert2].position;
+
+				t_real len = tl2::norm(
+					tl2::create<t_vec>({ pos1.x, pos1.y }) - 
+					tl2::create<t_vec>({ pos2.x, pos2.y }));
+
+				graph.AddEdge(
+					std::to_string(iter1->second), 
+					std::to_string(iter2->second),
+					len);
+			}
 		}
 	}
 
 	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
 }
-
+#endif
 
 }
 #endif

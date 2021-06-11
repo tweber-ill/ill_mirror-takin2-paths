@@ -27,6 +27,7 @@ list(APPEND CMAKE_MODULE_PATH
 
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
+option(USE_OVD "use openvoronoi" TRUE)
 option(BUILD_TEST_TOOLS "build test tools" FALSE)
 
 
@@ -93,9 +94,15 @@ if(Qhull_FOUND)
 endif()
 
 
-find_package(OVD)
-if(OVD_FOUND)
-	include_directories("${OVD_INCLUDE_DIRS}")
+if(USE_OVD)
+	find_package(OVD)
+	if(OVD_FOUND)
+		message("Openvoronoi enabled.")
+		add_definitions(-DUSE_OVD)
+		include_directories("${OVD_INCLUDE_DIRS}")
+	else()
+		message("Openvoronoi disabled.")
+	endif()
 endif()
 
 
@@ -168,13 +175,13 @@ if(BUILD_TEST_TOOLS)
 	add_executable(hull
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/about.cpp src/tools/about.h
-		src/libs/hull.h
+		src/libs/lines.h src/libs/hull.h
 	)
 
 	add_executable(lines
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/about.cpp src/tools/about.h
-		src/libs/lines.h
+		src/libs/lines.h src/libs/hull.h
 	)
 endif()
 
@@ -201,16 +208,16 @@ if(QT_VER EQUAL 6)
 	if(BUILD_TEST_TOOLS)
 		target_link_libraries(hull
 			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
-			${Boost_LIBRARIES}
-			${Lapacke_LIBRARIES}
-			${Qhull_LIBRARIES}
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
+			"${Qhull_LIBRARIES}"
 		)
 
 		target_link_libraries(lines
 			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
-			${Boost_LIBRARIES}
-			${Lapacke_LIBRARIES}
-			${OVD_LIBRARIES}
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
+			"${OVD_LIBRARIES}"
 			Threads::Threads
 		)
 	endif()
@@ -230,16 +237,16 @@ elseif(QT_VER EQUAL 5)
 	if(BUILD_TEST_TOOLS)
 		target_link_libraries(hull
 			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
-			${Boost_LIBRARIES}
-			${Lapacke_LIBRARIES}
-			${Qhull_LIBRARIES}
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
+			"${Qhull_LIBRARIES}"
 		)
 
 		target_link_libraries(lines
 			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
-			${Boost_LIBRARIES}
-			${Lapacke_LIBRARIES}
-			${OVD_LIBRARIES}
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
+			"${OVD_LIBRARIES}"
 			Threads::Threads
 		)
 	endif()

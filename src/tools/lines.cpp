@@ -535,11 +535,13 @@ void LinesScene::UpdateVoro()
 				= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(
 					m_lines, m_linegroups);
 			break;
+#ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
 				= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(
 					m_lines, m_linegroups);
 			break;
+#endif
 		default:
 			QMessageBox::critical(m_parent, "Error", "Unknown voronoi diagram calculation method.");
 			break;
@@ -1093,6 +1095,9 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionVoroOVD->setChecked(false);
 	connect(actionVoroOVD, &QAction::toggled, [this]()
 	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::OVD); });
+#if !defined(USE_OVD)
+	actionVoroOVD->setEnabled(false);
+#endif
 
 	QActionGroup *groupVoro = new QActionGroup{this};
 	groupVoro->addAction(actionVoroBoost);
