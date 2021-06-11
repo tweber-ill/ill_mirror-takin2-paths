@@ -209,6 +209,13 @@ void LinesScene::SetIntersectionCalculationMethod(IntersectionCalculationMethod 
 }
 
 
+void LinesScene::SetVoronoiCalculationMethod(VoronoiCalculationMethod m)
+{
+	m_voronoicalculationmethod = m;
+	UpdateVoro();
+}
+
+
 void LinesScene::UpdateAll()
 {
 	UpdateLines();
@@ -516,12 +523,29 @@ void LinesScene::UpdateVoro()
 	if(m_stoponinters && m_elems_inters.size())
 		return;
 
-	// get vertices and bisectors
-	auto [vertices, linear_edges, all_parabolic_edges, graph]
-		= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_linegroups);
-//		= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(m_lines, m_linegroups);
-	m_vorograph = std::move(graph);
 
+	std::vector<t_vec> vertices;
+	std::vector<std::pair<t_vec, t_vec>> linear_edges;
+	std::vector<std::vector<t_vec>> all_parabolic_edges;
+
+	switch(m_voronoicalculationmethod)
+	{
+		case VoronoiCalculationMethod::BOOSTPOLY:
+			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
+				= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(
+					m_lines, m_linegroups);
+			break;
+		case VoronoiCalculationMethod::OVD:
+			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
+				= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(
+					m_lines, m_linegroups);
+			break;
+		default:
+			QMessageBox::critical(m_parent, "Error", "Unknown voronoi diagram calculation method.");
+			break;
+	};
+
+	// voronoi edges
 	if(m_calcvoro)
 	{
 		// linear voronoi edges
@@ -569,8 +593,9 @@ void LinesScene::UpdateVoro()
 		brushVertex.setStyle(Qt::SolidPattern);
 		brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
 
-		for(const auto& vertex : vertices)
+		for(const t_vec& vertex : vertices)
 		{
+			//tl2_ops::operator<<(std::cout, vertex) << std::endl;
 			const t_real width = 8.;
 			QRectF rect{vertex[0]-width/2, vertex[1]-width/2, width, width};
 			QGraphicsItem *item = addEllipse(rect, penVertex, brushVertex);
@@ -1052,17 +1077,33 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionIntersSweep, &QAction::toggled, [this]()
 	{ m_scene->SetIntersectionCalculationMethod(IntersectionCalculationMethod::SWEEP); });
 
+	QActionGroup *groupInters = new QActionGroup{this};
+	groupInters->addAction(actionIntersDirect);
+	groupInters->addAction(actionIntersSweep);
+
+
+	QAction *actionVoroBoost = new QAction{"Boost.Polygon", this};
+	actionVoroBoost->setCheckable(true);
+	actionVoroBoost->setChecked(true);
+	connect(actionVoroBoost, &QAction::toggled, [this]()
+	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::BOOSTPOLY); });
+
+	QAction *actionVoroOVD = new QAction{"OpenVoronoi", this};
+	actionVoroOVD->setCheckable(true);
+	actionVoroOVD->setChecked(false);
+	connect(actionVoroOVD, &QAction::toggled, [this]()
+	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::OVD); });
+
+	QActionGroup *groupVoro = new QActionGroup{this};
+	groupVoro->addAction(actionVoroBoost);
+	groupVoro->addAction(actionVoroOVD);
+
 
 	QAction *actionStopOnInters = new QAction{"Stop on Intersections", this};
 	actionStopOnInters->setCheckable(true);
 	actionStopOnInters->setChecked(m_scene->GetStopOnInters());
 	connect(actionStopOnInters, &QAction::toggled, [this](bool b)
 	{ m_scene->SetStopOnInters(b); });
-
-
-	QActionGroup *groupInters = new QActionGroup{this};
-	groupInters->addAction(actionIntersDirect);
-	groupInters->addAction(actionIntersSweep);
 
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", this);
 	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", this);
@@ -1098,7 +1139,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenu *menuView = new QMenu{"View", this};
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuOptions = new QMenu{"Options", this};
-	QMenu *menuBack = new QMenu{"Intersection Backend", this};
+	QMenu *menuInters = new QMenu{"Intersection Backends", this};
+	QMenu *menuVoro = new QMenu{"Voronoi Diagram Backends", this};
 	QMenu *menuHelp = new QMenu("Help", this);
 
 	menuFile->addAction(actionNew);
@@ -1121,12 +1163,15 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuCalc->addSeparator();
 	menuCalc->addAction(actionVoroBitmap);
 
-	menuBack->addAction(actionIntersDirect);
-	menuBack->addAction(actionIntersSweep);
+	menuInters->addAction(actionIntersDirect);
+	menuInters->addAction(actionIntersSweep);
+	menuVoro->addAction(actionVoroBoost);
+	menuVoro->addAction(actionVoroOVD);
 
 	menuOptions->addAction(actionStopOnInters);
 	menuOptions->addSeparator();
-	menuOptions->addMenu(menuBack);
+	menuOptions->addMenu(menuInters);
+	menuOptions->addMenu(menuVoro);
 
 	menuHelp->addAction(actionAboutQt);
 	menuHelp->addSeparator();
@@ -1140,7 +1185,6 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuOptions);
-	//menuBar->addMenu(menuBack);
 	menuBar->addMenu(menuHelp);
 	setMenuBar(menuBar);
 

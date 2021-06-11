@@ -52,6 +52,13 @@ enum class IntersectionCalculationMethod
 };
 
 
+enum class VoronoiCalculationMethod
+{
+	BOOSTPOLY,
+	OVD,
+};
+
+
 
 class LinesScene : public QGraphicsScene
 {
@@ -102,6 +109,7 @@ public:
 	void UpdateTrapezoids();
 
 	void SetIntersectionCalculationMethod(IntersectionCalculationMethod m);
+	void SetVoronoiCalculationMethod(VoronoiCalculationMethod m);
 
 	void CreateVoroImage(int width, int height);
 	void UpdateVoroImage(const QTransform& trafoSceneToVP);
@@ -132,6 +140,8 @@ private:
 
 	IntersectionCalculationMethod m_intersectioncalculationmethod
 		= IntersectionCalculationMethod::SWEEP;
+	VoronoiCalculationMethod m_voronoicalculationmethod
+		= VoronoiCalculationMethod::BOOSTPOLY;
 	bool m_calctrapezoids = false;
 
 private:

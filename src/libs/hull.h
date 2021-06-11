@@ -17,6 +17,7 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <unordered_map>
 #include <tuple>
 #include <algorithm>
 #include <limits>
@@ -1192,8 +1193,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	using t_real = typename t_vec::value_type;
 	namespace poly = boost::polygon;
 
-	const t_real eps = 1e-3;
-	const t_real parabola_eps = 1e-3;
+	const t_real parabola_eps = 1e-2;
 	const t_real scale = 1000.; // internal scale for int-conversion
 
 	// length of infinite edges
@@ -1255,7 +1255,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	};
 
 	// get the group index of the line segment
-	auto get_group_idx = [&line_groups, &lines, eps](std::size_t segidx)
+	auto get_group_idx = [&line_groups](std::size_t segidx)
 		-> std::optional<std::size_t>
 	{
 		for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
@@ -1540,6 +1540,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 /**
  * voronoi diagram for line segments
+ * @see https://github.com/aewallin/openvoronoi/blob/master/cpp_examples/random_line_segments/main.cpp
+ * @see https://github.com/aewallin/openvoronoi/blob/master/src/utility/vd2svg.hpp
  */
 template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
@@ -1550,6 +1552,7 @@ calc_voro_ovd(const std::vector<t_line>& lines,
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
+	const t_real parabola_eps = 1e-2;
 
 	std::vector<t_vec> vertices;
 	std::vector<t_line> linear_edges;
@@ -1568,27 +1571,115 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 	ovd::VoronoiDiagram voro(std::sqrt(maxRadSq) * 10., lines.size());
+	//voro.debug_on();
+	//voro.set_silent(0);
 
 	std::vector<std::pair<int, int>> linesites;
 	linesites.reserve(lines.size());
 
 	for(const t_line& line : lines)
 	{
-		const t_vec& vec1 = std::get<0>(line);
-		const t_vec& vec2 = std::get<1>(line);
+		try
+		{
+			const t_vec& vec1 = std::get<0>(line);
+			const t_vec& vec2 = std::get<1>(line);
 
-		int idx1 = voro.insert_point_site(ovd::Point(vec1[0], vec1[1]));
-		int idx2 = voro.insert_point_site(ovd::Point(vec2[0], vec2[1]));
+			int idx1 = voro.insert_point_site(ovd::Point(vec1[0], vec1[1]));
+			int idx2 = voro.insert_point_site(ovd::Point(vec2[0], vec2[1]));
 
-		linesites.emplace_back(std::make_pair(idx1, idx2));
+			linesites.emplace_back(std::make_pair(idx1, idx2));
+		}
+		catch(const std::exception& ex)
+		{
+			std::cerr << "Error inserting voronoi point sites: " 
+				<< ex.what() << std::endl;
+		}
 	}
 
 	for(const auto& line : linesites)
 	{
-		voro.insert_line_site(std::get<0>(line), std::get<1>(line));
+		try
+		{
+			voro.insert_line_site(std::get<0>(line), std::get<1>(line));
+		}
+		catch(const std::exception& ex)
+		{
+			std::cerr << "Error inserting voronoi line segment sites: " 
+				<< ex.what() << std::endl;
+		}
 	}
 
-	// TODO
+
+	const auto& vdgraph = voro.get_graph_reference();
+
+	// maps ovd graph vertex pointer to identifier for own graph
+	std::unordered_map<ovd::HEVertex, std::size_t> vert_to_idx;
+
+	vertices.reserve(vdgraph.vertices().size());
+	for(const auto& vert : vdgraph.vertices())
+	{
+		if(vdgraph[vert].type != ovd::NORMAL)
+			continue;
+
+		const auto& pos = vdgraph[vert].position;
+		vertices.emplace_back(tl2::create<t_vec>({ pos.x, pos.y }));
+
+		// add graph vertex
+		std::size_t vertid = vertices.size();
+		vert_to_idx.insert(std::make_pair(vert, vertid));
+		graph.AddVertex(std::to_string(vertid));
+	}
+
+	linear_edges.reserve(vdgraph.edges().size());
+	for(const auto& edge : vdgraph.edges())
+	{
+		const auto ty = vdgraph[edge].type;
+		// ignore perpendicular lines separating regions
+		if(ty == ovd::SEPARATOR)
+			continue;
+
+		const auto vert1 = vdgraph.source(edge);
+		const auto vert2 = vdgraph.target(edge);
+
+		const auto& pos1 = vdgraph[vert1].position;
+		const auto& pos2 = vdgraph[vert2].position;
+
+		bool bisector_handled = false;
+		if(ty == ovd::LINE || ty == ovd::LINELINE || ty == ovd::PARA_LINELINE)
+		{
+			linear_edges.emplace_back(std::make_pair(
+				tl2::create<t_vec>({ pos1.x, pos1.y }), 
+				tl2::create<t_vec>({ pos2.x, pos2.y}) ));
+
+			bisector_handled = true;
+		}
+		else if(ty == ovd::PARABOLA)
+		{
+			std::vector<t_vec> para_edge;
+			para_edge.reserve(std::size_t(std::ceil(1./parabola_eps)));
+
+			for(t_real param=0.; param<=1.; param += parabola_eps)
+			{
+				t_real para_pos = 
+					tl2::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);
+				auto pt = vdgraph[edge].point(para_pos);
+				para_edge.emplace_back(tl2::create<t_vec>({ pt.x, pt.y }));
+			}
+
+			all_parabolic_edges.emplace_back(std::move(para_edge));
+			bisector_handled = true;
+		}
+
+		if(bisector_handled)
+		{
+			// add graph edge
+			auto iter1 = vert_to_idx.find(vert1);
+			auto iter2 = vert_to_idx.find(vert2);
+
+			if(iter1 != vert_to_idx.end() && iter2 != vert_to_idx.end())
+				graph.AddEdge(std::to_string(iter1->second), std::to_string(iter2->second));
+		}
+	}
 
 	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
 }
