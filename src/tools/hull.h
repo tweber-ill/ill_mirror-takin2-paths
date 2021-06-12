@@ -28,20 +28,7 @@
 #include <vector>
 
 #include "about.h"
-
-
-class Vertex : public QGraphicsItem
-{
-public:
-	Vertex(const QPointF& pos, double rad = 15.);
-	virtual ~Vertex();
-
-	virtual QRectF boundingRect() const override;
-	virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget*) override;
-
-private:
-	double m_rad = 15.;
-};
+#include "vertex.h"
 
 
 enum class HullCalculationMethod
@@ -147,7 +134,7 @@ private:
 	bool m_dragging = false;
 
 signals:
-	void SignalMouseCoordinates(double x, double y);
+	void SignalMouseCoordinates(t_real x, t_real y);
 };
 
 

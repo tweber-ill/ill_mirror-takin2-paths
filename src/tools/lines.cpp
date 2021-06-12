@@ -39,54 +39,6 @@ namespace ptree = boost::property_tree;
 #include "src/libs/hull.h"
 
 
-// ----------------------------------------------------------------------------
-
-Vertex::Vertex(const QPointF& pos, double rad) : m_rad{rad}
-{
-	setPos(pos);
-	setFlags(flags() | QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
-}
-
-
-Vertex::~Vertex()
-{
-}
-
-
-QRectF Vertex::boundingRect() const
-{
-	return QRectF{-m_rad/2., -m_rad/2., m_rad, m_rad};
-}
-
-
-void Vertex::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
-{
-	std::array<QColor, 2> colours =
-	{
-		QColor::fromRgbF(0.,0.,1.),
-		QColor::fromRgbF(0.,0.,0.),
-	};
-
-	QRadialGradient grad{};
-	grad.setCenter(0., 0.);
-	grad.setRadius(m_rad);
-
-	for(std::size_t col=0; col<colours.size(); ++col)
-		grad.setColorAt(col/double(colours.size()-1), colours[col]);
-
-	painter->setBrush(grad);
-	painter->setPen(*colours.rbegin());
-
-	painter->drawEllipse(-m_rad/2., -m_rad/2., m_rad, m_rad);
-}
-
-// ----------------------------------------------------------------------------
-
-
-
-
-// ----------------------------------------------------------------------------
-
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
 	ClearRegions();
@@ -637,7 +589,7 @@ void LinesView::resizeEvent(QResizeEvent *evt)
 	QPointF pt2{mapToScene(QPoint{widthView, heightView})};
 
 	// include bounds given by vertices
-	const double padding = 16;
+	const t_real padding = 16;
 	for(const Vertex* vertex : m_scene->GetVertexElems())
 	{
 		QPointF vertexpos = vertex->scenePos();
@@ -1032,15 +984,49 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionZoomIn = new QAction{"Zoom in", this};
 	connect(actionZoomIn, &QAction::triggered, [this]()
 	{
-		if(m_view)
-			m_view->scale(2., 2.);
+		if(!m_view)
+			return;
+		m_view->scale(2., 2.);
 	});
 
 	QAction *actionZoomOut = new QAction{"Zoom out", this};
 	connect(actionZoomOut, &QAction::triggered, [this]()
 	{
-		if(m_view)
-			m_view->scale(0.5, 0.5);
+		if(!m_view)
+			return;
+		m_view->scale(0.5, 0.5);
+	});
+
+	QAction *actionIncreaseVertexSize = new QAction{"Increase Vertex Size", this};
+	connect(actionIncreaseVertexSize, &QAction::triggered, [this]()
+	{
+		if(!m_scene)
+			return;
+
+		for(Vertex* vert : m_scene->GetVertexElems())
+		{
+			t_real rad = vert->GetRadius();
+			rad *= t_real(2.);
+			vert->SetRadius(rad);
+		}
+
+		m_scene->update(QRectF());
+	});
+
+	QAction *actionDecreaseVertexSize = new QAction{"Decrease Vertex Size", this};
+	connect(actionDecreaseVertexSize, &QAction::triggered, [this]()
+	{
+		if(!m_scene)
+			return;
+
+		for(Vertex* vert : m_scene->GetVertexElems())
+		{
+			t_real rad = vert->GetRadius();
+			rad *= t_real(0.5);
+			vert->SetRadius(rad);
+		}
+
+		m_scene->update(QRectF());
 	});
 
 
@@ -1160,6 +1146,9 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	menuView->addAction(actionZoomIn);
 	menuView->addAction(actionZoomOut);
+	menuView->addSeparator();
+	menuView->addAction(actionIncreaseVertexSize);
+	menuView->addAction(actionDecreaseVertexSize);
 
 	menuCalc->addAction(actionVoronoiRegions);
 	menuCalc->addAction(actionVoronoiVertices);
@@ -1196,7 +1185,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// connections
 	connect(m_view.get(), &LinesView::SignalMouseCoordinates,
-	[this](double x, double y, double vpx, double vpy, 
+	[this](t_real x, t_real y, t_real vpx, t_real vpy, 
 		const std::vector<std::size_t>& cursor_regions)
 	{
 		QString cursormsg = QString("Scene: x=%1, y=%2, Viewport: x=%3, y=%4.")

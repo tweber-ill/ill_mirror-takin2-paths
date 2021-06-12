@@ -25,24 +25,7 @@
 #include "src/libs/trapezoid.h"
 
 #include "about.h"
-
-
-using t_real = double;
-
-
-class Vertex : public QGraphicsItem
-{
-public:
-	Vertex(const QPointF& pos, double rad = 15.);
-	virtual ~Vertex();
-
-	virtual QRectF boundingRect() const override;
-	virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget*) override;
-
-private:
-	double m_rad = 15.;
-};
-
+#include "vertex.h"
 
 
 enum class IntersectionCalculationMethod
@@ -175,7 +158,8 @@ protected:
 	virtual void drawBackground(QPainter*, const QRectF&) override;
 
 signals:
-	void SignalMouseCoordinates(double scenex, double sceney, double vpx, double vpy, 
+	void SignalMouseCoordinates(
+		t_real scenex, t_real sceney, t_real vpx, t_real vpy, 
 		const std::vector<std::size_t>& cursor_regions);
 };
 

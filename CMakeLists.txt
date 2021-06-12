@@ -174,12 +174,14 @@ add_executable(taspaths
 if(BUILD_TEST_TOOLS)
 	add_executable(hull
 		src/tools/hull.cpp src/tools/hull.h
+		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/libs/lines.h src/libs/hull.h
 	)
 
 	add_executable(lines
 		src/tools/lines.cpp src/tools/lines.h
+		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/libs/lines.h src/libs/hull.h
 	)
