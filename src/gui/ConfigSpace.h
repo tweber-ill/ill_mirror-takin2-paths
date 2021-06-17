@@ -46,6 +46,9 @@ protected:
 	bool PathsBuilderProgress(bool start, bool end, t_real progress);
 	void RedrawPlot();
 
+	// either move instrument by clicking in the plot or enable plot zoom mode
+	void SetInstrumentMovable(bool moveInstr);
+
 private:
 	QSettings *m_sett{nullptr};
 	std::unique_ptr<QProgressDialog> m_progress{};
@@ -59,6 +62,8 @@ private:
 
 	PathsBuilder *m_pathsbuilder{};
 	boost::signals2::connection m_pathsbuilderslot{};
+
+	bool m_moveInstr = true;
 };
 
 

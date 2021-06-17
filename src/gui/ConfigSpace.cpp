@@ -33,13 +33,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// plotter
 	m_plot = std::make_shared<QCustomPlot>(this);
-	m_plot->setSelectionRectMode(QCP::srmZoom);
-	m_plot->setInteraction(QCP::Interaction(int(QCP::iRangeZoom) | int(QCP::iRangeDrag)));
 	m_plot->xAxis->setLabel("2θ_S (deg)");
 	m_plot->xAxis->setRange(0., 180.);
 	m_plot->yAxis->setLabel("2θ_M (deg)");
 	m_plot->yAxis->setRange(0., 180.);
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
 
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);
 	m_colourMap->setGradient(QCPColorGradient::gpJet);
@@ -93,6 +92,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// menu
 	QMenu *menuFile = new QMenu("File", this);
+	QMenu *menuView = new QMenu("View", this);
 
 	QAction *acSavePDF = new QAction("Save PDF...", menuFile);
 	menuFile->addAction(acSavePDF);
@@ -107,8 +107,17 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
 
+	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
+	acEnableZoom->setCheckable(true);
+	acEnableZoom->setChecked(!m_moveInstr);
+	menuView->addAction(acEnableZoom);
+
+	QAction *acResetZoom = new QAction("Reset Zoom", menuView);
+	menuView->addAction(acResetZoom);
+
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
 
 
@@ -146,31 +155,56 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// connections
 	connect(m_plot.get(), &QCustomPlot::mousePress,
-		[this](QMouseEvent* evt)
-		{
-			if(!this->m_plot)
-				return;
-			const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
-			const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+	[this](QMouseEvent* evt)
+	{
+		if(!this->m_plot || !m_moveInstr)
+			return;
 
-			std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
-			std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
-			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
-		});
+		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
+		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+
+		std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
+		std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
+
+		// move instrument
+		this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+	});
 
 	connect(m_plot.get(), &QCustomPlot::mouseMove,
-		[this](QMouseEvent* evt)
-		{
-			if(!this->m_plot)
-				return;
-			const t_real a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
-			const t_real a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+	[this](QMouseEvent* evt)
+	{
+		if(!this->m_plot)
+			return;
 
-			std::ostringstream ostr;
-			ostr.precision(g_prec_gui);
-			ostr << "2θ_S = " << a4 << " deg, 2θ_M = " << a2 << " deg.";
-			m_status->setText(ostr.str().c_str());
-		});
+		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
+		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+
+		// move instrument
+		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
+		{
+			std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
+			std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
+
+			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+		}
+
+		// set status
+		std::ostringstream ostr;
+		ostr.precision(g_prec_gui);
+		ostr << "2θ_S = " << _a4 << " deg, 2θ_M = " << _a2 << " deg.";
+		m_status->setText(ostr.str().c_str());
+	});
+
+	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
+	{
+		this->SetInstrumentMovable(!enableZoom);
+	});
+
+	connect(acResetZoom, &QAction::triggered, [this]()->void
+	{
+		m_plot->rescaleAxes();
+		m_plot->replot();
+	});
 
 	connect(acSaveLines, &QAction::triggered, this, saveLines);
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
@@ -178,6 +212,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
 	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
+
+	SetInstrumentMovable(m_moveInstr);
 }
 
 
@@ -192,6 +228,31 @@ void ConfigSpaceDlg::accept()
 	if(m_sett)
 		m_sett->setValue("configspace/geo", saveGeometry());
 	QDialog::accept();
+}
+
+
+/**
+ * either move instrument by clicking in the plot or enable plot zoom mode
+ */
+void ConfigSpaceDlg::SetInstrumentMovable(bool moveInstr)
+{
+	m_moveInstr = moveInstr;
+
+	if(!m_plot)
+		return;
+
+	if(m_moveInstr)
+	{
+		m_plot->setSelectionRectMode(QCP::srmNone);
+		m_plot->setInteraction(QCP::iRangeZoom, false);
+		m_plot->setInteraction(QCP::iRangeDrag, false);
+	}
+	else
+	{
+		m_plot->setSelectionRectMode(QCP::srmZoom);
+		m_plot->setInteraction(QCP::iRangeZoom, true);
+		m_plot->setInteraction(QCP::iRangeDrag, true);
+	}
 }
 
 
