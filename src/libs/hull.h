@@ -1567,8 +1567,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			for(auto iter = linear_edges.begin(); iter != linear_edges.end();)
 			{
 				// remove bisector
-				if(std::get<1>(*iter) && *std::get<1>(*iter)==idx ||
-					std::get<2>(*iter) && *std::get<2>(*iter)==idx)
+				if((std::get<1>(*iter) && *std::get<1>(*iter)==idx) ||
+					(std::get<2>(*iter) && *std::get<2>(*iter)==idx))
 				{
 					iter = linear_edges.erase(iter);
 					continue;
@@ -1715,6 +1715,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto& pos1 = vdgraph[vert1].position;
 		const auto& pos2 = vdgraph[vert2].position;
 
+		// TODO
+		std::size_t vert1idx = 0;
+		std::size_t vert2idx = 0;
+
 		bool bisector_handled = false;
 		if(ty == ovd::LINE || ty == ovd::LINELINE || ty == ovd::PARA_LINELINE)
 		{
@@ -1722,7 +1726,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				tl2::create<t_vec>({ pos1.x, pos1.y }),
 				tl2::create<t_vec>({ pos2.x, pos2.y}) );
 
-			linear_edges.emplace_back(std::make_tuple(line, vert1, vert2));
+			linear_edges.emplace_back(std::make_tuple(line, vert1idx, vert2idx));
 
 			bisector_handled = true;
 		}
@@ -1739,7 +1743,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				para_edge.emplace_back(tl2::create<t_vec>({ pt.x, pt.y }));
 			}
 
-			all_parabolic_edges.emplace_back(std::make_tuple(std::move(para_edge), vert1, vert2));
+			all_parabolic_edges.emplace_back(std::make_tuple(std::move(para_edge), vert1idx, vert2idx));
 			bisector_handled = true;
 		}
 
