@@ -477,8 +477,11 @@ void LinesScene::UpdateVoro()
 
 
 	std::vector<t_vec> vertices;
-	std::vector<std::pair<t_vec, t_vec>> linear_edges;
-	std::vector<std::vector<t_vec>> all_parabolic_edges;
+	std::vector<std::tuple<
+		std::pair<t_vec, t_vec>,
+		std::optional<std::size_t>,
+		std::optional<std::size_t>>> linear_edges;
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> all_parabolic_edges;
 
 	switch(m_voronoicalculationmethod)
 	{
@@ -510,9 +513,12 @@ void LinesScene::UpdateVoro()
 
 		for(const auto& linear_edge : linear_edges)
 		{
+			const auto& linear_bisector = std::get<0>(linear_edge);
+
 			QLineF line{
-				QPointF{std::get<0>(linear_edge)[0], std::get<0>(linear_edge)[1]},
-				QPointF{std::get<1>(linear_edge)[0], std::get<1>(linear_edge)[1]} };
+				QPointF{std::get<0>(linear_bisector)[0], std::get<0>(linear_bisector)[1]},
+				QPointF{std::get<1>(linear_bisector)[0], std::get<1>(linear_bisector)[1]} };
+
 			QGraphicsItem *item = addLine(line, penLinEdge);
 			m_elems_voro.push_back(item);
 		}
@@ -522,10 +528,12 @@ void LinesScene::UpdateVoro()
 
 		for(const auto& parabolic_edges : all_parabolic_edges)
 		{
+			const auto& parabolic_points = std::get<0>(parabolic_edges);
+
 			QPolygonF poly;
-			poly.reserve(parabolic_edges.size());
-			for(const auto& parabolic_edge : parabolic_edges)
-				poly << QPointF{parabolic_edge[0], parabolic_edge[1]};
+			poly.reserve(parabolic_points.size());
+			for(const auto& parabolic_point : parabolic_points)
+				poly << QPointF{parabolic_point[0], parabolic_point[1]};
 
 			QPainterPath path;
 			path.addPolygon(poly);

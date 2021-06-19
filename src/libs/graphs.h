@@ -491,6 +491,7 @@ public:
 	void AddEdge(std::size_t idx1, std::size_t idx2, t_weight w=0)
 	{
 		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+
 		m_nodes[idx1] = std::make_shared<AdjNode>();
 		m_nodes[idx1]->next = node;
 		m_nodes[idx1]->idx = idx2;

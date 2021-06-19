@@ -102,6 +102,7 @@ if(USE_OVD)
 		include_directories("${OVD_INCLUDE_DIRS}")
 	else()
 		message("Openvoronoi disabled.")
+		set(OVD_LIBRARIES "")
 	endif()
 endif()
 

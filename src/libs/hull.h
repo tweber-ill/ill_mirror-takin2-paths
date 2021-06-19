@@ -1187,7 +1187,11 @@ std::vector<t_edge> get_edges(
 template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
-std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
+std::tuple<
+	std::vector<t_vec>, 	// vertices
+	std::vector<std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>>,	// linear bisectors
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>>, 	// quadratic bisectors
+	t_graph>	// voronoi vertex graph
 calc_voro(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
@@ -1314,8 +1318,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// edges
-	std::vector<std::vector<t_vec>> all_parabolic_edges;
-	std::vector<t_line> linear_edges;
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> all_parabolic_edges;
+	std::vector<std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>> linear_edges;
 	linear_edges.reserve(voro.edges().size());
 
 	for(const auto& edge : voro.edges())
@@ -1445,8 +1449,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				continue;
 
 			std::vector<poly::point_data<t_real>> parabola{{ 
-				vertex_to_point_data(*edge.vertex0()), 
-				vertex_to_point_data(*edge.vertex1()) 
+				vertex_to_point_data(*vert0),
+				vertex_to_point_data(*vert1)
 			}};
 
 			poly::voronoi_visual_utils<t_real>::discretize(
@@ -1457,9 +1461,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			{
 				std::vector<t_vec> parabolic_edges;
 				parabolic_edges.reserve(parabola.size());
+
 				for(const auto& parabola_pt : parabola)
 					parabolic_edges.emplace_back(to_vec(parabola_pt));
-				all_parabolic_edges.emplace_back(std::move(parabolic_edges));
+
+				all_parabolic_edges.emplace_back(
+					std::make_tuple(std::move(parabolic_edges), *vert0idx, *vert1idx));
 			}
 		}
 
@@ -1469,9 +1476,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			// finite edge
 			if(edge.is_finite())
 			{
-				linear_edges.emplace_back(std::make_pair(
-					vertex_to_vec(*edge.vertex0()) / scale, 
-					vertex_to_vec(*edge.vertex1()) / scale));
+				t_line line = std::make_pair(
+					vertex_to_vec(*vert0) / scale,
+					vertex_to_vec(*vert1) / scale);
+
+				linear_edges.emplace_back(std::make_tuple(line, vert0idx, vert1idx));
 			}
 
 			// infinite edge
@@ -1479,14 +1488,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			{
 				t_vec lineorg;
 				bool inverted = false;
-				if(edge.vertex0())
+				if(vert0)
 				{
-					lineorg = vertex_to_vec(*edge.vertex0());
+					lineorg = vertex_to_vec(*vert0);
 					inverted = false;
 				}
-				else if(edge.vertex1())
+				else if(vert1)
 				{
-					lineorg = vertex_to_vec(*edge.vertex1());
+					lineorg = vertex_to_vec(*vert1);
 					inverted = true;
 				}
 				else
@@ -1510,7 +1519,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				linedir /= tl2::norm(linedir);
 				linedir *= infline_len;
 
-				linear_edges.push_back(std::make_pair(lineorg, lineorg + linedir));
+				t_line line = std::make_pair(lineorg, lineorg + linedir);
+				linear_edges.emplace_back(std::make_tuple(line, vert0idx, vert1idx));
 			}
 		}
 	}
@@ -1521,21 +1531,80 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		std::vector<std::string> verts;
 		verts.reserve(graph.GetNumVertices());
 
+		// get vertex identifiers
 		for(std::size_t vert=0; vert<graph.GetNumVertices(); ++vert)
 		{
 			const std::string& id = graph.GetVertexIdent(vert);
 			verts.push_back(id);
 		}
 
-		for(const std::string& id : verts)
+		// remove vertices with no connections from graph
+		std::vector<std::size_t> removed_indices;
+		removed_indices.reserve(verts.size());
+
+		for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
 		{
+			const std::string& id = verts[vertidx];
+
 			auto neighbours_outgoing = graph.GetNeighbours(id, 1);
 
-			if(neighbours_outgoing.size()==0)
+			if(neighbours_outgoing.size() == 0)
+			{
 				graph.RemoveVertex(id);
+				removed_indices.push_back(vertidx);
+			}
+		}
+
+		// remove the vertex coordinates
+		std::sort(removed_indices.begin(), removed_indices.end(),
+			[](std::size_t idx1, std::size_t idx2) -> bool { return idx1 >= idx2; });
+
+		for(std::size_t idx : removed_indices)
+		{
+			vertices.erase(vertices.begin() + idx);
+
+			// remove linear bisectors containing the removed vertex (and correct other indices)
+			for(auto iter = linear_edges.begin(); iter != linear_edges.end();)
+			{
+				// remove bisector
+				if(std::get<1>(*iter) && *std::get<1>(*iter)==idx ||
+					std::get<2>(*iter) && *std::get<2>(*iter)==idx)
+				{
+					iter = linear_edges.erase(iter);
+					continue;
+				}
+
+				// correct indices
+				if(std::get<1>(*iter) && *std::get<1>(*iter) > idx)
+					--*std::get<1>(*iter);
+				if(std::get<2>(*iter) && *std::get<2>(*iter) > idx)
+					--*std::get<2>(*iter);
+
+				++iter;
+			}
+
+			// remove quadratic bisectors containing the removed vertex (and correct other indices)
+			for(auto iter = all_parabolic_edges.begin(); iter != all_parabolic_edges.end();)
+			{
+				// remove bisector
+				if(std::get<1>(*iter)==idx || std::get<2>(*iter)==idx)
+				{
+					iter = all_parabolic_edges.erase(iter);
+					continue;
+				}
+
+				// correct indices
+				if(std::get<1>(*iter) > idx)
+					--std::get<1>(*iter);
+				if(std::get<2>(*iter) > idx)
+					--std::get<2>(*iter);
+
+				++iter;
+			}
 		}
 	}
 
+	// graph vertex indices correspond to those of the "vertices" vector
 	return std::make_tuple(vertices, linear_edges, all_parabolic_edges, graph);
 }
 
@@ -1547,9 +1616,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
  * @see https://github.com/aewallin/openvoronoi/blob/master/src/utility/vd2svg.hpp
  */
 template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
-	class t_graph=AdjacencyMatrix<typename t_vec::value_type>,
+	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
-std::tuple<std::vector<t_vec>, std::vector<t_line>, std::vector<std::vector<t_vec>>, t_graph>
+std::tuple<
+	std::vector<t_vec>,					// vertices
+	std::vector<std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>>,	// linear bisectors
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>>, 	// quadratic bisectors
+	t_graph>							// voronoi vertex graph
 calc_voro_ovd(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
@@ -1558,8 +1631,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	const t_real parabola_eps = 1e-2;
 
 	std::vector<t_vec> vertices;
-	std::vector<t_line> linear_edges;
-	std::vector<std::vector<t_vec>> all_parabolic_edges;
+	std::vector<std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>> linear_edges;
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> all_parabolic_edges;
 	t_graph graph;
 
 	// get minimal and maximal extents of vertices
@@ -1645,9 +1718,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		bool bisector_handled = false;
 		if(ty == ovd::LINE || ty == ovd::LINELINE || ty == ovd::PARA_LINELINE)
 		{
-			linear_edges.emplace_back(std::make_pair(
-				tl2::create<t_vec>({ pos1.x, pos1.y }), 
-				tl2::create<t_vec>({ pos2.x, pos2.y}) ));
+			t_line line = std::make_pair(
+				tl2::create<t_vec>({ pos1.x, pos1.y }),
+				tl2::create<t_vec>({ pos2.x, pos2.y}) );
+
+			linear_edges.emplace_back(std::make_tuple(line, vert1, vert2));
 
 			bisector_handled = true;
 		}
@@ -1664,7 +1739,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				para_edge.emplace_back(tl2::create<t_vec>({ pt.x, pt.y }));
 			}
 
-			all_parabolic_edges.emplace_back(std::move(para_edge));
+			all_parabolic_edges.emplace_back(std::make_tuple(std::move(para_edge), vert1, vert2));
 			bisector_handled = true;
 		}
 
