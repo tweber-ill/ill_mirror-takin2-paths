@@ -28,6 +28,7 @@
 #include "vertex.h"
 
 
+
 enum class IntersectionCalculationMethod
 {
 	DIRECT,
@@ -142,6 +143,8 @@ public:
 	LinesView(LinesView&) = delete;
 	const LinesView& operator=(const LinesView&) const = delete;
 
+	void UpdateAll();
+
 protected:
 	virtual void mousePressEvent(QMouseEvent *evt) override;
 	virtual void mouseReleaseEvent(QMouseEvent *evt) override;
@@ -159,7 +162,7 @@ protected:
 
 signals:
 	void SignalMouseCoordinates(
-		t_real scenex, t_real sceney, t_real vpx, t_real vpy, 
+		t_real scenex, t_real sceney, t_real vpx, t_real vpy,
 		const std::vector<std::size_t>& cursor_regions);
 };
 

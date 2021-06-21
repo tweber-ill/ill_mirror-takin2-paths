@@ -588,6 +588,14 @@ LinesView::~LinesView()
 }
 
 
+void LinesView::UpdateAll()
+{
+	// triggers updates
+	QResizeEvent evt{size(), size()};
+	resizeEvent(&evt);
+}
+
+
 void LinesView::resizeEvent(QResizeEvent *evt)
 {
 	int widthView = evt->size().width();
@@ -611,8 +619,8 @@ void LinesView::resizeEvent(QResizeEvent *evt)
 		if(vertexpos.y() > pt2.y())
 			pt2.setY(vertexpos.y() + padding);
 	}
-	setSceneRect(QRectF{pt1, pt2});
 
+	setSceneRect(QRectF{pt1, pt2});
 	m_scene->CreateVoroImage(widthView, heightView);
 }
 
@@ -707,8 +715,7 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 
 	if(m_dragging)
 	{
-		QResizeEvent evt{size(), size()};
-		resizeEvent(&evt);
+		UpdateAll();
 		m_scene->UpdateAll();
 	}
 
@@ -911,7 +918,9 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 			if(vertidx > 0)
 			{
+				m_view->UpdateAll();
 				m_scene->UpdateAll();
+
 				m_sett.setValue("cur_dir", QFileInfo(file).path());
 			}
 			else
