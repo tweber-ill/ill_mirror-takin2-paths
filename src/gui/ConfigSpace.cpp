@@ -284,6 +284,9 @@ void ConfigSpaceDlg::Calculate()
 	//m_status->setText("Simplifying obstacle contour lines.");
 	//m_pathsbuilder->SimplifyWallContours();
 
+	m_status->setText("Calculating line segments.");
+	m_pathsbuilder->CalculateLineSegments();
+
 	m_status->setText("Calculation finished.");
 	RedrawPlot();
 }

@@ -149,9 +149,61 @@ void PathsBuilder::SimplifyWallContours()
 }
 
 
+/**
+ * calculate lines segments and groups
+ */
+void PathsBuilder::CalculateLineSegments()
+{
+	m_lines.clear();
+	m_linegroups.clear();
+
+	std::size_t totalverts = 0;
+	for(const auto& contour : m_wallcontours)
+		totalverts += contour.size();
+
+	m_lines.reserve(totalverts);
+	m_linegroups.reserve(m_wallcontours.size());
+
+	// contour vertices
+	std::size_t linectr = 0;
+	for(std::size_t contouridx = 0; contouridx < m_wallcontours.size(); ++contouridx)
+	{
+		const auto& contour = m_wallcontours[contouridx];
+		std::size_t groupstart = linectr;
+
+		for(std::size_t vert1 = 0; vert1 < contour.size(); ++vert1)
+		{
+			std::size_t vert2 = (vert1 + 1) % contour.size();
+
+			const t_contourvec& vec1 = contour[vert1];
+			const t_contourvec& vec2 = contour[vert2];
+
+			t_vec linevec1 = vec1;
+			t_vec linevec2 = vec2;
+			m_lines.emplace_back(std::make_pair(std::move(linevec1), std::move(linevec2)));
+
+			++linectr;
+		}
+
+		// mark line group start and end index
+		std::size_t groupend = linectr;
+		m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
+	}
+}
+
+
 void PathsBuilder::CalculateVoronoi()
 {
+	std::vector<t_vec> vertices;
+	std::vector<std::tuple<
+		std::pair<t_vec, t_vec>,
+		std::optional<std::size_t>,
+		std::optional<std::size_t>>> linear_edges;
+	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> parabolic_edges;
+	t_graph m_vorograph{};
 
+	std::tie(vertices, linear_edges, parabolic_edges, m_vorograph)
+		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups);
 }
 
 
@@ -169,54 +221,43 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 	//std::ofstream ostr("contour.xml");
 	ostr << "<lines2d>\n";
 
-	std::vector<std::pair<std::size_t, std::size_t>> groups;
-	groups.reserve(m_wallcontours.size());
-
 	// contour vertices
 	std::size_t vertctr = 0;
 	ostr << "<vertices>\n";
-	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
+	for(std::size_t contouridx = 0; contouridx < m_linegroups.size(); ++contouridx)
 	{
-		const auto& contour = m_wallcontours[contouridx];
+		const auto& contour = m_linegroups[contouridx];
 		ostr << "\t<!-- contour " << contouridx << " -->\n";
 
-		std::size_t groupstart = vertctr;
-
-		for(std::size_t vert1=0; vert1<contour.size(); ++vert1)
+		for(std::size_t lineidx=std::get<0>(contour); lineidx<std::get<1>(contour); ++lineidx)
 		{
-			std::size_t vert2 = (vert1 + 1) % contour.size();
-
-			const t_contourvec& vec1 = contour[vert1];
-			const t_contourvec& vec2 = contour[vert2];
+			const t_line& line = m_lines[lineidx];
 
 			ostr << "\t<" << vertctr;
-			ostr << " x=\"" << vec1[0] << "\"";
-			ostr << " y=\"" << vec1[1] << "\"";
+			ostr << " x=\"" << std::get<0>(line)[0] << "\"";
+			ostr << " y=\"" << std::get<0>(line)[1] << "\"";
 			ostr << "/>\n";
 			++vertctr;
 
 			ostr << "\t<" << vertctr;
-			ostr << " x=\"" << vec2[0] << "\"";
-			ostr << " y=\"" << vec2[1] << "\"";
+			ostr << " x=\"" << std::get<1>(line)[0] << "\"";
+			ostr << " y=\"" << std::get<0>(line)[1] << "\"";
 			ostr << "/>\n\n";
 			++vertctr;
 		}
-
-		std::size_t groupend = vertctr;
-		groups.emplace_back(std::make_pair(groupstart, groupend));
 	}
 	ostr << "</vertices>\n";
 
 	// contour groups
 	ostr << "\n<groups>\n";
-	for(std::size_t groupidx = 0; groupidx<groups.size(); ++groupidx)
+	for(std::size_t groupidx = 0; groupidx < m_linegroups.size(); ++groupidx)
 	{
-		const auto& group = groups[groupidx];
+		const auto& group = m_linegroups[groupidx];
 		ostr << "\t<!-- contour " << groupidx << " -->\n";
 		ostr << "\t<" << groupidx << ">\n";
 
-		ostr << "\t\t<begin>" << std::get<0>(group) << "</begin>\n";
-		ostr << "\t\t<end>" << std::get<1>(group) << "</end>\n";
+		ostr << "\t\t<begin>" << std::get<0>(group)*2 << "</begin>\n";
+		ostr << "\t\t<end>" << std::get<1>(group)*2 << "</end>\n";
 
 		ostr << "\t</" << groupidx << ">\n\n";
 	}

@@ -16,12 +16,16 @@
 #include "types.h"
 #include "Instrument.h"
 #include "src/libs/img.h"
+#include "src/libs/graphs.h"
+
 
 
 class PathsBuilder
 {
 public:
 	using t_contourvec = tl2::vec<int, std::vector>;
+	using t_graph = geo::AdjacencyList<t_real>;
+	using t_line = std::pair<t_vec, t_vec>;
 
 
 public:
@@ -36,6 +40,7 @@ public:
 	void CalculateConfigSpace(t_real da2, t_real da4);
 	void CalculateWallContours();
 	void SimplifyWallContours();
+	void CalculateLineSegments();
 	void CalculateVoronoi();
 	void SimplifyVoronoi();
 
@@ -76,10 +81,12 @@ private:
 		boost::signals2::signal<
 			bool(bool start, bool end, t_real progress),
 			combine_sigret>;
-	std::shared_ptr<t_sig_progress> m_sigProgress;
+	std::shared_ptr<t_sig_progress> m_sigProgress{};
 
-	geo::Image<std::uint8_t> m_img;
-	std::vector<std::vector<t_contourvec>> m_wallcontours;
+	geo::Image<std::uint8_t> m_img{};
+	std::vector<std::vector<t_contourvec>> m_wallcontours{};
+	std::vector<t_line> m_lines{};
+	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 };
 
 #endif
