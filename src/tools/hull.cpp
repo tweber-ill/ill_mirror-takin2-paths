@@ -462,6 +462,14 @@ HullView::~HullView()
 }
 
 
+void HullView::UpdateAll()
+{
+	// triggers updates
+	QResizeEvent evt{size(), size()};
+	resizeEvent(&evt);
+}
+
+
 void HullView::resizeEvent(QResizeEvent *evt)
 {
 	QPointF pt1{mapToScene(QPoint{0,0})};
@@ -564,8 +572,7 @@ void HullView::mouseMoveEvent(QMouseEvent *evt)
 
 	if(m_dragging)
 	{
-		QResizeEvent evt{size(), size()};
-		resizeEvent(&evt);
+		UpdateAll();
 		m_scene->UpdateAll();
 	}
 

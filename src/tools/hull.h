@@ -31,6 +31,7 @@
 #include "vertex.h"
 
 
+
 enum class HullCalculationMethod
 {
 	QHULL,
@@ -120,6 +121,8 @@ public:
 
 	HullView(HullView&) = delete;
 	const HullView& operator=(const HullView&) const = delete;
+
+	void UpdateAll();
 
 protected:
 	virtual void mousePressEvent(QMouseEvent *evt) override;
