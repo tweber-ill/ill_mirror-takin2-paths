@@ -393,10 +393,15 @@ bool pt_inside_poly(
 	}
 
 
-	std::size_t num_inters = 0;
+	// check if the point is inside the polygon bounding box
+	auto bbox = tl2::bounding_box<t_vec>(poly);
+	if(!tl2::in_bounding_box<t_vec>(pt, bbox))
+		return false;
+
 
 	// some point outside the polygon
 	t_vec pt2 = pt;
+
 	for(const t_vec& vec : poly)
 	{
 		pt2[0] = std::abs(std::max(vec[0], pt2[0]));
@@ -410,6 +415,10 @@ bool pt_inside_poly(
 	// TODO: several runs with different line slopes, as the line can hit a vertex within epsilon
 	t_line line(pt, pt2);
 	//print_line<t_vec, t_line>(std::cout, line); std::cout << std::endl;
+
+
+	// number of intersections
+	std::size_t num_inters = 0;
 
 	// check intersection with polygon line segments
 	for(std::size_t vert1=0; vert1<poly.size(); ++vert1)
@@ -428,6 +437,88 @@ bool pt_inside_poly(
 		}
 	}
 
+	// odd number of intersections?
+	return num_inters % 2;
+}
+
+
+/**
+ * tests if a point is inside a polygon using the raycasting algo:
+ * @see https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm
+ */
+template<class t_vec, class t_line = std::tuple<t_vec, t_vec>, 
+	class t_real = typename t_vec::value_type>
+requires tl2::is_vec<t_vec>
+bool pt_inside_poly(
+	const std::vector<t_line>& polylines, const t_vec& pt,
+	std::size_t lineidx_begin = 0, std::size_t lineidx_end = 0,
+	t_real eps = 1e-6)
+{
+	// bounding box
+	t_vec bboxmin, bboxmax;
+	bboxmin = tl2::create<t_vec>(2);
+	bboxmin[0] = bboxmin[1] = std::numeric_limits<t_real>::max();
+	bboxmax = -bboxmin;
+
+
+	// some point outside the polygon
+	t_vec pt2 = pt;
+
+	for(const auto& pair : polylines)
+	{
+		const t_vec& vec1 = std::get<0>(pair);
+		const t_vec& vec2 = std::get<1>(pair);
+
+		//std::tie(bboxmin, bboxmax) = tl2::bounding_box<t_vec>({vec1, vec2}, &bboxmin, &bboxmax);
+		bboxmin[0] = std::min(bboxmin[0], vec1[0]);
+		bboxmax[0] = std::max(bboxmax[0], vec1[0]);
+		bboxmin[1] = std::min(bboxmin[1], vec1[1]);
+		bboxmax[1] = std::max(bboxmax[1], vec1[1]);
+		bboxmin[0] = std::min(bboxmin[0], vec2[0]);
+		bboxmax[0] = std::max(bboxmax[0], vec2[0]);
+		bboxmin[1] = std::min(bboxmin[1], vec2[1]);
+		bboxmax[1] = std::max(bboxmax[1], vec2[1]);
+
+		pt2[0] = std::abs(std::max(vec1[0], pt2[0]));
+		pt2[1] = std::abs(std::max(vec1[1], pt2[1]));
+	}
+
+
+	// check if the point is inside the polygon bounding box
+	auto bbox = std::make_tuple(std::move(bboxmin), std::move(bboxmax));
+	if(!tl2::in_bounding_box<t_vec>(pt, bbox))
+		return false;
+
+
+	// some arbitrary scales
+	pt2[0] *= t_real{4};
+	pt2[1] *= t_real{2};
+
+	// TODO: several runs with different line slopes, as the line can hit a vertex within epsilon
+	t_line line(pt, pt2);
+	//print_line<t_vec, t_line>(std::cout, line); std::cout << std::endl;
+
+
+	// if the given line indices are invalid, test all line segments
+	if(lineidx_end <= lineidx_begin)
+		lineidx_end = polylines.size();
+
+	// number of intersections
+	std::size_t num_inters = 0;
+
+	// check intersection with polygon line segments
+	for(std::size_t lineidx = lineidx_begin; lineidx < lineidx_end; ++lineidx)
+	{
+		const t_line& polyline = polylines[lineidx];
+
+		if(auto [intersects, inters_pt] = 
+			intersect_lines<t_line>(line, polyline, eps, false, false); intersects)
+		{
+			++num_inters;
+		}
+	}
+
+	// odd number of intersections?
 	return num_inters % 2;
 }
 

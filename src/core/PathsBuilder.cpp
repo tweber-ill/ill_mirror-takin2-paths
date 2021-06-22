@@ -213,7 +213,7 @@ void PathsBuilder::CalculateVoronoi()
 	(*m_sigProgress)(true, false, 0, message);
 
 	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
-		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, m_voroedge_eps);
+		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, true, m_voroedge_eps);
 
 	// TODO: remove voronoi edge paths inside obstacle regions
 

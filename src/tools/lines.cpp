@@ -303,6 +303,13 @@ void LinesScene::SetStopOnInters(bool b)
 }
 
 
+void LinesScene::SetRemoveVerticesInRegions(bool b)
+{
+	m_removeverticesinregions = b;
+	UpdateVoro();
+}
+
+
 void LinesScene::UpdateTrapezoids()
 {
 	// remove previous trapezoids
@@ -488,13 +495,13 @@ void LinesScene::UpdateVoro()
 		case VoronoiCalculationMethod::BOOSTPOLY:
 			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
 				= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(
-					m_lines, m_linegroups);
+					m_lines, m_linegroups, m_removeverticesinregions);
 			break;
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
 				= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(
-					m_lines, m_linegroups);
+					m_lines, m_linegroups, m_removeverticesinregions);
 			break;
 #endif
 		default:
@@ -1113,6 +1120,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionStopOnInters, &QAction::toggled, [this](bool b)
 	{ m_scene->SetStopOnInters(b); });
 
+	QAction *actionRemoveVerticesInRegions = new QAction{"Remove Vertices in Regions", this};
+	actionRemoveVerticesInRegions->setCheckable(true);
+	actionRemoveVerticesInRegions->setChecked(m_scene->GetRemoveVerticesInRegions());
+	connect(actionRemoveVerticesInRegions, &QAction::toggled, [this](bool b)
+	{ m_scene->SetRemoveVerticesInRegions(b); });
+
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", this);
 	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", this);
 
@@ -1180,6 +1193,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuVoro->addAction(actionVoroOVD);
 
 	menuOptions->addAction(actionStopOnInters);
+	menuOptions->addAction(actionRemoveVerticesInRegions);
 	menuOptions->addSeparator();
 	menuOptions->addMenu(menuInters);
 	menuOptions->addMenu(menuVoro);

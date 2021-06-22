@@ -1173,6 +1173,7 @@ std::vector<t_edge> get_edges(
 	return edges;
 }
 
+
 // ----------------------------------------------------------------------------
 
 
@@ -1194,6 +1195,7 @@ std::tuple<
 	t_graph>	// voronoi vertex graph
 calc_voro(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	bool remove_voronoi_vertices_in_regions = false,
 	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
@@ -1202,6 +1204,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 	// internal scale for int-conversion
 	const t_real scale = std::ceil(1./(edge_eps*edge_eps));
+	const t_real eps = edge_eps*edge_eps;
 
 	// length of infinite edges
 	t_real infline_len = 1.;
@@ -1348,7 +1351,40 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				auto region2 = get_group_idx(*seg2idx);
 
 				// are the generating line segments part of the same group?
+				// if so, ignore this voronoi edge and skip to next one
 				if(region1 && region2 && *region1 == *region2)
+					continue;
+			}
+
+
+			// remove the voronoi vertex if it's inside a region defined by a line group
+			if(remove_voronoi_vertices_in_regions)
+			{
+				bool vert_inside_region = false;
+
+				for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
+				{
+					auto [grp_beg, grp_end] = line_groups[grpidx];
+
+					// check edge vertex 0
+					if(vert0idx)
+					{
+						const auto& vorovert = vertices[*vert0idx];
+						if(vert_inside_region = pt_inside_poly<t_vec>(lines, vorovert, grp_beg, grp_end, eps); vert_inside_region)
+							break;
+					}
+
+					// check edge vertex 1
+					if(vert1idx)
+					{
+						const auto& vorovert = vertices[*vert1idx];
+						if(vert_inside_region = pt_inside_poly<t_vec>(lines, vorovert, grp_beg, grp_end, eps); vert_inside_region)
+							break;
+					}
+				}
+
+				// ignore this voronoi edge and skip to next one
+				if(vert_inside_region)
 					continue;
 			}
 		}
@@ -1626,6 +1662,7 @@ std::tuple<
 	t_graph>							// voronoi vertex graph
 calc_voro_ovd(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	bool remove_voronoi_vertices_in_regions = false,	// TODO
 	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
