@@ -161,8 +161,9 @@ add_executable(taspaths
 	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
 
 	src/core/Geometry.cpp src/core/Geometry.h
-	src/core/Axis.cpp src/core/Instrument.cpp
-	src/core/InstrumentSpace.cpp src/core/Instrument.h
+	src/core/Axis.cpp src/core/Axis.h
+	src/core/Instrument.cpp src/core/Instrument.h
+	src/core/InstrumentSpace.cpp src/core/InstrumentSpace.h
 	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
 	src/core/types.h
 

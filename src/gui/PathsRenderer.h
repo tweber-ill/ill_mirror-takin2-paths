@@ -21,7 +21,7 @@
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/qt/gl.h"
 
-#include "src/core/Instrument.h"
+#include "src/core/InstrumentSpace.h"
 
 using t_real_gl = tl2::t_real_gl;
 using t_vec2_gl = tl2::t_vec2_gl;

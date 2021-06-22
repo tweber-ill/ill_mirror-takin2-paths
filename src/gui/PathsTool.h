@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 
-#include "src/core/Instrument.h"
+#include "src/core/InstrumentSpace.h"
 #include "src/core/PathsBuilder.h"
 
 #include "tlibs2/libs/maths.h"

@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <optional>
 
-#include "Instrument.h"
+#include "InstrumentSpace.h"
 #include "src/libs/lines.h"
 #include "src/libs/ptree.h"
 #include "tlibs2/libs/file.h"

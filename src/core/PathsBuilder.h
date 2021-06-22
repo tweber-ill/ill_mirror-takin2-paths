@@ -14,7 +14,7 @@
 #include <boost/signals2/signal.hpp>
 
 #include "types.h"
-#include "Instrument.h"
+#include "InstrumentSpace.h"
 #include "src/libs/img.h"
 #include "src/libs/graphs.h"
 

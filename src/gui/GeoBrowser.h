@@ -15,7 +15,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QTableWidget>
 
-#include "src/core/Instrument.h"
+#include "src/core/InstrumentSpace.h"
 
 
 class GeometriesBrowser : public QDialog

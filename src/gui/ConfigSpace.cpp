@@ -347,11 +347,14 @@ void ConfigSpaceDlg::RedrawPlot()
 {
 	// draw wall image
 	const auto& img = m_pathsbuilder->GetImage();
-	m_colourMap->data()->setSize(img.GetWidth(), img.GetHeight());
+	const std::size_t width = img.GetWidth();
+	const std::size_t height = img.GetHeight();
 
-	for(std::size_t y=0; y<img.GetHeight(); ++y)
+	m_colourMap->data()->setSize(width, height);
+
+	for(std::size_t y=0; y<height; ++y)
 	{
-		for(std::size_t x=0; x<img.GetWidth(); ++x)
+		for(std::size_t x=0; x<width; ++x)
 		{
 			bool colliding = img.GetPixel(x, y) > 0;
 			m_colourMap->data()->setCell(x, y, colliding ? 1. : 0.);
@@ -380,7 +383,7 @@ void ConfigSpaceDlg::RedrawPlot()
 
 			int x = int(point[0]);
 			int y = int(point[1]);
-			if(x>=0 && y>=0 && x<img.GetWidth() && y<img.GetHeight())
+			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 				m_colourMap->data()->setCell(x, y, 0.25);
 		}
 	}
@@ -394,7 +397,7 @@ void ConfigSpaceDlg::RedrawPlot()
 		{
 			int x = int(point[0]);
 			int y = int(point[1]);
-			if(x>=0 && y>=0 && x<img.GetWidth() && y<img.GetHeight())
+			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 				m_colourMap->data()->setCell(x, y, 0.25);
 		}
 	}
