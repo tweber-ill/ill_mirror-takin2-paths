@@ -40,17 +40,18 @@ private:
 	QSettings m_sett{"takin", "taspaths"};
 
 	// renderer
-	std::shared_ptr<PathsRenderer> m_renderer{std::make_shared<PathsRenderer>(this)};
+	std::shared_ptr<PathsRenderer> m_renderer{ std::make_shared<PathsRenderer>(this) };
+	int m_multisamples{ 8 };
 
 	// gl info strings
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
 
-	QStatusBar *m_statusbar{nullptr};
-	QLabel *m_labelStatus{nullptr};
-	QLabel *m_labelCollisionStatus{nullptr};
+	QStatusBar *m_statusbar{ nullptr };
+	QLabel *m_labelStatus{ nullptr };
+	QLabel *m_labelCollisionStatus{ nullptr };
 
-	QMenu *m_menuOpenRecent{nullptr};
-	QMenuBar *m_menubar{nullptr};
+	QMenu *m_menuOpenRecent{ nullptr };
+	QMenuBar *m_menubar{ nullptr };
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser;
@@ -156,7 +157,7 @@ protected slots:
 	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right);
 
 	// dragging an object
-	void ObjectDragged(bool drag_start, const std::string& obj, 
+	void ObjectDragged(bool drag_start, const std::string& obj,
 		t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
 
 	void UpdateStatusLabel();

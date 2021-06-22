@@ -554,6 +554,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// rendering widget
 	// --------------------------------------------------------------------
+	// set gl surface format
+	m_renderer->setFormat(tl2::gl_format(true, _GL_MAJ_VER, _GL_MIN_VER,
+		m_multisamples, m_renderer->format()));
+
 	auto plotpanel = new QWidget(this);
 
 	connect(m_renderer.get(), &PathsRenderer::FloorPlaneCoordsChanged, this, &PathsTool::CursorCoordsChanged);
@@ -865,7 +869,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuGeo->addAction(actionAddCylindricalWall);
 	menuGeo->addSeparator();
 	menuGeo->addAction(actionGeoBrowser);
-	
+
 
 
 	// calculate menu
@@ -1072,7 +1076,8 @@ int main(int argc, char** argv)
 			std::cerr << ": " << log.toStdString() << std::endl;
 		});
 
-		tl2::set_gl_format(1, _GL_MAJ_VER, _GL_MIN_VER, 8);
+		// default gl surface format
+		tl2::set_gl_format(true, _GL_MAJ_VER, _GL_MIN_VER, 8);
 		tl2::set_locales();
 
 		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
@@ -1081,16 +1086,16 @@ int main(int argc, char** argv)
 
 		auto app = std::make_unique<QApplication>(argc, argv);
 		g_apppath = app->applicationDirPath().toStdString();
-		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." + 
+		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
 			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
 
-		auto dlg = std::make_unique<PathsTool>(nullptr);
+		auto mainwnd = std::make_unique<PathsTool>(nullptr);
 		if(argc > 1)
-			dlg->SetInitialInstrumentFile(argv[1]);
-		dlg->show();
-		dlg->raise();
-		dlg->activateWindow();
+			mainwnd->SetInitialInstrumentFile(argv[1]);
+		mainwnd->show();
+		mainwnd->raise();
+		mainwnd->activateWindow();
 
 		return app->exec();
 	}
