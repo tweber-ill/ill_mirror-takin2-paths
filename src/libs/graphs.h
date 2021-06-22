@@ -650,7 +650,7 @@ private:
  * @see https://graphviz.org/doc/info/lang.html
  */
 template<class t_graph> requires is_graph<t_graph>
-void print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
+bool print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
 {
 	const std::size_t N = graph.GetNumVertices();
 
@@ -676,6 +676,7 @@ void print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
 	}
 
 	ostr << "}\n";
+	return true;
 }
 
 

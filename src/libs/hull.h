@@ -1193,14 +1193,15 @@ std::tuple<
 	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>>, 	// quadratic bisectors
 	t_graph>	// voronoi vertex graph
 calc_voro(const std::vector<t_line>& lines, 
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
 	namespace poly = boost::polygon;
 
-	const t_real parabola_eps = 1e-2;
-	const t_real scale = 1000.; // internal scale for int-conversion
+	// internal scale for int-conversion
+	const t_real scale = std::ceil(1./(edge_eps*edge_eps));
 
 	// length of infinite edges
 	t_real infline_len = 1.;
@@ -1455,7 +1456,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 			poly::voronoi_visual_utils<t_real>::discretize(
 				to_point_data(*pt), to_segment_data(*seg),
-				parabola_eps, &parabola);
+				edge_eps, &parabola);
 
 			if(parabola.size())
 			{
@@ -1615,7 +1616,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
  * @see https://github.com/aewallin/openvoronoi/blob/master/cpp_examples/random_line_segments/main.cpp
  * @see https://github.com/aewallin/openvoronoi/blob/master/src/utility/vd2svg.hpp
  */
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 std::tuple<
@@ -1624,11 +1625,11 @@ std::tuple<
 	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>>, 	// quadratic bisectors
 	t_graph>							// voronoi vertex graph
 calc_voro_ovd(const std::vector<t_line>& lines, 
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups)
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
-	const t_real parabola_eps = 1e-2;
 
 	std::vector<t_vec> vertices;
 	std::vector<std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>> linear_edges;
@@ -1733,9 +1734,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		else if(ty == ovd::PARABOLA)
 		{
 			std::vector<t_vec> para_edge;
-			para_edge.reserve(std::size_t(std::ceil(1./parabola_eps)));
+			para_edge.reserve(std::size_t(std::ceil(1./edge_eps)));
 
-			for(t_real param=0.; param<=1.; param += parabola_eps)
+			for(t_real param=0.; param<=1.; param += edge_eps)
 			{
 				t_real para_pos = 
 					tl2::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);

@@ -73,7 +73,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// buttons
 	QPushButton *btnCalc = new QPushButton("Calculate", this);
-	QPushButton *btnSave = new QPushButton("Save PDF...", this);
+	QPushButton *btnSave = new QPushButton("Save Figure...", this);
 	QPushButton *btnClose = new QPushButton("OK", this);
 
 	// grid
@@ -94,11 +94,14 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QMenu *menuFile = new QMenu("File", this);
 	QMenu *menuView = new QMenu("View", this);
 
-	QAction *acSavePDF = new QAction("Save PDF...", menuFile);
+	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
 	menuFile->addAction(acSavePDF);
 
 	QAction *acSaveLines = new QAction("Save Contour Lines...", menuFile);
 	menuFile->addAction(acSaveLines);
+
+	QAction *acSaveGraph = new QAction("Save Voronoi Graph...", menuFile);
+	menuFile->addAction(acSaveGraph);
 
 	menuFile->addSeparator();
 
@@ -121,7 +124,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->setMenuBar(menuBar);
 
 
-	// functions
+	// export obstacle line segments
 	auto saveLines = [this]()
 	{
 		if(!this->m_pathsbuilder)
@@ -139,16 +142,40 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
 	};
 
+
+	// export figure as pdf file
 	auto savePDF = [this]()
 	{
 		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
 
 		QString filename = QFileDialog::getSaveFileName(
-			this, "Save PDF", dirLast, "PDF Files (*.pdf)");
+			this, "Save PDF Figure", dirLast, "PDF Files (*.pdf)");
 		if(filename=="")
 			return;
 
 		if(this->m_plot->savePdf(filename))
+			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
+	};
+
+
+	// export voronoi graph as dot file
+	auto saveGraph = [this]()
+	{
+		if(!this->m_pathsbuilder)
+			return;
+
+		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+
+		QString filename = QFileDialog::getSaveFileName(
+			this, "Save DOT Graph", dirLast, "DOT Files (*.dot)");
+		if(filename=="")
+			return;
+
+		std::ofstream ofstr(filename.toStdString());
+		bool ok = geo::print_graph(this->m_pathsbuilder->GetVoronoiGraph(), ofstr);
+		ofstr << std::endl;
+
+		if(ok)
 			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
 	};
 
@@ -208,6 +235,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	connect(acSaveLines, &QAction::triggered, this, saveLines);
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
+	connect(acSaveGraph, &QAction::triggered, this, saveGraph);
 	connect(btnSave, &QPushButton::clicked, savePDF);
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
@@ -281,11 +309,11 @@ void ConfigSpaceDlg::Calculate()
 	m_status->setText("Calculating obstacle contour lines.");
 	m_pathsbuilder->CalculateWallContours();
 
-	//m_status->setText("Simplifying obstacle contour lines.");
-	//m_pathsbuilder->SimplifyWallContours();
-
 	m_status->setText("Calculating line segments.");
 	m_pathsbuilder->CalculateLineSegments();
+
+	m_status->setText("Calculating Voronoi regions.");
+	m_pathsbuilder->CalculateVoronoi();
 
 	m_status->setText("Calculation finished.");
 	RedrawPlot();
@@ -298,9 +326,9 @@ void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 
 	m_pathsbuilder = builder;
 	m_pathsbuilderslot = m_pathsbuilder->AddProgressSlot(
-		[this](bool start, bool end, t_real progress) -> bool
+		[this](bool start, bool end, t_real progress, const std::string& message) -> bool
 		{
-			return this->PathsBuilderProgress(start, end, progress);
+			return this->PathsBuilderProgress(start, end, progress, message);
 		});
 }
 
@@ -339,13 +367,46 @@ void ConfigSpaceDlg::RedrawPlot()
 			m_colourMap->data()->setCell(vec[0], vec[1], 0.5);
 
 
+	// draw linear voronoi edges
+	const t_real edge_eps = m_pathsbuilder->GetVoronoiEdgeEpsilon();
+
+	for(const auto& edge : m_pathsbuilder->GetVoronoiEdgesLinear())
+	{
+		const auto& line = std::get<0>(edge);
+
+		for(t_real param=0.; param<=1.; param += edge_eps)
+		{
+			t_vec point = std::get<0>(line) + param * (std::get<1>(line) - std::get<0>(line));
+
+			int x = int(point[0]);
+			int y = int(point[1]);
+			if(x>=0 && y>=0 && x<img.GetWidth() && y<img.GetHeight())
+				m_colourMap->data()->setCell(x, y, 0.25);
+		}
+	}
+
+
+	// draw parabolic voronoi edges
+	for(const auto& edge : m_pathsbuilder->GetVoronoiEdgesParabolic())
+	{
+		const auto& points = std::get<0>(edge);
+		for(const auto& point : points)
+		{
+			int x = int(point[0]);
+			int y = int(point[1]);
+			if(x>=0 && y>=0 && x<img.GetWidth() && y<img.GetHeight())
+				m_colourMap->data()->setCell(x, y, 0.25);
+		}
+	}
+
+
 	// replot
 	m_plot->rescaleAxes();
 	m_plot->replot();
 }
 
 
-bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress)
+bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message)
 {
 	static const int max_progress = 1000;
 
@@ -353,7 +414,7 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress)
 	{
 		m_progress = std::make_unique<QProgressDialog>(this);
 		m_progress->setWindowModality(Qt::WindowModal);
-		m_progress->setLabelText("Calculating configuration space...");
+		m_progress->setLabelText(message.c_str());
 		m_progress->setMinimum(0);
 		m_progress->setMaximum(max_progress);
 	}

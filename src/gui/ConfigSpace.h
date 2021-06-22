@@ -43,7 +43,7 @@ signals:
 protected:
 	virtual void accept() override;
 
-	bool PathsBuilderProgress(bool start, bool end, t_real progress);
+	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
 	void RedrawPlot();
 
 	// either move instrument by clicking in the plot or enable plot zoom mode

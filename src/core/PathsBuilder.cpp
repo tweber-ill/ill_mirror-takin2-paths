@@ -37,10 +37,16 @@ PathsBuilder::~PathsBuilder()
 }
 
 
+/**
+ * calculate the obstacle regions in the angular configuration space
+ */
 void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 {
 	if(!m_instrspace)
 		return;
+
+	std::string message{"Calculating configuration space..."};
+	(*m_sigProgress)(true, false, 0, message);
 
 	// angles and ranges
 	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
@@ -114,12 +120,10 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 		asio::post(pool, [taskptr]() { (*taskptr)(); });
 	}
 
-	(*m_sigProgress)(true, false, 0);
-
 	// get results
 	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 	{
-		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size())))
+		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size()), message))
 		{
 			pool.stop();
 			break;
@@ -129,23 +133,26 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	}
 
 	pool.join();
-	(*m_sigProgress)(false, true, 1);
+	(*m_sigProgress)(false, true, 1, message);
 }
 
 
 /**
- * calculate contour lines
+ * calculate the contour lines of the obstacle regions
  */
 void PathsBuilder::CalculateWallContours()
 {
+	std::string message{"Calculating obstacle contours..."};
+	(*m_sigProgress)(true, false, 0, message);
+
 	m_wallcontours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
-}
+
+	(*m_sigProgress)(false, true, 1, message);
 
 
-void PathsBuilder::SimplifyWallContours()
-{
-	for(auto& contour : m_wallcontours)
-		geo::simplify_contour<t_contourvec, t_real>(contour, 1./180.*tl2::pi<t_real>);
+	// simplify wall contours
+	//for(auto& contour : m_wallcontours)
+	//	geo::simplify_contour<t_contourvec, t_real>(contour, 1./180.*tl2::pi<t_real>);
 }
 
 
@@ -154,6 +161,9 @@ void PathsBuilder::SimplifyWallContours()
  */
 void PathsBuilder::CalculateLineSegments()
 {
+	std::string message{"Calculating obstacle line segments..."};
+	(*m_sigProgress)(true, false, 0, message);
+
 	m_lines.clear();
 	m_linegroups.clear();
 
@@ -161,7 +171,7 @@ void PathsBuilder::CalculateLineSegments()
 	for(const auto& contour : m_wallcontours)
 		totalverts += contour.size();
 
-	m_lines.reserve(totalverts);
+	m_lines.reserve(totalverts/2 + 1);
 	m_linegroups.reserve(m_wallcontours.size());
 
 	// contour vertices
@@ -189,32 +199,30 @@ void PathsBuilder::CalculateLineSegments()
 		std::size_t groupend = linectr;
 		m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 	}
-}
 
-
-void PathsBuilder::CalculateVoronoi()
-{
-	std::vector<t_vec> vertices;
-	std::vector<std::tuple<
-		std::pair<t_vec, t_vec>,
-		std::optional<std::size_t>,
-		std::optional<std::size_t>>> linear_edges;
-	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> parabolic_edges;
-	t_graph m_vorograph{};
-
-	std::tie(vertices, linear_edges, parabolic_edges, m_vorograph)
-		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups);
-}
-
-
-void PathsBuilder::SimplifyVoronoi()
-{
-
+	(*m_sigProgress)(false, true, 1, message);
 }
 
 
 /**
- * save the contour data to the lines tool
+ * calculate the voronoi diagram
+ */
+void PathsBuilder::CalculateVoronoi()
+{
+	std::string message{"Calculating voronoi diagram..."};
+	(*m_sigProgress)(true, false, 0, message);
+
+	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
+		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, m_voroedge_eps);
+
+	// TODO: remove voronoi edge paths inside obstacle regions
+
+	(*m_sigProgress)(false, true, 1, message);
+}
+
+
+/**
+ * save the contour line segments to the lines tool
  */
 bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 {
