@@ -30,6 +30,10 @@ using t_vec_gl = tl2::t_vec_gl;
 using t_mat_gl = tl2::t_mat_gl;
 
 
+
+/**
+ * rendering object structure
+ */
 struct PathsObj : public tl2::GlRenderObj
 {
 	t_mat_gl m_mat = tl2::unit<t_mat_gl>();
@@ -44,12 +48,6 @@ struct PathsObj : public tl2::GlRenderObj
 
 
 
-// forward declarations
-class PathsRenderer;
-
-
-
-// ----------------------------------------------------------------------------
 /**
  * rendering widget
  */
@@ -232,7 +230,6 @@ public:
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 	void CentreCam(const std::string& obj);
 };
-// ----------------------------------------------------------------------------
 
 
 #endif
