@@ -312,20 +312,36 @@ void ConfigSpaceDlg::Calculate()
 	if(!m_pathsbuilder)
 		return;
 
-	t_real da2 = m_spinDelta2ThM->value();
-	t_real da4 = m_spinDelta2ThS->value();
+	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
+	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
 
 	m_status->setText("Calculating configuration space.");
-	m_pathsbuilder->CalculateConfigSpace(da2, da4);
+	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4))
+	{
+		m_status->setText("Error: Configuration space calculation failed.");
+		return;
+	}
 
 	m_status->setText("Calculating obstacle contour lines.");
-	m_pathsbuilder->CalculateWallContours(m_simplifycontour);
+	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour))
+	{
+		m_status->setText("Error: Obstacle contour lines calculation failed.");
+		return;
+	}
 
 	m_status->setText("Calculating line segments.");
-	m_pathsbuilder->CalculateLineSegments();
+	if(!m_pathsbuilder->CalculateLineSegments())
+	{
+		m_status->setText("Error: Line segment calculation failed.");
+		return;
+	}
 
 	m_status->setText("Calculating Voronoi regions.");
-	m_pathsbuilder->CalculateVoronoi();
+	if(!m_pathsbuilder->CalculateVoronoi())
+	{
+		m_status->setText("Error: Voronoi regions calculation failed.");
+		return;
+	}
 
 	m_status->setText("Calculation finished.");
 	RedrawPlot();

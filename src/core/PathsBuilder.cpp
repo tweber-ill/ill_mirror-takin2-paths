@@ -53,22 +53,21 @@ PathsBuilder::GetWallContours(bool full) const
 /**
  * calculate the obstacle regions in the angular configuration space
  */
-void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
+bool PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 {
 	if(!m_instrspace)
-		return;
+		return false;
 
-	std::string message{"Calculating configuration space..."};
-	(*m_sigProgress)(true, false, 0, message);
+	std::ostringstream ostrmsg;
+	ostrmsg << "Calculating configuration space in " << m_maxnum_threads << " threads...";
+	(*m_sigProgress)(true, false, 0, ostrmsg.str());
 
 	// angles and ranges
 	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
 
-	da4 = da4 / 180. * tl2::pi<t_real>;
 	t_real starta4 = 0.;
 	t_real enda4 = tl2::pi<t_real>;
 
-	da2 = da2 / 180. * tl2::pi<t_real>;
 	t_real starta2 = 0.;
 	t_real enda2 = tl2::pi<t_real>;
 
@@ -91,19 +90,18 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	m_img.Init(img_w, img_h);
 
 	// create thread pool
-	unsigned int num_threads = std::max<unsigned int>(
-		1, std::thread::hardware_concurrency()/2);
-	asio::thread_pool pool(num_threads);
+	asio::thread_pool pool(m_maxnum_threads);
 
 	std::vector<t_taskptr> tasks;
 	tasks.reserve(img_h);
 
 	// set image pixels
+	std::atomic<std::size_t> num_pixels;
 	for(std::size_t img_row=0; img_row<img_h; ++img_row)
 	{
 		t_real a2 = std::lerp(starta2, enda2, t_real(img_row)/t_real(img_h));
 
-		auto task = [this, img_w, img_row, starta4, enda4, a2, a6]()
+		auto task = [this, img_w, img_row, starta4, enda4, a2, a6, &num_pixels]()
 		{
 			InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
@@ -125,6 +123,8 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 				// set image value
 				bool colliding = instrspace_cpy.CheckCollision2D();
 				m_img.SetPixel(img_col, img_row, colliding ? 255 : 0);
+
+				++num_pixels;
 			}
 		};
 
@@ -136,7 +136,7 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	// get results
 	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
 	{
-		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size()), message))
+		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size()), ostrmsg.str()))
 		{
 			pool.stop();
 			break;
@@ -146,14 +146,16 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 	}
 
 	pool.join();
-	(*m_sigProgress)(false, true, 1, message);
+	(*m_sigProgress)(false, true, 1, ostrmsg.str());
+
+	return num_pixels == img_h*img_w;
 }
 
 
 /**
  * calculate the contour lines of the obstacle regions
  */
-void PathsBuilder::CalculateWallContours(bool simplify)
+bool PathsBuilder::CalculateWallContours(bool simplify)
 {
 	std::string message{"Calculating obstacle contours..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -175,18 +177,19 @@ void PathsBuilder::CalculateWallContours(bool simplify)
 			//contour = tl2::convert<t_contourvec, t_vec, std::vector>(hull_verts);
 
 			// simplify hull contour
-			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps);
+			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps_angular);
 		}
 	}
 
 	(*m_sigProgress)(false, true, 1, message);
+	return true;
 }
 
 
 /**
  * calculate lines segments and groups
  */
-void PathsBuilder::CalculateLineSegments()
+bool PathsBuilder::CalculateLineSegments()
 {
 	std::string message{"Calculating obstacle line segments..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -228,13 +231,14 @@ void PathsBuilder::CalculateLineSegments()
 	}
 
 	(*m_sigProgress)(false, true, 1, message);
+	return true;
 }
 
 
 /**
  * calculate the voronoi diagram
  */
-void PathsBuilder::CalculateVoronoi()
+bool PathsBuilder::CalculateVoronoi()
 {
 	std::string message{"Calculating voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -243,6 +247,7 @@ void PathsBuilder::CalculateVoronoi()
 		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, true, m_voroedge_eps);
 
 	(*m_sigProgress)(false, true, 1, message);
+	return true;
 }
 
 

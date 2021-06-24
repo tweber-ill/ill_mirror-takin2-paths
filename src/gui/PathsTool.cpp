@@ -1019,6 +1019,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// initialisations
 	// --------------------------------------------------------------------
+	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
+	m_pathsbuilder.SetEpsilon(g_eps);
+	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
 	m_pathsbuilder.SetScatteringSenses(this->m_sensesCCW);
 	m_pathsbuilder.AddProgressSlot([](bool start, bool end, t_real progress, const std::string& message)
@@ -1079,6 +1082,9 @@ int main(int argc, char** argv)
 		// default gl surface format
 		tl2::set_gl_format(true, _GL_MAJ_VER, _GL_MIN_VER, 8);
 		tl2::set_locales();
+
+		// set maximum number of threads
+		g_maxnum_threads = std::max<unsigned int>(1, std::thread::hardware_concurrency()/2);
 
 		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
 		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);

@@ -46,10 +46,10 @@ public:
 	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
 
 	// calculation workflow
-	void CalculateConfigSpace(t_real da2, t_real da4);
-	void CalculateWallContours(bool simplify = true);
-	void CalculateLineSegments();
-	void CalculateVoronoi();
+	bool CalculateConfigSpace(t_real da2, t_real da4);
+	bool CalculateWallContours(bool simplify = true);
+	bool CalculateLineSegments();
+	bool CalculateVoronoi();
 
 	// get contour image and wall contour points
 	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
@@ -74,8 +74,14 @@ public:
 	t_real GetEpsilon() const { return m_eps; }
 	void SetEpsilon(t_real eps) { m_eps = eps; }
 
+	t_real GetAngularEpsilon() const { return m_eps_angular; }
+	void SetAngularEpsilon(t_real eps) { m_eps_angular = eps; }
+
 	t_real GetVoronoiEdgeEpsilon() const { return m_voroedge_eps; }
 	void SetVoronoiEdgeEpsilon(t_real eps) { m_voroedge_eps = eps; }
+
+	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
+	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
 
 private:
@@ -120,9 +126,12 @@ private:
 	std::vector<t_voronoiedge_parabolic> m_parabolic_edges{};
 	t_graph m_vorograph{};
 
-	// general and voronoi edge calculation epsilon
+	// general, angular and voronoi edge calculation epsilon
 	t_real m_eps = 1e-3;
+	t_real m_eps_angular = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
+
+	unsigned int m_maxnum_threads = 4;
 };
 
 #endif

@@ -6,7 +6,9 @@
  */
 
 #include "Settings.h"
+
 #include "tlibs2/libs/file.h"
+#include "tlibs2/libs/maths.h"
 
 
 std::string g_apppath = ".";
@@ -20,9 +22,13 @@ int g_prec = 6;
 int g_prec_gui = 4;
 
 t_real g_eps = 1e-6;
+t_real g_eps_angular = 0.01/180.*tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;
 
 t_real g_a3_offs = tl2::pi<t_real>*0.5;
+
+unsigned int g_maxnum_threads = 4;
+
 
 /**
  * get the path to a resource file

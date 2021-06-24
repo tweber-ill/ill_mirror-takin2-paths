@@ -29,10 +29,13 @@ extern tl2::t_real_gl g_rotation_scale;
 extern int g_prec, g_prec_gui;
 
 // epsilons
-extern t_real g_eps, g_eps_gui;
+extern t_real g_eps, g_eps_angular, g_eps_gui;
 
 // crystal angle offset
 extern t_real g_a3_offs;
+
+// maximum number of threads for calculations
+extern unsigned int g_maxnum_threads;
 
 
 /**
