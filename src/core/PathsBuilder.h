@@ -53,7 +53,7 @@ public:
 
 	// get contour image and wall contour points
 	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
-	const std::vector<std::vector<t_contourvec>>& GetWallContours() const { return m_wallcontours; }
+	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
 	// get voronoi vertices and edges
 	const std::vector<t_vec>& GetVoronoiVertices() const { return m_vertices; }
@@ -105,7 +105,7 @@ private:
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
-	std::vector<std::vector<t_contourvec>> m_wallcontours{};
+	std::vector<std::vector<t_contourvec>> m_wallcontours{}, m_fullwallcontours{};
 
 	// line segments and groups from the wall contours
 	std::vector<t_line> m_lines{};

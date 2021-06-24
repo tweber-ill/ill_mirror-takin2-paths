@@ -233,7 +233,6 @@ std::vector<std::vector<t_vec>> trace_boundary(
 {
 	// contour polygons
 	std::vector<std::vector<t_vec>> contours;
-	std::vector<t_vec> contour;
 
 
 	// contour already seen?
@@ -291,6 +290,8 @@ std::vector<std::vector<t_vec>> trace_boundary(
 
 	while(true)
 	{
+		std::vector<t_vec> contour;
+
 		// find start pixel
 		bool start_found = 0;
 		auto [width, height] = get_image_dims(img);
@@ -323,7 +324,7 @@ std::vector<std::vector<t_vec>> trace_boundary(
 		if(!start_found)
 			return contours;
 
-		contour.push_back(start);
+		//contour.push_back(start);
 		if(boundary)
 			set_pixel<t_boundaryview>(*boundary, start[0], start[1], 0xff);
 
@@ -352,12 +353,16 @@ std::vector<std::vector<t_vec>> trace_boundary(
 				dir[0] = next_dir[0];
 				dir[1] = next_dir[1];
 
-				pos[0] += dir[0];
-				pos[1] += dir[1];
+				// don't insert the same point multiple times
+				if(!tl2::equals_0<t_vec>(dir))
+				{
+					pos[0] += dir[0];
+					pos[1] += dir[1];
 
-				contour.push_back(pos);
-				if(boundary)
-					set_pixel<t_boundaryview>(*boundary, pos[0], pos[1], 0xff);
+					contour.push_back(pos);
+					if(boundary)
+						set_pixel<t_boundaryview>(*boundary, pos[0], pos[1], 0xff);
+				}
 			}
 			else
 			{

@@ -363,7 +363,7 @@ void ConfigSpaceDlg::RedrawPlot()
 
 
 	// draw wall contours
-	const auto& contours = m_pathsbuilder->GetWallContours();
+	const auto& contours = m_pathsbuilder->GetWallContours(true);
 
 	for(const auto& contour : contours)
 		for(const auto& vec : contour)
@@ -420,6 +420,7 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 		m_progress->setLabelText(message.c_str());
 		m_progress->setMinimum(0);
 		m_progress->setMaximum(max_progress);
+		m_progress->setAutoReset(false);
 	}
 
 	m_progress->setValue(int(progress*max_progress));

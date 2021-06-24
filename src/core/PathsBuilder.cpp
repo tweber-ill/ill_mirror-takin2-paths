@@ -38,6 +38,19 @@ PathsBuilder::~PathsBuilder()
 
 
 /**
+ * returns the full or the simplified wall contours
+ */
+const std::vector<std::vector<PathsBuilder::t_contourvec>>& 
+PathsBuilder::GetWallContours(bool full) const
+{
+	if(full)
+		return m_fullwallcontours;
+
+	return m_wallcontours;
+}
+
+
+/**
  * calculate the obstacle regions in the angular configuration space
  */
 void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
@@ -146,13 +159,16 @@ void PathsBuilder::CalculateWallContours()
 	(*m_sigProgress)(true, false, 0, message);
 
 	m_wallcontours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
+	m_fullwallcontours = m_wallcontours;
 
-	(*m_sigProgress)(false, true, 1, message);
+	(*m_sigProgress)(false, false, 0.5, message);
 
 
 	// simplify wall contours
-	//for(auto& contour : m_wallcontours)
-	//	geo::simplify_contour<t_contourvec, t_real>(contour, 1./180.*tl2::pi<t_real>);
+	for(auto& contour : m_wallcontours)
+		geo::simplify_contour<t_contourvec, t_real>(contour, 1./180.*tl2::pi<t_real>);
+
+	(*m_sigProgress)(false, true, 1, message);
 }
 
 
@@ -215,8 +231,6 @@ void PathsBuilder::CalculateVoronoi()
 	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
 		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, true, m_voroedge_eps);
 
-	// TODO: remove voronoi edge paths inside obstacle regions
-
 	(*m_sigProgress)(false, true, 1, message);
 }
 
@@ -249,7 +263,7 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 
 			ostr << "\t<" << vertctr;
 			ostr << " x=\"" << std::get<1>(line)[0] << "\"";
-			ostr << " y=\"" << std::get<0>(line)[1] << "\"";
+			ostr << " y=\"" << std::get<1>(line)[1] << "\"";
 			ostr << "/>\n\n";
 			++vertctr;
 		}

@@ -235,6 +235,11 @@ void LinesScene::UpdateIntersections()
 	m_elems_inters.clear();
 
 
+	// don't calculate if disabled
+	if(!m_calcinters)
+		return;
+
+
 	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
 
 	switch(m_intersectioncalculationmethod)
@@ -271,6 +276,13 @@ void LinesScene::UpdateIntersections()
 		QGraphicsItem *item = addEllipse(rect, pen, brush);
 		m_elems_inters.push_back(item);
 	}
+}
+
+
+void LinesScene::SetCalculateIntersections(bool b)
+{
+	m_calcinters = b;
+	UpdateIntersections();
 }
 
 
@@ -1054,6 +1066,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	});
 
 
+	QAction *actionIntersections = new QAction{"Intersections", this};
+	actionIntersections->setCheckable(true);
+	actionIntersections->setChecked(m_scene->GetCalculateIntersections());
+	connect(actionIntersections, &QAction::toggled, [this](bool b)
+	{ m_scene->SetCalculateIntersections(b); });
+
 	QAction *actionVoronoiRegions = new QAction{"Voronoi Bisectors", this};
 	actionVoronoiRegions->setCheckable(true);
 	actionVoronoiRegions->setChecked(m_scene->GetCalculateVoro());
@@ -1180,6 +1198,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuView->addAction(actionIncreaseVertexSize);
 	menuView->addAction(actionDecreaseVertexSize);
 
+	menuCalc->addAction(actionIntersections);
+	menuCalc->addSeparator();
 	menuCalc->addAction(actionVoronoiRegions);
 	menuCalc->addAction(actionVoronoiVertices);
 	menuCalc->addSeparator();

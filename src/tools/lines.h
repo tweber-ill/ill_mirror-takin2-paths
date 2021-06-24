@@ -61,6 +61,9 @@ public:
 	const LinesScene& operator=(const LinesScene&) const = delete;
 
 public:
+	bool GetCalculateIntersections() const { return m_calcinters; }
+	void SetCalculateIntersections(bool);
+
 	bool GetCalculateTrapezoids() const { return m_calctrapezoids; }
 	void SetCalculateTrapezoids(bool);
 
@@ -121,6 +124,7 @@ private:
 	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
 	t_graph m_vorograph{};
+	bool m_calcinters = true;
 	bool m_calcvoro = true;
 	bool m_calcvorovertex = false;
 	bool m_stoponinters = true;
