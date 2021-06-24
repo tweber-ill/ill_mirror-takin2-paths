@@ -604,14 +604,102 @@ requires tl2::is_vec<t_vec>
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
 void simplify_contour(
-	std::vector<t_vec>& contour, t_real min_angle = 1./180.*tl2::pi<t_real>)
+	std::vector<t_vec>& contour, 
+	t_real min_angle = 1./180.*tl2::pi<t_real>,
+	t_real min_dist = 1e-3,
+	t_real eps = 1e-4)
 requires tl2::is_vec<t_vec>
 {
+	// circular iteration of the contour line
 	circular_wrapper circularverts(contour);
+	std::size_t removed_staircases = 0;
+	std::size_t removed_lines = 0;
 
+
+	// remove "staircase" artefacts from the contour line
+	for(std::size_t curidx = 0; curidx < contour.size()+1; ++curidx)
+	{
+		const t_vec& vert1 = circularverts[curidx];
+		const t_vec& vert2 = circularverts[curidx+1];
+		const t_vec& vert3 = circularverts[curidx+2];
+		const t_vec& vert4 = circularverts[curidx+3];
+
+		if(tl2::norm<t_vec, t_real>(vert3 - vert2) > min_dist)
+			continue;
+
+		// check for horizontal or vertical line between vert2 and vert3
+		t_real angle = line_angle<t_vec, t_real>(vert2, vert3);
+		angle = tl2::mod_pos(angle, t_real{2}*tl2::pi<t_real>);
+		//std::cout << angle/tl2::pi<t_real>*180. << std::endl;
+
+		// line horizontal or vertical?
+		if(tl2::equals_0<t_real>(angle, eps) 
+			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(2), eps)
+			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(3./2.), eps))
+		{
+			t_real angle1 = line_angle<t_vec, t_real>(vert1, vert2);			
+			t_real angle2 = line_angle<t_vec, t_real>(vert3, vert4);
+
+			angle1 = tl2::mod_pos(angle1, t_real{2}*tl2::pi<t_real>);
+			angle2 = tl2::mod_pos(angle2, t_real{2}*tl2::pi<t_real>);
+
+			// line angles before and after horizontal or vertical line equal?
+			if(tl2::equals<t_real>(angle1, angle2, eps))
+			{
+				circularverts.erase(circularverts.begin() + curidx+3);
+				circularverts.erase(circularverts.begin() + curidx+2);
+
+				++removed_staircases;
+			}
+		}
+	}
+
+
+	/*// remove "staircase" artefacts from the contour line
+	for(std::size_t curidx = 0; curidx < contour.size()*2-1; ++curidx)
+	{
+		const t_vec& vert1 = circularverts[curidx];
+		const t_vec& vert2 = circularverts[curidx+1];
+		const t_vec& vert3 = circularverts[curidx+2];
+		const t_vec& vert4 = circularverts[curidx+3];
+
+		if(tl2::norm<t_vec, t_real>(vert2 - vert1) > max_dist)
+			continue;
+		if(tl2::norm<t_vec, t_real>(vert3 - vert2) > max_dist)
+			continue;
+		if(tl2::norm<t_vec, t_real>(vert4 - vert3) > max_dist)
+			continue;
+
+		// check for horizontal or vertical line between vert2 and vert3
+		t_real angle1 = line_angle<t_vec, t_real>(vert1, vert2);			
+		t_real angle2 = line_angle<t_vec, t_real>(vert2, vert3);
+		t_real angle3 = line_angle<t_vec, t_real>(vert3, vert4);
+		angle1 = tl2::mod_pos(angle1, t_real{2}*tl2::pi<t_real>);
+		angle2 = tl2::mod_pos(angle2, t_real{2}*tl2::pi<t_real>);
+		angle3 = tl2::mod_pos(angle3, t_real{2}*tl2::pi<t_real>);
+
+		bool straight = tl2::equals_0<t_real>(angle2, eps) 
+			|| tl2::equals<t_real>(angle2, t_real(2)*tl2::pi<t_real>, eps);
+		bool up_straight_up = straight
+			&& tl2::equals<t_real>(angle1, tl2::pi<t_real>/t_real(2), eps)
+			&& tl2::equals<t_real>(angle3, tl2::pi<t_real>/t_real(2), eps);
+		bool down_straight_down = straight
+			&& tl2::equals<t_real>(angle1, tl2::pi<t_real>/t_real(3./2.), eps)
+			&& tl2::equals<t_real>(angle3, tl2::pi<t_real>/t_real(3./2.), eps);
+
+		if(up_straight_up || down_straight_down)			
+		{
+			circularverts.erase(circularverts.begin() + curidx+3);
+			circularverts.erase(circularverts.begin() + curidx+2);
+
+			++removed_staircases;
+		}
+	}*/
+
+
+	// remove vertices along almost straight lines
 	for(std::size_t curidx = 1; curidx < contour.size()*2-1; ++curidx)
 	{
-		// remove vertices inside almost straight lines
 		const t_vec& vert1 = circularverts[curidx-1];
 		const t_vec& vert2 = circularverts[curidx];
 		const t_vec& vert3 = circularverts[curidx+1];
@@ -629,8 +717,15 @@ requires tl2::is_vec<t_vec>
 		{
 			circularverts.erase(circularverts.begin() + curidx);
 			--curidx;
+
+			++removed_lines;
 		}
 	}
+
+
+	std::cout << "removed staircase vertices: " << removed_staircases;
+	std::cout << ", removed straight line vertices: " << removed_lines;
+	std::cout << std::endl;
 }
 // ----------------------------------------------------------------------------
 
