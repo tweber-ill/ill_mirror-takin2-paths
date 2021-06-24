@@ -166,13 +166,13 @@ void PathsBuilder::CalculateWallContours()
 
 	// simplify wall contours
 	t_real min_simplify_angle = 0.5/180.*tl2::pi<t_real>;
-	t_real max_simplify_dist = 1.;
+	//t_real max_simplify_dist = 5.;
 
 	// iterate and simplify contour groups
 	for(auto& contour : m_wallcontours)
 	{
 		geo::simplify_contour<t_contourvec, t_real>(
-			contour, min_simplify_angle, max_simplify_dist, m_voroedge_eps);
+			contour, min_simplify_angle/*, max_simplify_dist, m_voroedge_eps*/);
 	}
 
 	(*m_sigProgress)(false, true, 1, message);
