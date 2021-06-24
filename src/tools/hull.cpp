@@ -160,6 +160,7 @@ void HullScene::UpdateHull()
 
 
 	std::vector<std::vector<t_vec>> hull;
+	hull.reserve(1);
 
 	switch(m_hullcalculationmethod)
 	{

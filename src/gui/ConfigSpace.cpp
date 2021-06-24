@@ -92,6 +92,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// menu
 	QMenu *menuFile = new QMenu("File", this);
+	QMenu *menuOptions = new QMenu("Options", this);
 	QMenu *menuView = new QMenu("View", this);
 
 	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
@@ -110,6 +111,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
 
+	QAction *acSimplifyContour = new QAction("Simplify Contour", menuView);
+	acSimplifyContour->setCheckable(true);
+	acSimplifyContour->setChecked(m_simplifycontour);
+	menuOptions->addAction(acSimplifyContour);
+
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);
@@ -120,6 +126,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuOptions);
 	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
 
@@ -222,6 +229,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		m_status->setText(ostr.str().c_str());
 	});
 
+	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
+	{
+		m_simplifycontour = simplify;
+	});
+
 	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
 	{
 		this->SetInstrumentMovable(!enableZoom);
@@ -307,7 +319,7 @@ void ConfigSpaceDlg::Calculate()
 	m_pathsbuilder->CalculateConfigSpace(da2, da4);
 
 	m_status->setText("Calculating obstacle contour lines.");
-	m_pathsbuilder->CalculateWallContours();
+	m_pathsbuilder->CalculateWallContours(m_simplifycontour);
 
 	m_status->setText("Calculating line segments.");
 	m_pathsbuilder->CalculateLineSegments();

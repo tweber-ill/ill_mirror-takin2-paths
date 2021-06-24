@@ -63,6 +63,7 @@ private:
 	PathsBuilder *m_pathsbuilder{};
 	boost::signals2::connection m_pathsbuilderslot{};
 
+	bool m_simplifycontour = true;
 	bool m_moveInstr = true;
 };
 

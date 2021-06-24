@@ -153,7 +153,7 @@ void PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 /**
  * calculate the contour lines of the obstacle regions
  */
-void PathsBuilder::CalculateWallContours()
+void PathsBuilder::CalculateWallContours(bool simplify)
 {
 	std::string message{"Calculating obstacle contours..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -163,16 +163,20 @@ void PathsBuilder::CalculateWallContours()
 
 	(*m_sigProgress)(false, false, 0.5, message);
 
-
-	// simplify wall contours
-	t_real min_simplify_angle = 0.5/180.*tl2::pi<t_real>;
-	//t_real max_simplify_dist = 5.;
-
 	// iterate and simplify contour groups
-	for(auto& contour : m_wallcontours)
+	if(simplify)
 	{
-		geo::simplify_contour<t_contourvec, t_real>(
-			contour, min_simplify_angle/*, max_simplify_dist, m_voroedge_eps*/);
+		for(auto& contour : m_wallcontours)
+		{
+			// replace contour with its convex hull
+			//std::vector<t_vec> contour_real = tl2::convert<t_vec, t_contourvec, std::vector>(contour);
+			//auto [hull_verts, hull_lines, hull_indices]
+			//	= geo::calc_delaunay<t_vec>(2, contour_real, true);
+			//contour = tl2::convert<t_contourvec, t_vec, std::vector>(hull_verts);
+
+			// simplify hull contour
+			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps);
+		}
 	}
 
 	(*m_sigProgress)(false, true, 1, message);

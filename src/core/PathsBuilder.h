@@ -47,7 +47,7 @@ public:
 
 	// calculation workflow
 	void CalculateConfigSpace(t_real da2, t_real da4);
-	void CalculateWallContours();
+	void CalculateWallContours(bool simplify = true);
 	void CalculateLineSegments();
 	void CalculateVoronoi();
 
@@ -70,6 +70,9 @@ public:
 	template<class t_slot>
 	boost::signals2::connection AddProgressSlot(const t_slot& slot)
 		{ return m_sigProgress->connect(slot); }
+
+	t_real GetEpsilon() const { return m_eps; }
+	void SetEpsilon(t_real eps) { m_eps = eps; }
 
 	t_real GetVoronoiEdgeEpsilon() const { return m_voroedge_eps; }
 	void SetVoronoiEdgeEpsilon(t_real eps) { m_voroedge_eps = eps; }
@@ -117,7 +120,8 @@ private:
 	std::vector<t_voronoiedge_parabolic> m_parabolic_edges{};
 	t_graph m_vorograph{};
 
-	// voronoi edge calculation epsilon
+	// general and voronoi edge calculation epsilon
+	t_real m_eps = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
 };
 

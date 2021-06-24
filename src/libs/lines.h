@@ -603,6 +603,7 @@ requires tl2::is_vec<t_vec>
 	// sort by angle
 	t_vec mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
 	mean /= t_real(verts.size());
+
 	std::stable_sort(verts.begin(), verts.end(), 
 		[&mean](const t_vec& vec1, const t_vec& vec2)->bool
 		{

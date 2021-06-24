@@ -605,18 +605,16 @@ requires tl2::is_vec<t_vec>
 template<class t_vec, class t_real = typename t_vec::value_type>
 void simplify_contour(
 	std::vector<t_vec>& contour, 
-	t_real min_angle = 1./180.*tl2::pi<t_real>/*,
-	t_real min_dist = 1e-3, t_real eps = 1e-4*/)
+	t_real min_dist = 0.01,
+	t_real eps = 0.01/180.*tl2::pi<t_real>)
 requires tl2::is_vec<t_vec>
 {
 	// circular iteration of the contour line
 	circular_wrapper circularverts(contour);
-	//std::size_t removed_staircases = 0;
-	//std::size_t removed_lines = 0;
 
 
 	// remove "staircase" artefacts from the contour line
-	/*for(std::size_t curidx = 0; curidx < contour.size()+1; ++curidx)
+	for(std::size_t curidx = 0; curidx < contour.size()+1; ++curidx)
 	{
 		const t_vec& vert1 = circularverts[curidx];
 		const t_vec& vert2 = circularverts[curidx+1];
@@ -646,14 +644,14 @@ requires tl2::is_vec<t_vec>
 			// line angles before and after horizontal or vertical line equal?
 			//std::cout << angle1/tl2::pi<t_real>*180. << ", ";
 			//std::cout << angle2/tl2::pi<t_real>*180. << std::endl;
-			if(tl2::equals<t_real>(angle1, angle2, min_angle))
+			if(tl2::equals<t_real>(angle1, angle2, eps))
 			{
 				circularverts.erase(circularverts.begin() + curidx+3);
 				circularverts.erase(circularverts.begin() + curidx+2);
 				//++removed_staircases;
 			}
 		}
-	}*/
+	}
 
 
 	// remove vertices along almost straight lines
@@ -674,18 +672,12 @@ requires tl2::is_vec<t_vec>
 		//std::cout << "angle between " << vert1 << " ... " << vert2 << " ... " << vert3 << ": "
 		//	<< angle/tl2::pi<t_real> * 180. << std::endl;
 
-		if(std::abs(angle) < min_angle)
+		if(std::abs(angle) < eps)
 		{
 			circularverts.erase(circularverts.begin() + curidx);
 			--curidx;
-			//++removed_lines;
 		}
 	}
-
-
-	//std::cout << "removed staircase vertices: " << removed_staircases;
-	//std::cout << ", removed straight line vertices: " << removed_lines;
-	//std::cout << std::endl;
 }
 // ----------------------------------------------------------------------------
 
@@ -730,12 +722,36 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 
 
 		qh::QhullFacetList facets{qh.facetList()};
+		qh::QhullVertexList hull_vertices{qh.vertexList()};
+
 		std::vector<void*> facetHandles{};
 
 		facetHandles.reserve(facets.size());
 		voronoi.reserve(facets.size());
 		triags.reserve(facets.size());
 		neighbours.reserve(facets.size());
+
+
+		// use "voronoi" array for hull vertices, if not needed otherwise
+		if(only_hull)
+		{
+			for(auto iterVert=hull_vertices.begin(); iterVert!=hull_vertices.end(); ++iterVert)
+			{
+				qh::QhullPoint pt = iterVert->point();
+
+				t_vec vec = tl2::create<t_vec>(dim);
+				for(int i=0; i<dim; ++i)
+					vec[i] = t_real{pt[i]};
+
+				voronoi.emplace_back(std::move(vec));
+			}
+
+			if(dim == 2)
+			{
+				std::tie(voronoi, std::ignore)
+					= sort_vertices_by_angle<t_vec>(voronoi);
+			}
+		}
 
 
 		// get all triangles
@@ -755,7 +771,6 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 
 				voronoi.emplace_back(std::move(vec));
 			}
-
 
 			std::vector<t_vec> thetriag;
 			qh::QhullVertexSet vertices = iterFacet->vertices();
