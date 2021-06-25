@@ -1663,12 +1663,24 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 
 		// remove the vertex coordinates
-		std::sort(removed_indices.begin(), removed_indices.end(),
-			[](std::size_t idx1, std::size_t idx2) -> bool { return idx1 >= idx2; });
+		//std::sort(removed_indices.begin(), removed_indices.end(),
+		//	[](std::size_t idx1, std::size_t idx2) -> bool { return idx1 > idx2; });
+		std::reverse(removed_indices.begin(), removed_indices.end());
 
 		for(std::size_t idx : removed_indices)
 		{
-			vertices.erase(vertices.begin() + idx);
+			if(idx < vertices.size())
+			{
+				vertices.erase(vertices.begin() + idx);
+			}
+			else
+			{
+				std::ostringstream ostrErr;
+				ostrErr << "Vertex index out of range: " << idx << ". ";
+				ostrErr << "Vector size: " << vertices.size() << ".";
+				throw std::out_of_range(ostrErr.str());
+				break;
+			}
 
 			// remove linear bisectors containing the removed vertex (and correct other indices)
 			for(auto iter = linear_edges.begin(); iter != linear_edges.end();)
