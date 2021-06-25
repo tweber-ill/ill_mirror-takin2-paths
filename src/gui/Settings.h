@@ -8,8 +8,9 @@
 #ifndef __TASPATHS_SETTINGS__
 #define __TASPATHS_SETTINGS__
 
-#include <QtWidgets/QDialog>
 #include <QtCore/QSettings>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QTableWidget>
 
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
@@ -69,9 +70,11 @@ public:
 
 protected:
 	virtual void accept() override;
+	void ApplySettings();
 
 private:
 	QSettings *m_sett{nullptr};
+	QTableWidget *m_tab{nullptr};
 };
 
 #endif
