@@ -107,7 +107,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	tasks.reserve(img_h);
 
 	// set image pixels
-	std::atomic<std::size_t> num_pixels;
+	std::atomic<std::size_t> num_pixels = 0;
 	for(std::size_t img_row=0; img_row<img_h; ++img_row)
 	{
 		t_real a2 = std::lerp(starta2, enda2, t_real(img_row)/t_real(img_h));
