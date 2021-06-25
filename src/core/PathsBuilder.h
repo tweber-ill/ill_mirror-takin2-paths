@@ -51,6 +51,9 @@ public:
 	bool CalculateLineSegments();
 	bool CalculateVoronoi();
 
+	// clear all data
+	void Clear();
+
 	// get contour image and wall contour points
 	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;

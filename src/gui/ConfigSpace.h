@@ -31,23 +31,31 @@ public:
 
 	void Calculate();
 
+	// receivers for instrument (space) update signals
+	void UpdateInstrument(const Instrument& instr, const t_real* sensesCCW = nullptr);
+
 	void EmitGotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5);
+
 
 signals:
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5);
 
+
 protected:
 	virtual void accept() override;
 
 	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
+	void ClearPlotCurves();
+	void AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y);
 	void RedrawPlot();
 
 	// either move instrument by clicking in the plot or enable plot zoom mode
 	void SetInstrumentMovable(bool moveInstr);
+
 
 private:
 	QSettings *m_sett{nullptr};
@@ -56,6 +64,8 @@ private:
 	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
+	QCPGraph *m_instrposplot{};
+	std::vector<QCPCurve*> m_vorocurves{};
 
 	QLabel *m_status{};
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};

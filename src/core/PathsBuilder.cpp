@@ -27,13 +27,27 @@ using t_taskptr = std::shared_ptr<t_task>;
 PathsBuilder::PathsBuilder()
 	: m_sigProgress{std::make_shared<t_sig_progress>()}
 {
-
 }
 
 
 PathsBuilder::~PathsBuilder()
 {
+}
 
+
+void PathsBuilder::Clear()
+{
+	//m_img.Clear();
+	m_wallcontours.clear();
+	m_fullwallcontours.clear();
+
+	m_lines.clear();
+	m_linegroups.clear();
+
+	m_vertices.clear();
+	m_linear_edges.clear();
+	m_parabolic_edges.clear();
+	m_vorograph.Clear();
 }
 
 

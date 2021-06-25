@@ -1273,8 +1273,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	namespace poly = boost::polygon;
 
 	// internal scale for int-conversion
-	const t_real scale = std::ceil(1./(edge_eps*edge_eps));
 	const t_real eps = edge_eps*edge_eps;
+	const t_real scale = std::ceil(1./eps);
 
 	// length of infinite edges
 	t_real infline_len = 1.;

@@ -126,7 +126,7 @@ protected:
 	// ------------------------------------------------------------------------
 	// shader interface
 	// ------------------------------------------------------------------------
-	std::shared_ptr<QOpenGLShaderProgram> m_pShaders;
+	std::shared_ptr<QOpenGLShaderProgram> m_pShaders{};
 
 	// vertex attributes
 	GLint m_attrVertex = -1;
@@ -188,11 +188,11 @@ protected:
 	std::vector<t_vec3_gl> m_lights;
 	std::unordered_map<std::string, PathsObj> m_objs;
 
-	QPointF m_posMouse;
-	QPointF m_posMouseRotationStart, m_posMouseRotationEnd;
+	QPointF m_posMouse{};
+	QPointF m_posMouseRotationStart{}, m_posMouseRotationEnd{};
 	bool m_inRotation = false;
 
-	QTimer m_timer;
+	QTimer m_timer{};
 
 
 protected:

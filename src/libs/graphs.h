@@ -96,6 +96,13 @@ public:
 	~AdjacencyMatrix() = default;
 
 
+	void Clear()
+	{
+		m_vertexidents.clear();
+		m_mat = t_mat{};
+	}
+
+
 	std::size_t GetNumVertices() const
 	{
 		return m_mat.size1();
@@ -345,6 +352,13 @@ public:
 public:
 	AdjacencyList() = default;
 	~AdjacencyList() = default;
+
+
+	void Clear()
+	{
+		m_vertexidents.clear();
+		m_nodes.clear();
+	}
 
 
 	std::size_t GetNumVertices() const

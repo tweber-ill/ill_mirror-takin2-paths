@@ -5,7 +5,10 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References:
+ *   - https://www.qcustomplot.com/documentation/classQCustomPlot.html
  *   - https://www.qcustomplot.com/documentation/classQCPColorMap.html
+ *   - https://www.qcustomplot.com/documentation/classQCPGraph.html
+ *   - https://www.qcustomplot.com/documentation/classQCPCurve.html
  */
 
 #include "ConfigSpace.h"
@@ -40,12 +43,33 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
 
+	// wall contours
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);
 	m_colourMap->setGradient(QCPColorGradient::gpJet);
 	m_colourMap->setDataRange(QCPRange{0, 1});
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
 	m_colourMap->data()->setRange(QCPRange{0., 180.}, QCPRange{0., 180.});
-	m_colourMap->setInterpolate(false);
+	m_colourMap->setInterpolate(true);
+	m_colourMap->setAntialiased(true);
+
+	// instrument position plot
+	m_instrposplot = m_plot->addGraph();
+	m_instrposplot->setLineStyle(QCPGraph::lsNone);
+	m_instrposplot->setAntialiased(true);
+
+	QPen instrpen = m_instrposplot->pen();
+	instrpen.setColor(QColor::fromRgbF(0., 1., 0.));
+	m_instrposplot->setPen(instrpen);
+
+	QBrush instrbrush = m_instrposplot->brush();
+	instrbrush.setColor(QColor::fromRgbF(0., 1., 0.));
+	instrbrush.setStyle(Qt::SolidPattern);
+	m_instrposplot->setBrush(instrbrush);
+
+	QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
+	scatterstyle.setPen(instrpen);
+	scatterstyle.setBrush(instrbrush);
+	m_instrposplot->setScatterStyle(scatterstyle);
 
 	// status label
 	m_status = new QLabel(this);
@@ -272,6 +296,31 @@ void ConfigSpaceDlg::accept()
 
 
 /**
+ * update the current instrument position indicator if the instrument has moved
+ */
+void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sensesCCW)
+{
+	t_real monoScAngle = instr.GetMonochromator().GetAxisAngleOut();
+	t_real sampleScAngle = instr.GetSample().GetAxisAngleOut();
+	//t_real anaScAngle = instr.GetAnalyser().GetAxisAngleOut();
+
+	if(sensesCCW)
+	{
+		monoScAngle *= sensesCCW[0];
+		sampleScAngle *= sensesCCW[1];
+		//anaScAngle *= sensesCCW[2];
+	}
+
+	QVector<t_real> x, y;
+	x << sampleScAngle / tl2::pi<t_real> * t_real(180);
+	y << monoScAngle / tl2::pi<t_real> * t_real(180);
+
+	m_instrposplot->setData(x, y);
+	m_plot->replot();
+}
+
+
+/**
  * either move instrument by clicking in the plot or enable plot zoom mode
  */
 void ConfigSpaceDlg::SetInstrumentMovable(bool moveInstr)
@@ -311,6 +360,8 @@ void ConfigSpaceDlg::Calculate()
 {
 	if(!m_pathsbuilder)
 		return;
+
+	m_pathsbuilder->Clear();
 
 	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
 	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
@@ -371,8 +422,37 @@ void ConfigSpaceDlg::UnsetPathsBuilder()
 }
 
 
+void ConfigSpaceDlg::ClearPlotCurves()
+{
+	for(auto* plot : m_vorocurves)
+	{
+		m_plot->removePlottable(plot);
+		//delete plot;
+	}
+
+	m_vorocurves.clear();
+}
+
+
+void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y)
+{
+	QCPCurve *voroplot = new QCPCurve(m_plot->xAxis, m_plot->yAxis);
+	voroplot->setLineStyle(QCPCurve::lsLine);
+	voroplot->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone, 1));
+	voroplot->setAntialiased(true);
+	QPen voropen = voroplot->pen();
+	voropen.setColor(QColor::fromRgbF(1., 1., 1.));
+	voroplot->setPen(voropen);
+
+	voroplot->setData(x, y);
+	m_vorocurves.push_back(voroplot);
+}
+
+
 void ConfigSpaceDlg::RedrawPlot()
 {
+	ClearPlotCurves();
+
 	// draw wall image
 	const auto& img = m_pathsbuilder->GetImage();
 	const std::size_t width = img.GetWidth();
@@ -405,15 +485,26 @@ void ConfigSpaceDlg::RedrawPlot()
 	{
 		const auto& line = std::get<0>(edge);
 
-		for(t_real param=0.; param<=1.; param += edge_eps)
+		QVector<t_real> vecx, vecy;
+		vecx.reserve((std::size_t)std::ceil(1./edge_eps));
+		vecy.reserve((std::size_t)std::ceil(1./edge_eps));
+
+		for(t_real param = 0.; param <= 1.; param += edge_eps)
 		{
 			t_vec point = std::get<0>(line) + param * (std::get<1>(line) - std::get<0>(line));
 
 			int x = int(point[0]);
 			int y = int(point[1]);
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
-				m_colourMap->data()->setCell(x, y, 0.25);
+			{
+				//m_colourMap->data()->setCell(x, y, 0.25);
+
+				vecx << std::lerp(0., 180., point[0]/t_real(width));
+				vecy << std::lerp(0., 180., point[1]/t_real(height));
+			}
 		}
+
+		AddPlotCurve(vecx, vecy);
 	}
 
 
@@ -421,13 +512,25 @@ void ConfigSpaceDlg::RedrawPlot()
 	for(const auto& edge : m_pathsbuilder->GetVoronoiEdgesParabolic())
 	{
 		const auto& points = std::get<0>(edge);
+
+		QVector<t_real> vecx, vecy;
+		vecx.reserve(points.size());
+		vecy.reserve(points.size());
+
 		for(const auto& point : points)
 		{
 			int x = int(point[0]);
 			int y = int(point[1]);
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
-				m_colourMap->data()->setCell(x, y, 0.25);
+			{
+				//m_colourMap->data()->setCell(x, y, 0.25);
+
+				vecx << std::lerp(0., 180., point[0]/t_real(width));
+				vecy << std::lerp(0., 180., point[1]/t_real(height));
+			}
 		}
+
+		AddPlotCurve(vecx, vecy);
 	}
 
 

@@ -223,8 +223,11 @@ bool PathsTool::OpenFile(const QString &file)
 
 				SetInstrumentStatus(Qrlu, E, m_instrspace.CheckCollision2D());
 
-				if(m_renderer)
-					m_renderer->UpdateInstrument(instr);
+				if(this->m_dlgConfigSpace)
+					this->m_dlgConfigSpace->UpdateInstrument(instr, m_sensesCCW);
+
+				if(this->m_renderer)
+					this->m_renderer->UpdateInstrument(instr);
 			});
 
 		m_instrspace.GetInstrument().EmitUpdate();

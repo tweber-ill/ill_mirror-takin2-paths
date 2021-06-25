@@ -90,6 +90,14 @@ public:
 	}
 
 
+	void Clear()
+	{
+		m_width = 0;
+		m_height = 0;
+		m_img.reset();
+	}
+
+
 	std::size_t GetWidth() const
 	{
 		return m_width;
