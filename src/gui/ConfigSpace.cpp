@@ -51,8 +51,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->data()->setRange(
 		QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.}, 
 		QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
-	m_colourMap->setInterpolate(true);
-	m_colourMap->setAntialiased(true);
+	m_colourMap->setInterpolate(false);
+	m_colourMap->setAntialiased(false);
 
 	// instrument position plot
 	m_instrposplot = m_plot->addGraph();
@@ -85,7 +85,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	m_spinDelta2ThS->setPrefix("Δθ_S = ");
 	m_spinDelta2ThS->setSuffix(" deg");
-	m_spinDelta2ThS->setValue(0.5);
+	m_spinDelta2ThS->setValue(1.0);
 	m_spinDelta2ThS->setMinimum(0.001);
 	m_spinDelta2ThS->setMaximum(180.);
 	m_spinDelta2ThS->setSingleStep(0.1);
@@ -444,6 +444,7 @@ void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real
 	voroplot->setAntialiased(true);
 	QPen voropen = voroplot->pen();
 	voropen.setColor(QColor::fromRgbF(1., 1., 1.));
+	voropen.setWidthF(1.);
 	voroplot->setPen(voropen);
 
 	voroplot->setData(x, y);

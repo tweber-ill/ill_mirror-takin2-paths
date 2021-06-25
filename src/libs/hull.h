@@ -1682,9 +1682,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				}
 
 				// correct indices
-				if(std::get<1>(*iter) && *std::get<1>(*iter) > idx)
+				if(std::get<1>(*iter) && *std::get<1>(*iter) >= idx)
 					--*std::get<1>(*iter);
-				if(std::get<2>(*iter) && *std::get<2>(*iter) > idx)
+				if(std::get<2>(*iter) && *std::get<2>(*iter) >= idx)
 					--*std::get<2>(*iter);
 
 				++iter;
@@ -1701,9 +1701,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				}
 
 				// correct indices
-				if(std::get<1>(*iter) > idx)
+				if(std::get<1>(*iter) >= idx)
 					--std::get<1>(*iter);
-				if(std::get<2>(*iter) > idx)
+				if(std::get<2>(*iter) >= idx)
 					--std::get<2>(*iter);
 
 				++iter;
