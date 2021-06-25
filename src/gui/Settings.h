@@ -68,6 +68,8 @@ public:
 	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~SettingsDlg();
 
+	static void ReadSettings(QSettings* sett);
+
 protected:
 	virtual void accept() override;
 	void ApplySettings();

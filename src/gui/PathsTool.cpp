@@ -552,6 +552,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
 	setWindowTitle(PROG_TITLE);
 
+	// restore settings
+	SettingsDlg::ReadSettings(&m_sett);
+
 
 	// --------------------------------------------------------------------
 	// rendering widget

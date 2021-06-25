@@ -105,8 +105,8 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	// create the settings table
 	m_tab = new QTableWidget(this);
 	m_tab->setShowGrid(true);
-	m_tab->setSortingEnabled(true);
-	m_tab->setMouseTracking(true);
+	m_tab->setSortingEnabled(false);
+	m_tab->setMouseTracking(false);
 	m_tab->setSelectionBehavior(QTableWidget::SelectRows);
 	m_tab->setSelectionMode(QTableWidget::SingleSelection);
 
@@ -182,12 +182,70 @@ SettingsDlg::~SettingsDlg()
 }
 
 
+template<class T>
+static void get_setting(QSettings* sett, const char* key, T* val)
+{
+	if(sett->contains(key))
+	{
+		*val = sett->value(key, *val).template value<T>();
+		//std::cout << key << ": " << *val << std::endl;
+	}
+}
+
+
 /**
- * 'Apply' was clicked
+ * read the settings and set the global variables 
+ */
+void SettingsDlg::ReadSettings(QSettings* sett)
+{
+	if(!sett)
+		return;
+
+	get_setting<t_real>(sett, "settings/eps", &g_eps);
+	get_setting<t_real>(sett, "settings/eps_angular", &g_eps_angular);
+	get_setting<t_real>(sett, "settings/eps_gui", &g_eps_gui);
+
+	get_setting<int>(sett, "settings/prec", &g_prec);
+	get_setting<int>(sett, "settings/prec_gui", &g_prec_gui);
+
+	get_setting<unsigned int>(sett, "settings/maxnum_threads", &g_maxnum_threads);
+}
+
+
+/**
+ * 'Apply' was clicked, write the settings from the global variables
  */
 void SettingsDlg::ApplySettings()
 {
-	// TODO
+	// set the global variables
+	g_eps = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_tab->item((int)SettingsKeys::EPS, 2))->GetValue();
+	g_eps_angular = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_tab->item((int)SettingsKeys::ANGULAR_EPS, 2))->GetValue();
+	g_eps_gui = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_tab->item((int)SettingsKeys::GUI_EPS, 2))->GetValue();
+
+	g_prec = dynamic_cast<NumericTableWidgetItem<int>*>(
+		m_tab->item((int)SettingsKeys::PREC, 2))->GetValue();
+	g_prec_gui = dynamic_cast<NumericTableWidgetItem<int>*>(
+		m_tab->item((int)SettingsKeys::GUI_PREC, 2))->GetValue();
+
+	g_maxnum_threads = dynamic_cast<NumericTableWidgetItem<unsigned int>*>(
+		m_tab->item((int)SettingsKeys::MAX_THREADS, 2))->GetValue();
+
+
+	// write out the settings
+	if(m_sett)
+	{
+		m_sett->setValue("settings/eps", g_eps);
+		m_sett->setValue("settings/eps_angular", g_eps_angular);
+		m_sett->setValue("settings/eps_gui", g_eps_gui);
+
+		m_sett->setValue("settings/prec", g_prec);
+		m_sett->setValue("settings/prec_gui", g_prec_gui);
+
+		m_sett->setValue("settings/maxnum_threads", g_maxnum_threads);
+	}
 }
 
 
