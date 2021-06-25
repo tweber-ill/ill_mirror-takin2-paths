@@ -8,11 +8,18 @@
 #ifndef __TASPATHS_SETTINGS__
 #define __TASPATHS_SETTINGS__
 
+#include <QtWidgets/QDialog>
+#include <QtCore/QSettings>
+
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
 #include "src/core/types.h"
 
 
+
+// ----------------------------------------------------------------------------
+// global settings variables
+// ----------------------------------------------------------------------------
 // application binary path
 extern std::string g_apppath;
 
@@ -36,11 +43,36 @@ extern t_real g_a3_offs;
 
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;
+// ----------------------------------------------------------------------------
 
 
+
+// ----------------------------------------------------------------------------
+// functions
+// ----------------------------------------------------------------------------
 /**
  * get the path to a resource file
  */
 extern std::string find_resource(const std::string& resfile);
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// settings dialog
+// ----------------------------------------------------------------------------
+class SettingsDlg : public QDialog
+{
+public:
+	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
+	virtual ~SettingsDlg();
+
+protected:
+	virtual void accept() override;
+
+private:
+	QSettings *m_sett{nullptr};
+};
 
 #endif
+// ----------------------------------------------------------------------------

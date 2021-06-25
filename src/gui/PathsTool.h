@@ -27,6 +27,8 @@
 #include "ConfigSpace.h"
 #include "GeoBrowser.h"
 #include "About.h"
+#include "Settings.h"
+
 #include "dock/TASProperties.h"
 #include "dock/XtalProperties.h"
 #include "dock/PathProperties.h"
@@ -53,7 +55,9 @@ private:
 	QMenu *m_menuOpenRecent{ nullptr };
 	QMenuBar *m_menubar{ nullptr };
 
+	// dialogs and docks
 	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<SettingsDlg> m_dlgSettings;
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser;
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;

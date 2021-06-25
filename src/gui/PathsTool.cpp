@@ -6,7 +6,6 @@
  */
 
 #include "PathsTool.h"
-#include "Settings.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QLoggingCategory>
@@ -758,39 +757,54 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// file menu
 	QMenu *menuFile = new QMenu("File", m_menubar);
 
-	QAction *acNew = new QAction(QIcon::fromTheme("document-new"), "New", menuFile);
-	QAction *acOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
-	QAction *acSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
-	QAction *acSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
-	QAction *acQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
+	QAction *actionNew = new QAction(QIcon::fromTheme("document-new"), "New", menuFile);
+	QAction *actionOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
+	QAction *actionSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
+	QAction *actionSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
+	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings", menuFile);
+	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
 
 	// shortcuts
-	acNew->setShortcut(QKeySequence::New);
-	acOpen->setShortcut(QKeySequence::Open);
-	acSave->setShortcut(QKeySequence::Save);
-	acSaveAs->setShortcut(QKeySequence::SaveAs);
-	acQuit->setShortcut(QKeySequence::Quit);
+	actionNew->setShortcut(QKeySequence::New);
+	actionOpen->setShortcut(QKeySequence::Open);
+	actionSave->setShortcut(QKeySequence::Save);
+	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	actionSettings->setShortcut(QKeySequence::Preferences);
+	actionQuit->setShortcut(QKeySequence::Quit);
 
 	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
-	acQuit->setMenuRole(QAction::QuitRole);
+	actionSettings->setMenuRole(QAction::PreferencesRole);
+	actionQuit->setMenuRole(QAction::QuitRole);
 
-	connect(acNew, &QAction::triggered, this, [this]() { this->NewFile(); });
-	connect(acOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
-	connect(acSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
-	connect(acSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
-	connect(acQuit, &QAction::triggered, this, &PathsTool::close);
+	connect(actionNew, &QAction::triggered, this, [this]() { this->NewFile(); });
+	connect(actionOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
+	connect(actionSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
+	connect(actionSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
+	connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
 
-	menuFile->addAction(acNew);
+	connect(actionSettings, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgSettings)
+			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+
+		m_dlgSettings->show();
+		m_dlgSettings->raise();
+		m_dlgSettings->activateWindow();
+	});
+
+	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
-	menuFile->addAction(acOpen);
+	menuFile->addAction(actionOpen);
 	menuFile->addMenu(m_menuOpenRecent);
 	menuFile->addSeparator();
-	menuFile->addAction(acSave);
-	menuFile->addAction(acSaveAs);
+	menuFile->addAction(actionSave);
+	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
-	menuFile->addAction(acQuit);
+	menuFile->addAction(actionSettings);
+	menuFile->addSeparator();
+	menuFile->addAction(actionQuit);
 
 
 	// view menu
@@ -935,7 +949,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
 	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
-	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", menuHelp);
+	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About TAS-Paths...", menuHelp);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
 	actionAbout->setMenuRole(QAction::AboutRole);

@@ -37,9 +37,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// plotter
 	m_plot = std::make_shared<QCustomPlot>(this);
 	m_plot->xAxis->setLabel("2θ_S (deg)");
-	m_plot->xAxis->setRange(0., 180.);
+	m_plot->xAxis->setRange(m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.);
 	m_plot->yAxis->setLabel("2θ_M (deg)");
-	m_plot->yAxis->setRange(0., 180.);
+	m_plot->yAxis->setRange(m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.);
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
 
@@ -48,7 +48,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->setGradient(QCPColorGradient::gpJet);
 	m_colourMap->setDataRange(QCPRange{0, 1});
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
-	m_colourMap->data()->setRange(QCPRange{0., 180.}, QCPRange{0., 180.});
+	m_colourMap->data()->setRange(
+		QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.}, 
+		QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
 	m_colourMap->setInterpolate(true);
 	m_colourMap->setAntialiased(true);
 
@@ -367,7 +369,7 @@ void ConfigSpaceDlg::Calculate()
 	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
 
 	m_status->setText("Calculating configuration space.");
-	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4))
+	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4, m_starta2, m_enda2, m_starta4, m_enda4))
 	{
 		m_status->setText("Error: Configuration space calculation failed.");
 		return;
@@ -492,15 +494,15 @@ void ConfigSpaceDlg::RedrawPlot()
 		for(t_real param = 0.; param <= 1.; param += edge_eps)
 		{
 			t_vec point = std::get<0>(line) + param * (std::get<1>(line) - std::get<0>(line));
-
 			int x = int(point[0]);
 			int y = int(point[1]);
+
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
 
-				vecx << std::lerp(0., 180., point[0]/t_real(width));
-				vecy << std::lerp(0., 180., point[1]/t_real(height));
+				vecx << std::lerp(m_starta4, m_enda4, point[0]/t_real(width)) / tl2::pi<t_real>*180;
+				vecy << std::lerp(m_starta2, m_enda2, point[1]/t_real(height)) / tl2::pi<t_real>*180;
 			}
 		}
 
@@ -521,12 +523,13 @@ void ConfigSpaceDlg::RedrawPlot()
 		{
 			int x = int(point[0]);
 			int y = int(point[1]);
+
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
 
-				vecx << std::lerp(0., 180., point[0]/t_real(width));
-				vecy << std::lerp(0., 180., point[1]/t_real(height));
+				vecx << std::lerp(m_starta4, m_enda4, point[0]/t_real(width)) / tl2::pi<t_real>*180.;
+				vecy << std::lerp(m_starta2, m_enda2, point[1]/t_real(height)) / tl2::pi<t_real>*180.;
 			}
 		}
 

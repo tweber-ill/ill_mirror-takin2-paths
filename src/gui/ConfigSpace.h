@@ -61,6 +61,11 @@ private:
 	QSettings *m_sett{nullptr};
 	std::unique_ptr<QProgressDialog> m_progress{};
 
+	t_real m_starta2 = 0.;
+	t_real m_enda2 = tl2::pi<t_real>;
+	t_real m_starta4 = -tl2::pi<t_real>;
+	t_real m_enda4 = tl2::pi<t_real>;
+
 	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};

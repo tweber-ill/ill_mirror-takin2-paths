@@ -31,7 +31,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 
 	int y = 0;
 
-	QLabel *labTitle = new QLabel("TAS Paths Tool", this);
+	QLabel *labTitle = new QLabel("Takin / TAS-Paths", this);
 	QFont fontTitle = labTitle->font();
 	fontTitle.setPointSize(fontTitle.pointSize()*1.5);
 	fontTitle.setWeight(QFont::Bold);
@@ -61,7 +61,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labDate1 = new QLabel("Date: ", this);
 	labDate1->setFont(fontLabel1);
 	grid->addWidget(labDate1, y,0,1,1);
-	QLabel *labDate2 = new QLabel("February 2021 - May 2021.", this);
+	QLabel *labDate2 = new QLabel("February 2021 - June 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
 	QSpacerItem *spacer2 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);

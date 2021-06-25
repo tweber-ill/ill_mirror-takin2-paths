@@ -67,7 +67,10 @@ PathsBuilder::GetWallContours(bool full) const
 /**
  * calculate the obstacle regions in the angular configuration space
  */
-bool PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
+bool PathsBuilder::CalculateConfigSpace(
+	t_real da2, t_real da4, 
+	t_real starta2, t_real enda2,
+	t_real starta4, t_real enda4)
 {
 	if(!m_instrspace)
 		return false;
@@ -78,12 +81,6 @@ bool PathsBuilder::CalculateConfigSpace(t_real da2, t_real da4)
 
 	// angles and ranges
 	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
-
-	t_real starta4 = 0.;
-	t_real enda4 = tl2::pi<t_real>;
-
-	t_real starta2 = 0.;
-	t_real enda2 = tl2::pi<t_real>;
 
 	// include scattering senses
 	if(m_sensesCCW)
