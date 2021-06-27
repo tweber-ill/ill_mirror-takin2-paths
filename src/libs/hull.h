@@ -1918,16 +1918,16 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 template<class t_vec, class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::vector<std::vector<t_vec>> convex_split(
-	const std::vector<t_vec>& _poly, t_real eps = 1e-6)
+	const std::vector<t_vec>& poly, t_real eps = 1e-6)
 {
 	std::vector<std::vector<t_vec>>	split{};
 
 	// number of vertices
-	const std::size_t N = _poly.size();
+	const std::size_t N = poly.size();
 	if(N <= 3)
 		return split;
 
-	auto [poly, mean] = sort_vertices_by_angle<t_vec, t_real>(_poly);
+	//auto [poly, mean] = sort_vertices_by_angle<t_vec, t_real>(_poly);
 
 	/*using namespace tl2_ops;
 	std::cout << "polygon to split:" << std::endl;
