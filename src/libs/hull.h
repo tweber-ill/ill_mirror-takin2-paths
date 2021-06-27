@@ -1920,8 +1920,12 @@ requires tl2::is_vec<t_vec>
 std::vector<std::vector<t_vec>> convex_split(
 	const std::vector<t_vec>& poly, t_real eps = 1e-6)
 {
+	std::vector<std::vector<t_vec>>	split{};
+
 	// number of vertices
 	const std::size_t N = poly.size();
+	if(N <= 3)
+		return split;
 
 
 	// find concave corner
@@ -1972,7 +1976,8 @@ std::vector<std::vector<t_vec>> convex_split(
 
 			// intersect infinite line from concave edge with contour line segment
 			auto[pt1, pt2, valid, dist, param1, param2] =
-				tl2::intersect_line_line(vert1, dir1, vert3, dir2, eps);
+				tl2::intersect_line_line<t_vec, t_real>(
+					vert1, dir1, vert3, dir2, eps);
 
 			if(valid && param2>=0. && param2<1.)
 			{
@@ -1985,7 +1990,6 @@ std::vector<std::vector<t_vec>> convex_split(
 
 
 	// split polygon
-	std::vector<std::vector<t_vec>>	split{};
 	split.reserve(N);
 
 	if(idx_concave && idx_intersection)
@@ -2000,15 +2004,18 @@ std::vector<std::vector<t_vec>> convex_split(
 		poly2.reserve(N);
 
 		for(auto iter=iter2; iter.GetIter()!=(iter1+2).GetIter(); ++iter)
-			poly1.push_back(*iter);;
+			poly1.push_back(*iter);
 		for(auto iter=iter1+1; iter.GetIter()!=(iter2+1).GetIter(); ++iter)
-			poly2.push_back(*iter);;
+			poly2.push_back(*iter);
 
 		// recursively split new polygons
 		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1); subsplit1.size())
 		{
-			for(auto& newpoly : subsplit1)
-				split.emplace_back(std::move(newpoly));
+			for(auto&& newpoly : subsplit1)
+			{
+				if(newpoly.size() >= 3)
+					split.emplace_back(std::move(newpoly));
+			}
 		}
 		else
 		{
@@ -2018,8 +2025,11 @@ std::vector<std::vector<t_vec>> convex_split(
 
 		if(auto subsplit2 = convex_split<t_vec, t_real>(poly2); subsplit2.size())
 		{
-			for(auto& newpoly : subsplit2)
-				split.emplace_back(std::move(newpoly));
+			for(auto&& newpoly : subsplit2)
+			{
+				if(newpoly.size() >= 3)
+					split.emplace_back(std::move(newpoly));
+			}
 		}
 		else
 		{

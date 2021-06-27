@@ -156,7 +156,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
 	{
 		// prevent sending too many progress signals
-		if(taskidx % signal_skip == 0)
+		if(signal_skip && taskidx % signal_skip == 0)
 		{
 			if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
 			{
@@ -172,7 +172,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	pool.join();
 	(*m_sigProgress)(false, true, 1, ostrmsg.str());
 
-	std::cout << "pixels total: " << img_h*img_w << ", calculated: " << num_pixels << std::endl;
+	//std::cout << "pixels total: " << img_h*img_w << ", calculated: " << num_pixels << std::endl;
 	return num_pixels == img_h*img_w;
 }
 
@@ -190,9 +190,9 @@ bool PathsBuilder::CalculateWallContours(bool simplify)
 
 	(*m_sigProgress)(false, false, 0.5, message);
 
-	// iterate and simplify contour groups
 	if(simplify)
 	{
+		// iterate and simplify contour groups
 		for(auto& contour : m_wallcontours)
 		{
 			// replace contour with its convex hull
@@ -204,6 +204,21 @@ bool PathsBuilder::CalculateWallContours(bool simplify)
 			// simplify hull contour
 			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps_angular);
 		}
+
+
+		// convex split
+		/*std::vector<std::vector<t_contourvec>> splitcontours;
+		splitcontours.reserve(m_wallcontours.size()*2);
+
+		for(auto& contour : m_wallcontours)
+		{
+			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour);
+			for(auto&& poly : slitcontour)
+				splitcontours.emplace_back(std::move(poly));
+		}
+
+		m_wallcontours = std::move(splitcontours);*/
+		//std::cout << "Number of wall contours: " << m_wallcontours.size() << std::endl;
 	}
 
 	(*m_sigProgress)(false, true, 1, message);
@@ -269,7 +284,8 @@ bool PathsBuilder::CalculateVoronoi()
 	(*m_sigProgress)(true, false, 0, message);
 
 	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
-		= geo::calc_voro<t_vec, t_line, t_graph>(m_lines, m_linegroups, true, m_voroedge_eps);
+		= geo::calc_voro<t_vec, t_line, t_graph>(
+			m_lines, m_linegroups, true, m_voroedge_eps);
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;

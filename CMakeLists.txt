@@ -51,6 +51,11 @@ message("Selected Qt version ${QT_VER}.")
 message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_compile_options(-g -ggdb)
+endif()
+
+
 # -----------------------------------------------------------------------------
 # system specific settings
 # -----------------------------------------------------------------------------
