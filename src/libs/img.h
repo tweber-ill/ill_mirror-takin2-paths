@@ -4,7 +4,7 @@
  * @date may-2021
  * @note Forked on 26-may-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  * @license see 'LICENSE' file
- * 
+ *
  * @references:
  *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
  */
@@ -233,7 +233,7 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_imageview& img)
  * boundary tracing
  * @see http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/ray.html
  */
-template<class t_vec, 
+template<class t_vec,
 	class t_imageview, class t_boundaryview = t_imageview>
 requires tl2::is_vec<t_vec>
 std::vector<std::vector<t_vec>> trace_boundary(
@@ -259,7 +259,7 @@ std::vector<std::vector<t_vec>> trace_boundary(
 	// next possible position depending on direction
 	auto get_next_dir = [](const t_vec& dir, t_vec& next_dir, int iter=0) -> bool
 	{
-		const t_vec next_dirs[] = 
+		static const t_vec next_dirs[] =
 		{
 			tl2::create<t_vec>({ -1, -1 }), // 0
 			tl2::create<t_vec>({  0, -1 }), // 1
@@ -270,7 +270,7 @@ std::vector<std::vector<t_vec>> trace_boundary(
 			tl2::create<t_vec>({ -1,  1 }), // 6
 			tl2::create<t_vec>({ -1,  0 }), // 7
 		};
-		
+
 		const t_vec back_dir = -dir;
 		std::size_t idx = 0;
 		bool has_next_dir = false;
@@ -315,7 +315,6 @@ std::vector<std::vector<t_vec>> trace_boundary(
 						continue;
 
 					t_vec vec = tl2::create<t_vec>({x, y});
-
 					if(already_seen(vec))
 						continue;
 
@@ -342,14 +341,14 @@ std::vector<std::vector<t_vec>> trace_boundary(
 		t_vec dir = tl2::create<t_vec>({1, 0});
 		t_vec next_dir = tl2::create<t_vec>({0, 0});
 
-
-		while(1)
+		while(true)
 		{
 			bool has_next_dir = false;
 
 			for(int i=0; i<8; ++i)
 			{
-				if(get_next_dir(dir, next_dir, i) && get_pixel(img, pos[0]+next_dir[0], pos[1]+next_dir[1]))
+				if(get_next_dir(dir, next_dir, i)
+					&& get_pixel(img, pos[0]+next_dir[0], pos[1]+next_dir[1]))
 				{
 					has_next_dir = true;
 					break;
@@ -382,7 +381,10 @@ std::vector<std::vector<t_vec>> trace_boundary(
 				break;
 		}
 
-		contours.emplace_back(std::move(contour));
+		if(contour.size())
+			contours.emplace_back(std::move(contour));
+		else
+			break;
 	}
 
 	return contours;

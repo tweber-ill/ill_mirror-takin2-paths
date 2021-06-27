@@ -106,6 +106,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	std::vector<t_taskptr> tasks;
 	tasks.reserve(img_h);
 
+
 	// set image pixels
 	std::atomic<std::size_t> num_pixels = 0;
 	for(std::size_t img_row=0; img_row<img_h; ++img_row)
@@ -137,6 +138,8 @@ bool PathsBuilder::CalculateConfigSpace(
 
 				++num_pixels;
 			}
+
+			//std::cout << a2/tl2::pi<t_real>*180. << " finished" << std::endl;
 		};
 
 		t_taskptr taskptr = std::make_shared<t_task>(task);
@@ -144,21 +147,32 @@ bool PathsBuilder::CalculateConfigSpace(
 		asio::post(pool, [taskptr]() { (*taskptr)(); });
 	}
 
+
 	// get results
-	for(std::size_t taskidx=0; taskidx<tasks.size(); ++taskidx)
+	std::size_t num_tasks = tasks.size();
+	// send no more than half-percentage update signals
+	std::size_t signal_skip = num_tasks / 200;
+
+	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
 	{
-		if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(tasks.size()), ostrmsg.str()))
+		// prevent sending too many progress signals
+		if(taskidx % signal_skip == 0)
 		{
-			pool.stop();
-			break;
+			if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
+			{
+				pool.stop();
+				break;
+			}
 		}
 
 		tasks[taskidx]->get_future().get();
+		//std::cout << taskidx << " / " << num_tasks << " finished" << std::endl;
 	}
 
 	pool.join();
 	(*m_sigProgress)(false, true, 1, ostrmsg.str());
 
+	std::cout << "pixels total: " << img_h*img_w << ", calculated: " << num_pixels << std::endl;
 	return num_pixels == img_h*img_w;
 }
 

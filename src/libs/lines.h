@@ -922,7 +922,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 			}
 		}
 	};
-	
+
 
 	// events
 	auto events_comp = [](const SweepEvent& evt1, const SweepEvent& evt2) -> bool
@@ -1032,7 +1032,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 				t_node* status_begin = t_treealgos::begin_node(&status);
 				t_node* status_end = t_treealgos::end_node(&status);
-	
+
 				t_node* iterPrev = (iter == status_begin ? status_end : t_treealgos::prev_node(iter));
 				t_node* iterNext = (iter == status_end ? status_end : t_treealgos::next_node(iter));
 

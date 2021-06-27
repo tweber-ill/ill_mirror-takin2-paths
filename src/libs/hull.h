@@ -630,12 +630,12 @@ requires tl2::is_vec<t_vec>
 		//std::cout << angle/tl2::pi<t_real>*180. << std::endl;
 
 		// line horizontal or vertical?
-		if(tl2::equals_0<t_real>(angle, eps) 
+		if(tl2::equals_0<t_real>(angle, eps)
 			|| tl2::equals<t_real>(angle, tl2::pi<t_real>, eps)
 			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(2), eps)
 			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(3./2.), eps))
 		{
-			t_real angle1 = line_angle<t_vec, t_real>(vert1, vert2);			
+			t_real angle1 = line_angle<t_vec, t_real>(vert1, vert2);
 			t_real angle2 = line_angle<t_vec, t_real>(vert3, vert4);
 
 			angle1 = tl2::mod_pos(angle1, t_real{2}*tl2::pi<t_real>);
@@ -1885,7 +1885,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				iter2 = vert_to_idx.insert(std::make_pair(vert2, curidx)).first;
 				graph.AddVertex(std::to_string(curidx));
 				++curidx;
-			}			
+			}
 
 			// add graph edge
 			if(iter1 != vert_to_idx.end() && iter2 != vert_to_idx.end())
