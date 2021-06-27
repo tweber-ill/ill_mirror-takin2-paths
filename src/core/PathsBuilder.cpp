@@ -212,6 +212,9 @@ bool PathsBuilder::CalculateWallContours(bool simplify)
 
 		for(auto& contour : m_wallcontours)
 		{
+			//std::vector<t_vec> contour_real = 
+			//	tl2::convert<t_vec, t_contourvec, std::vector>(contour);
+
 			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour);
 			for(auto&& poly : slitcontour)
 				splitcontours.emplace_back(std::move(poly));

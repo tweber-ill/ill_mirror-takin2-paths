@@ -84,7 +84,8 @@
 			"typeinfo": "cpp",
 			"variant": "cpp",
 			"qgridlayout": "cpp",
-			"valarray": "cpp"
+			"valarray": "cpp",
+			"__split_buffer": "cpp"
 		}
 	}
 }

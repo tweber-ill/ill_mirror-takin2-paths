@@ -1918,14 +1918,22 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 template<class t_vec, class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::vector<std::vector<t_vec>> convex_split(
-	const std::vector<t_vec>& poly, t_real eps = 1e-6)
+	const std::vector<t_vec>& _poly, t_real eps = 1e-6)
 {
 	std::vector<std::vector<t_vec>>	split{};
 
 	// number of vertices
-	const std::size_t N = poly.size();
+	const std::size_t N = _poly.size();
 	if(N <= 3)
 		return split;
+
+	auto [poly, mean] = sort_vertices_by_angle<t_vec, t_real>(_poly);
+
+	/*using namespace tl2_ops;
+	std::cout << "polygon to split:" << std::endl;
+	for(const t_vec& vec : poly)
+		std::cout << "\t" << vec << std::endl;
+	std::cout << std::endl;*/
 
 
 	// find concave corner
@@ -1940,7 +1948,8 @@ std::vector<std::vector<t_vec>> convex_split(
 		const t_vec& vert2 = poly[idx2];
 		const t_vec& vert3 = poly[idx3];
 
-		t_real angle = tl2::pi<t_real>-line_angle<t_vec>(vert1, vert2, vert2, vert3);
+		t_real angle = tl2::pi<t_real> - line_angle<t_vec, t_real>(
+			vert1, vert2, vert2, vert3);
 		angle = tl2::mod_pos<t_real>(angle, t_real(2)*tl2::pi<t_real>);
 
 		// corner angle > 180°  =>  concave corner found
@@ -1953,6 +1962,8 @@ std::vector<std::vector<t_vec>> convex_split(
 
 
 	// get intersection of concave edge with contour
+	// TODO: handle int->real conversion if needed
+	t_vec intersection;
 	std::optional<std::size_t> idx_intersection;
 
 	if(idx_concave)
@@ -1978,6 +1989,7 @@ std::vector<std::vector<t_vec>> convex_split(
 			auto[pt1, pt2, valid, dist, param1, param2] =
 				tl2::intersect_line_line<t_vec, t_real>(
 					vert1, dir1, vert3, dir2, eps);
+			intersection = pt1;
 
 			if(valid && param2>=0. && param2<1.)
 			{
@@ -1999,14 +2011,32 @@ std::vector<std::vector<t_vec>> convex_split(
 		auto iter1 = circularverts.begin() + (*idx_concave);
 		auto iter2 = circularverts.begin() + (*idx_intersection);
 
+		// split polygon along the line [idx_concave+1], intersection
 		std::vector<t_vec> poly1, poly2;
 		poly1.reserve(N);
 		poly2.reserve(N);
 
-		for(auto iter=iter2; iter.GetIter()!=(iter1+2).GetIter(); ++iter)
-			poly1.push_back(*iter);
-		for(auto iter=iter1+1; iter.GetIter()!=(iter2+1).GetIter(); ++iter)
-			poly2.push_back(*iter);
+		// sub-polygon 1
+		poly1.push_back(intersection);
+		for(auto iter = iter2; true; ++iter)
+		{
+			if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
+				poly1.push_back(*iter);
+
+			if(iter.GetIter() == (iter1+1).GetIter())
+				break;
+		}
+
+		// sub-polygon 2
+		for(auto iter = iter1+1; true; ++iter)
+		{
+			if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
+				poly2.push_back(*iter);
+
+			if(iter.GetIter() == (iter2-1).GetIter())
+				break;
+		}
+		poly2.push_back(intersection);
 
 		// recursively split new polygons
 		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1); subsplit1.size())

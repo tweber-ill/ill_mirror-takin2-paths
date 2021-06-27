@@ -593,22 +593,24 @@ requires tl2::is_vec<t_vec>
 }
 
 
-template<class t_vec, class t_real = typename t_vec::value_type>
-std::tuple<std::vector<t_vec>, t_vec>
+template<class t_vec, 
+	class t_real = typename t_vec::value_type,
+	class t_vec_real = tl2::vec<t_real, std::vector>>
+std::tuple<std::vector<t_vec>, t_vec_real>
 sort_vertices_by_angle(const std::vector<t_vec>& _verts)
 requires tl2::is_vec<t_vec>
 {
 	std::vector<t_vec> verts = _verts;
 
 	// sort by angle
-	t_vec mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
+	t_vec_real mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
 	mean /= t_real(verts.size());
 
 	std::stable_sort(verts.begin(), verts.end(), 
 		[&mean](const t_vec& vec1, const t_vec& vec2)->bool
 		{
-			return line_angle<t_vec>(mean, vec1) 
-				< line_angle<t_vec>(mean, vec2);
+			return line_angle<t_vec_real, t_real>(mean, vec1) 
+				< line_angle<t_vec_real, t_real>(mean, vec2);
 		});
 
 	return std::make_tuple(verts, mean);

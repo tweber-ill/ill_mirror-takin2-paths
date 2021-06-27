@@ -12,26 +12,24 @@
 using namespace tl2_ops;
 
 
-using t_real = double;
-using t_vec = tl2::vec<t_real, std::vector>;
-using t_line = std::pair<t_vec, t_vec>;
-
-
-int main()
+void tst1()
 {
+	using t_real = double;
+	using t_vec = tl2::vec<t_real, std::vector>;
+
 	std::vector<t_vec> poly
 	{{
-		/*0*/ tl2::create<t_vec>({0., 0.}),
-		/*1*/ tl2::create<t_vec>({2., 2.}),
-		/*2*/ tl2::create<t_vec>({8., 2.}),
-		/*3*/ tl2::create<t_vec>({10., 0.}),
-		/*4*/ tl2::create<t_vec>({10., 10.}),
-		/*5*/ tl2::create<t_vec>({8., 8.}),
-		/*6*/ tl2::create<t_vec>({2., 8.}),
-		/*7*/ tl2::create<t_vec>({0., 10.}),
+		tl2::create<t_vec>({0., 0.}),
+		tl2::create<t_vec>({2., 2.}),
+		tl2::create<t_vec>({8., 2.}),
+		tl2::create<t_vec>({10., 0.}),
+		tl2::create<t_vec>({10., 10.}),
+		tl2::create<t_vec>({8., 8.}),
+		tl2::create<t_vec>({2., 8.}),
+		tl2::create<t_vec>({0., 10.}),
 	}};
 
-	auto split = geo::convex_split<t_vec>(poly);
+	auto split = geo::convex_split<t_vec, t_real>(poly);
 	if(split.size() == 0)
 		std::cout << "already convex" << std::endl;
 
@@ -44,6 +42,45 @@ int main()
 			std::cout << vec << std::endl;
 	}
 	std::cout << std::endl;
+}
+
+
+void tst2()
+{
+	using t_real = double;
+	using t_vec = tl2::vec<int, std::vector>;
+
+	std::vector<t_vec> poly
+	{{
+		tl2::create<t_vec>({36, 20}),
+		tl2::create<t_vec>({35, 19}),
+		tl2::create<t_vec>({34, 20}),
+		tl2::create<t_vec>({35, 21}),
+	}};
+
+	auto split = geo::convex_split<t_vec, t_real>(poly);
+	if(split.size() == 0)
+		std::cout << "already convex" << std::endl;
+
+	for(std::size_t idx=0; idx<split.size(); ++idx)
+	{
+		const auto& polysplit = split[idx];
+		std::cout << "split polygon " << idx << std::endl;
+
+		for(const auto& vec : polysplit)
+			std::cout << vec << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+
+int main()
+{
+	std::cout << "Test 1" << std::endl;
+	tst1();
+
+	std::cout << "\nTest 2" << std::endl;
+	tst2();
 
 	return 0;
 }
