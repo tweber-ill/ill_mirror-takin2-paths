@@ -1938,6 +1938,7 @@ std::vector<std::vector<t_vec>> convex_split(
 
 	// find concave corner
 	std::optional<std::size_t> idx_concave;
+	//t_real total_angle = 0.;
 
 	for(std::size_t idx1=0; idx1<N; ++idx1)
 	{
@@ -1950,15 +1951,17 @@ std::vector<std::vector<t_vec>> convex_split(
 
 		t_real angle = tl2::pi<t_real> - line_angle<t_vec, t_real>(
 			vert1, vert2, vert2, vert3);
+		//total_angle += angle;
 		angle = tl2::mod_pos<t_real>(angle, t_real(2)*tl2::pi<t_real>);
 
 		// corner angle > 180°  =>  concave corner found
-		if(angle > tl2::pi<t_real>)
+		if(!idx_concave && angle > tl2::pi<t_real> + eps)
 		{
 			idx_concave = idx1;
 			break;
 		}
 	}
+	//std::cout << "total angle: " << total_angle/tl2::pi<t_real>*180. << std::endl;
 
 
 	// get intersection of concave edge with contour
@@ -2039,7 +2042,8 @@ std::vector<std::vector<t_vec>> convex_split(
 		poly2.push_back(intersection);
 
 		// recursively split new polygons
-		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1); subsplit1.size())
+		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1, eps);
+			subsplit1.size())
 		{
 			for(auto&& newpoly : subsplit1)
 			{
@@ -2053,7 +2057,8 @@ std::vector<std::vector<t_vec>> convex_split(
 			split.emplace_back(std::move(poly1));
 		}
 
-		if(auto subsplit2 = convex_split<t_vec, t_real>(poly2); subsplit2.size())
+		if(auto subsplit2 = convex_split<t_vec, t_real>(poly2, eps);
+			subsplit2.size())
 		{
 			for(auto&& newpoly : subsplit2)
 			{
