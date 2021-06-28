@@ -1992,12 +1992,12 @@ std::vector<std::vector<t_vec>> convex_split(
 			auto[pt1, pt2, valid, dist, param1, param2] =
 				tl2::intersect_line_line<t_vec, t_real>(
 					vert1, dir1, vert3, dir2, eps);
-			intersection = pt1;
 
 			if(valid && param2>=0. && param2<1.)
 			{
 				auto iterInters = (iter+1).GetIter();
 				idx_intersection = iterInters - poly.begin();
+				intersection = pt1;
 				break;
 			}
 		}
@@ -2020,26 +2020,26 @@ std::vector<std::vector<t_vec>> convex_split(
 		poly2.reserve(N);
 
 		// sub-polygon 1
-		poly1.push_back(intersection);
+		//poly1.push_back(intersection);
 		for(auto iter = iter2; true; ++iter)
 		{
-			if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
+			//if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
 				poly1.push_back(*iter);
 
-			if(iter.GetIter() == (iter1+1).GetIter())
+			if(iter.GetIter() == (iter1 + 1).GetIter())
 				break;
 		}
 
 		// sub-polygon 2
 		for(auto iter = iter1+1; true; ++iter)
 		{
-			if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
+			//if(!tl2::equals<t_vec, t_real>(intersection, *iter, eps))
 				poly2.push_back(*iter);
 
-			if(iter.GetIter() == (iter2-1).GetIter())
+			if(iter.GetIter() == (iter2 /*- 1*/).GetIter())
 				break;
 		}
-		poly2.push_back(intersection);
+		//poly2.push_back(intersection);
 
 		// recursively split new polygons
 		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1, eps);

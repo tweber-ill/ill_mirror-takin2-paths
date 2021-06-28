@@ -115,8 +115,8 @@ int main()
 	std::cout << "\nTest 2" << std::endl;
 	tst2();
 
-	//std::cout << "\nTest 3" << std::endl;
-	//tst3();
+//	std::cout << "\nTest 3" << std::endl;
+//	tst3();
 
 	return 0;
 }
