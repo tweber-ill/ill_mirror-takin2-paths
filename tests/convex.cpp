@@ -83,6 +83,7 @@ void tst3()
 	using t_real = double;
 	using t_vec = tl2::vec<int, std::vector>;
 
+	// test points in wrong, non-ccw order
 	std::vector<t_vec> poly
 	{{
 		tl2::create<t_vec>({6, 0}),
@@ -115,8 +116,8 @@ int main()
 	std::cout << "\nTest 2" << std::endl;
 	tst2();
 
-//	std::cout << "\nTest 3" << std::endl;
-//	tst3();
+	std::cout << "\nTest 3" << std::endl;
+	tst3();
 
 	return 0;
 }

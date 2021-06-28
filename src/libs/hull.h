@@ -1982,7 +1982,7 @@ std::vector<std::vector<t_vec>> convex_split(
 		auto iterBeg = circularverts.begin() + (*idx_concave + 2);
 		auto iterEnd = circularverts.begin() + (*idx_concave + N);
 
-		for(auto iter=iterBeg; iter!=iterEnd; ++iter)
+		for(auto iter = iterBeg; iter != iterEnd; ++iter)
 		{
 			const t_vec& vert3 = *iter;
 			const t_vec& vert4 = *(iter + 1);
@@ -1993,7 +1993,8 @@ std::vector<std::vector<t_vec>> convex_split(
 				tl2::intersect_line_line<t_vec, t_real>(
 					vert1, dir1, vert3, dir2, eps);
 
-			if(valid && param2>=0. && param2<1.)
+			if(valid && param2>=0. && param2<1. &&
+				tl2::equals<t_vec>(pt1, pt2, eps))
 			{
 				auto iterInters = (iter+1).GetIter();
 				idx_intersection = iterInters - poly.begin();
