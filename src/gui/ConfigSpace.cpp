@@ -142,6 +142,18 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acSimplifyContour->setChecked(m_simplifycontour);
 	menuOptions->addAction(acSimplifyContour);
 
+	menuOptions->addSeparator();
+
+	QAction *acSplitContour = new QAction("Split Contour into Convex Regions", menuView);
+	acSplitContour->setCheckable(true);
+	acSplitContour->setChecked(m_splitcontour);
+	menuOptions->addAction(acSplitContour);
+
+	QAction *acCalcVoro = new QAction("Calculate Voronoi Diagram", menuView);
+	acCalcVoro->setCheckable(true);
+	acCalcVoro->setChecked(m_calcvoronoi);
+	menuOptions->addAction(acCalcVoro);
+
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);
@@ -260,6 +272,16 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		m_simplifycontour = simplify;
 	});
 
+	connect(acSplitContour, &QAction::toggled, [this](bool split)->void
+	{
+		m_splitcontour = split;
+	});
+
+	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
+	{
+		m_calcvoronoi = calc;
+	});
+
 	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
 	{
 		this->SetInstrumentMovable(!enableZoom);
@@ -376,7 +398,7 @@ void ConfigSpaceDlg::Calculate()
 	}
 
 	m_status->setText("Calculating obstacle contour lines.");
-	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour))
+	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour, m_splitcontour))
 	{
 		m_status->setText("Error: Obstacle contour lines calculation failed.");
 		return;
@@ -389,11 +411,14 @@ void ConfigSpaceDlg::Calculate()
 		return;
 	}
 
-	m_status->setText("Calculating Voronoi regions.");
-	if(!m_pathsbuilder->CalculateVoronoi())
+	if(m_calcvoronoi)
 	{
-		m_status->setText("Error: Voronoi regions calculation failed.");
-		return;
+		m_status->setText("Calculating Voronoi regions.");
+		if(!m_pathsbuilder->CalculateVoronoi())
+		{
+			m_status->setText("Error: Voronoi regions calculation failed.");
+			return;
+		}
 	}
 
 	m_status->setText("Calculation finished.");

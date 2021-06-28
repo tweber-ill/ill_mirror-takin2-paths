@@ -1966,7 +1966,7 @@ std::vector<std::vector<t_vec>> convex_split(
 
 	// get intersection of concave edge with contour
 	// TODO: handle int->real conversion if needed
-	t_vec intersection;
+	//t_vec intersection;
 	std::optional<std::size_t> idx_intersection;
 
 	if(idx_concave)
@@ -1998,7 +1998,7 @@ std::vector<std::vector<t_vec>> convex_split(
 			{
 				auto iterInters = (iter+1).GetIter();
 				idx_intersection = iterInters - poly.begin();
-				intersection = pt1;
+				//intersection = pt1;
 				break;
 			}
 		}

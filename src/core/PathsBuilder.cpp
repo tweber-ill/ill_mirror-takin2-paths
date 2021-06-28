@@ -180,7 +180,7 @@ bool PathsBuilder::CalculateConfigSpace(
 /**
  * calculate the contour lines of the obstacle regions
  */
-bool PathsBuilder::CalculateWallContours(bool simplify)
+bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 {
 	std::string message{"Calculating obstacle contours..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -188,7 +188,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify)
 	m_wallcontours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
 	m_fullwallcontours = m_wallcontours;
 
-	(*m_sigProgress)(false, false, 0.5, message);
+	(*m_sigProgress)(false, false, 0.33, message);
 
 	if(simplify)
 	{
@@ -204,24 +204,32 @@ bool PathsBuilder::CalculateWallContours(bool simplify)
 			// simplify hull contour
 			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps_angular);
 		}
+	}
 
+	(*m_sigProgress)(false, false, 0.66, message);
 
+	if(convex_split)
+	{
 		// convex split
-		/*std::vector<std::vector<t_contourvec>> splitcontours;
+		std::vector<std::vector<t_contourvec>> splitcontours;
 		splitcontours.reserve(m_wallcontours.size()*2);
 
 		for(auto& contour : m_wallcontours)
 		{
-			//std::vector<t_vec> contour_real = 
-			//	tl2::convert<t_vec, t_contourvec, std::vector>(contour);
-
-			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour);
-			for(auto&& poly : slitcontour)
-				splitcontours.emplace_back(std::move(poly));
+			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour, m_eps);
+			if(slitcontour.size())
+			{
+				for(auto&& poly : slitcontour)
+					splitcontours.emplace_back(std::move(poly));
+			}
+			else
+			{
+				// no split, use original contour
+				splitcontours.push_back(contour);
+			}
 		}
 
-		m_wallcontours = std::move(splitcontours);*/
-		//std::cout << "Number of wall contours: " << m_wallcontours.size() << std::endl;
+		m_wallcontours = std::move(splitcontours);
 	}
 
 	(*m_sigProgress)(false, true, 1, message);

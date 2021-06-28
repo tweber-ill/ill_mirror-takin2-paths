@@ -49,7 +49,7 @@ public:
 	bool CalculateConfigSpace(t_real da2, t_real da4,
 		t_real starta2 = 0., t_real enda2 = tl2::pi<t_real>,
 		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
-	bool CalculateWallContours(bool simplify = true);
+	bool CalculateWallContours(bool simplify = true, bool convex_split=false);
 	bool CalculateLineSegments();
 	bool CalculateVoronoi();
 
