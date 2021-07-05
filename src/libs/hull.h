@@ -604,7 +604,7 @@ requires tl2::is_vec<t_vec>
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
 void simplify_contour(
-	std::vector<t_vec>& contour, 
+	std::vector<t_vec>& contour,
 	t_real min_dist = 0.01,
 	t_real eps = 0.01/180.*tl2::pi<t_real>)
 requires tl2::is_vec<t_vec>
