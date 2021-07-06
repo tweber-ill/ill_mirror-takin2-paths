@@ -184,7 +184,7 @@ void HullScene::UpdateHull()
 
 	// convex hull
 	QPen penHull;
-	penHull.setWidthF(2.);
+	penHull.setWidthF(3.);
 
 	for(const auto& thetriag : hull)
 	{
@@ -642,11 +642,11 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 
 
 	// menu actions
-	QAction *actionNew = new QAction{"New", this};
+	QAction *actionNew = new QAction{QIcon::fromTheme("document-new"), "New", this};
 	connect(actionNew, &QAction::triggered, [this]()
 		{ m_scene->ClearVertices(); });
 
-	QAction *actionLoad = new QAction{"Open...", this};
+	QAction *actionLoad = new QAction{QIcon::fromTheme("document-open"), "Open...", this};
 	connect(actionLoad, &QAction::triggered, [this]()
 	{
 		QString dirLast = m_sett.value("cur_dir", "~/").toString();
@@ -699,7 +699,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
-	QAction *actionSaveAs = new QAction{"Save as...", this};
+	QAction *actionSaveAs = new QAction{QIcon::fromTheme("document-save-as"), "Save as...", this};
 	connect(actionSaveAs, &QAction::triggered, [this]()
 	{
 		if(QString file = QFileDialog::getSaveFileName(this, "Save Data", "",
@@ -733,7 +733,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
-	QAction *actionExportSvg = new QAction{"Export SVG...", this};
+	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
 		if(QString file = QFileDialog::getSaveFileName(this, "Export SVG", "",
@@ -748,20 +748,20 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
-	QAction *actionQuit = new QAction{"Quit", this};
+	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
 	actionQuit->setMenuRole(QAction::QuitRole);
 	connect(actionQuit, &QAction::triggered, [this]()
 		{ this->close(); });
 
 
-	QAction *actionZoomIn = new QAction{"Zoom in", this};
+	QAction *actionZoomIn = new QAction{QIcon::fromTheme("zoom-in"), "Zoom in", this};
 	connect(actionZoomIn, &QAction::triggered, [this]()
 	{
 		if(m_view)
 			m_view->scale(2., 2.);
 	});
 
-	QAction *actionZoomOut = new QAction{"Zoom out", this};
+	QAction *actionZoomOut = new QAction{QIcon::fromTheme("zoom-out"), "Zoom out", this};
 	connect(actionZoomOut, &QAction::triggered, [this]()
 	{
 		if(m_view)
