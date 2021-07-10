@@ -172,6 +172,11 @@ add_executable(taspaths
 	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
 	src/core/types.h
 
+	src/libs/lines.h src/libs/graphs.h
+	src/libs/voronoi.h src/libs/voronoi_lines.h
+	src/libs/hull.h src/libs/img.h 
+	src/libs/ptree.h
+
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 
 	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
@@ -184,6 +189,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/libs/lines.h src/libs/hull.h
+		src/libs/voronoi.h
 	)
 
 	add_executable(lines
@@ -191,6 +197,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/libs/lines.h src/libs/hull.h
+		src/libs/voronoi_lines.h
 	)
 endif()
 

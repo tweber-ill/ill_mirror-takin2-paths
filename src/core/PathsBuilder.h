@@ -15,9 +15,13 @@
 
 #include "types.h"
 #include "InstrumentSpace.h"
+
+#include "tlibs2/libs/maths.h"
 #include "src/libs/img.h"
 #include "src/libs/graphs.h"
-
+#include "src/libs/voronoi.h"
+#include "src/libs/voronoi_lines.h"
+#include "src/libs/hull.h"
 
 
 class PathsBuilder
@@ -61,12 +65,12 @@ public:
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
 	// get voronoi vertices and edges
-	const std::vector<t_vec>& GetVoronoiVertices() const { return m_vertices; }
-	const std::vector<t_voronoiedge_linear>& GetVoronoiEdgesLinear() const { return m_linear_edges; }
-	const std::vector<t_voronoiedge_parabolic>& GetVoronoiEdgesParabolic() const { return m_parabolic_edges; }
+	const std::vector<t_vec>& GetVoronoiVertices() const { return m_voro_results.vertices; }
+	const std::vector<t_voronoiedge_linear>& GetVoronoiEdgesLinear() const { return m_voro_results.linear_edges; }
+	const std::vector<t_voronoiedge_parabolic>& GetVoronoiEdgesParabolic() const { return m_voro_results.parabolic_edges; }
 
 	// get voronoi graphs
-	const t_graph& GetVoronoiGraph() const { return m_vorograph; }
+	const t_graph& GetVoronoiGraph() const { return m_voro_results.graph; }
 
 	// save contour line segments to lines test tools
 	bool SaveToLinesTool(std::ostream& ostr);
@@ -126,10 +130,7 @@ private:
 	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
 	// voronoi vertices, edges and graph from the line segments
-	std::vector<t_vec> m_vertices{};
-	std::vector<t_voronoiedge_linear> m_linear_edges{};
-	std::vector<t_voronoiedge_parabolic> m_parabolic_edges{};
-	t_graph m_vorograph{};
+	geo::VoronoiLinesResults<t_vec, t_line, t_graph> m_voro_results{};
 
 	// general, angular and voronoi edge calculation epsilon
 	t_real m_eps = 1e-3;

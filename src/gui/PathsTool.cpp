@@ -924,7 +924,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	std::size_t num_tools = 0;
 	if(fs::exists(hullpath))
 	{
-		QAction *acHullTool = new QAction("Convex Hull Test...", menuTools);
+		QAction *acHullTool = new QAction("Convex Hull...", menuTools);
 		menuTools->addAction(acHullTool);
 		++num_tools;
 
@@ -936,7 +936,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	if(fs::exists(linespath))
 	{
-		QAction *acLinesTool = new QAction("Line Segment Test...", menuTools);
+		QAction *acLinesTool = new QAction("Line Segments...", menuTools);
 		menuTools->addAction(acLinesTool);
 		++num_tools;
 

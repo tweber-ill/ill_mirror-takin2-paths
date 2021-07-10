@@ -17,9 +17,6 @@
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
-#include "src/libs/hull.h"
-#include "tlibs2/libs/maths.h"
-
 using t_task = std::packaged_task<void()>;
 using t_taskptr = std::shared_ptr<t_task>;
 
@@ -44,10 +41,10 @@ void PathsBuilder::Clear()
 	m_lines.clear();
 	m_linegroups.clear();
 
-	m_vertices.clear();
-	m_linear_edges.clear();
-	m_parabolic_edges.clear();
-	m_vorograph.Clear();
+	m_voro_results.vertices.clear();
+	m_voro_results.linear_edges.clear();
+	m_voro_results.parabolic_edges.clear();
+	m_voro_results.graph.Clear();
 }
 
 
@@ -298,7 +295,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines)
 	std::string message{"Calculating voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
 
-	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
+	m_voro_results
 		= geo::calc_voro<t_vec, t_line, t_graph>(
 			m_lines, m_linegroups, group_lines, true, m_voroedge_eps);
 

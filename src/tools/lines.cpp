@@ -36,7 +36,7 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 #include "tlibs2/libs/helper.h"
-#include "src/libs/hull.h"
+#include "src/libs/voronoi_lines.h"
 
 
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
@@ -487,6 +487,8 @@ std::size_t LinesScene::GetClosestLineIdx(const t_vec& pt) const
 
 void LinesScene::UpdateVoro()
 {
+	using t_line = std::pair<t_vec, t_vec>;
+
 	// remove previous voronoi diagram
 	for(QGraphicsItem* item : m_elems_voro)
 	{
@@ -502,29 +504,25 @@ void LinesScene::UpdateVoro()
 		return;
 
 
-	std::vector<t_vec> vertices;
-	std::vector<std::tuple<
-		std::pair<t_vec, t_vec>,
-		std::optional<std::size_t>,
-		std::optional<std::size_t>>> linear_edges;
-	std::vector<std::tuple<std::vector<t_vec>, std::size_t, std::size_t>> all_parabolic_edges;
+	geo::VoronoiLinesResults<t_vec, t_line, t_graph> results{};
 
 	switch(m_voronoicalculationmethod)
 	{
 		case VoronoiCalculationMethod::BOOSTPOLY:
-			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
-				= geo::calc_voro<t_vec, std::pair<t_vec, t_vec>, t_graph>(
-					m_lines, m_linegroups, m_grouplines, m_removeverticesinregions);
+			results = geo::calc_voro<t_vec, t_line, t_graph>(
+				m_lines, m_linegroups, m_grouplines, 
+				m_removeverticesinregions);
 			break;
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
-			std::tie(vertices, linear_edges, all_parabolic_edges, m_vorograph)
-				= geo::calc_voro_ovd<t_vec, std::pair<t_vec, t_vec>, t_graph>(
-					m_lines, m_linegroups, m_grouplines, m_removeverticesinregions);
+			results = geo::calc_voro_ovd<t_vec, t_line, t_graph>(
+				m_lines, m_linegroups, m_grouplines, 
+				m_removeverticesinregions);
 			break;
 #endif
 		default:
-			QMessageBox::critical(m_parent, "Error", "Unknown voronoi diagram calculation method.");
+			QMessageBox::critical(m_parent, "Error", 
+				"Unknown voronoi diagram calculation method.");
 			break;
 	};
 
@@ -537,7 +535,7 @@ void LinesScene::UpdateVoro()
 		penLinEdge.setWidthF(1.);
 		penLinEdge.setColor(QColor::fromRgbF(0.,0.,0.));
 
-		for(const auto& linear_edge : linear_edges)
+		for(const auto& linear_edge : results.linear_edges)
 		{
 			const auto& linear_bisector = std::get<0>(linear_edge);
 
@@ -552,7 +550,7 @@ void LinesScene::UpdateVoro()
 		// parabolic voronoi edges
 		QPen penParaEdge = penLinEdge;
 
-		for(const auto& parabolic_edges : all_parabolic_edges)
+		for(const auto& parabolic_edges : results.parabolic_edges)
 		{
 			const auto& parabolic_points = std::get<0>(parabolic_edges);
 
@@ -581,7 +579,7 @@ void LinesScene::UpdateVoro()
 		brushVertex.setStyle(Qt::SolidPattern);
 		brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
 
-		for(const t_vec& vertex : vertices)
+		for(const t_vec& vertex : results.vertices)
 		{
 			//tl2_ops::operator<<(std::cout, vertex) << std::endl;
 			const t_real width = 8.;
