@@ -51,7 +51,7 @@ public:
 		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
 	bool CalculateLineSegments();
-	bool CalculateVoronoi();
+	bool CalculateVoronoi(bool group_lines=true);
 
 	// clear all data
 	void Clear();

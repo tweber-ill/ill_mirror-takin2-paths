@@ -79,6 +79,9 @@ public:
 	bool GetRemoveVerticesInRegions() const { return m_removeverticesinregions; }
 	void SetRemoveVerticesInRegions(bool);
 
+	bool GetGroupLines() const { return m_grouplines; }
+	void SetGroupLines(bool);
+
 	void AddVertex(const QPointF& pos);
 	void AddRegion(std::vector<t_vec>&& region);
 	void AddGroup(std::pair<std::size_t, std::size_t>&& group);
@@ -128,6 +131,7 @@ private:
 	bool m_calcvoro = true;
 	bool m_calcvorovertex = false;
 	bool m_stoponinters = true;
+	bool m_grouplines = false;
 	bool m_removeverticesinregions = false;
 
 	IntersectionCalculationMethod m_intersectioncalculationmethod

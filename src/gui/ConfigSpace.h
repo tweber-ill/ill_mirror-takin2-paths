@@ -78,6 +78,7 @@ private:
 	PathsBuilder *m_pathsbuilder{};
 	boost::signals2::connection m_pathsbuilderslot{};
 
+	bool m_grouplines = false;
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;
 	bool m_calcvoronoi = true;

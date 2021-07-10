@@ -202,7 +202,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 			//contour = tl2::convert<t_contourvec, t_vec, std::vector>(hull_verts);
 
 			// simplify hull contour
-			geo::simplify_contour<t_contourvec, t_real>(contour, 1., m_eps_angular);
+			geo::simplify_contour<t_contourvec, t_real>(contour, 2., m_eps_angular);
 		}
 	}
 
@@ -216,11 +216,15 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 
 		for(auto& contour : m_wallcontours)
 		{
+			//std::reverse(contour.begin(), contour.end());
 			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour, m_eps);
 			if(slitcontour.size())
 			{
 				for(auto&& poly : slitcontour)
+				{
+					//std::reverse(poly.begin(), poly.end());
 					splitcontours.emplace_back(std::move(poly));
+				}
 			}
 			else
 			{
@@ -289,14 +293,14 @@ bool PathsBuilder::CalculateLineSegments()
 /**
  * calculate the voronoi diagram
  */
-bool PathsBuilder::CalculateVoronoi()
+bool PathsBuilder::CalculateVoronoi(bool group_lines)
 {
 	std::string message{"Calculating voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
 
 	std::tie(m_vertices, m_linear_edges, m_parabolic_edges, m_vorograph)
 		= geo::calc_voro<t_vec, t_line, t_graph>(
-			m_lines, m_linegroups, true, m_voroedge_eps);
+			m_lines, m_linegroups, group_lines, true, m_voroedge_eps);
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;

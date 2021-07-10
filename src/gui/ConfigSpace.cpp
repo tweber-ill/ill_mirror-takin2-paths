@@ -142,7 +142,10 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acSimplifyContour->setChecked(m_simplifycontour);
 	menuOptions->addAction(acSimplifyContour);
 
-	menuOptions->addSeparator();
+	QAction *acGroupLines = new QAction("Group Line Segments", menuView);
+	acGroupLines->setCheckable(true);
+	acGroupLines->setChecked(m_grouplines);
+	menuOptions->addAction(acGroupLines);
 
 	QAction *acSplitContour = new QAction("Split Contour into Convex Regions", menuView);
 	acSplitContour->setCheckable(true);
@@ -268,24 +271,19 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	});
 
 	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
-	{
-		m_simplifycontour = simplify;
-	});
+	{ m_simplifycontour = simplify; });
+
+	connect(acGroupLines, &QAction::toggled, [this](bool group)->void
+	{ m_grouplines = group; });
 
 	connect(acSplitContour, &QAction::toggled, [this](bool split)->void
-	{
-		m_splitcontour = split;
-	});
+	{ m_splitcontour = split; });
 
 	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
-	{
-		m_calcvoronoi = calc;
-	});
+	{ m_calcvoronoi = calc; });
 
 	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
-	{
-		this->SetInstrumentMovable(!enableZoom);
-	});
+	{ this->SetInstrumentMovable(!enableZoom); });
 
 	connect(acResetZoom, &QAction::triggered, [this]()->void
 	{
@@ -380,11 +378,15 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
 }
 
 
+/**
+ * calculate the instrument path
+ */
 void ConfigSpaceDlg::Calculate()
 {
 	if(!m_pathsbuilder)
 		return;
 
+	m_status->setText("Clearing old paths.");
 	m_pathsbuilder->Clear();
 
 	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
@@ -414,7 +416,7 @@ void ConfigSpaceDlg::Calculate()
 	if(m_calcvoronoi)
 	{
 		m_status->setText("Calculating Voronoi regions.");
-		if(!m_pathsbuilder->CalculateVoronoi())
+		if(!m_pathsbuilder->CalculateVoronoi(m_grouplines))
 		{
 			m_status->setText("Error: Voronoi regions calculation failed.");
 			return;
@@ -451,6 +453,7 @@ void ConfigSpaceDlg::UnsetPathsBuilder()
 
 void ConfigSpaceDlg::ClearPlotCurves()
 {
+	// TODO: optimise, as this takes too much time
 	for(auto* plot : m_vorocurves)
 	{
 		m_plot->removePlottable(plot);

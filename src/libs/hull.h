@@ -1265,7 +1265,7 @@ std::tuple<
 	t_graph>	// voronoi vertex graph
 calc_voro(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
-	bool remove_voronoi_vertices_in_regions = false,
+	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
 	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
@@ -1409,7 +1409,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		auto vert1idx = get_vertex_idx(vert1);
 		bool valid_vertices = vert0idx && vert1idx;
 
-		// group lines?
+		// line groups defined?
 		if(line_groups.size())
 		{
 			auto seg1idx = get_segment_idx(edge, false);
@@ -1420,10 +1420,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				auto region1 = get_group_idx(*seg1idx);
 				auto region2 = get_group_idx(*seg2idx);
 
-				// are the generating line segments part of the same group?
-				// if so, ignore this voronoi edge and skip to next one
-				if(region1 && region2 && *region1 == *region2)
-					continue;
+				if(group_lines)
+				{
+					// are the generating line segments part of the same group?
+					// if so, ignore this voronoi edge and skip to next one
+					if(region1 && region2 && *region1 == *region2)
+						continue;
+				}
 			}
 
 
@@ -1744,7 +1747,7 @@ std::tuple<
 	t_graph>							// voronoi vertex graph
 calc_voro_ovd(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
-	bool remove_voronoi_vertices_in_regions = false,	// TODO
+	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
 	typename t_vec::value_type edge_eps = 1e-2)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
