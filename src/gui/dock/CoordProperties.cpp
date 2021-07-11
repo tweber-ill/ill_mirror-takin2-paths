@@ -56,14 +56,15 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	m_checkKfFixed->setChecked(true);
 
 	QPushButton *btnGoto = new QPushButton("Go to Coordinates", this);
+	QPushButton *btnTarget = new QPushButton("Set Target Angles", this);
 
 	const char* labels[] = {
-		"Momentum Transfer (h):", 
-		"Momentum Transfer (k):", 
-		"Momentum Transfer (l):", 
-		"Initial Wavenumber (ki):", 
-		"Final Wavenumber (kf):", 
-		"Energy Transfer (E):"
+		"Momentum (h):", 
+		"Momentum (k):", 
+		"Momentum (l):", 
+		"Initial k (ki):", 
+		"Final k (kf):", 
+		"Energy (E):"
 	};
 
 	auto *groupCoords = new QGroupBox("Crystal Coordinates", this);
@@ -82,6 +83,7 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 
 		layoutStart->addWidget(m_checkKfFixed, y++, 0, 1, 2);
 		layoutStart->addWidget(btnGoto, y++, 0, 1, 2);
+		layoutStart->addWidget(btnTarget, y++, 0, 1, 2);
 	}
 
 	auto *grid = new QGridLayout(this);
@@ -155,7 +157,20 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 			t_real ki = m_spinCoords[3]->value();
 			t_real kf = m_spinCoords[4]->value();
 
-			emit GotoCoordinates(h, k, l, ki, kf);
+			emit GotoCoordinates(h, k, l, ki, kf, false);
+		});
+
+	// only set target angles
+	connect(btnTarget, &QPushButton::clicked,
+		[this]() -> void
+		{
+			t_real h = m_spinCoords[0]->value();
+			t_real k = m_spinCoords[1]->value();
+			t_real l = m_spinCoords[2]->value();
+			t_real ki = m_spinCoords[3]->value();
+			t_real kf = m_spinCoords[4]->value();
+
+			emit GotoCoordinates(h, k, l, ki, kf, true);
 		});
 }
 

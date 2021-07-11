@@ -338,7 +338,10 @@ void PathsTool::RebuildRecentFiles()
 /**
  * go to crystal coordinates
  */
-void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf)
+void PathsTool::GotoCoordinates(
+	t_real h, t_real k, t_real l, 
+	t_real ki, t_real kf,
+	bool only_set_target)
 {
 	std::optional<t_real> a1 = tl2::calc_tas_a1<t_real>(ki, m_dspacings[0]);
 	std::optional<t_real> a5 = tl2::calc_tas_a1<t_real>(kf, m_dspacings[1]);
@@ -370,15 +373,33 @@ void PathsTool::GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real 
 		return;
 	}
 
-	// set scattering angles
-	m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
-	m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(a4);
-	m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+	if(only_set_target)
+	{
+		if(!m_pathProperties)
+			return;
+		auto pathwidget = m_pathProperties->GetWidget();
+		if(!pathwidget)
+			return;
 
-	// set crystal angles
-	m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
-	m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(a3);
-	m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+		t_real a2_abs = *a1 * 2. * m_sensesCCW[0];
+		t_real a4_abs = a4 * m_sensesCCW[1];
+	
+		pathwidget->SetTarget(
+			a2_abs / tl2::pi<t_real> * 180., 
+			a4_abs / tl2::pi<t_real> * 180.);
+	}
+	else
+	{
+		// set scattering angles
+		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(a4);
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+
+		// set crystal angles
+		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(a3);
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+	}
 }
 
 
@@ -419,7 +440,6 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
 		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
 	}
-
 }
 
 
@@ -759,7 +779,20 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		{
 			a2 = a2 / 180. * tl2::pi<t_real>;
 			a4 = a4 / 180. * tl2::pi<t_real>;
+
 			this->GotoAngles(a2/2., std::nullopt, a4, std::nullopt);
+		});
+
+
+	// target angles have changed
+	connect(pathwidget, &PathPropertiesWidget::TargetChanged, 
+		[this](t_real a2, t_real a4)
+		{
+			a2 = a2 / 180. * tl2::pi<t_real>;
+			a4 = a4 / 180. * tl2::pi<t_real>;
+
+			if(this->m_dlgConfigSpace)
+				this->m_dlgConfigSpace->UpdateTarget(a2, a4);
 		});
 	// --------------------------------------------------------------------
 

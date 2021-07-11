@@ -55,23 +55,46 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->setAntialiased(false);
 
 	// instrument position plot
-	m_instrposplot = m_plot->addGraph();
-	m_instrposplot->setLineStyle(QCPGraph::lsNone);
-	m_instrposplot->setAntialiased(true);
+	{
+		m_instrposplot = m_plot->addGraph();
+		m_instrposplot->setLineStyle(QCPGraph::lsNone);
+		m_instrposplot->setAntialiased(true);
 
-	QPen instrpen = m_instrposplot->pen();
-	instrpen.setColor(QColor::fromRgbF(0., 1., 0.));
-	m_instrposplot->setPen(instrpen);
+		QPen instrpen = m_instrposplot->pen();
+		instrpen.setColor(QColor::fromRgbF(1., 0., 0.));
+		m_instrposplot->setPen(instrpen);
 
-	QBrush instrbrush = m_instrposplot->brush();
-	instrbrush.setColor(QColor::fromRgbF(0., 1., 0.));
-	instrbrush.setStyle(Qt::SolidPattern);
-	m_instrposplot->setBrush(instrbrush);
+		QBrush instrbrush = m_instrposplot->brush();
+		instrbrush.setColor(QColor::fromRgbF(1., 0., 0.));
+		instrbrush.setStyle(Qt::SolidPattern);
+		m_instrposplot->setBrush(instrbrush);
 
-	QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
-	scatterstyle.setPen(instrpen);
-	scatterstyle.setBrush(instrbrush);
-	m_instrposplot->setScatterStyle(scatterstyle);
+		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
+		scatterstyle.setPen(instrpen);
+		scatterstyle.setBrush(instrbrush);
+		m_instrposplot->setScatterStyle(scatterstyle);
+	}
+
+	// target position plot
+	{
+		m_targetposplot = m_plot->addGraph();
+		m_targetposplot->setLineStyle(QCPGraph::lsNone);
+		m_targetposplot->setAntialiased(true);
+
+		QPen instrpen = m_targetposplot->pen();
+		instrpen.setColor(QColor::fromRgbF(0., 1., 0.));
+		m_targetposplot->setPen(instrpen);
+
+		QBrush instrbrush = m_targetposplot->brush();
+		instrbrush.setColor(QColor::fromRgbF(0., 1., 0.));
+		instrbrush.setStyle(Qt::SolidPattern);
+		m_targetposplot->setBrush(instrbrush);
+
+		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
+		scatterstyle.setPen(instrpen);
+		scatterstyle.setBrush(instrbrush);
+		m_targetposplot->setScatterStyle(scatterstyle);
+	}
 
 	// status label
 	m_status = new QLabel(this);
@@ -338,6 +361,20 @@ void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sen
 	y << monoScAngle / tl2::pi<t_real> * t_real(180);
 
 	m_instrposplot->setData(x, y);
+	m_plot->replot();
+}
+
+
+/**
+ * update the current target position indicator
+ */
+void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle)
+{
+	QVector<t_real> x, y;
+	x << sampleScAngle / tl2::pi<t_real> * t_real(180);
+	y << monoScAngle / tl2::pi<t_real> * t_real(180);
+
+	m_targetposplot->setData(x, y);
 	m_plot->replot();
 }
 

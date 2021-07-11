@@ -24,20 +24,17 @@ public:
 	virtual ~PathPropertiesWidget();
 
 public slots:
-	void SetStart(t_real a2, t_real a4);
-	void SetFinish(t_real a2, t_real a4);
+	void SetTarget(t_real a2, t_real a4);
 
 signals:
-	void StartChanged(t_real a2, t_real a4);
-	void FinishChanged(t_real a2, t_real a4);
+	void TargetChanged(t_real a2, t_real a4);
 	void GotoAngles(t_real a2, t_real a4);
 
 private:
 	// number of coordinate elements
 	static constexpr std::size_t m_num_coord_elems = 2;
 
-	// path start and finish (a2, a4) coordinates
-	QDoubleSpinBox *m_spinStart[m_num_coord_elems]{nullptr, nullptr};
+	// path target (a2, a4) coordinates
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 };
 

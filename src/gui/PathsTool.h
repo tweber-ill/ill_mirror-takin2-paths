@@ -43,7 +43,8 @@ private:
 	QSettings m_sett{"takin", "taspaths"};
 
 	// renderer
-	std::shared_ptr<PathsRenderer> m_renderer{ std::make_shared<PathsRenderer>(this) };
+	std::shared_ptr<PathsRenderer> m_renderer
+		{ std::make_shared<PathsRenderer>(this) };
 	int m_multisamples{ 8 };
 
 	// gl info strings
@@ -83,7 +84,9 @@ private:
 	std::string m_curObj;
 
 	// crystal matrices
-	t_mat m_B = tl2::B_matrix<t_mat>(5., 5., 5., tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5);
+	t_mat m_B = tl2::B_matrix<t_mat>(
+		5., 5., 5., 
+		tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5);
 	t_mat m_UB = tl2::unit<t_mat>(3);
 
 	// scattering plane
@@ -142,8 +145,10 @@ protected:
 
 
 protected slots:
-	// go to crystal coordinates
-	void GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	// go to crystal coordinates (or set target angles)
+	void GotoCoordinates(t_real h, t_real k, t_real l, 
+		t_real ki, t_real kf,
+		bool only_set_target);
 
 	// go to instrument angles
 	void GotoAngles(std::optional<t_real> a1,
@@ -180,7 +185,8 @@ public:
 
 	~PathsTool() = default;
 
-	void SetInitialInstrumentFile(const std::string& file) { m_initialInstrFile = file;  }
+	void SetInitialInstrumentFile(const std::string& file)
+	{ m_initialInstrFile = file;  }
 };
 // ----------------------------------------------------------------------------
 
