@@ -614,17 +614,20 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
 	m_xtalProperties = std::make_shared<XtalPropertiesDockWidget>(this);
 	m_xtalInfos = std::make_shared<XtalInfoDockWidget>(this);
+	m_coordProperties = std::make_shared<CoordPropertiesDockWidget>(this);
 	m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 	m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalInfos.get());
+	addDockWidget(Qt::RightDockWidgetArea, m_coordProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
 
 	auto* taswidget = m_tasProperties->GetWidget().get();
 	auto* xtalwidget = m_xtalProperties->GetWidget().get();
+	auto* coordwidget = m_coordProperties->GetWidget().get();
 	auto* pathwidget = m_pathProperties->GetWidget().get();
 	auto* camwidget = m_camProperties->GetWidget().get();
 
@@ -747,7 +750,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		});
 
 	// goto coordinates
-	connect(pathwidget, &PathPropertiesWidget::Goto, this, &PathsTool::GotoCoordinates);
+	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates, 
+		this, &PathsTool::GotoCoordinates);
+
+	// goto angles
+	connect(pathwidget, &PathPropertiesWidget::GotoAngles, 
+		[this](t_real a2, t_real a4)
+		{
+			a2 = a2 / 180. * tl2::pi<t_real>;
+			a4 = a4 / 180. * tl2::pi<t_real>;
+			this->GotoAngles(a2/2., std::nullopt, a4, std::nullopt);
+		});
 	// --------------------------------------------------------------------
 
 
@@ -816,6 +829,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuView->addAction(m_tasProperties->toggleViewAction());
 	menuView->addAction(m_xtalProperties->toggleViewAction());
 	menuView->addAction(m_xtalInfos->toggleViewAction());
+	menuView->addAction(m_coordProperties->toggleViewAction());
 	menuView->addAction(m_pathProperties->toggleViewAction());
 	menuView->addAction(m_camProperties->toggleViewAction());
 	//menuView->addSeparator();

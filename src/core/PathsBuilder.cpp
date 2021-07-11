@@ -379,3 +379,14 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 	ostr << "</lines2d>" << std::endl;
 	return true;
 }
+
+
+/**
+ * find a path from an initial (a2, a4) to a final (a2, a4)
+ */
+void PathsBuilder::FindPath(
+	t_real a2_i, t_real a4_i, 
+	t_real a2_f, t_real a4_f)
+{
+
+}

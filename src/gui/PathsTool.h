@@ -31,6 +31,7 @@
 
 #include "dock/TASProperties.h"
 #include "dock/XtalProperties.h"
+#include "dock/CoordProperties.h"
 #include "dock/PathProperties.h"
 #include "dock/CamProperties.h"
 
@@ -63,6 +64,7 @@ private:
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
 	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos;
+	std::shared_ptr<CoordPropertiesDockWidget> m_coordProperties;
 	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
 

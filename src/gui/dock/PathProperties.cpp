@@ -28,31 +28,19 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinStart[i] = new QDoubleSpinBox(this);
 		m_spinFinish[i] = new QDoubleSpinBox(this);
 
-		m_spinStart[i]->setMinimum(-999);
-		m_spinStart[i]->setMaximum(999);
+		m_spinStart[i]->setMinimum(-180);
+		m_spinStart[i]->setMaximum(180);
 		m_spinStart[i]->setSingleStep(0.1);
 		m_spinStart[i]->setDecimals(g_prec_gui);
 		m_spinStart[i]->setValue(0);
+		m_spinStart[i]->setSuffix("°");
 
-		if(i==3 || i==4)
-			m_spinStart[i]->setSuffix(" Å⁻¹");
-		else if(i==5)
-			m_spinStart[i]->setSuffix(" meV");
-		else
-			m_spinStart[i]->setSuffix(" rlu");
-
-		m_spinFinish[i]->setMinimum(-999);
-		m_spinFinish[i]->setMaximum(999);
+		m_spinFinish[i]->setMinimum(-180);
+		m_spinFinish[i]->setMaximum(180);
 		m_spinFinish[i]->setSingleStep(0.1);
 		m_spinFinish[i]->setDecimals(g_prec_gui);
 		m_spinFinish[i]->setValue(0);
-
-		if(i==3 || i==4)
-			m_spinFinish[i]->setSuffix(" Å⁻¹");
-		else if(i==5)
-			m_spinFinish[i]->setSuffix(" meV");
-		else
-			m_spinFinish[i]->setSuffix(" rlu");
+		m_spinFinish[i]->setSuffix("°");
 	}
 
 	for(std::size_t i=1; i<m_num_coord_elems; ++i)
@@ -61,30 +49,19 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		QWidget::setTabOrder(m_spinFinish[i-1], m_spinFinish[i]);
 
 
-	m_checkStartKfFixed = new QCheckBox(this);
-	m_checkFinishKfFixed = new QCheckBox(this);
-	m_checkStartKfFixed->setText("Keep kf = const.");
-	m_checkFinishKfFixed->setText("Keep kf = const.");
-
 	// default values
-	m_spinStart[0]->setValue(1);
-	m_spinStart[3]->setValue(1.4);
-	m_spinStart[4]->setValue(1.4);
-	m_spinStart[5]->setValue(0);
-	m_checkStartKfFixed->setChecked(true);
+	m_spinStart[0]->setValue(90.);
+	m_spinStart[1]->setValue(90.);
 
-	m_spinFinish[0]->setValue(1);
-	m_spinFinish[3]->setValue(1.4);
-	m_spinFinish[4]->setValue(1.4);
-	m_spinFinish[5]->setValue(0);
-	m_checkFinishKfFixed->setChecked(true);
+	m_spinFinish[0]->setValue(90.);
+	m_spinFinish[1]->setValue(90.);
 
-	QPushButton *btnGotoStart = new QPushButton("Go to Start Coordinate", this);
-	QPushButton *btnGotoFinish = new QPushButton("Go to Finish Coordinate", this);
+	QPushButton *btnGotoStart = new QPushButton("Go to Start Angles", this);
+	QPushButton *btnGotoFinish = new QPushButton("Go to Finish Angles", this);
 
-	const char* labels[] = {"h:", "k:", "l:", "ki:", "kf:", "E:"};
+	const char* labels[] = {"Monochromator:", "Sample:"};
 
-	auto *groupStart = new QGroupBox("Start Coordinate", this);
+	auto *groupStart = new QGroupBox("Start Scattering Angles", this);
 	{
 		auto *layoutStart = new QGridLayout(groupStart);
 		layoutStart->setHorizontalSpacing(2);
@@ -98,11 +75,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			layoutStart->addWidget(m_spinStart[i], y++, 1, 1, 1);
 		}
 
-		layoutStart->addWidget(m_checkStartKfFixed, y++, 0, 1, 2);
 		layoutStart->addWidget(btnGotoStart, y++, 0, 1, 2);
 	}
 
-	auto *groupFinish = new QGroupBox("Finish Coordinate", this);
+	auto *groupFinish = new QGroupBox("Finish Scattering Angles", this);
 	{
 		auto *layoutFinish = new QGridLayout(groupFinish);
 		layoutFinish->setHorizontalSpacing(2);
@@ -116,7 +92,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			layoutFinish->addWidget(m_spinFinish[i], y++, 1, 1, 1);
 		}
 
-		layoutFinish->addWidget(m_checkFinishKfFixed, y++, 0, 1, 2);
 		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
 	}
 
@@ -132,7 +107,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 
 	for(std::size_t i=0; i<m_num_coord_elems-1; ++i)
 	{
-		// start coordinates
+		// start angles
 		connect(m_spinStart[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
@@ -146,15 +121,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 						coords[j] = m_spinStart[j]->value();
 				}
 
-				t_real E = tl2::calc_tas_E<t_real>(coords[3], coords[4]);
-				m_spinStart[5]->blockSignals(true);
-				m_spinStart[5]->setValue(E);
-				m_spinStart[5]->blockSignals(false);
-
-				emit StartChanged(coords[0], coords[1], coords[2], coords[3], coords[4]);
+				emit StartChanged(coords[0], coords[1]);
 			});
 
-		// finish coordinates
+		// finish angles
 		connect(m_spinFinish[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
@@ -168,93 +138,29 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 						coords[j] = m_spinFinish[j]->value();
 				}
 
-				t_real E = tl2::calc_tas_E<t_real>(coords[3], coords[4]);
-				m_spinFinish[5]->blockSignals(true);
-				m_spinFinish[5]->setValue(E);
-				m_spinFinish[5]->blockSignals(false);
-
-				emit FinishChanged(coords[0], coords[1], coords[2], coords[3], coords[4]);
+				emit FinishChanged(coords[0], coords[1]);
 			});
 	}
 
-	// start energy
-	connect(m_spinStart[5],
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real E) -> void
-		{
-			if(m_checkStartKfFixed->isChecked())
-			{
-				t_real kf = m_spinStart[4]->value();
-				t_real ki = tl2::calc_tas_ki<t_real>(kf, E);
 
-				// set ki
-				m_spinStart[3]->blockSignals(true);
-				m_spinStart[3]->setValue(ki);
-				m_spinStart[3]->blockSignals(false);
-			}
-			else
-			{
-				t_real ki = m_spinStart[3]->value();
-				t_real kf = tl2::calc_tas_kf<t_real>(ki, E);
-
-				// set kf
-				m_spinStart[4]->blockSignals(true);
-				m_spinStart[4]->setValue(kf);
-				m_spinStart[4]->blockSignals(false);
-			}
-		});
-
-	// finish energy
-	connect(m_spinFinish[5],
-		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-		[this](t_real E) -> void
-		{
-			if(m_checkFinishKfFixed->isChecked())
-			{
-				t_real kf = m_spinFinish[4]->value();
-				t_real ki = tl2::calc_tas_ki<t_real>(kf, E);
-
-				// set ki
-				m_spinFinish[3]->blockSignals(true);
-				m_spinFinish[3]->setValue(ki);
-				m_spinFinish[3]->blockSignals(false);
-			}
-			else
-			{
-				t_real ki = m_spinFinish[3]->value();
-				t_real kf = tl2::calc_tas_kf<t_real>(ki, E);
-
-				// set kf
-				m_spinFinish[4]->blockSignals(true);
-				m_spinFinish[4]->setValue(kf);
-				m_spinFinish[4]->blockSignals(false);
-			}
-		});
-
-	// go to start coordinate
+	// go to start angles
 	connect(btnGotoStart, &QPushButton::clicked,
 		[this]() -> void
 		{
-			t_real h = m_spinStart[0]->value();
-			t_real k = m_spinStart[1]->value();
-			t_real l = m_spinStart[2]->value();
-			t_real ki = m_spinStart[3]->value();
-			t_real kf = m_spinStart[4]->value();
+			t_real a2 = m_spinStart[0]->value();
+			t_real a4 = m_spinStart[1]->value();
 
-			emit Goto(h, k, l, ki, kf);
+			emit GotoAngles(a2, a4);
 		});
 
-	// go to finish coordinate
+	// go to finish angles
 	connect(btnGotoFinish, &QPushButton::clicked,
 		[this]() -> void
 		{
-			t_real h = m_spinFinish[0]->value();
-			t_real k = m_spinFinish[1]->value();
-			t_real l = m_spinFinish[2]->value();
-			t_real ki = m_spinFinish[3]->value();
-			t_real kf = m_spinFinish[4]->value();
+			t_real a2 = m_spinFinish[0]->value();
+			t_real a4 = m_spinFinish[1]->value();
 
-			emit Goto(h, k, l, ki, kf);
+			emit GotoAngles(a2, a4);
 		});
 }
 
@@ -264,31 +170,23 @@ PathPropertiesWidget::~PathPropertiesWidget()
 }
 
 
-void PathPropertiesWidget::SetStart(t_real h, t_real k, t_real l, t_real ki, t_real kf)
+void PathPropertiesWidget::SetStart(t_real a2, t_real a4)
 {
 	this->blockSignals(true);
 
-	m_spinStart[0]->setValue(h);
-	m_spinStart[1]->setValue(k);
-	m_spinStart[2]->setValue(l);
-	m_spinStart[3]->setValue(ki);
-	m_spinStart[4]->setValue(kf);
-	m_spinStart[5]->setValue(tl2::calc_tas_E<t_real>(ki, kf));
+	m_spinStart[0]->setValue(a2);
+	m_spinStart[1]->setValue(a4);
 
 	this->blockSignals(false);
 }
 
 
-void PathPropertiesWidget::SetFinish(t_real h, t_real k, t_real l, t_real ki, t_real kf)
+void PathPropertiesWidget::SetFinish(t_real a2, t_real a4)
 {
 	this->blockSignals(true);
 
-	m_spinFinish[0]->setValue(h);
-	m_spinFinish[1]->setValue(k);
-	m_spinFinish[2]->setValue(l);
-	m_spinFinish[3]->setValue(ki);
-	m_spinFinish[4]->setValue(kf);
-	m_spinFinish[5]->setValue(tl2::calc_tas_E<t_real>(ki, kf));
+	m_spinFinish[0]->setValue(a2);
+	m_spinFinish[1]->setValue(a4);
 
 	this->blockSignals(false);
 }

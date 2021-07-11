@@ -34,8 +34,13 @@ public:
 	using t_line = std::pair<t_vec, t_vec>;
 
 	// voronoi edges
-	using t_voronoiedge_linear = std::tuple<t_line, std::optional<std::size_t>, std::optional<std::size_t>>;
-	using t_voronoiedge_parabolic = std::tuple<std::vector<t_vec>, std::size_t, std::size_t>;
+	using t_voronoiedge_linear = 
+		std::tuple<t_line, 
+		std::optional<std::size_t>, 
+		std::optional<std::size_t>>;
+	using t_voronoiedge_parabolic = 
+		std::tuple<std::vector<t_vec>, 
+		std::size_t, std::size_t>;
 
 	// voronoi graph
 	using t_graph = geo::AdjacencyList<t_real>;
@@ -65,12 +70,16 @@ public:
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
 	// get voronoi vertices and edges
-	const std::vector<t_vec>& GetVoronoiVertices() const { return m_voro_results.vertices; }
-	const std::vector<t_voronoiedge_linear>& GetVoronoiEdgesLinear() const { return m_voro_results.linear_edges; }
-	const std::vector<t_voronoiedge_parabolic>& GetVoronoiEdgesParabolic() const { return m_voro_results.parabolic_edges; }
+	const std::vector<t_vec>& GetVoronoiVertices() const
+	{ return m_voro_results.vertices; }
+	const std::vector<t_voronoiedge_linear>& GetVoronoiEdgesLinear() const
+	{ return m_voro_results.linear_edges; }
+	const std::vector<t_voronoiedge_parabolic>& GetVoronoiEdgesParabolic() const
+	{ return m_voro_results.parabolic_edges; }
 
 	// get voronoi graphs
-	const t_graph& GetVoronoiGraph() const { return m_voro_results.graph; }
+	const t_graph& GetVoronoiGraph() const 
+	{ return m_voro_results.graph; }
 
 	// save contour line segments to lines test tools
 	bool SaveToLinesTool(std::ostream& ostr);
@@ -78,7 +87,7 @@ public:
 	// connection to progress signal
 	template<class t_slot>
 	boost::signals2::connection AddProgressSlot(const t_slot& slot)
-		{ return m_sigProgress->connect(slot); }
+	{ return m_sigProgress->connect(slot); }
 
 	t_real GetEpsilon() const { return m_eps; }
 	void SetEpsilon(t_real eps) { m_eps = eps; }
@@ -92,6 +101,8 @@ public:
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
+	// find a path from an initial (a2, a4) to a final (a2, a4)
+	void FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
 
 private:
 	const InstrumentSpace *m_instrspace{};

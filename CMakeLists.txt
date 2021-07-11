@@ -160,6 +160,7 @@ add_executable(taspaths
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/dock/TASProperties.cpp src/gui/dock/TASProperties.h
 	src/gui/dock/XtalProperties.cpp src/gui/dock/XtalProperties.h
+	src/gui/dock/CoordProperties.cpp src/gui/dock/CoordProperties.h
 	src/gui/dock/PathProperties.cpp src/gui/dock/PathProperties.h
 	src/gui/dock/CamProperties.cpp src/gui/dock/CamProperties.h
 	src/gui/ConfigSpace.cpp src/gui/ConfigSpace.h

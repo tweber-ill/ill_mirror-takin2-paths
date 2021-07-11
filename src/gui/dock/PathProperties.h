@@ -24,27 +24,21 @@ public:
 	virtual ~PathPropertiesWidget();
 
 public slots:
-	void SetStart(t_real h, t_real k, t_real l, t_real ki, t_real kf);
-	void SetFinish(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void SetStart(t_real a2, t_real a4);
+	void SetFinish(t_real a2, t_real a4);
 
 signals:
-	void StartChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
-	void FinishChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
-	void Goto(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void StartChanged(t_real a2, t_real a4);
+	void FinishChanged(t_real a2, t_real a4);
+	void GotoAngles(t_real a2, t_real a4);
 
 private:
 	// number of coordinate elements
-	static constexpr std::size_t m_num_coord_elems = 6;
+	static constexpr std::size_t m_num_coord_elems = 2;
 
-	// path start (h, k, l, ki, kf, E) coordinates
-	QDoubleSpinBox *m_spinStart[m_num_coord_elems]
-		{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-	QCheckBox *m_checkStartKfFixed{nullptr};
-
-	// path finish (h, k, l, ki, kf, E) coordinates
-	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]
-		{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-	QCheckBox *m_checkFinishKfFixed{nullptr};
+	// path start and finish (a2, a4) coordinates
+	QDoubleSpinBox *m_spinStart[m_num_coord_elems]{nullptr, nullptr};
+	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 };
 
 
