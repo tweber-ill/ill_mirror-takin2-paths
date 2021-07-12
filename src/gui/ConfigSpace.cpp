@@ -142,6 +142,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu
 	QMenu *menuFile = new QMenu("File", this);
 	QMenu *menuOptions = new QMenu("Options", this);
+	QMenu *menuCalc = new QMenu("Calculate", this);
 	QMenu *menuView = new QMenu("View", this);
 
 	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
@@ -180,6 +181,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuOptions->addAction(acCalcVoro);
 
+	QAction *acCalcMesh = new QAction("Calculate Path Mesh", menuView);
+	menuCalc->addAction(acCalcMesh);
+
+	QAction *acCalcPath = new QAction("Calculate Path", menuView);
+	menuCalc->addAction(acCalcPath);
+
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);
@@ -191,6 +198,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
 	menuBar->addMenu(menuOptions);
+	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
 
@@ -318,7 +326,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
 	connect(acSaveGraph, &QAction::triggered, this, saveGraph);
 	connect(btnSave, &QPushButton::clicked, savePDF);
-	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::Calculate);
+	connect(acCalcMesh, &QAction::triggered, this, &ConfigSpaceDlg::CalculatePathMesh);
+	connect(acCalcPath, &QAction::triggered, this, &ConfigSpaceDlg::CalculatePath);
+	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::CalculatePathMesh);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
 	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
 
@@ -345,20 +355,20 @@ void ConfigSpaceDlg::accept()
  */
 void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sensesCCW)
 {
-	t_real monoScAngle = instr.GetMonochromator().GetAxisAngleOut();
-	t_real sampleScAngle = instr.GetSample().GetAxisAngleOut();
-	//t_real anaScAngle = instr.GetAnalyser().GetAxisAngleOut();
+	m_curMonoScatteringAngle = instr.GetMonochromator().GetAxisAngleOut();
+	m_curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
+	//m_curAnaScatteringAngle = instr.GetAnalyser().GetAxisAngleOut();
 
 	if(sensesCCW)
 	{
-		monoScAngle *= sensesCCW[0];
-		sampleScAngle *= sensesCCW[1];
-		//anaScAngle *= sensesCCW[2];
+		m_curMonoScatteringAngle *= sensesCCW[0];
+		m_curSampleScatteringAngle *= sensesCCW[1];
+		//m_anaScatteringAngle *= sensesCCW[2];
 	}
 
 	QVector<t_real> x, y;
-	x << sampleScAngle / tl2::pi<t_real> * t_real(180);
-	y << monoScAngle / tl2::pi<t_real> * t_real(180);
+	x << m_curSampleScatteringAngle / tl2::pi<t_real> * t_real(180);
+	y << m_curMonoScatteringAngle / tl2::pi<t_real> * t_real(180);
 
 	m_instrposplot->setData(x, y);
 	m_plot->replot();
@@ -370,9 +380,12 @@ void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sen
  */
 void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle)
 {
+	m_targetMonoScatteringAngle = monoScAngle;
+	m_targetSampleScatteringAngle = sampleScAngle;
+
 	QVector<t_real> x, y;
-	x << sampleScAngle / tl2::pi<t_real> * t_real(180);
-	y << monoScAngle / tl2::pi<t_real> * t_real(180);
+	x << m_targetSampleScatteringAngle / tl2::pi<t_real> * t_real(180);
+	y << m_targetMonoScatteringAngle / tl2::pi<t_real> * t_real(180);
 
 	m_targetposplot->setData(x, y);
 	m_plot->replot();
@@ -416,9 +429,9 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
 
 
 /**
- * calculate the instrument path
+ * calculate the mesh of possible instrument paths
  */
-void ConfigSpaceDlg::Calculate()
+void ConfigSpaceDlg::CalculatePathMesh()
 {
 	if(!m_pathsbuilder)
 		return;
@@ -462,6 +475,23 @@ void ConfigSpaceDlg::Calculate()
 
 	m_status->setText("Calculation finished.");
 	RedrawPlot();
+}
+
+
+/**
+ * calculate the instrument path from the current to the target position
+ */
+void ConfigSpaceDlg::CalculatePath()
+{
+	if(!m_pathsbuilder)
+		return;
+
+	// find path from current to target position
+	m_pathsbuilder->FindPath(
+		m_curMonoScatteringAngle, m_curSampleScatteringAngle,
+		m_targetMonoScatteringAngle, m_targetSampleScatteringAngle);
+
+	// TODO
 }
 
 

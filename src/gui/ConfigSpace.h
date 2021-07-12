@@ -29,7 +29,8 @@ public:
 	void SetPathsBuilder(PathsBuilder* builder);
 	void UnsetPathsBuilder();
 
-	void Calculate();
+	void CalculatePathMesh();
+	void CalculatePath();
 
 	// receivers for instrument (space) and target position update signals
 	void UpdateInstrument(const Instrument& instr, const t_real* sensesCCW = nullptr);
@@ -70,11 +71,17 @@ private:
 	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
-	// current instrument position
-	QCPGraph *m_instrposplot{};
-	// target instrument position
-	QCPGraph *m_targetposplot{};
 	std::vector<QCPCurve*> m_vorocurves{};
+
+	// current instrument position
+	t_real m_curMonoScatteringAngle{};
+	t_real m_curSampleScatteringAngle{};
+	QCPGraph *m_instrposplot{};
+
+	// target instrument position
+	t_real m_targetMonoScatteringAngle{};
+	t_real m_targetSampleScatteringAngle{};
+	QCPGraph *m_targetposplot{};
 
 	QLabel *m_status{};
 	QDoubleSpinBox *m_spinDelta2ThS{}, *m_spinDelta2ThM{};

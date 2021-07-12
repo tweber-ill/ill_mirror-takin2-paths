@@ -388,5 +388,14 @@ void PathsBuilder::FindPath(
 	t_real a2_i, t_real a4_i, 
 	t_real a2_f, t_real a4_f)
 {
+	a2_i *= 180. / tl2::pi<t_real>;
+	a4_i *= 180. / tl2::pi<t_real>;
+	a2_f *= 180. / tl2::pi<t_real>;
+	a4_f *= 180. / tl2::pi<t_real>;
 
+	std::cout << "a2_i = " << a2_i << ", a4_i = " << a4_i
+		<< "; a2_f = " << a2_f << ", a4_f = " << a4_f 
+		<< "." << std::endl;
+
+	// TODO
 }
