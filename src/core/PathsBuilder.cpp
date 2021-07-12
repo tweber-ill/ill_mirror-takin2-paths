@@ -393,9 +393,78 @@ void PathsBuilder::FindPath(
 	a2_f *= 180. / tl2::pi<t_real>;
 	a4_f *= 180. / tl2::pi<t_real>;
 
+#ifdef DEBUG
 	std::cout << "a2_i = " << a2_i << ", a4_i = " << a4_i
 		<< "; a2_f = " << a2_f << ", a4_f = " << a4_f 
 		<< "." << std::endl;
+#endif
 
-	// TODO
+
+	// vertices in configuration space
+	t_vec vec_i = tl2::create<t_vec>({ a2_i, a4_i });
+	t_vec vec_f = tl2::create<t_vec>({ a2_f, a4_f });
+
+
+	// find closest voronoi vertices
+	const auto& voro_vertices = m_voro_results.vertices;
+
+	std::size_t idx_i = 0;
+	std::size_t idx_f = 0;
+
+	t_real mindist_i = std::numeric_limits<t_real>::max();
+	t_real mindist_f = std::numeric_limits<t_real>::max();
+
+	for(std::size_t idx_vert = 0; idx_vert < voro_vertices.size(); ++idx_vert)
+	{
+		const t_vec& cur_vert = voro_vertices[idx_vert];
+
+		t_vec diff_i = vec_i - cur_vert;
+		t_vec diff_f = vec_f - cur_vert;
+
+		t_real dist_i_sq = tl2::inner<t_vec>(diff_i, diff_i);
+		t_real dist_f_sq = tl2::inner<t_vec>(diff_f, diff_f);
+
+		if(dist_i_sq < mindist_i)
+		{
+			mindist_i = dist_i_sq;
+			idx_i = idx_vert;
+		}
+
+		if(dist_f_sq < mindist_f)
+		{
+			mindist_f = dist_f_sq;
+			idx_f = idx_vert;
+		}
+	}
+
+#ifdef DEBUG
+	std::cout << "Nearest voronoi vertices: " << idx_i << ", " << idx_f << "." << std::endl;
+#endif
+
+
+	// find the shortest path between the voronoi vertices
+	const auto& voro_graph = m_voro_results.graph;
+
+	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
+	const auto predecessors = geo::dijk(voro_graph, ident_i);
+
+	std::size_t cur_vertidx = idx_f;
+	while(true)
+	{
+		if(cur_vertidx == idx_i)
+		{
+			std::cout << "Path completed." << std::endl;
+			break;
+		}
+
+		auto next_vertidx = predecessors[cur_vertidx];
+		if(!next_vertidx)
+		{
+			std::cout << "Path not found." << std::endl;
+			break;
+		}
+
+		std::cout << "Predecessor of vertex " << cur_vertidx << ": " << *next_vertidx << std::endl;
+		cur_vertidx = *next_vertidx;
+	}
 }
