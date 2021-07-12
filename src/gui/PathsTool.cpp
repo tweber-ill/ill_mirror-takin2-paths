@@ -640,7 +640,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
-	addDockWidget(Qt::LeftDockWidgetArea, m_xtalInfos.get());
+	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_coordProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
