@@ -51,7 +51,7 @@ void PathsBuilder::Clear()
 /**
  * convert a pixel of the plot image into the angular range of the plot 
  */
-t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg) const
+t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
 {
 	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1], 
 		img_x / t_real(m_img.GetWidth()));
@@ -64,6 +64,12 @@ t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg) const
 		y *= t_real(180) / tl2::pi<t_real>;
 	}
 
+	if(inc_sense)
+	{
+		x *= m_sensesCCW[1];
+		y *= m_sensesCCW[0];
+	}
+
 	return tl2::create<t_vec>({x, y});
 }
 
@@ -71,13 +77,20 @@ t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg) const
 /**
  * convert angular coordinates to a pixel in the plot image 
  */
-t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg) const
+t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool inc_sense) const
 {
 	if(deg)
 	{
 		angle_x *= tl2::pi<t_real> / t_real(180);
 		angle_y *= tl2::pi<t_real> / t_real(180);
 	}
+
+	if(inc_sense)
+	{
+		angle_x *= m_sensesCCW[1];
+		angle_y *= m_sensesCCW[0];
+	}
+
 
 	t_real x = std::lerp(t_real(0.), t_real(m_img.GetWidth()), 
 		(angle_x - m_sampleScatteringRange[0]) / (m_sampleScatteringRange[1] - m_sampleScatteringRange[0]));
@@ -112,10 +125,10 @@ bool PathsBuilder::CalculateConfigSpace(
 	if(!m_instrspace)
 		return false;
 
-	m_monoScatteringRange[0] = starta2;
-	m_monoScatteringRange[1] = enda2;
 	m_sampleScatteringRange[0] = starta4;
 	m_sampleScatteringRange[1] = enda4;
+	m_monoScatteringRange[0] = starta2;
+	m_monoScatteringRange[1] = enda2;
 
 	std::ostringstream ostrmsg;
 	ostrmsg << "Calculating configuration space in " << m_maxnum_threads << " threads...";
@@ -153,15 +166,15 @@ bool PathsBuilder::CalculateConfigSpace(
 	std::atomic<std::size_t> num_pixels = 0;
 	for(std::size_t img_row=0; img_row<img_h; ++img_row)
 	{
-		t_real a2 = std::lerp(starta2, enda2, t_real(img_row)/t_real(img_h));
-
-		auto task = [this, img_w, img_row, starta4, enda4, a2, a6, &num_pixels]()
+		auto task = [this, img_w, img_row, a6, &num_pixels]()
 		{
 			InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
 			for(std::size_t img_col=0; img_col<img_w; ++img_col)
 			{
-				t_real a4 = std::lerp(starta4, enda4, t_real(img_col)/t_real(img_w));
+				t_vec angle = PixelToAngle(img_col, img_row, false, true);
+				t_real a4 = angle[0];
+				t_real a2 = angle[1];
 				t_real a3 = a4 * 0.5;
 
 				// set scattering angles
@@ -528,10 +541,12 @@ InstrumentPath PathsBuilder::FindPath(
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
 		const t_vec& voro_vertex = path.voronoi_vertices[idx];
+		const t_vec voro_angle = PixelToAngle(voro_vertex[0], voro_vertex[1], true);
 
-		using namespace tl2_ops;
-		std::cout << "\tvertex " << voro_idx << ": (" 
-			<< voro_vertex[0] << ", " << voro_vertex[1] << ")" << std::endl;
+		std::cout << "\tvertex index " << voro_idx << ": pixel (" 
+			<< voro_vertex[0] << ", " << voro_vertex[1] << "), angle (" 
+			<< voro_angle[0] << ", " << voro_angle[1] << ")" 
+			<< std::endl;
 	}
 
 	return path;

@@ -59,8 +59,8 @@ public:
 	PathsBuilder();
 	~PathsBuilder();
 
-	t_vec PixelToAngle(t_real x, t_real y, bool deg = true) const;
-	t_vec AngleToPixel(t_real x, t_real y, bool deg = true) const;
+	t_vec PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
+	t_vec AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
 
 	// input instrument
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }

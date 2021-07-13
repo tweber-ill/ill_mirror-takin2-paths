@@ -512,7 +512,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
 		{
 			const std::string& id = verts[vertidx];
-
 			auto neighbours_outgoing = graph.GetNeighbours(id, 1);
 
 			if(neighbours_outgoing.size() == 0)
@@ -703,8 +702,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				tl2::create<t_vec>({ pos1.x, pos1.y }),
 				tl2::create<t_vec>({ pos2.x, pos2.y}) );
 
-			linear_edges.emplace_back(std::make_tuple(line, vert1idx, vert2idx));
-
+			linear_edges.emplace_back(
+				std::make_tuple(line, vert1idx, vert2idx));
 			bisector_handled = true;
 		}
 		else if(ty == ovd::PARABOLA)
@@ -720,7 +719,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				para_edge.emplace_back(tl2::create<t_vec>({ pt.x, pt.y }));
 			}
 
-			all_parabolic_edges.emplace_back(std::make_tuple(std::move(para_edge), vert1idx, vert2idx));
+			all_parabolic_edges.emplace_back(
+				std::make_tuple(std::move(para_edge), vert1idx, vert2idx));
 			bisector_handled = true;
 		}
 
