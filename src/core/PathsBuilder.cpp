@@ -49,6 +49,46 @@ void PathsBuilder::Clear()
 
 
 /**
+ * convert a pixel of the plot image into the angular range of the plot 
+ */
+t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg) const
+{
+	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1], 
+		img_x / t_real(m_img.GetWidth()));
+	t_real y = std::lerp(m_monoScatteringRange[0], m_monoScatteringRange[1], 
+		img_y / t_real(m_img.GetHeight()));
+	
+	if(deg)
+	{
+		x *= t_real(180) / tl2::pi<t_real>;
+		y *= t_real(180) / tl2::pi<t_real>;
+	}
+
+	return tl2::create<t_vec>({x, y});
+}
+
+
+/**
+ * convert angular coordinates to a pixel in the plot image 
+ */
+t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg) const
+{
+	if(deg)
+	{
+		angle_x *= tl2::pi<t_real> / t_real(180);
+		angle_y *= tl2::pi<t_real> / t_real(180);
+	}
+
+	t_real x = std::lerp(t_real(0.), t_real(m_img.GetWidth()), 
+		(angle_x - m_sampleScatteringRange[0]) / (m_sampleScatteringRange[1] - m_sampleScatteringRange[0]));
+	t_real y = std::lerp(t_real(0.), t_real(m_img.GetHeight()), 
+		(angle_y - m_monoScatteringRange[0]) / (m_monoScatteringRange[1] - m_monoScatteringRange[0]));
+	
+	return tl2::create<t_vec>({x, y});
+}
+
+
+/**
  * returns the full or the simplified wall contours
  */
 const std::vector<std::vector<PathsBuilder::t_contourvec>>& 
@@ -71,6 +111,11 @@ bool PathsBuilder::CalculateConfigSpace(
 {
 	if(!m_instrspace)
 		return false;
+
+	m_monoScatteringRange[0] = starta2;
+	m_monoScatteringRange[1] = enda2;
+	m_sampleScatteringRange[0] = starta4;
+	m_sampleScatteringRange[1] = enda4;
 
 	std::ostringstream ostrmsg;
 	ostrmsg << "Calculating configuration space in " << m_maxnum_threads << " threads...";
@@ -384,7 +429,7 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 /**
  * find a path from an initial (a2, a4) to a final (a2, a4)
  */
-void PathsBuilder::FindPath(
+InstrumentPath PathsBuilder::FindPath(
 	t_real a2_i, t_real a4_i, 
 	t_real a2_f, t_real a4_f)
 {
@@ -394,16 +439,18 @@ void PathsBuilder::FindPath(
 	a4_f *= 180. / tl2::pi<t_real>;
 
 #ifdef DEBUG
-	std::cout << "a2_i = " << a2_i << ", a4_i = " << a4_i
-		<< "; a2_f = " << a2_f << ", a4_f = " << a4_f 
+	std::cout << "a4_i = " << a4_i << ", a2_i = " << a2_i
+		<< "; a4_f = " << a4_f << ", a2_f = " << a2_f 
 		<< "." << std::endl;
 #endif
 
 
 	// vertices in configuration space
-	t_vec vec_i = tl2::create<t_vec>({ a2_i, a4_i });
-	t_vec vec_f = tl2::create<t_vec>({ a2_f, a4_f });
+	t_vec vec_i = AngleToPixel(a4_i, a2_i, true);
+	t_vec vec_f = AngleToPixel(a4_f, a2_f, true);
 
+	std::cout << "start pixel: (" << vec_i[0] << ", " << vec_i[1] << std::endl; 
+	std::cout << "target pixel: (" << vec_f[0] << ", " << vec_f[1] << std::endl; 
 
 	// find closest voronoi vertices
 	const auto& voro_vertices = m_voro_results.vertices;
@@ -417,6 +464,7 @@ void PathsBuilder::FindPath(
 	for(std::size_t idx_vert = 0; idx_vert < voro_vertices.size(); ++idx_vert)
 	{
 		const t_vec& cur_vert = voro_vertices[idx_vert];
+		//std::cout << "cur_vert: " << cur_vert[0] << " " << cur_vert[1] << std::endl;
 
 		t_vec diff_i = vec_i - cur_vert;
 		t_vec diff_f = vec_f - cur_vert;
@@ -448,23 +496,43 @@ void PathsBuilder::FindPath(
 	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
 	const auto predecessors = geo::dijk(voro_graph, ident_i);
 
+	InstrumentPath path{};
 	std::size_t cur_vertidx = idx_f;
+
 	while(true)
 	{
+		path.voronoi_indices.push_back(cur_vertidx);
+		path.voronoi_vertices.push_back(voro_vertices[cur_vertidx]);
+
 		if(cur_vertidx == idx_i)
 		{
-			std::cout << "Path completed." << std::endl;
+			path.ok = true;
 			break;
 		}
 
 		auto next_vertidx = predecessors[cur_vertidx];
 		if(!next_vertidx)
 		{
-			std::cout << "Path not found." << std::endl;
+			path.ok = false;
 			break;
 		}
 
-		std::cout << "Predecessor of vertex " << cur_vertidx << ": " << *next_vertidx << std::endl;
 		cur_vertidx = *next_vertidx;
 	}
+
+	std::reverse(path.voronoi_indices.begin(), path.voronoi_indices.end());
+	std::reverse(path.voronoi_vertices.begin(), path.voronoi_vertices.end());
+
+	std::cout << "Path ok: " << std::boolalpha << path.ok << std::endl;
+	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
+	{
+		std::size_t voro_idx = path.voronoi_indices[idx];
+		const t_vec& voro_vertex = path.voronoi_vertices[idx];
+
+		using namespace tl2_ops;
+		std::cout << "\tvertex " << voro_idx << ": (" 
+			<< voro_vertex[0] << ", " << voro_vertex[1] << ")" << std::endl;
+	}
+
+	return path;
 }

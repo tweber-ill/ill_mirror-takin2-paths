@@ -73,22 +73,20 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupFinish, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
-	for(std::size_t i=0; i<m_num_coord_elems-1; ++i)
+	for(std::size_t i=0; i<m_num_coord_elems; ++i)
 	{
 		// target angles
 		connect(m_spinFinish[i],
 			static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 			[this, i](t_real val) -> void
 			{
-				t_real coords[m_num_coord_elems-1];
-				for(std::size_t j=0; j<m_num_coord_elems-1; ++j)
-				{
-					if(j == i)
-						coords[j] = val;
-					else
-						coords[j] = m_spinFinish[j]->value();
-				}
+				std::size_t j = (i + 1) % m_num_coord_elems;
 
+				t_real coords[m_num_coord_elems];
+				coords[i] = val;
+				coords[j] = m_spinFinish[j]->value();
+
+				//std::cout << coords[0] << ", " << coords[1] << std::endl;
 				emit TargetChanged(coords[0], coords[1]);
 			});
 	}

@@ -596,9 +596,10 @@ void ConfigSpaceDlg::RedrawPlot()
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
+				t_vec angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
 
-				vecx << std::lerp(m_starta4, m_enda4, point[0]/t_real(width)) / tl2::pi<t_real>*180;
-				vecy << std::lerp(m_starta2, m_enda2, point[1]/t_real(height)) / tl2::pi<t_real>*180;
+				vecx << angles[0];
+				vecy << angles[1];
 			}
 		}
 
@@ -623,9 +624,10 @@ void ConfigSpaceDlg::RedrawPlot()
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
+				t_vec angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
 
-				vecx << std::lerp(m_starta4, m_enda4, point[0]/t_real(width)) / tl2::pi<t_real>*180.;
-				vecy << std::lerp(m_starta2, m_enda2, point[1]/t_real(height)) / tl2::pi<t_real>*180.;
+				vecx << angles[0];
+				vecy << angles[1];
 			}
 		}
 

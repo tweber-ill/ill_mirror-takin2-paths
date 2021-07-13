@@ -24,6 +24,15 @@
 #include "src/libs/hull.h"
 
 
+struct InstrumentPath
+{
+	bool ok = false;
+
+	std::vector<std::size_t> voronoi_indices;
+	std::vector<t_vec> voronoi_vertices;
+};
+
+
 class PathsBuilder
 {
 public:
@@ -49,6 +58,9 @@ public:
 public:
 	PathsBuilder();
 	~PathsBuilder();
+
+	t_vec PixelToAngle(t_real x, t_real y, bool deg = true) const;
+	t_vec AngleToPixel(t_real x, t_real y, bool deg = true) const;
 
 	// input instrument
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
@@ -102,7 +114,7 @@ public:
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
 	// find a path from an initial (a2, a4) to a final (a2, a4)
-	void FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
+	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
 
 private:
 	const InstrumentSpace *m_instrspace{};
@@ -131,6 +143,10 @@ private:
 			bool(bool start, bool end, t_real progress, const std::string& message),
 			combine_sigret>;
 	std::shared_ptr<t_sig_progress> m_sigProgress{};
+
+	// angular ranges
+	t_real m_monoScatteringRange[2]{0, tl2::pi<t_real>};
+	t_real m_sampleScatteringRange[2]{0, tl2::pi<t_real>};
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
