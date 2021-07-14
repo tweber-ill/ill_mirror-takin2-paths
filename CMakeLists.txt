@@ -11,8 +11,8 @@ enable_language(CXX)
 
 
 list(APPEND CMAKE_MODULE_PATH
-	"${PROJECT_SOURCE_DIR}" 
-	"${PROJECT_SOURCE_DIR}/cmake" 
+	"${PROJECT_SOURCE_DIR}"
+	"${PROJECT_SOURCE_DIR}/cmake"
 	"${PROJECT_SOURCE_DIR}/tlibs2/cmake"
 )
 
@@ -28,7 +28,9 @@ list(APPEND CMAKE_MODULE_PATH
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
 option(USE_OVD "use openvoronoi" TRUE)
+option(USE_PY "use python scripting" FALSE)
 option(BUILD_TEST_TOOLS "build test tools" TRUE)
+option(UNIT_TESTS "build unit tests" FALSE)
 
 
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -54,6 +56,17 @@ message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_compile_options(-g -ggdb)
 endif()
+
+
+# -----------------------------------------------------------------------------
+# compiler settings
+# -----------------------------------------------------------------------------
+set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-std=c++20)
+add_compile_options(-Wall -Wextra)
+
+add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
+# -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
@@ -124,6 +137,33 @@ if(USE_LAPACK)
 endif()
 
 
+if(USE_PY)
+	find_package(Python3 REQUIRED COMPONENTS Interpreter Development REQUIRED)
+	message("Python version ${Python3_VERSION} enabled; packages: ${Python3_SITEARCH}.")
+
+	cmake_policy(SET CMP0078 NEW)
+	cmake_policy(SET CMP0086 NEW)
+
+	find_package(SWIG REQUIRED)
+	set(UseSWIG_TARGET_NAME_PREFERENCE STANDARD)
+	include(${SWIG_USE_FILE})
+
+	set_source_files_properties(scripting/taspaths.i PROPERTIES CPLUSPLUS TRUE)
+	set_source_files_properties(scripting/taspaths.i PROPERTIES SWIG_FLAGS "-I ${PROJECT_SOURCE_DIR}")
+
+	swig_add_library(taspaths_py LANGUAGE python SOURCES
+		scripting/taspaths.i
+		src/core/Geometry.cpp src/core/Axis.cpp
+		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
+		#src/core/PathsBuilder.cpp
+	)
+
+	target_link_libraries(taspaths_py Python3::Python)
+else()
+	message("Python disabled.")
+endif()
+
+
 if(QT_VER EQUAL 6)
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL OpenGLWidgets PrintSupport)
 elseif(QT_VER EQUAL 5)
@@ -138,14 +178,9 @@ set(CMAKE_AUTOMOC TRUE)
 
 
 # -----------------------------------------------------------------------------
-# compiler settings
+# more compiler settings
 # -----------------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-std=c++20)
 add_compile_options(${Boost_CXX_FLAGS})
-add_compile_options(-Wall -Wextra)
-
-add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 #add_definitions(-DQCUSTOMPLOT_USE_OPENGL )
 # -----------------------------------------------------------------------------
 
@@ -175,7 +210,7 @@ add_executable(taspaths
 
 	src/libs/lines.h src/libs/graphs.h
 	src/libs/voronoi.h src/libs/voronoi_lines.h
-	src/libs/hull.h src/libs/img.h 
+	src/libs/hull.h src/libs/img.h
 	src/libs/ptree.h
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
@@ -277,5 +312,13 @@ endif()
 #	TARGET taspaths PRE_BUILD
 #	COMMAND if [ ! -d res ]\; then ln -sf ../res\; fi
 #)
+# -----------------------------------------------------------------------------
 
+
+# -----------------------------------------------------------------------------
+# unit tests
+# -----------------------------------------------------------------------------
+if(UNIT_TESTS)
+	add_subdirectory(unittests)
+endif()
 # -----------------------------------------------------------------------------

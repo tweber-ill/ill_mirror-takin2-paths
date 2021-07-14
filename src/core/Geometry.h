@@ -115,7 +115,7 @@ public:
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({-0.5, 0, 0});
 	t_vec m_pos2 = tl2::create<t_vec>({0.5, 0, 0});
-	t_real m_height{}, m_depth{}, m_length{1};
+	t_real m_height = 0, m_depth = 0, m_length = 1;
 };
 // ----------------------------------------------------------------------------
 
@@ -154,7 +154,7 @@ public:
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
-	t_real m_height{}, m_radius{};
+	t_real m_height = 0, m_radius = 0;
 };
 // ----------------------------------------------------------------------------
 
@@ -190,7 +190,7 @@ public:
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
-	t_real m_radius{};
+	t_real m_radius = 0;
 };
 // ----------------------------------------------------------------------------
 

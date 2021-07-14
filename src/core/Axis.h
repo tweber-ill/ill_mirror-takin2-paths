@@ -67,7 +67,7 @@ public:
 	void UpdateTrafos() const;
 	void TrafosNeedUpdate() const;
 
-	const std::vector<std::shared_ptr<Geometry>>& 
+	const std::vector<std::shared_ptr<Geometry>>&
 		GetComps(AxisAngle which=AxisAngle::INCOMING) const;
 
 	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
@@ -76,9 +76,9 @@ private:
 	// identifier
 	std::string m_id;
 	// previous and next axis
-	const Axis *m_prev{nullptr}, *m_next{nullptr};;
+	const Axis *m_prev = nullptr, *m_next = nullptr;
 	// parent instrument
-	Instrument *m_instr{nullptr};
+	Instrument *m_instr = nullptr;
 
 	// trafo matrices
 	mutable t_mat m_trafoIncoming = tl2::unit<t_mat>(4);
