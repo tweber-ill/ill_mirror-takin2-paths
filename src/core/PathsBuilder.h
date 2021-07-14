@@ -82,12 +82,8 @@ public:
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
 	// get voronoi vertices and edges
-	const std::vector<t_vec>& GetVoronoiVertices() const
-	{ return m_voro_results.vertices; }
-	const std::vector<t_voronoiedge_linear>& GetVoronoiEdgesLinear() const
-	{ return m_voro_results.linear_edges; }
-	const std::vector<t_voronoiedge_parabolic>& GetVoronoiEdgesParabolic() const
-	{ return m_voro_results.parabolic_edges; }
+	const geo::VoronoiLinesResults<t_vec, t_line, t_graph>& GetVoronoiResults() const
+	{ return m_voro_results; }
 
 	// get voronoi graphs
 	const t_graph& GetVoronoiGraph() const 

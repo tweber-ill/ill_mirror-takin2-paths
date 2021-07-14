@@ -579,9 +579,9 @@ void ConfigSpaceDlg::RedrawPlot()
 	// draw linear voronoi edges
 	const t_real edge_eps = m_pathsbuilder->GetVoronoiEdgeEpsilon();
 
-	for(const auto& edge : m_pathsbuilder->GetVoronoiEdgesLinear())
+	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().linear_edges)
 	{
-		const auto& line = std::get<0>(edge);
+		const auto& line = std::get<1>(edge);
 
 		QVector<t_real> vecx, vecy;
 		vecx.reserve((std::size_t)std::ceil(1./edge_eps));
@@ -608,9 +608,9 @@ void ConfigSpaceDlg::RedrawPlot()
 
 
 	// draw parabolic voronoi edges
-	for(const auto& edge : m_pathsbuilder->GetVoronoiEdgesParabolic())
+	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().parabolic_edges)
 	{
-		const auto& points = std::get<0>(edge);
+		const auto& points = std::get<1>(edge);
 
 		QVector<t_real> vecx, vecy;
 		vecx.reserve(points.size());

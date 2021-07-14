@@ -47,7 +47,7 @@ struct ClosestPairTreeLeaf
 	}
 
 	friend bool operator<(
-		const ClosestPairTreeLeaf<t_hook, T>& e1, 
+		const ClosestPairTreeLeaf<t_hook, T>& e1,
 		const ClosestPairTreeLeaf<t_hook, T>& e2)
 	{
 		// compare by y
@@ -139,7 +139,7 @@ requires tl2::is_vec<t_vec>
 
 template<class t_vertex, class t_vec, std::size_t ...indices>
 constexpr void _geo_vertex_assign(
-	t_vertex& vert, const t_vec& vec, 
+	t_vertex& vert, const t_vec& vec,
 	const std::index_sequence<indices...>&)
 {
 	namespace geo = boost::geometry;

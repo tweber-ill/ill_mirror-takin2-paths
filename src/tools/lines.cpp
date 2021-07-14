@@ -537,7 +537,7 @@ void LinesScene::UpdateVoro()
 
 		for(const auto& linear_edge : results.linear_edges)
 		{
-			const auto& linear_bisector = std::get<0>(linear_edge);
+			const auto& linear_bisector = std::get<1>(linear_edge);
 
 			QLineF line{
 				QPointF{std::get<0>(linear_bisector)[0], std::get<0>(linear_bisector)[1]},
@@ -552,7 +552,7 @@ void LinesScene::UpdateVoro()
 
 		for(const auto& parabolic_edges : results.parabolic_edges)
 		{
-			const auto& parabolic_points = std::get<0>(parabolic_edges);
+			const auto& parabolic_points = std::get<1>(parabolic_edges);
 
 			QPolygonF poly;
 			poly.reserve(parabolic_points.size());
