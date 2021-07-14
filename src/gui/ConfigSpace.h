@@ -34,7 +34,7 @@ public:
 
 	// receivers for instrument (space) and target position update signals
 	void UpdateInstrument(const Instrument& instr, const t_real* sensesCCW = nullptr);
-	void UpdateTarget(t_real monoScAngle, t_real sampleScAngle);
+	void UpdateTarget(t_real monoScAngle, t_real sampleScAngle, const t_real* sensesCCW = nullptr);
 
 	void EmitGotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
@@ -44,7 +44,7 @@ public:
 signals:
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
-		std::optional<t_real> a5);
+		std::optional<t_real> a5, bool move_target);
 
 
 protected:
@@ -52,7 +52,8 @@ protected:
 
 	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
 	void ClearPlotCurves();
-	void AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y);
+	void AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+		t_real width = 1., QColor colour = QColor::fromRgbF(1., 1., 1.));
 	void RedrawPlot();
 
 	// either move instrument by clicking in the plot or enable plot zoom mode
@@ -72,6 +73,7 @@ private:
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};
+	std::vector<t_vec> m_pathcurve;
 
 	// current instrument position
 	t_real m_curMonoScatteringAngle{};
@@ -93,6 +95,7 @@ private:
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;
 	bool m_calcvoronoi = true;
+	bool m_movetarget = false;
 
 	bool m_moveInstr = true;
 };

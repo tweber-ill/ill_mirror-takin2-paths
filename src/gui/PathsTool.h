@@ -153,7 +153,7 @@ protected slots:
 	// go to instrument angles
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
-		std::optional<t_real> a5);
+		std::optional<t_real> a5, bool only_set_target);
 
 	// called after the plotter has initialised
 	void AfterGLInitialisation();

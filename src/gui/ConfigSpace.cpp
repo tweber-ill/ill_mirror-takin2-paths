@@ -181,6 +181,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuOptions->addAction(acCalcVoro);
 
+	QAction *acMoveTarget = new QAction("Move Target Point", menuView);
+	acMoveTarget->setCheckable(true);
+	acMoveTarget->setChecked(m_movetarget);
+	menuOptions->addSeparator();
+	menuOptions->addAction(acMoveTarget);
+
 	QAction *acCalcMesh = new QAction("Calculate Path Mesh", menuView);
 	menuCalc->addAction(acCalcMesh);
 
@@ -251,7 +257,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return;
 
 		std::ofstream ofstr(filename.toStdString());
-		bool ok = geo::print_graph(this->m_pathsbuilder->GetVoronoiGraph(), ofstr);
+		bool ok = geo::print_graph(this->m_pathsbuilder->GetVoronoiResults().graph, ofstr);
 		ofstr << std::endl;
 
 		if(ok)
@@ -312,6 +318,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
 	{ m_calcvoronoi = calc; });
+
+	connect(acMoveTarget, &QAction::toggled, [this](bool b)->void
+	{ m_movetarget = b; });
 
 	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
 	{ this->SetInstrumentMovable(!enableZoom); });
@@ -378,10 +387,17 @@ void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sen
 /**
  * update the current target position indicator
  */
-void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle)
+void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle, const t_real* sensesCCW)
 {
 	m_targetMonoScatteringAngle = monoScAngle;
 	m_targetSampleScatteringAngle = sampleScAngle;
+
+	if(sensesCCW)
+	{
+		m_targetMonoScatteringAngle *= sensesCCW[0];
+		m_targetSampleScatteringAngle *= sensesCCW[1];
+		//m_targetAnaScatteringAngle *= sensesCCW[2];
+	}
 
 	QVector<t_real> x, y;
 	x << m_targetSampleScatteringAngle / tl2::pi<t_real> * t_real(180);
@@ -424,7 +440,7 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
 	std::optional<t_real> a3, std::optional<t_real> a4,
 	std::optional<t_real> a5)
 {
-	emit GotoAngles(a1, a3, a4, a5);
+	emit GotoAngles(a1, a3, a4, a5, m_movetarget);
 }
 
 
@@ -487,11 +503,33 @@ void ConfigSpaceDlg::CalculatePath()
 		return;
 
 	// find path from current to target position
-	m_pathsbuilder->FindPath(
+	InstrumentPath path = m_pathsbuilder->FindPath(
 		m_curMonoScatteringAngle, m_curSampleScatteringAngle,
 		m_targetMonoScatteringAngle, m_targetSampleScatteringAngle);
 
-	// TODO
+	if(!path.ok)
+	{
+		m_status->setText("Error: No path could be found.");
+		return;
+	}
+
+	const auto& voro_results = m_pathsbuilder->GetVoronoiResults();
+	const auto& voro_vertices = voro_results.vertices;
+
+	m_pathcurve.clear();
+	m_pathcurve.reserve(voro_vertices.size());
+
+	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
+	{
+		std::size_t voro_idx = path.voronoi_indices[idx];
+		const t_vec& voro_vertex = voro_vertices[voro_idx];
+		const t_vec voro_angle = m_pathsbuilder->PixelToAngle(voro_vertex[0], voro_vertex[1], true);
+
+		m_pathcurve.emplace_back(std::move(voro_angle));
+	}
+
+	// TODO: only redraw path curve, not entire graph
+	RedrawPlot();
 }
 
 
@@ -531,15 +569,17 @@ void ConfigSpaceDlg::ClearPlotCurves()
 }
 
 
-void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y)
+void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+	t_real width, QColor colour)
 {
 	QCPCurve *voroplot = new QCPCurve(m_plot->xAxis, m_plot->yAxis);
 	voroplot->setLineStyle(QCPCurve::lsLine);
 	voroplot->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone, 1));
 	voroplot->setAntialiased(true);
+
 	QPen voropen = voroplot->pen();
-	voropen.setColor(QColor::fromRgbF(1., 1., 1.));
-	voropen.setWidthF(1.);
+	voropen.setColor(colour);
+	voropen.setWidthF(width);
 	voroplot->setPen(voropen);
 
 	voroplot->setData(x, y);
@@ -633,6 +673,19 @@ void ConfigSpaceDlg::RedrawPlot()
 
 		AddPlotCurve(vecx, vecy);
 	}
+
+
+	// draw path curve
+	QVector<t_real> pathx, pathy;
+	pathx.reserve(m_pathcurve.size());
+	pathy.reserve(m_pathcurve.size());
+
+	for(const auto& pathvert : m_pathcurve)
+	{
+		pathx << pathvert[0];
+		pathy << pathvert[1];
+	}
+	AddPlotCurve(pathx, pathy, 2., QColor::fromRgbF(0., 0.5, 0.));
 
 
 	// replot

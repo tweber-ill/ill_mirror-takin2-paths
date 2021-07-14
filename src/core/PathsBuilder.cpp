@@ -462,8 +462,10 @@ InstrumentPath PathsBuilder::FindPath(
 	t_vec vec_i = AngleToPixel(a4_i, a2_i, true);
 	t_vec vec_f = AngleToPixel(a4_f, a2_f, true);
 
-	std::cout << "start pixel: (" << vec_i[0] << ", " << vec_i[1] << std::endl; 
+#ifdef DEBUG
+	std::cout << "start pixel: (" << vec_i[0] << ", " << vec_i[1] << std::endl;
 	std::cout << "target pixel: (" << vec_f[0] << ", " << vec_f[1] << std::endl; 
+#endif
 
 	// find closest voronoi vertices
 	const auto& voro_vertices = m_voro_results.vertices;
@@ -515,7 +517,6 @@ InstrumentPath PathsBuilder::FindPath(
 	while(true)
 	{
 		path.voronoi_indices.push_back(cur_vertidx);
-		path.voronoi_vertices.push_back(voro_vertices[cur_vertidx]);
 
 		if(cur_vertidx == idx_i)
 		{
@@ -534,13 +535,13 @@ InstrumentPath PathsBuilder::FindPath(
 	}
 
 	std::reverse(path.voronoi_indices.begin(), path.voronoi_indices.end());
-	std::reverse(path.voronoi_vertices.begin(), path.voronoi_vertices.end());
 
+#ifdef DEBUG
 	std::cout << "Path ok: " << std::boolalpha << path.ok << std::endl;
 	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
-		const t_vec& voro_vertex = path.voronoi_vertices[idx];
+		const t_vec& voro_vertex = voro_vertices[voro_idx];
 		const t_vec voro_angle = PixelToAngle(voro_vertex[0], voro_vertex[1], true);
 
 		std::cout << "\tvertex index " << voro_idx << ": pixel (" 
@@ -548,6 +549,7 @@ InstrumentPath PathsBuilder::FindPath(
 			<< voro_angle[0] << ", " << voro_angle[1] << ")" 
 			<< std::endl;
 	}
+#endif
 
 	return path;
 }

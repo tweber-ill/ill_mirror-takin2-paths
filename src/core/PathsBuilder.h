@@ -29,7 +29,6 @@ struct InstrumentPath
 	bool ok = false;
 
 	std::vector<std::size_t> voronoi_indices;
-	std::vector<t_vec> voronoi_vertices;
 };
 
 
@@ -81,13 +80,9 @@ public:
 	const geo::Image<std::uint8_t>& GetImage() const { return m_img; }
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
-	// get voronoi vertices and edges
+	// get voronoi vertices, edges and graph
 	const geo::VoronoiLinesResults<t_vec, t_line, t_graph>& GetVoronoiResults() const
 	{ return m_voro_results; }
-
-	// get voronoi graphs
-	const t_graph& GetVoronoiGraph() const 
-	{ return m_voro_results.graph; }
 
 	// save contour line segments to lines test tools
 	bool SaveToLinesTool(std::ostream& ostr);
