@@ -685,7 +685,7 @@ void ConfigSpaceDlg::RedrawPlot()
 		pathx << pathvert[0];
 		pathy << pathvert[1];
 	}
-	AddPlotCurve(pathx, pathy, 2., QColor::fromRgbF(0., 0.5, 0.));
+	AddPlotCurve(pathx, pathy, 4., QColor::fromRgbF(0.9, 0.9, 0.));
 
 
 	// replot
