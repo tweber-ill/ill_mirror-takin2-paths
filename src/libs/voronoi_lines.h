@@ -502,9 +502,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					parabolic_edges.emplace_back(to_vec(parabola_pt));
 
 				all_parabolic_edges_vec.emplace_back(
-					std::make_tuple(std::move(parabolic_edges), *vert0idx, *vert1idx));
-				//all_parabolic_edges.emplace(
-				//	std::make_pair(std::make_pair(*vert0idx, *vert1idx), std::move(parabolic_edges)));
+					std::make_tuple(
+						std::move(parabolic_edges), 
+						*vert0idx, *vert1idx));
+				/*all_parabolic_edges.emplace(
+					std::make_pair(
+						std::make_pair(*vert0idx, *vert1idx), 
+						std::move(parabolic_edges)));*/
 			}
 		}
 
@@ -518,8 +522,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					vertex_to_vec(*vert0) / scale,
 					vertex_to_vec(*vert1) / scale);
 
-				linear_edges_vec.emplace_back(std::make_tuple(line, vert0idx, vert1idx));
-				//linear_edges.emplace(std::make_pair(std::make_pair(vert0idx, vert1idx), line));
+				linear_edges_vec.emplace_back(
+					std::make_tuple(line, vert0idx, vert1idx));
+				/*linear_edges.emplace(
+					std::make_pair(
+						std::make_pair(vert0idx, vert1idx),
+						line));*/
 			}
 
 			// infinite edge
@@ -559,8 +567,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				linedir *= infline_len;
 
 				t_line line = std::make_pair(lineorg, lineorg + linedir);
-				linear_edges_vec.emplace_back(std::make_tuple(line, vert0idx, vert1idx));
-				//linear_edges.emplace(std::make_pair(std::make_pair(vert0idx, vert1idx), line));
+				linear_edges_vec.emplace_back(
+					std::make_tuple(line, vert0idx, vert1idx));
+				/*linear_edges.emplace(
+					std::make_pair(
+						std::make_pair(vert0idx, vert1idx), 
+						line));*/
 			}
 		}
 	}
@@ -663,7 +675,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		std::size_t idx1 = std::get<1>(edge);
 		std::size_t idx2 = std::get<2>(edge);
 
-		all_parabolic_edges.emplace(std::make_pair(std::make_pair(idx1, idx2), std::move(std::get<0>(edge))));
+		all_parabolic_edges.emplace(
+			std::make_pair(
+				std::make_pair(idx1, idx2),	// key
+				std::move(std::get<0>(edge))));
 	}
 
 	for(const auto& edge : linear_edges_vec)
@@ -674,7 +689,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		std::size_t idx1 = _idx1 ? *_idx1 : std::numeric_limits<std::size_t>::max();
 		std::size_t idx2 = _idx2 ? *_idx2 : std::numeric_limits<std::size_t>::max();
 
-		linear_edges.emplace(std::make_pair(std::make_pair(idx1, idx2), std::move(std::get<0>(edge))));
+		linear_edges.emplace(
+			std::make_pair(
+				std::make_pair(idx1, idx2),	// key 
+				std::move(std::get<0>(edge))));
 	}
 
 	return results;
@@ -772,7 +790,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 	std::size_t curidx = 0;
-	linear_edges.reserve(vdgraph.edges().size());
+	//linear_edges.reserve(vdgraph.edges().size());
+
 	for(const auto& edge : vdgraph.edges())
 	{
 		const auto ty = vdgraph[edge].type;
@@ -786,61 +805,37 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto& pos1 = vdgraph[vert1].position;
 		const auto& pos2 = vdgraph[vert2].position;
 
-		// TODO
 		std::size_t vert1idx = 0;
 		std::size_t vert2idx = 0;
 
-		bool bisector_handled = false;
-		if(ty == ovd::LINE || ty == ovd::LINELINE || ty == ovd::PARA_LINELINE)
-		{
-			t_line line = std::make_pair(
-				tl2::create<t_vec>({ pos1.x, pos1.y }),
-				tl2::create<t_vec>({ pos2.x, pos2.y}) );
-
-			//linear_edges.emplace_back(
-			//	std::make_tuple(line, vert1idx, vert2idx));
-			linear_edges.emplacek(
-				std::make_pair(std::make_pair(vert1idx, vert2idx), line));
-			bisector_handled = true;
-		}
-		else if(ty == ovd::PARABOLA)
-		{
-			std::vector<t_vec> para_edge;
-			para_edge.reserve(std::size_t(std::ceil(1./edge_eps)));
-
-			for(t_real param=0.; param<=1.; param += edge_eps)
-			{
-				t_real para_pos = 
-					tl2::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);
-				auto pt = vdgraph[edge].point(para_pos);
-				para_edge.emplace_back(tl2::create<t_vec>({ pt.x, pt.y }));
-			}
-
-			//all_parabolic_edges.emplace_back(
-			//	std::make_tuple(std::move(para_edge), vert1idx, vert2idx));
-			all_parabolic_edges.emplace(
-				std::make_pair(std::make_pair(vert1idx, vert2idx), std::move(para_edge)));
-			bisector_handled = true;
-		}
-
-		if(bisector_handled)
+		// bisector handled?
+		if(ty == ovd::LINE || ty == ovd::LINELINE || 
+			ty == ovd::PARA_LINELINE || ty == ovd::PARABOLA)
 		{
 			// add graph vertex
 			auto iter1 = vert_to_idx.find(vert1);
 			if(iter1 == vert_to_idx.end())
 			{
-				iter1 = vert_to_idx.insert(std::make_pair(vert1, curidx)).first;
-				graph.AddVertex(std::to_string(curidx));
-				++curidx;
+				vert1idx = curidx++;
+				iter1 = vert_to_idx.insert(std::make_pair(vert1, vert1idx)).first;
+				graph.AddVertex(std::to_string(vert1idx));
+			}
+			else
+			{
+				vert1idx = iter1->second;
 			}
 
 			// add graph vertex
 			auto iter2 = vert_to_idx.find(vert2);
 			if(iter2 == vert_to_idx.end())
 			{
-				iter2 = vert_to_idx.insert(std::make_pair(vert2, curidx)).first;
-				graph.AddVertex(std::to_string(curidx));
-				++curidx;
+				vert2idx = curidx++;
+				iter2 = vert_to_idx.insert(std::make_pair(vert2, vert2idx)).first;
+				graph.AddVertex(std::to_string(vert2idx));
+			}
+			else
+			{
+				vert2idx = iter2->second;
 			}
 
 			// add graph edge
@@ -855,10 +850,45 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					tl2::create<t_vec>({ pos2.x, pos2.y }));
 
 				graph.AddEdge(
-					std::to_string(iter1->second), 
-					std::to_string(iter2->second),
+					std::to_string(vert1idx), 
+					std::to_string(vert2idx),
 					len);
 			}
+		}
+
+
+		if(ty == ovd::LINE || ty == ovd::LINELINE || ty == ovd::PARA_LINELINE)
+		{
+			t_line line = std::make_pair(
+				tl2::create<t_vec>({ pos1.x, pos1.y }),
+				tl2::create<t_vec>({ pos2.x, pos2.y }));
+
+			linear_edges.emplace(
+				std::make_pair(
+					std::make_pair(vert1idx, vert2idx), 
+					std::move(line)));
+		}
+		else if(ty == ovd::PARABOLA)
+		{
+			std::vector<t_vec> para_edge;
+			para_edge.reserve(std::size_t(std::ceil(1./edge_eps)));
+
+			// TODO: check parameter range because of gaps in the bisector
+			for(t_real param = 0.; param <= 1.; param += edge_eps)
+			{
+				t_real para_pos = 
+					std::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);
+				auto pt = vdgraph[edge].point(para_pos);
+
+				if(std::isfinite(pt.x) && std::isfinite(pt.y))
+					para_edge.emplace_back(
+						tl2::create<t_vec>({ pt.x, pt.y }));
+			}
+
+			all_parabolic_edges.emplace(
+				std::make_pair(
+					std::make_pair(vert1idx, vert2idx), 
+					std::move(para_edge)));
 		}
 	}
 
