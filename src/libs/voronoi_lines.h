@@ -26,7 +26,7 @@
 #include "hull.h"
 #include "lines.h"
 #include "graphs.h"
-#include "helpers.h"
+#include "hashes.h"
 #include "circular_iterator.h"
 
 

@@ -1,5 +1,5 @@
 /**
- * helper functions
+ * hash functions
  * @author Tobias Weber <tweber@ill.fr>
  * @date July-2021
  * @note Forked on 14-jul-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
@@ -20,9 +20,10 @@
 
 namespace geo {
 
+
 /**
-	* get the hash of a value
-	*/
+ * get the hash of a value
+ */
 template<class T>
 std::size_t unordered_hash(const T& t)
 {
@@ -31,9 +32,9 @@ std::size_t unordered_hash(const T& t)
 
 
 /**
-	* get the combined hash of several values,
-	* where the order doesn't matter
-	*/
+ * get the combined hash of several values,
+ * where the order doesn't matter
+ */
 template<class T1, class ...T2>
 std::size_t unordered_hash(const T1& t1, const T2& ...t2)
 {
