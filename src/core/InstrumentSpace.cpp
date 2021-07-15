@@ -541,16 +541,16 @@ void InstrumentSpace::DragObject(bool drag_start, const std::string& obj,
 /**
  * load an instrument space definition from an xml file
  */
-std::tuple<bool, std::string> InstrumentSpace::load(
+std::pair<bool, std::string> InstrumentSpace::load(
 	const std::string& filename, InstrumentSpace& instrspace)
 {
 	if(filename == "" || !fs::exists(fs::path(filename)))
-		return std::make_tuple(false, "Instrument file \"" + filename + "\" does not exist.");
+		return std::make_pair(false, "Instrument file \"" + filename + "\" does not exist.");
 
 	// open xml
 	std::ifstream ifstr{filename};
 	if(!ifstr)
-		return std::make_tuple(false, "Could not read instrument file \"" + filename + "\".");
+		return std::make_pair(false, "Could not read instrument file \"" + filename + "\".");
 
 	// read xml
 	pt::ptree prop;
@@ -559,7 +559,7 @@ std::tuple<bool, std::string> InstrumentSpace::load(
 	if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
 		!opt || *opt != PROG_IDENT)
 	{
-		return std::make_tuple(false, "Instrument file \"" + filename + "\" has invalid identifier.");
+		return std::make_pair(false, "Instrument file \"" + filename + "\" has invalid identifier.");
 	}
 
 	// get variables from config file
@@ -584,16 +584,16 @@ std::tuple<bool, std::string> InstrumentSpace::load(
 	if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
 	{
 		if(!instrspace.Load(*instr))
-			return std::make_tuple(false, "Instrument configuration \"" + filename + "\" could not be loaded.");
+			return std::make_pair(false, "Instrument configuration \"" + filename + "\" could not be loaded.");
 	}
 	else
 	{
-		return std::make_tuple(false, "No instrument definition found in \"" + filename + "\".");
+		return std::make_pair(false, "No instrument definition found in \"" + filename + "\".");
 	}
 
 	std::ostringstream timestamp;
 	if(auto optTime = prop.get_optional<t_real>(FILE_BASENAME "timestamp"); optTime)
 		timestamp << tl2::epoch_to_str(*optTime);;
 
-	return std::make_tuple(true, timestamp.str());
+	return std::make_pair(true, timestamp.str());
 }

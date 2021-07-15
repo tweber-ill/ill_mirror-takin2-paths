@@ -93,7 +93,6 @@ void PathsTool::closeEvent(QCloseEvent *evt)
 void PathsTool::NewFile()
 {
 	SetCurrentFile("");
-
 	m_instrspace.Clear();
 
 	if(m_dlgGeoBrowser)
@@ -159,7 +158,7 @@ bool PathsTool::OpenFile(const QString &file)
 		NewFile();
 
 		// load instrument definition file
-		if(auto [instrok, msg] = 
+		if(auto [instrok, msg] =
 			InstrumentSpace::load(file.toStdString(), m_instrspace); !instrok)
 		{
 			QMessageBox::critical(this, "Error", msg.c_str());

@@ -50,7 +50,7 @@ public:
 	Instrument& GetInstrument() { return m_instr; }
 
 	bool CheckCollision2D() const;
-	void DragObject(bool drag_start, const std::string& obj, 
+	void DragObject(bool drag_start, const std::string& obj,
 		t_real x_start, t_real y_start, t_real x, t_real y);
 
 	// connection to update signal
@@ -61,7 +61,7 @@ public:
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
 public:
-	static std::tuple<bool, std::string> load(
+	static std::pair<bool, std::string> load(
 		const std::string& filename, InstrumentSpace& instrspace);
 
 private:
