@@ -42,12 +42,12 @@ public:
 	using t_line = std::pair<t_vec, t_vec>;
 
 	// voronoi edges
-	using t_voronoiedge_linear = 
-		std::tuple<t_line, 
-		std::optional<std::size_t>, 
+	using t_voronoiedge_linear =
+		std::tuple<t_line,
+		std::optional<std::size_t>,
 		std::optional<std::size_t>>;
-	using t_voronoiedge_parabolic = 
-		std::tuple<std::vector<t_vec>, 
+	using t_voronoiedge_parabolic =
+		std::tuple<std::vector<t_vec>,
 		std::size_t, std::size_t>;
 
 	// voronoi graph
@@ -141,7 +141,7 @@ private:
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
-	std::vector<std::vector<t_contourvec>> m_wallcontours{}, m_fullwallcontours{};
+	std::vector<std::vector<t_contourvec>> m_wallcontours = {}, m_fullwallcontours = {};
 
 	// line segments and groups from the wall contours
 	std::vector<t_line> m_lines{};

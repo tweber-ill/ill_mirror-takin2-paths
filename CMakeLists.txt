@@ -155,10 +155,13 @@ if(USE_PY)
 		scripting/taspaths.i
 		src/core/Geometry.cpp src/core/Axis.cpp
 		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
-		#src/core/PathsBuilder.cpp
+		src/core/PathsBuilder.cpp
 	)
 
-	target_link_libraries(taspaths_py Python3::Python)
+	target_link_libraries(taspaths_py
+		Python3::Python Threads::Threads
+		"${Boost_LIBRARIES}" "${Lapacke_LIBRARIES}"
+	)
 else()
 	message("Python disabled.")
 endif()

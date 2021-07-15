@@ -16,7 +16,7 @@
 	#include "src/core/Axis.h"
 	#include "src/core/Instrument.h"
 	#include "src/core/InstrumentSpace.h"
-	//#include "src/core/PathsBuilder.h"
+	#include "src/core/PathsBuilder.h"
 %}
 
 // standard includes: /usr/share/swig/4.0.2/python/
@@ -34,4 +34,4 @@
 %include "src/core/Axis.h"
 %include "src/core/Instrument.h"
 %include "src/core/InstrumentSpace.h"
-
+%include "src/core/PathsBuilder.h"

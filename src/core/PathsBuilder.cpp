@@ -49,15 +49,15 @@ void PathsBuilder::Clear()
 
 
 /**
- * convert a pixel of the plot image into the angular range of the plot 
+ * convert a pixel of the plot image into the angular range of the plot
  */
 t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
 {
-	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1], 
+	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1],
 		img_x / t_real(m_img.GetWidth()));
-	t_real y = std::lerp(m_monoScatteringRange[0], m_monoScatteringRange[1], 
+	t_real y = std::lerp(m_monoScatteringRange[0], m_monoScatteringRange[1],
 		img_y / t_real(m_img.GetHeight()));
-	
+
 	if(deg)
 	{
 		x *= t_real(180) / tl2::pi<t_real>;
@@ -75,7 +75,7 @@ t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_
 
 
 /**
- * convert angular coordinates to a pixel in the plot image 
+ * convert angular coordinates to a pixel in the plot image
  */
 t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool inc_sense) const
 {
@@ -92,11 +92,11 @@ t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool 
 	}
 
 
-	t_real x = std::lerp(t_real(0.), t_real(m_img.GetWidth()), 
+	t_real x = std::lerp(t_real(0.), t_real(m_img.GetWidth()),
 		(angle_x - m_sampleScatteringRange[0]) / (m_sampleScatteringRange[1] - m_sampleScatteringRange[0]));
-	t_real y = std::lerp(t_real(0.), t_real(m_img.GetHeight()), 
+	t_real y = std::lerp(t_real(0.), t_real(m_img.GetHeight()),
 		(angle_y - m_monoScatteringRange[0]) / (m_monoScatteringRange[1] - m_monoScatteringRange[0]));
-	
+
 	return tl2::create<t_vec>({x, y});
 }
 
@@ -104,7 +104,7 @@ t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool 
 /**
  * returns the full or the simplified wall contours
  */
-const std::vector<std::vector<PathsBuilder::t_contourvec>>& 
+const std::vector<std::vector<PathsBuilder::t_contourvec>>&
 PathsBuilder::GetWallContours(bool full) const
 {
 	if(full)
@@ -118,7 +118,7 @@ PathsBuilder::GetWallContours(bool full) const
  * calculate the obstacle regions in the angular configuration space
  */
 bool PathsBuilder::CalculateConfigSpace(
-	t_real da2, t_real da4, 
+	t_real da2, t_real da4,
 	t_real starta2, t_real enda2,
 	t_real starta4, t_real enda4)
 {
