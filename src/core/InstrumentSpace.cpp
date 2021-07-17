@@ -221,11 +221,23 @@ bool InstrumentSpace::CheckCollision2D() const
 	};
 
 
-	auto get_circles = [&get_comps_circles](const Axis& axis, 
-		std::vector<std::tuple<t_vec, t_real>>& circles)
+	auto get_circles = [&get_comps_circles](
+		const Axis& axis, 
+		std::vector<std::tuple<t_vec, t_real>>& circles, 
+		bool inc_incoming = true,
+		bool inc_internal = true,
+		bool inc_outgoing = true)
 	{
+		std::vector<AxisAngle> axisangles;
+		if(inc_incoming)
+			axisangles.push_back(AxisAngle::INCOMING);
+		if(inc_internal)
+			axisangles.push_back(AxisAngle::INTERNAL);
+		if(inc_outgoing)
+			axisangles.push_back(AxisAngle::OUTGOING);
+
 		// get geometries relative to incoming, internal, and outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
+		for(AxisAngle axisangle : axisangles)
 		{
 			const t_mat& matAxis = axis.GetTrafo(axisangle);
 			get_comps_circles(axis.GetComps(axisangle), circles, &matAxis);
@@ -285,11 +297,23 @@ bool InstrumentSpace::CheckCollision2D() const
 	};
 
 
-	auto get_polys = [&get_comps_polys](const Axis& axis, 
-		std::vector<std::vector<t_vec>>& polys)
+	auto get_polys = [&get_comps_polys](
+		const Axis& axis, 
+		std::vector<std::vector<t_vec>>& polys,
+		bool inc_incoming = true,
+		bool inc_internal = true,
+		bool inc_outgoing = true)
 	{
+		std::vector<AxisAngle> axisangles;
+		if(inc_incoming)
+			axisangles.push_back(AxisAngle::INCOMING);
+		if(inc_internal)
+			axisangles.push_back(AxisAngle::INTERNAL);
+		if(inc_outgoing)
+			axisangles.push_back(AxisAngle::OUTGOING);
+
 		// get geometries relative to incoming, internal, and outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
+		for(AxisAngle axisangle : axisangles)
 		{
 			const t_mat& matAxis = axis.GetTrafo(axisangle);
 			get_comps_polys(axis.GetComps(axisangle), polys, &matAxis);
@@ -387,24 +411,36 @@ bool InstrumentSpace::CheckCollision2D() const
 	const auto& walls = GetWalls();
 
 	std::vector<std::tuple<t_vec, t_real>> 
-		monoCircles, sampleCircles, anaCircles;
+		monoCircles, monoCirclesIntOut, 
+		sampleCircles,
+		anaCircles;
 	std::vector<std::vector<t_vec>> 
-		monoPolys, samplePolys, anaPolys;
+		monoPolys, monoPolysIn, monoPolysIntOut,
+		samplePolys, samplePolysIn,
+		anaPolys;
 
 	get_circles(mono, monoCircles);
+	get_circles(mono, monoCirclesIntOut, false, true, true);
 	get_circles(sample, sampleCircles);
 	get_circles(ana, anaCircles);
 
 	get_polys(mono, monoPolys);
+	get_polys(mono, monoPolysIn, true, false, false);
+	get_polys(mono, monoPolysIntOut, false, true, true);
 	get_polys(sample, samplePolys);
+	get_polys(sample, samplePolysIn, true, false, false);
 	get_polys(ana, anaPolys);
 
 	// get bounding boxes
 	auto monoBB = tl2::bounding_box<t_vec, std::vector>(monoPolys, 2);
+	auto monoInBB = tl2::bounding_box<t_vec, std::vector>(monoPolysIn, 2);
+	auto monoIntOutBB = tl2::bounding_box<t_vec, std::vector>(monoPolysIntOut, 2);
 	auto sampleBB = tl2::bounding_box<t_vec, std::vector>(samplePolys, 2);
+	auto sampleInBB = tl2::bounding_box<t_vec, std::vector>(samplePolysIn, 2);
 	auto anaBB = tl2::bounding_box<t_vec, std::vector>(anaPolys, 2);
 
 	auto monoCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(monoCircles, 2);
+	auto monoCircleIntOutBB = tl2::sphere_bounding_box<t_vec, std::vector>(monoCirclesIntOut, 2);
 	auto sampleCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(sampleCircles, 2);
 	auto anaCircleBB = tl2::sphere_bounding_box<t_vec, std::vector>(anaCircles, 2);
 
@@ -427,15 +463,15 @@ bool InstrumentSpace::CheckCollision2D() const
 			// TODO: exclude checks for objects that are already colliding
 			//       in the instrument definition file
 
-			//if(check_collision_poly_poly(monoPolys, wallPolys, monoBB, wallBB))
-			//	return true;
+			if(check_collision_poly_poly(monoPolysIntOut, wallPolys, monoIntOutBB, wallBB))
+				return true;
 			if(check_collision_poly_poly(samplePolys, wallPolys, sampleBB, wallBB))
 				return true;
 			if(check_collision_poly_poly(anaPolys, wallPolys, anaBB, wallBB))
 				return true;
 
-			//if(check_collision_circle_poly(monoCircles, wallPolys, monoCircleBB, wallBB))
-			//	return true;
+			if(check_collision_circle_poly(monoCirclesIntOut, wallPolys, monoCircleIntOutBB, wallBB))
+				return true;
 			if(check_collision_circle_poly(sampleCircles, wallPolys, sampleCircleBB, wallBB))
 				return true;
 			if(check_collision_circle_poly(anaCircles, wallPolys, anaCircleBB, wallBB))
@@ -453,8 +489,8 @@ bool InstrumentSpace::CheckCollision2D() const
 			wallCircles.emplace_back(std::move(wallCircle));
 			auto wallCirclesBB = tl2::sphere_bounding_box<t_vec, std::vector>(wallCircles, 2);
 
-			//if(check_collision_circle_circle(monoCircles, wallCircles))
-			//	return true;
+			if(check_collision_circle_circle(monoCirclesIntOut, wallCircles))
+				return true;
 			if(check_collision_circle_circle(sampleCircles, wallCircles))
 				return true;
 			if(check_collision_circle_circle(anaCircles, wallCircles))
@@ -480,14 +516,14 @@ bool InstrumentSpace::CheckCollision2D() const
 		return true;
 	if(check_collision_circle_poly(monoCircles, samplePolys, monoCircleBB, sampleBB))
 		return true;
-	//if(check_collision_circle_poly(sampleCircles, monoPolys, sampleCircleBB, monoBB))
-	//	return true;
+	if(check_collision_circle_poly(sampleCircles, monoPolysIn, sampleCircleBB, monoInBB))
+		return true;
 	if(check_collision_circle_poly(sampleCircles, anaPolys, sampleCircleBB, anaBB))
 		return true;
 	if(check_collision_circle_poly(anaCircles, monoPolys, anaCircleBB, monoBB))
 		return true;
-	//if(check_collision_circle_poly(anaCircles, samplePolys, anaCircleBB, sampleBB))
-	//	return true;
+	if(check_collision_circle_poly(anaCircles, samplePolysIn, anaCircleBB, sampleInBB))
+		return true;
 
 	return false;
 }
