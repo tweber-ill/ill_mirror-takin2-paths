@@ -383,7 +383,7 @@ template<class t_vec, class t_line = std::tuple<t_vec, t_vec>,
 requires tl2::is_vec<t_vec>
 bool pt_inside_poly(
 	const std::vector<t_vec>& poly, const t_vec& pt,
-	t_real eps = 1e-6)
+	bool inverted_poly = false, t_real eps = 1e-6)
 {
 	// check if the point coincides with one of the polygon vertices
 	for(const auto& vert : poly)
@@ -438,7 +438,8 @@ bool pt_inside_poly(
 	}
 
 	// odd number of intersections?
-	return num_inters % 2;
+	bool odd = (num_inters % 2);
+	return inverted_poly ? !odd : odd;
 }
 
 
@@ -452,7 +453,7 @@ requires tl2::is_vec<t_vec>
 bool pt_inside_poly(
 	const std::vector<t_line>& polylines, const t_vec& pt,
 	std::size_t lineidx_begin = 0, std::size_t lineidx_end = 0,
-	t_real eps = 1e-6)
+	bool inverted_poly = false, t_real eps = 1e-6)
 {
 	// bounding box
 	t_vec bboxmin, bboxmax;
@@ -519,7 +520,8 @@ bool pt_inside_poly(
 	}
 
 	// odd number of intersections?
-	return num_inters % 2;
+	bool odd = (num_inters % 2);
+	return inverted_poly ? !odd : odd;
 }
 
 

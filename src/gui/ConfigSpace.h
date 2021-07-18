@@ -31,6 +31,8 @@ public:
 
 	void CalculatePathMesh();
 	void CalculatePath();
+	
+	void UpdatePlotRanges();
 
 	// receivers for instrument (space) and target position update signals
 	void UpdateInstrument(const Instrument& instr, const t_real* sensesCCW = nullptr);
@@ -69,7 +71,6 @@ private:
 	t_real m_starta4 = -tl2::pi<t_real>;
 	t_real m_enda4 = tl2::pi<t_real>;
 
-	geo::Image<std::uint8_t> m_img;
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};

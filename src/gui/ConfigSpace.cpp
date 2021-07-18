@@ -37,9 +37,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// plotter
 	m_plot = std::make_shared<QCustomPlot>(this);
 	m_plot->xAxis->setLabel("2θ_S (deg)");
-	m_plot->xAxis->setRange(m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.);
 	m_plot->yAxis->setLabel("2θ_M (deg)");
-	m_plot->yAxis->setRange(m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.);
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
 
@@ -48,12 +46,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->setGradient(QCPColorGradient::gpJet);
 	m_colourMap->setDataRange(QCPRange{0, 1});
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
-	m_colourMap->data()->setRange(
-		QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.}, 
-		QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
 	m_colourMap->setInterpolate(false);
 	m_colourMap->setAntialiased(false);
-
+	
 	// instrument position plot
 	{
 		m_instrposplot = m_plot->addGraph();
@@ -95,6 +90,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		scatterstyle.setBrush(instrbrush);
 		m_targetposplot->setScatterStyle(scatterstyle);
 	}
+	
+	UpdatePlotRanges();
 
 	// status label
 	m_status = new QLabel(this);
@@ -359,6 +356,28 @@ void ConfigSpaceDlg::accept()
 }
 
 
+void ConfigSpaceDlg::UpdatePlotRanges()
+{
+	if(m_plot)
+	{
+		m_plot->xAxis->setRange(
+			m_starta4/tl2::pi<t_real>*180.,
+			m_enda4/tl2::pi<t_real>*180.);
+
+		m_plot->yAxis->setRange(
+			m_starta2/tl2::pi<t_real>*180.,
+			m_enda2/tl2::pi<t_real>*180.);
+	}
+
+	if(m_colourMap)
+	{
+		m_colourMap->data()->setRange(
+			QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.}, 
+			QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
+	}
+}
+
+
 /**
  * update the current instrument position indicator if the instrument has moved
  */
@@ -449,17 +468,36 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
  */
 void ConfigSpaceDlg::CalculatePathMesh()
 {
-	if(!m_pathsbuilder)
+	if(!m_pathsbuilder || !m_pathsbuilder->GetInstrumentSpace())
 		return;
+
+	const auto& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
+
+	// plot angular steps
+	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
+	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
+
+	// get the angular limits from the instrument model
+	m_starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+	m_enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+	m_starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
+	m_enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
+
+	// angular padding
+	t_real padding = 4;
+	m_starta2 -= padding * da2;
+	m_enda2 += padding * da2;
+	m_starta4 -= padding * da4;
+	m_enda4 += padding * da4;
+
+	UpdatePlotRanges();
 
 	m_status->setText("Clearing old paths.");
 	m_pathsbuilder->Clear();
 
-	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
-	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
-
 	m_status->setText("Calculating configuration space.");
-	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4, m_starta2, m_enda2, m_starta4, m_enda4))
+	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4, 
+		m_starta2, m_enda2, m_starta4, m_enda4))
 	{
 		m_status->setText("Error: Configuration space calculation failed.");
 		return;
@@ -602,8 +640,13 @@ void ConfigSpaceDlg::RedrawPlot()
 	{
 		for(std::size_t x=0; x<width; ++x)
 		{
-			bool colliding = img.GetPixel(x, y) > 0;
-			m_colourMap->data()->setCell(x, y, colliding ? 1. : 0.);
+			using t_pixel = typename std::decay_t<decltype(img)>::value_type;
+			t_pixel pixel_val = img.GetPixel(x, y);
+			
+			// val > 0 => colliding
+			t_real val = std::lerp(t_real(0), t_real(1), 
+				t_real(pixel_val)/t_real(std::numeric_limits<t_pixel>::max()));
+			m_colourMap->data()->setCell(x, y, val);
 		}
 	}
 

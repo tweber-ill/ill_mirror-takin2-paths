@@ -188,8 +188,17 @@ bool PathsBuilder::CalculateConfigSpace(
 				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
 
 				// set image value
-				bool colliding = instrspace_cpy.CheckCollision2D();
-				m_img.SetPixel(img_col, img_row, colliding ? 255 : 0);
+				bool angle_ok = instrspace_cpy.CheckAngularLimits();
+
+				if(!angle_ok)
+				{
+					m_img.SetPixel(img_col, img_row, 240);
+				}
+				else
+				{
+					bool colliding = instrspace_cpy.CheckCollision2D();
+					m_img.SetPixel(img_col, img_row, colliding ? 255 : 0);
+				}
 
 				++num_pixels;
 			}
@@ -272,10 +281,10 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 		for(auto& contour : m_wallcontours)
 		{
 			//std::reverse(contour.begin(), contour.end());
-			auto slitcontour = geo::convex_split<t_contourvec, t_real>(contour, m_eps);
-			if(slitcontour.size())
+			auto splitcontour = geo::convex_split<t_contourvec, t_real>(contour, m_eps);
+			if(splitcontour.size())
 			{
-				for(auto&& poly : slitcontour)
+				for(auto&& poly : splitcontour)
 				{
 					//std::reverse(poly.begin(), poly.end());
 					splitcontours.emplace_back(std::move(poly));
@@ -337,7 +346,11 @@ bool PathsBuilder::CalculateLineSegments()
 
 		// mark line group start and end index
 		std::size_t groupend = linectr;
-		m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
+		
+		// don't include outer bounding region
+		// TODO: test if such a region is there
+		if(contouridx != 0)
+			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 	}
 
 	(*m_sigProgress)(false, true, 1, message);

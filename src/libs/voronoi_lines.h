@@ -363,13 +363,19 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
 				{
+					// !!problem-specific hack!!
+					// TODO: find inverted contours from their turning sense
+					bool inv = (grpidx == 0);
+
 					auto [grp_beg, grp_end] = line_groups[grpidx];
 
 					// check edge vertex 0
 					if(vert0idx)
 					{
 						const auto& vorovert = vertices[*vert0idx];
-						if(vert_inside_region = pt_inside_poly<t_vec>(lines, vorovert, grp_beg, grp_end, eps); vert_inside_region)
+						if(vert_inside_region = pt_inside_poly<t_vec>(
+							lines, vorovert, grp_beg, grp_end, inv, eps); 
+							vert_inside_region)
 							break;
 					}
 
@@ -377,7 +383,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					if(vert1idx)
 					{
 						const auto& vorovert = vertices[*vert1idx];
-						if(vert_inside_region = pt_inside_poly<t_vec>(lines, vorovert, grp_beg, grp_end, eps); vert_inside_region)
+						if(vert_inside_region = pt_inside_poly<t_vec>(
+							lines, vorovert, grp_beg, grp_end, inv, eps); 
+							vert_inside_region)
 							break;
 					}
 				}

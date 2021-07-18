@@ -63,6 +63,8 @@ public:
 
 	// input instrument
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
+	const InstrumentSpace* GetInstrumentSpace() const { return m_instrspace; }
+
 	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
 
 	// calculation workflow
