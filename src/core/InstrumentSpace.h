@@ -49,7 +49,9 @@ public:
 	const Instrument& GetInstrument() const { return m_instr; }
 	Instrument& GetInstrument() { return m_instr; }
 
+	bool CheckAngularLimits() const;
 	bool CheckCollision2D() const;
+
 	void DragObject(bool drag_start, const std::string& obj,
 		t_real x_start, t_real y_start, t_real x, t_real y);
 

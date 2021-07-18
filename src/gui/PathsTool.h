@@ -174,7 +174,8 @@ protected slots:
 	void UpdateStatusLabel();
 
 	// set instrument status (coordinates, collision flag)
-	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E, bool colliding);
+	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E,
+		bool in_angluar_limits, bool colliding);
 
 
 public:

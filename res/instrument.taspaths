@@ -102,6 +102,9 @@
 				<angle_internal> 45 </angle_internal>
 				<angle_out> 90 </angle_out>
 
+				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
+
 				<geometry_in>
 					<box id="reactor-monochromator guide">
 						<pos1> -5 0 </pos1>
@@ -145,7 +148,10 @@
 				<pos> 3.5 0 </pos>
 				<angle_in> 0 </angle_in>
 				<angle_internal> 45 </angle_internal>
-				<angle_out> 90 </angle_out>
+				<angle_out> -90 </angle_out>
+
+				<angle_out_lower_limit> -180 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
 
 				<geometry_internal>
 					<cylinder>
@@ -179,8 +185,11 @@
 			<analyser>
 				<pos> 2.5 0 </pos>
 				<angle_in> 0 </angle_in>
-				<angle_internal> -22.5 </angle_internal>
-				<angle_out> -45 </angle_out>
+				<angle_internal> 22.5 </angle_internal>
+				<angle_out> 90 </angle_out>
+
+				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
 
 				<geometry_internal>
 					<cylinder>

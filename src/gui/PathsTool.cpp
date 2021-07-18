@@ -219,7 +219,9 @@ bool PathsTool::OpenFile(const QString &file)
 					m_plane_rlu[0], m_plane_rlu[2],
 					m_sensesCCW[1], g_a3_offs);
 
-				SetInstrumentStatus(Qrlu, E, m_instrspace.CheckCollision2D());
+				SetInstrumentStatus(Qrlu, E,
+					m_instrspace.CheckAngularLimits(),
+					m_instrspace.CheckCollision2D());
 
 				if(this->m_dlgConfigSpace)
 					this->m_dlgConfigSpace->UpdateInstrument(instr, m_sensesCCW);
@@ -560,7 +562,8 @@ void PathsTool::UpdateStatusLabel()
 }
 
 
-void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E, bool colliding)
+void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E,
+	bool in_angular_limits, bool colliding)
 {
 	using namespace tl2_ops;
 
@@ -578,6 +581,9 @@ void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E, 
 
 	tl2::set_eps_0<t_real>(E, g_eps_gui);
 	ostr << std::fixed << "E = " << E << " meV, ";
+
+	if(!in_angular_limits)
+		ostr << "invalid angles, ";
 
 	if(colliding)
 		ostr << "collision detected!";

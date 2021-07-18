@@ -51,6 +51,13 @@ const Axis& Axis::operator=(const Axis& axis)
 	this->m_angle_out = axis.m_angle_out;
 	this->m_angle_internal = axis.m_angle_internal;
 
+	for(int i=0; i<2; ++i)
+	{
+		this->m_angle_in_limits[i] = axis.m_angle_in_limits[i];
+		this->m_angle_out_limits[i] = axis.m_angle_out_limits[i];
+		this->m_angle_internal_limits[i] = axis.m_angle_internal_limits[i];
+	}
+
 	this->m_comps_in = axis.m_comps_in;
 	this->m_comps_out = axis.m_comps_out;
 	this->m_comps_internal = axis.m_comps_internal;
@@ -64,11 +71,129 @@ const Axis& Axis::operator=(const Axis& axis)
 }
 
 
+void Axis::SetPreviousAxis(const Axis* axis)
+{
+	m_prev = axis; 
+	m_trafos_need_update = true;
+}
+
+
+void Axis::SetNextAxis(const Axis* axis)
+{
+	m_next = axis;
+	m_trafos_need_update = true;
+}
+
+
+void Axis::SetParentInstrument(Instrument* instr)
+{
+	m_instr = instr;
+	m_trafos_need_update = true;
+}
+
+
+t_real Axis::GetAxisAngleInLowerLimit() const 
+{ 
+	if(m_angle_in_limits[0]) 
+		return *m_angle_in_limits[0];
+	else
+		return -tl2::pi<t_real>;
+}
+
+
+t_real Axis::GetAxisAngleInUpperLimit() const 
+{
+	if(m_angle_in_limits[1])
+		return *m_angle_in_limits[1];
+	else
+		return tl2::pi<t_real>; 
+}
+
+
+t_real Axis::GetAxisAngleOutLowerLimit() const 
+{
+	if(m_angle_out_limits[0])
+		return *m_angle_out_limits[0];
+	else
+		return -tl2::pi<t_real>;
+}
+
+
+t_real Axis::GetAxisAngleOutUpperLimit() const 
+{
+	if(m_angle_out_limits[1])
+		return *m_angle_out_limits[1];
+	else
+		return tl2::pi<t_real>;
+}
+
+
+t_real Axis::GetAxisAngleInternalLowerLimit() const 
+{
+	if(m_angle_internal_limits[0]) 
+		return *m_angle_internal_limits[0];
+	else
+		return -tl2::pi<t_real>;
+}
+
+
+t_real Axis::GetAxisAngleInternalUpperLimit() const 
+{
+	if(m_angle_internal_limits[1])
+		return *m_angle_internal_limits[1];
+	else
+		return tl2::pi<t_real>;
+}
+
+
+void Axis::SetAxisAngleInLowerLimit(t_real angle)
+{
+	m_angle_in_limits[0] = angle;
+}
+
+
+void Axis::SetAxisAngleInUpperLimit(t_real angle)
+{
+	m_angle_in_limits[1] = angle;
+}
+
+
+void Axis::SetAxisAngleOutLowerLimit(t_real angle)
+{
+	m_angle_out_limits[0] = angle;
+}
+
+
+void Axis::SetAxisAngleOutUpperLimit(t_real angle)
+{
+	m_angle_out_limits[1] = angle;
+}
+
+
+void Axis::SetAxisAngleInternalLowerLimit(t_real angle)
+{
+	m_angle_internal_limits[0] = angle;
+}
+
+
+void Axis::SetAxisAngleInternalUpperLimit(t_real angle)
+{
+	m_angle_internal_limits[1] = angle;
+}
+
+
 void Axis::Clear()
 {
 	m_comps_in.clear();
 	m_comps_out.clear();
 	m_comps_internal.clear();
+
+	for(int i=0; i<2; ++i)
+	{
+		this->m_angle_in_limits[i] = std::nullopt;
+		this->m_angle_out_limits[i] = std::nullopt;
+		this->m_angle_internal_limits[i] = std::nullopt;
+	}
 
 	m_trafos_need_update = true;
 }
@@ -93,6 +218,20 @@ bool Axis::Load(const pt::ptree& prop)
 		m_angle_internal = *opt/t_real{180}*tl2::pi<t_real>;
 	if(auto opt = prop.get_optional<t_real>("angle_out"); opt)
 		m_angle_out = *opt/t_real{180}*tl2::pi<t_real>; //- m_angle_in;
+
+	// angular limits
+	if(auto opt = prop.get_optional<t_real>("angle_in_lower_limit"); opt)
+		m_angle_in_limits[0] = *opt/t_real{180}*tl2::pi<t_real>;
+	if(auto opt = prop.get_optional<t_real>("angle_in_upper_limit"); opt)
+		m_angle_in_limits[1] = *opt/t_real{180}*tl2::pi<t_real>;
+	if(auto opt = prop.get_optional<t_real>("angle_internal_lower_limit"); opt)
+		m_angle_internal_limits[0] = *opt/t_real{180}*tl2::pi<t_real>;
+	if(auto opt = prop.get_optional<t_real>("angle_internal_upper_limit"); opt)
+		m_angle_internal_limits[1] = *opt/t_real{180}*tl2::pi<t_real>;
+	if(auto opt = prop.get_optional<t_real>("angle_out_lower_limit"); opt)
+		m_angle_out_limits[0] = *opt/t_real{180}*tl2::pi<t_real>;
+	if(auto opt = prop.get_optional<t_real>("angle_out_upper_limit"); opt)
+		m_angle_out_limits[1] = *opt/t_real{180}*tl2::pi<t_real>;
 
 	auto load_geo = [this, &prop](const std::string& name,
 		std::vector<std::shared_ptr<Geometry>>& comp_geo) -> void
@@ -135,6 +274,26 @@ pt::ptree Axis::Save() const
 	prop.put<t_real>("angle_in", m_angle_in/tl2::pi<t_real>*t_real(180));
 	prop.put<t_real>("angle_internal", m_angle_internal/tl2::pi<t_real>*t_real(180));
 	prop.put<t_real>("angle_out", m_angle_out/tl2::pi<t_real>*t_real(180));
+
+	// angular limits
+	if(m_angle_in_limits[0])
+		prop.put<t_real>("angle_in_lower_limit", 
+			*m_angle_in_limits[0]/tl2::pi<t_real>*t_real(180));
+	if(m_angle_in_limits[1])
+		prop.put<t_real>("angle_in_upper_limit", 
+			*m_angle_in_limits[1]/tl2::pi<t_real>*t_real(180));
+	if(m_angle_internal_limits[0])
+		prop.put<t_real>("angle_internal_lower_limit", 
+			*m_angle_internal_limits[0]/tl2::pi<t_real>*t_real(180));
+	if(m_angle_internal_limits[1])
+		prop.put<t_real>("angle_internal_upper_limit", 
+			*m_angle_internal_limits[1]/tl2::pi<t_real>*t_real(180));
+	if(m_angle_out_limits[0])
+		prop.put<t_real>("angle_out_lower_limit", 
+			*m_angle_out_limits[0]/tl2::pi<t_real>*t_real(180));
+	if(m_angle_out_limits[1])
+		prop.put<t_real>("angle_out_upper_limit", 
+			*m_angle_out_limits[1]/tl2::pi<t_real>*t_real(180));
 
 	// geometries
 	auto allcomps = { m_comps_in, m_comps_internal, m_comps_out };

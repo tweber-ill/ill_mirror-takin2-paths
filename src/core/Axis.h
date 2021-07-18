@@ -8,6 +8,8 @@
 #ifndef __INSTR_AXIS_H__
 #define __INSTR_AXIS_H__
 
+#include <optional>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/signals2/signal.hpp>
@@ -43,9 +45,9 @@ public:
 	Axis(const Axis& axis);
 	const Axis& operator=(const Axis& axis);
 
-	void SetPreviousAxis(const Axis* axis) { m_prev = axis; m_trafos_need_update = true; }
-	void SetNextAxis(const Axis* axis) { m_next = axis; m_trafos_need_update = true; }
-	void SetParentInstrument(Instrument* instr) { m_instr = instr; m_trafos_need_update = true; }
+	void SetPreviousAxis(const Axis* axis);
+	void SetNextAxis(const Axis* axis);
+	void SetParentInstrument(Instrument* instr);
 
 	void Clear();
 	bool Load(const boost::property_tree::ptree& prop);
@@ -61,6 +63,20 @@ public:
 	void SetAxisAngleIn(t_real angle);
 	void SetAxisAngleOut(t_real angle);
 	void SetAxisAngleInternal(t_real angle);
+
+	t_real GetAxisAngleInLowerLimit() const;
+	t_real GetAxisAngleInUpperLimit() const;
+	t_real GetAxisAngleOutLowerLimit() const;
+	t_real GetAxisAngleOutUpperLimit() const;
+	t_real GetAxisAngleInternalLowerLimit() const;
+	t_real GetAxisAngleInternalUpperLimit() const;
+
+	void SetAxisAngleInLowerLimit(t_real angle);
+	void SetAxisAngleInUpperLimit(t_real angle);
+	void SetAxisAngleOutLowerLimit(t_real angle);
+	void SetAxisAngleOutUpperLimit(t_real angle);
+	void SetAxisAngleInternalLowerLimit(t_real angle);
+	void SetAxisAngleInternalUpperLimit(t_real angle);
 
 	// which==1: in, which==2: internal, which==3: out
 	const t_mat& GetTrafo(AxisAngle which=AxisAngle::INCOMING) const;
@@ -93,6 +109,11 @@ private:
 	t_real m_angle_in = 0, m_angle_out = 0;
 	// internal rotation angle
 	t_real m_angle_internal;
+
+	// optional angular limits
+	std::optional<t_real> m_angle_in_limits[2];
+	std::optional<t_real> m_angle_internal_limits[2];
+	std::optional<t_real> m_angle_out_limits[2];
 
 	// components relative to incoming and outgoing axis
 	std::vector<std::shared_ptr<Geometry>> m_comps_in, m_comps_out;

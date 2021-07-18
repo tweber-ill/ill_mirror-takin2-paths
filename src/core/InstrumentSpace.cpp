@@ -148,6 +148,37 @@ void InstrumentSpace::AddWall(const std::vector<std::shared_ptr<Geometry>>& wall
 
 
 /**
+ * check if the axis angles are within their limits
+ */
+bool InstrumentSpace::CheckAngularLimits() const
+{
+	const Axis& mono = GetInstrument().GetMonochromator();
+	const Axis& sample = GetInstrument().GetSample();
+	const Axis& ana = GetInstrument().GetAnalyser();
+
+	for(const Axis& axis : { mono, sample, ana })
+	{
+		if(axis.GetAxisAngleIn() < axis.GetAxisAngleInLowerLimit())
+			return false;
+		if(axis.GetAxisAngleIn() > axis.GetAxisAngleInUpperLimit())
+			return false;
+
+		if(axis.GetAxisAngleInternal() < axis.GetAxisAngleInternalLowerLimit())
+			return false;
+		if(axis.GetAxisAngleInternal() > axis.GetAxisAngleInternalUpperLimit())
+			return false;
+
+		if(axis.GetAxisAngleOut() < axis.GetAxisAngleOutLowerLimit())
+			return false;
+		if(axis.GetAxisAngleOut() > axis.GetAxisAngleOutUpperLimit())
+			return false;
+	}
+
+	return true;
+}
+
+
+/**
  * check for collisions, using a 2d representation of the instrument space
  */
 bool InstrumentSpace::CheckCollision2D() const
