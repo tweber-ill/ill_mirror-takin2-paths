@@ -301,7 +301,7 @@ std::vector<std::vector<t_vec>> trace_boundary(
 		std::vector<t_vec> contour;
 
 		// find start pixel
-		bool start_found = 0;
+		bool start_found = false;
 		auto [width, height] = get_image_dims(img);
 
 		for(int y=start[1]; y<(int)height; ++y)
@@ -319,7 +319,7 @@ std::vector<std::vector<t_vec>> trace_boundary(
 						continue;
 
 					start = vec;
-					start_found = 1;
+					start_found = true;
 					break;
 				}
 			}

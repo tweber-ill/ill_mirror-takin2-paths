@@ -285,8 +285,10 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_plot)
 			return;
 
-		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
-		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+		const int x = evt->x();
+		const int y = evt->y();
+		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
+		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
 
 		// move instrument
 		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
@@ -301,6 +303,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		std::ostringstream ostr;
 		ostr.precision(g_prec_gui);
 		ostr << "2θ_S = " << _a4 << " deg, 2θ_M = " << _a2 << " deg.";
+		ostr <<" Pixel: (" << x << ", " << y << ").";
 		m_status->setText(ostr.str().c_str());
 	});
 

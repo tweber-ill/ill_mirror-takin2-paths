@@ -361,10 +361,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			// remove the voronoi vertex if it's inside a region defined by a line group
 			if(remove_voronoi_vertices_in_regions)
 			{
-				bool vert_inside_region = false;
+				bool vert_inside_norm_region = false;
+				bool has_inv_regions = false;
+				bool vert0_outside_all_inv_regions = true;
+				bool vert1_outside_all_inv_regions = true;
 
 				for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
 				{
+					bool vert_inside_region = false;
 					auto [grp_beg, grp_end] = line_groups[grpidx];
 					const t_vec* pt_outside = nullptr;
 					bool inv_region = false;
@@ -381,9 +385,19 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 						vert_inside_region = pt_inside_poly<t_vec>(
 							lines, vorovert, grp_beg, grp_end, pt_outside, eps);
 						if(inv_region)
-							vert_inside_region = !vert_inside_region;
-						if(vert_inside_region)
-							break;
+						{
+							has_inv_regions = true;
+							if(vert_inside_region)
+								vert0_outside_all_inv_regions = false;
+						}
+						else
+						{
+							if(vert_inside_region)
+							{
+								vert_inside_norm_region = true;
+								break;
+							}
+						}
 					}
 
 					// check edge vertex 1
@@ -393,14 +407,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 						vert_inside_region = pt_inside_poly<t_vec>(
 							lines, vorovert, grp_beg, grp_end, pt_outside, eps);
 						if(inv_region)
-							vert_inside_region = !vert_inside_region;
-						if(vert_inside_region)
-							break;
+						{
+							has_inv_regions = true;
+							if(vert_inside_region)
+								vert1_outside_all_inv_regions = false;
+						}
+						else
+						{
+							if(vert_inside_region)
+							{
+								vert_inside_norm_region = true;
+								break;
+							}
+						}
 					}
 				}
 
-				// ignore this voronoi edge and skip to next one
-				if(vert_inside_region)
+				// ignore this voronoi edge and skip to the next one
+				if(vert_inside_norm_region)
+					continue;
+				if(has_inv_regions && 
+					(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
 					continue;
 			}
 		}

@@ -192,12 +192,12 @@ bool PathsBuilder::CalculateConfigSpace(
 
 				if(!angle_ok)
 				{
-					m_img.SetPixel(img_col, img_row, 240);
+					m_img.SetPixel(img_col, img_row, 0xf0);
 				}
 				else
 				{
 					bool colliding = instrspace_cpy.CheckCollision2D();
-					m_img.SetPixel(img_col, img_row, colliding ? 255 : 0);
+					m_img.SetPixel(img_col, img_row, colliding ? 0xff : 0x00);
 				}
 
 				++num_pixels;
@@ -321,7 +321,7 @@ bool PathsBuilder::CalculateLineSegments()
 	// find an arbitrary point outside all obstacles
 	auto find_point_outside_regions = [this]
 	(std::size_t x_start = 0, std::size_t y_start = 0,
-	 bool skip_search = false) -> t_vec
+		bool skip_search = false) -> t_vec
 	{
 		t_vec point_outside_regions = tl2::create<t_vec>({-50, -40});
 		bool found_point = false;
@@ -362,6 +362,7 @@ bool PathsBuilder::CalculateLineSegments()
 	{
 		const auto& contour = m_wallcontours[contouridx];
 		std::size_t groupstart = linectr;
+		t_contourvec contour_mean = tl2::zero<t_vec>(2);
 
 		for(std::size_t vert1 = 0; vert1 < contour.size(); ++vert1)
 		{
@@ -369,12 +370,29 @@ bool PathsBuilder::CalculateLineSegments()
 
 			const t_contourvec& vec1 = contour[vert1];
 			const t_contourvec& vec2 = contour[vert2];
+			contour_mean += vec1;
 
 			t_vec linevec1 = vec1;
 			t_vec linevec2 = vec2;
+
 			m_lines.emplace_back(std::make_pair(std::move(linevec1), std::move(linevec2)));
 
 			++linectr;
+		}
+		
+		contour_mean /= contour.size();
+
+		// move a point on the contour in the direction of the contour mean
+		// to get a point inside the contour
+		t_contourvec in_contour = contour[0];
+		const int in_contour_dist = 1;
+
+		for(int i = 0; i < 2; ++i)
+		{
+			if(contour_mean[i] > in_contour[i])
+				in_contour[i] += in_contour_dist;
+			else if(contour_mean[i] < in_contour[i])
+				in_contour[i] -= in_contour_dist;
 		}
 
 		// mark line group start and end index
@@ -386,11 +404,23 @@ bool PathsBuilder::CalculateLineSegments()
 		{
 			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 
-			// the first contour is an inverted one
 			t_vec point_outside_regions = 
 				find_point_outside_regions(contour[0][0], contour[0][1], true);
 			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
-			m_inverted_regions.push_back(contouridx == 1);
+		
+			auto pix_incontour = m_img.GetPixel(in_contour[0], in_contour[1]);
+
+#ifdef DEBUG
+			std::cout << "contour " << std::dec << contouridx 
+				<< ", pixel " << in_contour[0] 
+				<< ", " << (/*m_img.GetHeight()-*/in_contour[1])
+				<< ": " << std::hex << int(pix_incontour) << std::endl;
+#endif
+
+			// normal regions encircle forbidden coordinate points
+			// inverted regions encircle allowed coordinate points
+			// TODO: check
+			m_inverted_regions.push_back(pix_incontour != 0);
 		}
 	}
 
