@@ -151,6 +151,7 @@ private:
 
 	// arbitrary points outside and inside the regions
 	std::vector<t_vec> m_points_outside_regions{};
+	std::vector<bool> m_inverted_regions{};
 
 	// voronoi vertices, edges and graph from the line segments
 	geo::VoronoiLinesResults<t_vec, t_line, t_graph> m_voro_results{};

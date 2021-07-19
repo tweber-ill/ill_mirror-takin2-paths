@@ -315,25 +315,37 @@ bool PathsBuilder::CalculateLineSegments()
 
 	m_lines.clear();
 	m_linegroups.clear();
+	m_points_outside_regions.clear();
+	m_inverted_regions.clear();
 
 	// find an arbitrary point outside all obstacles
-	t_vec point_outside_regions = tl2::create<t_vec>({-50, -40});
-	bool found_point = false;
-
-	for(std::size_t y=0; y<m_img.GetHeight(); ++y)
+	auto find_point_outside_regions = [this]
+	(std::size_t x_start = 0, std::size_t y_start = 0,
+	 bool skip_search = false) -> t_vec
 	{
-		for(std::size_t x=0; x<m_img.GetWidth(); ++x)
+		t_vec point_outside_regions = tl2::create<t_vec>({-50, -40});
+		bool found_point = false;
+
+		if(!skip_search)
 		{
-			if(m_img.GetPixel(x, y) == 0)
+			for(std::size_t y=y_start; y<m_img.GetHeight(); ++y)
 			{
-				point_outside_regions = tl2::create<t_vec>({x, y});
-				found_point = true;
-				break;
+				for(std::size_t x=x_start; x<m_img.GetWidth(); ++x)
+				{
+					if(m_img.GetPixel(x, y) == 0)
+					{
+						point_outside_regions = tl2::create<t_vec>({x, y});
+						found_point = true;
+						break;
+					}
+				}
+				if(found_point)
+					break;
 			}
 		}
-		if(found_point)
-			break;
-	}
+
+		return point_outside_regions;
+	};
 
 	std::size_t totalverts = 0;
 	for(const auto& contour : m_wallcontours)
@@ -341,6 +353,8 @@ bool PathsBuilder::CalculateLineSegments()
 
 	m_lines.reserve(totalverts/2 + 1);
 	m_linegroups.reserve(m_wallcontours.size());
+	m_points_outside_regions.reserve(m_wallcontours.size());
+	m_inverted_regions.reserve(m_wallcontours.size());
 
 	// contour vertices
 	std::size_t linectr = 0;
@@ -373,7 +387,10 @@ bool PathsBuilder::CalculateLineSegments()
 			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 
 			// the first contour is an inverted one
-			m_points_outside_regions.push_back(point_outside_regions);
+			t_vec point_outside_regions = 
+				find_point_outside_regions(contour[0][0], contour[0][1], true);
+			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
+			m_inverted_regions.push_back(contouridx == 1);
 		}
 	}
 
@@ -393,7 +410,8 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines)
 	m_voro_results
 		= geo::calc_voro<t_vec, t_line, t_graph>(
 			m_lines, m_linegroups, group_lines, true,
-			m_voroedge_eps, &m_points_outside_regions);
+			m_voroedge_eps, &m_points_outside_regions,
+			&m_inverted_regions);
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;
