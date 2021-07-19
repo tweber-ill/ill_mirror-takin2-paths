@@ -149,6 +149,9 @@ private:
 	std::vector<t_line> m_lines{};
 	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
+	// arbitrary points outside and inside the regions
+	std::vector<t_vec> m_points_outside_regions{};
+
 	// voronoi vertices, edges and graph from the line segments
 	geo::VoronoiLinesResults<t_vec, t_line, t_graph> m_voro_results{};
 

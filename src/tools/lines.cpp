@@ -754,7 +754,7 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 
 		auto vec = tl2::create<typename LinesScene::t_vec>({ posScene.x(), posScene.y() });
 		bool in_region = geo::pt_inside_poly<typename LinesScene::t_vec>(
-			region, vec, false, LinesScene::g_eps);
+			region, vec, nullptr, LinesScene::g_eps);
 
 		if(in_region)
 			cursor_regions.push_back(regionidx);

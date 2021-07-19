@@ -180,7 +180,8 @@ VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
-	typename t_vec::value_type edge_eps = 1e-2)
+	typename t_vec::value_type edge_eps = 1e-2,
+	const std::vector<t_vec>* points_outside_regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -363,18 +364,17 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
 				{
-					// !!problem-specific hack!!
-					// TODO: find inverted contours from their turning sense
-					bool inv = (grpidx == 0);
-
 					auto [grp_beg, grp_end] = line_groups[grpidx];
+					const t_vec* pt_outside = nullptr;
+					if(points_outside_regions && points_outside_regions->size())
+						pt_outside = &(*points_outside_regions)[grpidx];
 
 					// check edge vertex 0
 					if(vert0idx)
 					{
 						const auto& vorovert = vertices[*vert0idx];
 						if(vert_inside_region = pt_inside_poly<t_vec>(
-							lines, vorovert, grp_beg, grp_end, inv, eps); 
+							lines, vorovert, grp_beg, grp_end, pt_outside, eps); 
 							vert_inside_region)
 							break;
 					}
@@ -384,7 +384,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					{
 						const auto& vorovert = vertices[*vert1idx];
 						if(vert_inside_region = pt_inside_poly<t_vec>(
-							lines, vorovert, grp_beg, grp_end, inv, eps); 
+							lines, vorovert, grp_beg, grp_end, pt_outside, eps); 
 							vert_inside_region)
 							break;
 					}
@@ -721,7 +721,8 @@ VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_ovd(const std::vector<t_line>& lines, 
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
-	typename t_vec::value_type edge_eps = 1e-2)
+	typename t_vec::value_type edge_eps = 1e-2,
+	const std::vector<t_vec>* points_outside_regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;

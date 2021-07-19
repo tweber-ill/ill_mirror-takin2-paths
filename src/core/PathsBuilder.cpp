@@ -316,6 +316,25 @@ bool PathsBuilder::CalculateLineSegments()
 	m_lines.clear();
 	m_linegroups.clear();
 
+	// find an arbitrary point outside all obstacles
+	t_vec point_outside_regions = tl2::create<t_vec>({-50, -40});
+	bool found_point = false;
+
+	for(std::size_t y=0; y<m_img.GetHeight(); ++y)
+	{
+		for(std::size_t x=0; x<m_img.GetWidth(); ++x)
+		{
+			if(m_img.GetPixel(x, y) == 0)
+			{
+				point_outside_regions = tl2::create<t_vec>({x, y});
+				found_point = true;
+				break;
+			}
+		}
+		if(found_point)
+			break;
+	}
+
 	std::size_t totalverts = 0;
 	for(const auto& contour : m_wallcontours)
 		totalverts += contour.size();
@@ -349,8 +368,13 @@ bool PathsBuilder::CalculateLineSegments()
 		
 		// don't include outer bounding region
 		// TODO: test if such a region is there
-		if(contouridx != 0)
+		if(contouridx > 0)
+		{
 			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
+
+			// the first contour is an inverted one
+			m_points_outside_regions.push_back(point_outside_regions);
+		}
 	}
 
 	(*m_sigProgress)(false, true, 1, message);
@@ -368,7 +392,8 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines)
 
 	m_voro_results
 		= geo::calc_voro<t_vec, t_line, t_graph>(
-			m_lines, m_linegroups, group_lines, true, m_voroedge_eps);
+			m_lines, m_linegroups, group_lines, true,
+			m_voroedge_eps, &m_points_outside_regions);
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;
