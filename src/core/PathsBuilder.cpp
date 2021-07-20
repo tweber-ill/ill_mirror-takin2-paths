@@ -384,16 +384,10 @@ bool PathsBuilder::CalculateLineSegments()
 
 		// move a point on the contour in the direction of the contour mean
 		// to get a point inside the contour
-		t_contourvec in_contour = contour[0];
-		const int in_contour_dist = 1;
-
+		t_contourvec inside_contour = contour[0] + (contour_mean-contour[0]) / 8;
+		t_contourvec outside_contour = contour[0];
 		for(int i = 0; i < 2; ++i)
-		{
-			if(contour_mean[i] > in_contour[i])
-				in_contour[i] += in_contour_dist;
-			else if(contour_mean[i] < in_contour[i])
-				in_contour[i] -= in_contour_dist;
-		}
+			outside_contour[i] -= 1;
 
 		// mark line group start and end index
 		std::size_t groupend = linectr;
@@ -408,19 +402,20 @@ bool PathsBuilder::CalculateLineSegments()
 				find_point_outside_regions(contour[0][0], contour[0][1], true);
 			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
 		
-			auto pix_incontour = m_img.GetPixel(in_contour[0], in_contour[1]);
+			auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
+			auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
 
 #ifdef DEBUG
 			std::cout << "contour " << std::dec << contouridx 
-				<< ", pixel " << in_contour[0] 
-				<< ", " << (/*m_img.GetHeight()-*/in_contour[1])
+				<< ", pixel " << inside_contour[0] 
+				<< ", " << inside_contour[1]
 				<< ": " << std::hex << int(pix_incontour) << std::endl;
 #endif
 
 			// normal regions encircle forbidden coordinate points
 			// inverted regions encircle allowed coordinate points
-			// TODO: check
-			m_inverted_regions.push_back(pix_incontour != 0);
+			//m_inverted_regions.push_back(pix_incontour == 0);
+			m_inverted_regions.push_back(pix_outcontour != 0);
 		}
 	}
 

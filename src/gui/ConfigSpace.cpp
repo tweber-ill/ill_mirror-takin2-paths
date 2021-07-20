@@ -289,7 +289,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		const int y = evt->y();
 		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
 		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
-
+		
 		// move instrument
 		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
 		{
@@ -302,8 +302,17 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		// set status
 		std::ostringstream ostr;
 		ostr.precision(g_prec_gui);
+
+		// show angular coordinates
 		ostr << "2θ_S = " << _a4 << " deg, 2θ_M = " << _a2 << " deg.";
-		ostr <<" Pixel: (" << x << ", " << y << ").";
+
+		// show pixel coordinates
+		if(m_pathsbuilder)
+		{
+			t_vec pix = m_pathsbuilder->AngleToPixel(_a4, _a2);
+			ostr <<" Pixel: (" << (int)pix[0] << ", " << (int)pix[1] << ").";
+		}
+
 		m_status->setText(ostr.str().c_str());
 	});
 

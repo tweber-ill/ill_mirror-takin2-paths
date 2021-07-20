@@ -359,6 +359,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 			// remove the voronoi vertex if it's inside a region defined by a line group
+			// TODO: could alternatively directly query path builder's m_img pixels
 			if(remove_voronoi_vertices_in_regions)
 			{
 				bool vert_inside_norm_region = false;
