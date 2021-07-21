@@ -41,10 +41,7 @@ void PathsBuilder::Clear()
 	m_lines.clear();
 	m_linegroups.clear();
 
-	m_voro_results.vertices.clear();
-	m_voro_results.linear_edges.clear();
-	m_voro_results.parabolic_edges.clear();
-	m_voro_results.graph.Clear();
+	m_voro_results.Clear();
 }
 
 
@@ -379,7 +376,7 @@ bool PathsBuilder::CalculateLineSegments()
 
 			++linectr;
 		}
-		
+
 		contour_mean /= contour.size();
 
 		// move a point on the contour in the direction of the contour mean
@@ -391,7 +388,7 @@ bool PathsBuilder::CalculateLineSegments()
 
 		// mark line group start and end index
 		std::size_t groupend = linectr;
-		
+
 		// don't include outer bounding region
 		// TODO: test if such a region is there
 		if(contouridx > 0)
@@ -401,7 +398,7 @@ bool PathsBuilder::CalculateLineSegments()
 			t_vec point_outside_regions = 
 				find_point_outside_regions(contour[0][0], contour[0][1], true);
 			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
-		
+
 			auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
 			auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
 

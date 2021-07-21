@@ -26,8 +26,10 @@
 
 struct InstrumentPath
 {
+	// path mesh ok?
 	bool ok = false;
 
+	// indices of the voronoi vertices on the path mesh
 	std::vector<std::size_t> voronoi_indices;
 };
 

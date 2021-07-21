@@ -95,6 +95,9 @@ struct VoronoiLinesResults
 	using t_vert_indices_opt = std::pair<t_vert_index_opt, t_vert_index_opt>;
 
 
+	/**
+	 * hash function for vertex indices in arbitrary order
+	 */
 	struct t_vert_hash
 	{
 		std::size_t operator()(const t_vert_indices& idx) const
@@ -103,6 +106,10 @@ struct VoronoiLinesResults
 		}
 	};
 
+
+	/**
+	 * equality function for vertex indices in arbitrary order
+	 */
 	struct t_vert_equ
 	{
 		bool operator()(const t_vert_indices& a, const t_vert_indices& b) const
@@ -115,6 +122,9 @@ struct VoronoiLinesResults
 	};
 
 
+	/**
+	 * hash function for vertex indices in arbitrary order (using std::optional)
+	 */
 	struct t_vert_hash_opt
 	{
 		std::size_t operator()(const t_vert_indices_opt& idx) const
@@ -128,6 +138,10 @@ struct VoronoiLinesResults
 		}
 	};
 
+
+	/**
+	 * equality function for vertex indices in arbitrary order (using std::optional)
+	 */
 	struct t_vert_equ_opt
 	{
 		bool operator()(const t_vert_indices_opt& a, const t_vert_indices_opt& b) const
@@ -156,11 +170,20 @@ struct VoronoiLinesResults
 		parabolic_edges{};
 
 	// vertices
-	std::vector<t_vec> vertices;
+	std::vector<t_vec> vertices{};
 
 	// voronoi vertex graph
 	// graph vertex indices correspond to those of the "vertices" vector
 	t_graph graph;
+
+	
+	void Clear()
+	{
+		vertices.clear();
+		linear_edges.clear();
+		parabolic_edges.clear();
+		graph.Clear();
+	}
 };
 
 
