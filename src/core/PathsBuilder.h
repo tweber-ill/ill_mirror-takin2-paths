@@ -90,6 +90,7 @@ public:
 
 	// save contour line segments to lines test tools
 	bool SaveToLinesTool(std::ostream& ostr);
+	bool SaveToLinesTool(const std::string& filename);
 
 	// connection to progress signal
 	template<class t_slot>
@@ -149,7 +150,8 @@ private:
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
-	std::vector<std::vector<t_contourvec>> m_wallcontours = {}, m_fullwallcontours = {};
+	std::vector<std::vector<t_contourvec>> 
+		m_wallcontours = {}, m_fullwallcontours = {};
 
 	// line segments and groups from the wall contours
 	std::vector<t_line> m_lines{};

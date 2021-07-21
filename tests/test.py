@@ -1,12 +1,13 @@
 #
 # py interface test
 # @author Tobias Weber <tweber@ill.fr>
-# @date 14-July-2021
+# @date 14-july-2021
 # @license see 'LICENSE' file
 #
 
 import sys
 import os
+import math
 
 cwd = os.getcwd()
 sys.path.append(cwd)
@@ -15,7 +16,11 @@ sys.path.append(cwd)
 import taspaths as tas
 
 
+# -----------------------------------------------------------------------------
 # load instrument
+# -----------------------------------------------------------------------------
+print("Loading instrument definition...")
+
 file_name = "../res/instrument.taspaths"
 instrspace = tas.InstrumentSpace()
 [file_ok, file_date] = tas.InstrumentSpace.load(file_name, instrspace)
@@ -25,3 +30,53 @@ if file_ok:
 else:
 	print("Cannot load \"%s\"" % (file_name))
 	exit(-1)
+
+print("Instrument definition loaded.")
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# build path mesh
+# -----------------------------------------------------------------------------
+print("Building path mesh...")
+mem = tas.MemManager()
+senses = mem.NewRealArray(3)
+mem.SetRealArray(senses, 0, 1)
+mem.SetRealArray(senses, 1, -1)
+mem.SetRealArray(senses, 2, 1)
+
+builder = tas.PathsBuilder()
+builder.SetInstrumentSpace(instrspace)
+builder.SetScatteringSenses(senses)
+print("Path builder uses %d threads." % builder.GetMaxNumThreads())
+
+# angular ranges to probe
+angle_padding = 4.
+a2_delta = 0.5/180.*math.pi
+a4_delta = 1./180.*math.pi
+a2_begin = 0. - angle_padding*a2_delta
+a2_end = math.pi + angle_padding*a2_delta
+a4_begin = -math.pi - angle_padding*a2_delta
+a4_end = math.pi + angle_padding*a2_delta
+
+if not builder.CalculateConfigSpace(
+	a2_delta, a4_delta,
+	a2_begin, a2_end,
+	a4_begin, a4_end):
+	print("Angular configuration space could not be calculated.")
+
+if not builder.CalculateWallContours(True, False):
+	print("Obstacle contours could not be calculated.")
+
+if not builder.CalculateLineSegments():
+	print("Line segments could not be calculated.")
+
+if not builder.CalculateVoronoi(False):
+	print("Voronoi diagram could not be calculated.")
+
+print("Finished building path mesh.")
+# -----------------------------------------------------------------------------
+
+
+if not builder.SaveToLinesTool("lines.xml"):
+	print("Could not save line segment diagram.")

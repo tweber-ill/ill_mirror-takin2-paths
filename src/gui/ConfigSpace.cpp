@@ -48,7 +48,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
 	m_colourMap->setInterpolate(false);
 	m_colourMap->setAntialiased(false);
-	
+
 	// instrument position plot
 	{
 		m_instrposplot = m_plot->addGraph();
@@ -90,7 +90,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		scatterstyle.setBrush(instrbrush);
 		m_targetposplot->setScatterStyle(scatterstyle);
 	}
-	
+
 	UpdatePlotRanges();
 
 	// status label
@@ -294,7 +294,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		const int y = evt->y();
 		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
 		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
-		
+
 		// move instrument
 		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
 		{
@@ -420,6 +420,9 @@ void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sen
 
 	m_instrposplot->setData(x, y);
 	m_plot->replot();
+
+	if(m_autocalcpath)
+		CalculatePath();
 }
 
 
@@ -444,6 +447,9 @@ void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle, cons
 
 	m_targetposplot->setData(x, y);
 	m_plot->replot();
+
+	if(m_autocalcpath)
+		CalculatePath();
 }
 
 
@@ -680,7 +686,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 		{
 			using t_pixel = typename std::decay_t<decltype(img)>::value_type;
 			t_pixel pixel_val = img.GetPixel(x, y);
-			
+
 			// val > 0 => colliding
 			t_real val = std::lerp(t_real(0), t_real(1), 
 				t_real(pixel_val)/t_real(std::numeric_limits<t_pixel>::max()));

@@ -445,8 +445,9 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines)
  */
 bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 {
-	//std::ofstream ostr("contour.xml");
 	ostr << "<lines2d>\n";
+	std::vector<std::pair<std::size_t, std::size_t>> group_indices;
+	group_indices.reserve(m_linegroups.size());
 
 	// contour vertices
 	std::size_t vertctr = 0;
@@ -455,6 +456,8 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 	{
 		const auto& contour = m_linegroups[contouridx];
 		ostr << "\t<!-- contour " << contouridx << " -->\n";
+
+		std::size_t group_begin = vertctr;
 
 		for(std::size_t lineidx=std::get<0>(contour); lineidx<std::get<1>(contour); ++lineidx)
 		{
@@ -472,25 +475,28 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 			ostr << "/>\n\n";
 			++vertctr;
 		}
+
+		std::size_t group_end = vertctr;
+		group_indices.emplace_back(std::make_pair(group_begin, group_end));
 	}
 	ostr << "</vertices>\n";
 
 	// contour groups
 	ostr << "\n<groups>\n";
-	for(std::size_t groupidx = 0; groupidx < m_linegroups.size(); ++groupidx)
+	for(std::size_t groupidx = 0; groupidx < group_indices.size(); ++groupidx)
 	{
-		const auto& group = m_linegroups[groupidx];
+		const auto& group = group_indices[groupidx];
 		ostr << "\t<!-- contour " << groupidx << " -->\n";
 		ostr << "\t<" << groupidx << ">\n";
 
-		ostr << "\t\t<begin>" << std::get<0>(group)*2 << "</begin>\n";
-		ostr << "\t\t<end>" << std::get<1>(group)*2 << "</end>\n";
+		ostr << "\t\t<begin>" << std::get<0>(group) << "</begin>\n";
+		ostr << "\t\t<end>" << std::get<1>(group) << "</end>\n";
 
 		ostr << "\t</" << groupidx << ">\n\n";
 	}
 	ostr << "</groups>\n";
 
-	// contour regions
+	// alternatively: contour regions (obsolete)
 	/*ostr << "\n<regions>\n";
 	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
 	{
@@ -514,6 +520,19 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 
 	ostr << "</lines2d>" << std::endl;
 	return true;
+}
+
+
+/**
+ * save the contour line segments to the lines tool
+ */
+bool PathsBuilder::SaveToLinesTool(const std::string& filename)
+{
+	std::ofstream ofstr(filename);
+	if(!ofstr)
+		return false;
+
+	return SaveToLinesTool(ofstr);
 }
 
 
@@ -702,11 +721,11 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 				}
 			}
 		}
-		
+
 		// if it's a linear one, just connect the voronoi vertices
 		if(is_linear_bisector)
 			add_curve_vertex(voro_vertex);
 	}
-	
+
 	return path_vertices;
 }
