@@ -547,6 +547,13 @@ InstrumentPath PathsBuilder::FindPath(
 
 	// find closest voronoi vertices
 	const auto& voro_vertices = m_voro_results.vertices;
+	InstrumentPath path{};
+	path.ok = false;
+
+	// no voronoi vertices available
+	if(voro_vertices.size() == 0)
+		return path;
+
 
 	std::size_t idx_i = 0;
 	std::size_t idx_f = 0;
@@ -586,10 +593,12 @@ InstrumentPath PathsBuilder::FindPath(
 	// find the shortest path between the voronoi vertices
 	const auto& voro_graph = m_voro_results.graph;
 
+	// are the graph vertex indices valid?
+	if(idx_i >= voro_graph.GetNumVertices() || idx_f >= voro_graph.GetNumVertices())
+		return path;
+
 	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
 	const auto predecessors = geo::dijk(voro_graph, ident_i);
-
-	InstrumentPath path{};
 	std::size_t cur_vertidx = idx_f;
 
 	while(true)
@@ -630,4 +639,74 @@ InstrumentPath PathsBuilder::FindPath(
 #endif
 
 	return path;
+}
+
+
+/**
+ * get individual vertices on an instrument path
+ */
+std::vector<t_vec> PathsBuilder::GetPathVertices(
+	const InstrumentPath& path, bool subdivide_lines) const
+{
+	std::vector<t_vec> path_vertices;
+
+	if(!path.ok)
+		return path_vertices;
+
+	const auto& voro_results = GetVoronoiResults();
+	const auto& voro_vertices = voro_results.vertices;
+
+
+	auto add_curve_vertex = [&path_vertices, this](const t_vec& vertex)
+	{
+		const t_vec angle = PixelToAngle(vertex[0], vertex[1], true);
+		path_vertices.emplace_back(std::move(angle));
+	};
+
+
+	// iterate voronoi vertices
+	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
+	{
+		std::size_t voro_idx = path.voronoi_indices[idx];
+		const t_vec& voro_vertex = voro_vertices[voro_idx];
+		bool is_linear_bisector = true;
+
+		// check if the current one is a quadratic bisector
+		if(idx >= 1)
+		{
+			std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
+
+			auto iter_quadr = voro_results.parabolic_edges.find(
+				std::make_pair(prev_voro_idx, voro_idx));
+			if(iter_quadr != voro_results.parabolic_edges.end())
+			{
+				// it's a quadratic bisector
+				is_linear_bisector = false;
+
+				// get correct iteration order of bisector,
+				// which is stored in an unordered fashion
+				bool inverted_iter_order = false;
+				const std::vector<t_vec>& vertices = iter_quadr->second;
+				if(vertices.size() && tl2::equals<t_vec>(vertices[0], voro_vertex, m_eps))
+					inverted_iter_order = true;
+
+				if(inverted_iter_order)
+				{
+					for(auto iter_vert = vertices.rbegin(); iter_vert != vertices.rend(); ++iter_vert)
+						add_curve_vertex(*iter_vert);
+				}
+				else
+				{
+					for(const t_vec& vertex : vertices)
+						add_curve_vertex(vertex);
+				}
+			}
+		}
+		
+		// if it's a linear one, just connect the voronoi vertices
+		if(is_linear_bisector)
+			add_curve_vertex(voro_vertex);
+	}
+	
+	return path_vertices;
 }

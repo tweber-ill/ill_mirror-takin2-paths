@@ -178,10 +178,15 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuOptions->addAction(acCalcVoro);
 
+	QAction *acAutocalcPath = new QAction("Automatically Calculate Path", menuView);
+	acAutocalcPath->setCheckable(true);
+	acAutocalcPath->setChecked(m_autocalcpath);
+	menuOptions->addSeparator();
+	menuOptions->addAction(acAutocalcPath);
+
 	QAction *acMoveTarget = new QAction("Move Target Point", menuView);
 	acMoveTarget->setCheckable(true);
 	acMoveTarget->setChecked(m_movetarget);
-	menuOptions->addSeparator();
 	menuOptions->addAction(acMoveTarget);
 
 	QAction *acCalcMesh = new QAction("Calculate Path Mesh", menuView);
@@ -328,6 +333,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
 	{ m_calcvoronoi = calc; });
 
+	connect(acAutocalcPath, &QAction::toggled, [this](bool calc)->void
+	{ m_autocalcpath = calc; });
+
 	connect(acMoveTarget, &QAction::toggled, [this](bool b)->void
 	{ m_movetarget = b; });
 
@@ -471,6 +479,9 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
 	std::optional<t_real> a3, std::optional<t_real> a4,
 	std::optional<t_real> a5)
 {
+	if(m_autocalcpath)
+		CalculatePath();
+
 	emit GotoAngles(a1, a3, a4, a5, m_movetarget);
 }
 
@@ -540,7 +551,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	}
 
 	m_status->setText("Calculation finished.");
-	RedrawPlot();
+	RedrawVoronoiPlot();
 }
 
 
@@ -549,6 +560,8 @@ void ConfigSpaceDlg::CalculatePathMesh()
  */
 void ConfigSpaceDlg::CalculatePath()
 {
+	m_pathvertices.clear();
+
 	if(!m_pathsbuilder)
 		return;
 
@@ -560,71 +573,15 @@ void ConfigSpaceDlg::CalculatePath()
 	if(!path.ok)
 	{
 		m_status->setText("Error: No path could be found.");
+		if(!m_autocalcpath)
+			QMessageBox::critical(this, "Error", "No path could be found.");
 		return;
 	}
 
-	const auto& voro_results = m_pathsbuilder->GetVoronoiResults();
-	const auto& voro_vertices = voro_results.vertices;
+	// get the vertices on the path
+	m_pathvertices = m_pathsbuilder->GetPathVertices(path, false);
 
-	m_pathcurve.clear();
-	m_pathcurve.reserve(voro_vertices.size());
-	
-
-	auto add_curve_vertex = [this](const t_vec& vertex)
-	{
-		const t_vec angle = m_pathsbuilder->PixelToAngle(
-			vertex[0], vertex[1], true);
-
-		m_pathcurve.emplace_back(std::move(angle));
-	};
-
-
-	// iterate voronoi vertices
-	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
-	{
-		std::size_t voro_idx = path.voronoi_indices[idx];
-		const t_vec& voro_vertex = voro_vertices[voro_idx];
-		bool is_linear_bisector = true;
-
-		// check if the current one is a quadratic bisector
-		if(idx >= 1)
-		{
-			std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
-
-			auto iter_quadr = voro_results.parabolic_edges.find(
-				std::make_pair(prev_voro_idx, voro_idx));
-			if(iter_quadr != voro_results.parabolic_edges.end())
-			{
-				// it's a quadratic bisector
-				is_linear_bisector = false;
-
-				// get correct iteration order of bisector,
-				// which is stored in an unordered fashion
-				bool inverted_iter_order = false;
-				const std::vector<t_vec>& vertices = iter_quadr->second;
-				if(vertices.size() && tl2::equals<t_vec>(vertices[0], voro_vertex, g_eps))
-					inverted_iter_order = true;
-
-				if(inverted_iter_order)
-				{
-					for(auto iter_vert = vertices.rbegin(); iter_vert != vertices.rend(); ++iter_vert)
-						add_curve_vertex(*iter_vert);
-				}
-				else
-				{
-					for(const t_vec& vertex : vertices)
-						add_curve_vertex(vertex);
-				}
-			}
-		}
-		
-		// if it's a linear one, just connect the voronoi vertices
-		if(is_linear_bisector)
-			add_curve_vertex(voro_vertex);
-	}
-
-	// TODO: only redraw path curve, not entire graph
-	RedrawPlot();
+	RedrawPathPlot();
 }
 
 
@@ -651,7 +608,7 @@ void ConfigSpaceDlg::UnsetPathsBuilder()
 }
 
 
-void ConfigSpaceDlg::ClearPlotCurves()
+void ConfigSpaceDlg::ClearVoronoiPlotCurves()
 {
 	// TODO: optimise, as this takes too much time
 	for(auto* plot : m_vorocurves)
@@ -664,7 +621,14 @@ void ConfigSpaceDlg::ClearPlotCurves()
 }
 
 
-void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+void ConfigSpaceDlg::ClearPathPlotCurve()
+{
+	m_plot->removePlottable(m_pathcurve);
+	//delete m_pathcurve;
+}
+
+
+void ConfigSpaceDlg::AddVoronoiPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
 	t_real width, QColor colour)
 {
 	QCPCurve *voroplot = new QCPCurve(m_plot->xAxis, m_plot->yAxis);
@@ -682,9 +646,26 @@ void ConfigSpaceDlg::AddPlotCurve(const QVector<t_real>& x, const QVector<t_real
 }
 
 
-void ConfigSpaceDlg::RedrawPlot()
+void ConfigSpaceDlg::SetPathPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+	t_real width, QColor colour)
 {
-	ClearPlotCurves();
+	m_pathcurve = new QCPCurve(m_plot->xAxis, m_plot->yAxis);
+	m_pathcurve->setLineStyle(QCPCurve::lsLine);
+	m_pathcurve->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone, 1));
+	m_pathcurve->setAntialiased(true);
+
+	QPen voropen = m_pathcurve->pen();
+	voropen.setColor(colour);
+	voropen.setWidthF(width);
+	m_pathcurve->setPen(voropen);
+
+	m_pathcurve->setData(x, y);
+}
+
+
+void ConfigSpaceDlg::RedrawVoronoiPlot()
+{
+	ClearVoronoiPlotCurves();
 
 	// draw wall image
 	const auto& img = m_pathsbuilder->GetImage();
@@ -743,7 +724,7 @@ void ConfigSpaceDlg::RedrawPlot()
 			}
 		}
 
-		AddPlotCurve(vecx, vecy);
+		AddVoronoiPlotCurve(vecx, vecy);
 	}
 
 
@@ -771,21 +752,33 @@ void ConfigSpaceDlg::RedrawPlot()
 			}
 		}
 
-		AddPlotCurve(vecx, vecy);
+		AddVoronoiPlotCurve(vecx, vecy);
 	}
 
 
+	// replot
+	m_plot->rescaleAxes();
+	m_plot->replot();
+}
+
+
+void ConfigSpaceDlg::RedrawPathPlot()
+{
+	ClearPathPlotCurve();
+
+	
 	// draw path curve
 	QVector<t_real> pathx, pathy;
-	pathx.reserve(m_pathcurve.size());
-	pathy.reserve(m_pathcurve.size());
+	pathx.reserve(m_pathvertices.size());
+	pathy.reserve(m_pathvertices.size());
 
-	for(const auto& pathvert : m_pathcurve)
+	for(const t_vec& pathvert : m_pathvertices)
 	{
 		pathx << pathvert[0];
 		pathy << pathvert[1];
 	}
-	AddPlotCurve(pathx, pathy, 4., QColor::fromRgbF(0.9, 0.9, 0.));
+
+	SetPathPlotCurve(pathx, pathy, 4., QColor::fromRgbF(0.9, 0.9, 0.));
 
 
 	// replot
@@ -810,7 +803,7 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 	}
 
 	m_progress->setValue(int(progress*max_progress));
-	RedrawPlot();
+	RedrawVoronoiPlot();
 
 	bool ok = !m_progress->wasCanceled();
 

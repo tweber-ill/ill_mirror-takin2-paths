@@ -53,10 +53,18 @@ protected:
 	virtual void accept() override;
 
 	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
-	void ClearPlotCurves();
-	void AddPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+
+	// voronoi / path mesh plot curves
+	void ClearVoronoiPlotCurves();
+	void AddVoronoiPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
 		t_real width = 1., QColor colour = QColor::fromRgbF(1., 1., 1.));
-	void RedrawPlot();
+	void RedrawVoronoiPlot();
+
+	// path plot curve
+	void ClearPathPlotCurve();
+	void SetPathPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
+		t_real width = 1., QColor colour = QColor::fromRgbF(1., 1., 1.));
+	void RedrawPathPlot();
 
 	// either move instrument by clicking in the plot or enable plot zoom mode
 	void SetInstrumentMovable(bool moveInstr);
@@ -74,7 +82,8 @@ private:
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};
-	std::vector<t_vec> m_pathcurve;
+	QCPCurve* m_pathcurve = nullptr;
+	std::vector<t_vec> m_pathvertices;
 
 	// current instrument position
 	t_real m_curMonoScatteringAngle{};
@@ -96,6 +105,7 @@ private:
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;
 	bool m_calcvoronoi = true;
+	bool m_autocalcpath = true;
 	bool m_movetarget = false;
 
 	bool m_moveInstr = true;

@@ -111,6 +111,10 @@ public:
 	// find a path from an initial (a2, a4) to a final (a2, a4)
 	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
 
+	// get individual vertices on an instrument path
+	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
+		bool subdivide_lines = false) const;
+
 private:
 	const InstrumentSpace *m_instrspace{};
 	const t_real *m_sensesCCW{nullptr};
