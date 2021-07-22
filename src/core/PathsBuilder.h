@@ -29,8 +29,15 @@ struct InstrumentPath
 	// path mesh ok?
 	bool ok = false;
 
+	// initial and final vertices on path
+	t_vec vec_i{}, vec_f{};
+
 	// indices of the voronoi vertices on the path mesh
 	std::vector<std::size_t> voronoi_indices;
+
+	// position parameter along the entry and exit path
+	t_real param_begin = 0;
+	t_real param_end = 1;
 };
 
 

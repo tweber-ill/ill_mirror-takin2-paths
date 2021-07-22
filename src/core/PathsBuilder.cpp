@@ -554,20 +554,20 @@ InstrumentPath PathsBuilder::FindPath(
 		<< "." << std::endl;
 #endif
 
+	InstrumentPath path{};
+	path.ok = false;
 
 	// vertices in configuration space
-	t_vec vec_i = AngleToPixel(a4_i, a2_i, true);
-	t_vec vec_f = AngleToPixel(a4_f, a2_f, true);
+	path.vec_i = AngleToPixel(a4_i, a2_i, true);
+	path.vec_f = AngleToPixel(a4_f, a2_f, true);
 
 #ifdef DEBUG
-	std::cout << "start pixel: (" << vec_i[0] << ", " << vec_i[1] << std::endl;
-	std::cout << "target pixel: (" << vec_f[0] << ", " << vec_f[1] << std::endl; 
+	std::cout << "start pixel: (" << path.vec_i[0] << ", " << path.vec_i[1] << std::endl;
+	std::cout << "target pixel: (" << path.vec_f[0] << ", " << path.vec_f[1] << std::endl; 
 #endif
 
 	// find closest voronoi vertices
 	const auto& voro_vertices = m_voro_results.vertices;
-	InstrumentPath path{};
-	path.ok = false;
 
 	// no voronoi vertices available
 	if(voro_vertices.size() == 0)
@@ -585,8 +585,8 @@ InstrumentPath PathsBuilder::FindPath(
 		const t_vec& cur_vert = voro_vertices[idx_vert];
 		//std::cout << "cur_vert: " << cur_vert[0] << " " << cur_vert[1] << std::endl;
 
-		t_vec diff_i = vec_i - cur_vert;
-		t_vec diff_f = vec_f - cur_vert;
+		t_vec diff_i = path.vec_i - cur_vert;
+		t_vec diff_f = path.vec_f - cur_vert;
 
 		t_real dist_i_sq = tl2::inner<t_vec>(diff_i, diff_i);
 		t_real dist_f_sq = tl2::inner<t_vec>(diff_f, diff_f);
@@ -657,6 +657,52 @@ InstrumentPath PathsBuilder::FindPath(
 	}
 #endif
 
+
+	// find closest point on a path segment
+	auto closest_point = [&path, &voro_vertices]
+	(std::size_t _idx1, std::size_t _idx2, const t_vec& vec) -> t_real
+	{
+		std::size_t idx1 = path.voronoi_indices[_idx1];
+		std::size_t idx2 = path.voronoi_indices[_idx2];
+
+		const t_vec& vert1 = voro_vertices[idx1];
+		const t_vec& vert2 = voro_vertices[idx2];
+
+		t_vec dir = vert2 - vert1;
+		t_real dir_len = tl2::norm<t_vec>(dir);
+		dir /= dir_len;
+
+		auto [ptProj, dist, paramProj] = 
+			tl2::project_line<t_vec, t_real>(
+				vec, vert1, dir, true);
+
+		return paramProj / dir_len;
+	};
+
+
+	if(path.voronoi_indices.size() >= 2)
+	{
+		// find closest start point
+		path.param_begin = closest_point(0, 1, path.vec_i);
+
+		if(path.param_begin > 1.)
+			path.param_begin = 1.;
+		else if(path.param_begin < 0.)
+			path.param_begin = 0.;
+
+
+		// find closest end point
+		path.param_end = closest_point(
+			path.voronoi_indices.size() - 2, 
+			path.voronoi_indices.size() - 1,
+			path.vec_f);
+
+		if(path.param_end > 1.)
+			path.param_end = 1.;
+		else if(path.param_end < 0.)
+			path.param_end = 0.;
+	}
+
 	return path;
 }
 
@@ -676,6 +722,7 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 	const auto& voro_vertices = voro_results.vertices;
 
 
+	// convert pixel to angular coordinates and add vertex to path
 	auto add_curve_vertex = [&path_vertices, this](const t_vec& vertex)
 	{
 		const t_vec angle = PixelToAngle(vertex[0], vertex[1], true);
@@ -683,49 +730,91 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 	};
 
 
+	// add starting point
+	add_curve_vertex(path.vec_i);
+
 	// iterate voronoi vertices
-	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
+	for(std::size_t idx=1; idx<path.voronoi_indices.size(); ++idx)
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
 		const t_vec& voro_vertex = voro_vertices[voro_idx];
 		bool is_linear_bisector = true;
 
 		// check if the current one is a quadratic bisector
-		if(idx >= 1)
+		std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
+		auto iter_quadr = voro_results.parabolic_edges.find(
+			std::make_pair(prev_voro_idx, voro_idx));
+
+		if(iter_quadr != voro_results.parabolic_edges.end())
 		{
-			std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
+			// it's a quadratic bisector
+			is_linear_bisector = false;
 
-			auto iter_quadr = voro_results.parabolic_edges.find(
-				std::make_pair(prev_voro_idx, voro_idx));
-			if(iter_quadr != voro_results.parabolic_edges.end())
+			// get correct iteration order of bisector,
+			// which is stored in an unordered fashion
+			bool inverted_iter_order = false;
+			const std::vector<t_vec>& vertices = iter_quadr->second;
+			if(vertices.size() && tl2::equals<t_vec>(vertices[0], voro_vertex, m_eps))
+				inverted_iter_order = true;
+
+			std::ptrdiff_t begin_idx = 0;
+			std::ptrdiff_t end_idx = 0;
+
+			// use the closest position on the path for the initial vertex
+			if(idx == 1)
 			{
-				// it's a quadratic bisector
-				is_linear_bisector = false;
+				begin_idx = path.param_begin * vertices.size();
+				if(begin_idx >= vertices.size())
+					begin_idx = vertices.size()-1;
+				if(begin_idx < 0)
+					begin_idx = 0;
+			}
+			// use the closest position on the path for the final vertex
+			else if(idx == path.voronoi_indices.size()-1)
+			{
+				end_idx = (1.-path.param_end) * vertices.size();
+				if(end_idx >= vertices.size())
+					end_idx = vertices.size()-1;
+				if(end_idx < 0)
+					end_idx = 0;
+			}
 
-				// get correct iteration order of bisector,
-				// which is stored in an unordered fashion
-				bool inverted_iter_order = false;
-				const std::vector<t_vec>& vertices = iter_quadr->second;
-				if(vertices.size() && tl2::equals<t_vec>(vertices[0], voro_vertex, m_eps))
-					inverted_iter_order = true;
-
-				if(inverted_iter_order)
-				{
-					for(auto iter_vert = vertices.rbegin(); iter_vert != vertices.rend(); ++iter_vert)
-						add_curve_vertex(*iter_vert);
-				}
-				else
-				{
-					for(const t_vec& vertex : vertices)
-						add_curve_vertex(vertex);
-				}
+			if(inverted_iter_order)
+			{
+				for(auto iter_vert = vertices.rbegin()+begin_idx; iter_vert != vertices.rend()-end_idx; ++iter_vert)
+					add_curve_vertex(*iter_vert);
+			}
+			else
+			{
+				for(auto iter_vert = vertices.begin()+begin_idx; iter_vert != vertices.end()-end_idx; ++iter_vert)
+					add_curve_vertex(*iter_vert);
 			}
 		}
 
-		// if it's a linear one, just connect the voronoi vertices
+		// if it's a linear bisector, just connect the voronoi vertices
 		if(is_linear_bisector)
-			add_curve_vertex(voro_vertex);
+		{
+			// use the closest position on the path for the initial vertex
+			if(idx == 1 && path.voronoi_indices.size() > 1)
+			{
+				const t_vec& voro_vertex1 = voro_vertices[path.voronoi_indices[0]];
+				add_curve_vertex(voro_vertex1 + path.param_begin*(voro_vertex-voro_vertex1));
+			}
+			// use the closest position on the path for the final vertex
+			else if(idx == path.voronoi_indices.size()-1 && idx > 1)
+			{
+				const t_vec& voro_vertex1 = voro_vertices[path.voronoi_indices[idx-1]];
+				add_curve_vertex(voro_vertex1 + path.param_end*(voro_vertex-voro_vertex1));
+			}
+			else
+			{
+				add_curve_vertex(voro_vertex);
+			}
+		}
 	}
+
+	// add target point
+	add_curve_vertex(path.vec_f);
 
 	return path_vertices;
 }
