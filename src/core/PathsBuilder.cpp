@@ -660,11 +660,9 @@ InstrumentPath PathsBuilder::FindPath(
 
 	// find closest point on a path segment
 	auto closest_point = [&path, &voro_vertices]
-	(std::size_t _idx1, std::size_t _idx2, const t_vec& vec) -> t_real
+	(std::size_t idx1, std::size_t idx2, const t_vec& vec)
+		-> std::tuple<t_real, t_real>
 	{
-		std::size_t idx1 = path.voronoi_indices[_idx1];
-		std::size_t idx2 = path.voronoi_indices[_idx2];
-
 		const t_vec& vert1 = voro_vertices[idx1];
 		const t_vec& vert2 = voro_vertices[idx2];
 
@@ -676,14 +674,49 @@ InstrumentPath PathsBuilder::FindPath(
 			tl2::project_line<t_vec, t_real>(
 				vec, vert1, dir, true);
 
-		return paramProj / dir_len;
+		paramProj /= dir_len;
+		return std::make_tuple(paramProj, dist);
 	};
 
 
 	if(path.voronoi_indices.size() >= 2)
 	{
 		// find closest start point
-		path.param_begin = closest_point(0, 1, path.vec_i);
+		std::size_t vert_idx1_begin = path.voronoi_indices[0];
+		std::size_t vert_idx2_begin = path.voronoi_indices[1];
+
+		std::size_t min_dist_idx_begin = vert_idx2_begin;
+		auto [min_param_begin, min_dist_begin] = 
+			closest_point(vert_idx1_begin, vert_idx2_begin, path.vec_i);
+
+		// check if any neighbour path before first vertex is even closer
+		for(std::size_t neighbour_idx :
+			voro_graph.GetNeighbours(vert_idx1_begin))
+		{
+			if(neighbour_idx == vert_idx2_begin)
+				continue;
+
+			auto [neighbour_param, neighbour_dist] = 
+				closest_point(neighbour_idx, vert_idx1_begin, path.vec_i);
+
+			// choose a new position on the adjacent edge if it's either
+			// closer or if the former parameters had been out of bounds
+			// and are now within [0, 1]
+			if((neighbour_param >= 0. && neighbour_param <= 1.)
+				&& (neighbour_dist < min_dist_begin 
+				|| (min_param_begin < 0. || min_param_begin > 1.)))
+			{
+				min_dist_begin = neighbour_dist;
+				min_param_begin = neighbour_param;
+				min_dist_idx_begin = neighbour_idx;
+			}
+		}
+
+		// a neighbour edge is closer
+		if(min_dist_idx_begin != vert_idx2_begin)
+			path.voronoi_indices.insert(path.voronoi_indices.begin(), min_dist_idx_begin);
+
+		path.param_begin = min_param_begin;
 
 		if(path.param_begin > 1.)
 			path.param_begin = 1.;
@@ -692,10 +725,39 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 		// find closest end point
-		path.param_end = closest_point(
-			path.voronoi_indices.size() - 2, 
-			path.voronoi_indices.size() - 1,
-			path.vec_f);
+		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
+		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
+		std::size_t min_dist_idx_end = vert_idx1_end;
+		auto [min_param_end, min_dist_end] = 
+			closest_point(vert_idx1_end, vert_idx2_end, path.vec_f);
+
+		// check if any neighbour path before first vertex is even closer
+		for(std::size_t neighbour_idx : voro_graph.GetNeighbours(vert_idx2_end))
+		{
+			if(neighbour_idx == vert_idx1_end)
+				continue;
+
+			auto [neighbour_param, neighbour_dist] = 
+				closest_point(vert_idx2_end, neighbour_idx, path.vec_f);
+
+			// choose a new position on the adjacent edge if it's either
+			// closer or if the former parameters had been out of bounds
+			// and are now within [0, 1]
+			if((neighbour_param >= 0. && neighbour_param <= 1.)
+				&& (neighbour_dist < min_dist_end 
+				|| (min_param_end < 0. || min_param_end > 1.)))
+			{
+				min_dist_end = neighbour_dist;
+				min_param_end = neighbour_param;
+				min_dist_idx_end = neighbour_idx;
+			}
+		}
+
+		// a neighbour edge is closer
+		if(min_dist_idx_end != vert_idx1_end)
+			path.voronoi_indices.push_back(min_dist_idx_end);
+
+		path.param_end = min_param_end;
 
 		if(path.param_end > 1.)
 			path.param_end = 1.;
