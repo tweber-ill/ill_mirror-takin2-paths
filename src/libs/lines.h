@@ -1249,7 +1249,7 @@ requires tl2::is_vec<t_vec>
 /**
  * check for a collision of two polygons
  */
-template<class t_vec, template<class...> class t_cont=std::vector>
+template<class t_vec, template<class...> class t_cont = std::vector>
 bool collide_poly_poly(
 	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2)
 requires tl2::is_vec<t_vec>
@@ -1295,6 +1295,47 @@ requires tl2::is_vec<t_vec>
 	return false;
 }
 // ----------------------------------------------------------------------------
+
+
+/**
+ * subdivide line segments on a path
+ */
+template<class t_vec, 
+	class t_real = typename t_vec::value_type,
+	template<class...> class t_cont = std::vector>
+t_cont<t_vec> subdivide_lines(
+	const t_cont<t_vec>& vertices, t_real dist)
+requires tl2::is_vec<t_vec>
+{
+	t_cont<t_vec> newverts;
+
+	for(std::size_t idx0 = 0; idx0 < vertices.size(); ++idx0)
+	{
+		const t_vec& vert0 = vertices[idx0];
+
+		newverts.push_back(vert0);
+		if(idx0 == vertices.size()-1)
+			break;
+
+		std::size_t idx1 = idx0 + 1;
+		const t_vec& vert1 = vertices[idx1];
+
+		t_real len = tl2::norm<t_vec>(vert1 - vert0);
+
+		// if length is greater than requested length, subdivide
+		if(len > dist)
+		{
+			t_real div = std::ceil(len / dist);
+			for(t_real param=1./div; param<1.; param += 1./div)
+			{
+				t_vec vertBetween = vert0 + param*(vert1 - vert0);
+				newverts.emplace_back(std::move(vertBetween));
+			}
+		}
+	}
+
+	return newverts;
+}
 
 }
 #endif

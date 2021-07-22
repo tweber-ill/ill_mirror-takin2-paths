@@ -113,6 +113,9 @@ public:
 	t_real GetVoronoiEdgeEpsilon() const { return m_voroedge_eps; }
 	void SetVoronoiEdgeEpsilon(t_real eps) { m_voroedge_eps = eps; }
 
+	t_real GetSubdivisionLength() const { return m_subdiv_len; }
+	void SetSubdivisionLength(t_real len) { m_subdiv_len = len; }
+
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
@@ -175,6 +178,9 @@ private:
 	t_real m_eps = 1e-3;
 	t_real m_eps_angular = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
+
+	// line segment length for subdivisions
+	t_real m_subdiv_len = 0.1;
 
 	unsigned int m_maxnum_threads = 4;
 };

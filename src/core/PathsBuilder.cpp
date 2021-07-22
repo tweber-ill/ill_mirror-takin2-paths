@@ -826,8 +826,8 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 			if(idx == 1)
 			{
 				begin_idx = path.param_begin * vertices.size();
-				if(begin_idx >= vertices.size())
-					begin_idx = vertices.size()-1;
+				if(begin_idx >= (std::ptrdiff_t)vertices.size())
+					begin_idx = (std::ptrdiff_t)(vertices.size()-1);
 				if(begin_idx < 0)
 					begin_idx = 0;
 			}
@@ -835,8 +835,8 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 			else if(idx == path.voronoi_indices.size()-1)
 			{
 				end_idx = (1.-path.param_end) * vertices.size();
-				if(end_idx >= vertices.size())
-					end_idx = vertices.size()-1;
+				if(end_idx >= (std::ptrdiff_t)vertices.size())
+					end_idx = (std::ptrdiff_t)(vertices.size()-1);
 				if(end_idx < 0)
 					end_idx = 0;
 			}
@@ -877,6 +877,13 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 	// add target point
 	add_curve_vertex(path.vec_f);
+	
+
+	// interpolate points on path line segments
+	if(subdivide_lines)
+	{
+		path_vertices = geo::subdivide_lines<t_vec>(path_vertices, m_subdiv_len);
+	}
 
 	return path_vertices;
 }
