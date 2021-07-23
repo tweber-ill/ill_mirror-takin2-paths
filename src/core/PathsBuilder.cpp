@@ -773,7 +773,7 @@ InstrumentPath PathsBuilder::FindPath(
  * get individual vertices on an instrument path
  */
 std::vector<t_vec> PathsBuilder::GetPathVertices(
-	const InstrumentPath& path, bool subdivide_lines) const
+	const InstrumentPath& path, bool subdivide_lines, bool deg) const
 {
 	std::vector<t_vec> path_vertices;
 
@@ -785,9 +785,9 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 
 	// convert pixel to angular coordinates and add vertex to path
-	auto add_curve_vertex = [&path_vertices, this](const t_vec& vertex)
+	auto add_curve_vertex = [&path_vertices, deg, this](const t_vec& vertex)
 	{
-		const t_vec angle = PixelToAngle(vertex[0], vertex[1], true);
+		const t_vec angle = PixelToAngle(vertex[0], vertex[1], deg);
 		path_vertices.emplace_back(std::move(angle));
 	};
 
@@ -877,7 +877,7 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 	// add target point
 	add_curve_vertex(path.vec_f);
-	
+
 
 	// interpolate points on path line segments
 	if(subdivide_lines)
@@ -894,9 +894,9 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
  * helper function for the scripting interface
  */
 std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
-	const InstrumentPath& path, bool subdivide_lines) const
+	const InstrumentPath& path, bool subdivide_lines, bool deg) const
 {
-	std::vector<t_vec> vertices = GetPathVertices(path, subdivide_lines);
+	std::vector<t_vec> vertices = GetPathVertices(path, subdivide_lines, deg);
 
 	std::vector<std::pair<t_real, t_real>> pairs;
 	pairs.reserve(vertices.size());

@@ -1,5 +1,5 @@
 #
-# py interface test
+# py workflow demo
 # @author Tobias Weber <tweber@ill.fr>
 # @date 14-july-2021
 # @license see 'LICENSE' file
@@ -14,6 +14,15 @@ sys.path.append(cwd)
 #print(sys.path)
 
 import taspaths as tas
+
+
+# -----------------------------------------------------------------------------
+# options
+# -----------------------------------------------------------------------------
+write_pathmesh = False
+write_path = False
+show_plot = True
+# -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
@@ -79,10 +88,6 @@ print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
 
 
-#if not builder.SaveToLinesTool("lines.xml"):
-#	print("Could not save line segment diagram.")
-
-
 # -----------------------------------------------------------------------------
 # find path
 # -----------------------------------------------------------------------------
@@ -98,10 +103,30 @@ if not path.ok:
 	print("No path could be found.")
 
 builder.SetSubdivisionLength(0.5)
-vertices = builder.GetPathVerticesAsPairs(path, True)
+vertices = builder.GetPathVerticesAsPairs(path, True, True)
 
 print("Finished calculating path.\n")
+# -----------------------------------------------------------------------------
 
-for vertex in vertices:
-	print(vertex)
+
+# -----------------------------------------------------------------------------
+# output
+# -----------------------------------------------------------------------------
+if write_pathmesh:
+	if not builder.SaveToLinesTool("lines.xml"):
+		print("Could not save line segment diagram.")
+
+if write_path:
+	with open("path.dat", "w") as datafile:
+		for vertex in vertices:
+			datafile.write("%.4f %.4f\n" % (vertex[0], vertex[1]))
+
+if show_plot:
+	import matplotlib.pyplot as plt
+
+	x, y = zip(*vertices)
+	plt.xlabel("Sample Scattering Angle 2\u03b8_S (deg)")
+	plt.ylabel("Monochromator Scattering Angle 2\u03b8_M (deg)")
+	plt.plot(x, y, "-", linewidth=2)
+	plt.show()
 # -----------------------------------------------------------------------------

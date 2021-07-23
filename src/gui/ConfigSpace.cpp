@@ -585,7 +585,7 @@ void ConfigSpaceDlg::CalculatePath()
 	}
 
 	// get the vertices on the path
-	m_pathvertices = m_pathsbuilder->GetPathVertices(path, false);
+	m_pathvertices = m_pathsbuilder->GetPathVertices(path, false, true);
 
 	RedrawPathPlot();
 }

@@ -124,12 +124,12 @@ public:
 
 	// get individual vertices on an instrument path
 	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
-		bool subdivide_lines = false) const;
+		bool subdivide_lines = false, bool deg = false) const;
 
 	// get individual vertices on an instrument path
-	std::vector<std::pair<t_real, t_real>> 
+	std::vector<std::pair<t_real, t_real>>
 		GetPathVerticesAsPairs(const InstrumentPath& path,
-			bool subdivide_lines = false) const;
+			bool subdivide_lines = false, bool deg = false) const;
 
 
 private:
@@ -166,7 +166,7 @@ private:
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
-	std::vector<std::vector<t_contourvec>> 
+	std::vector<std::vector<t_contourvec>>
 		m_wallcontours = {}, m_fullwallcontours = {};
 
 	// line segments and groups from the wall contours
