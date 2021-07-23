@@ -887,3 +887,22 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 	return path_vertices;
 }
+
+
+/**
+ * get individual vertices on an instrument path
+ * helper function for the scripting interface
+ */
+std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
+	const InstrumentPath& path, bool subdivide_lines) const
+{
+	std::vector<t_vec> vertices = GetPathVertices(path, subdivide_lines);
+
+	std::vector<std::pair<t_real, t_real>> pairs;
+	pairs.reserve(vertices.size());
+
+	for(const t_vec& vec : vertices)
+		pairs.emplace_back(std::make_pair(vec[0], vec[1]));
+
+	return pairs;
+}

@@ -31,7 +31,7 @@ else:
 	print("Cannot load \"%s\"" % (file_name))
 	exit(-1)
 
-print("Instrument definition loaded.")
+print("Instrument definition loaded.\n")
 # -----------------------------------------------------------------------------
 
 
@@ -39,6 +39,7 @@ print("Instrument definition loaded.")
 # build path mesh
 # -----------------------------------------------------------------------------
 print("Building path mesh...")
+
 mem = tas.MemManager()
 senses = mem.NewRealArray(3)
 mem.SetRealArray(senses, 0, 1)
@@ -52,8 +53,8 @@ print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
 # angular ranges to probe
 angle_padding = 4.
-a2_delta = 0.5/180.*math.pi
-a4_delta = 1./180.*math.pi
+a2_delta = 1./180.*math.pi
+a4_delta = 2./180.*math.pi
 a2_begin = 0. - angle_padding*a2_delta
 a2_end = math.pi + angle_padding*a2_delta
 a4_begin = -math.pi - angle_padding*a2_delta
@@ -74,9 +75,33 @@ if not builder.CalculateLineSegments():
 if not builder.CalculateVoronoi(False):
 	print("Voronoi diagram could not be calculated.")
 
-print("Finished building path mesh.")
+print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
 
 
-if not builder.SaveToLinesTool("lines.xml"):
-	print("Could not save line segment diagram.")
+#if not builder.SaveToLinesTool("lines.xml"):
+#	print("Could not save line segment diagram.")
+
+
+# -----------------------------------------------------------------------------
+# find path
+# -----------------------------------------------------------------------------
+print("Calculating path...")
+
+a2_start = 40./180.*math.pi
+a4_start = -80./180.*math.pi
+a2_target = 120./180.*math.pi
+a4_target = 105./180.*math.pi
+
+path = builder.FindPath(a2_start, a4_start, a2_target, a4_target)
+if not path.ok:
+	print("No path could be found.")
+
+builder.SetSubdivisionLength(0.5)
+vertices = builder.GetPathVerticesAsPairs(path, True)
+
+print("Finished calculating path.\n")
+
+for vertex in vertices:
+	print(vertex)
+# -----------------------------------------------------------------------------

@@ -367,7 +367,7 @@ void LinesScene::UpdateTrapezoids()
 
 			QLineF line
 			{
-				QPointF{trap[idx1][0], trap[idx1][1]}, 
+				QPointF{trap[idx1][0], trap[idx1][1]},
 				QPointF{trap[idx2][0], trap[idx2][1]}
 			};
 
@@ -429,8 +429,8 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 					else
 					{
 						col.setRgb(
-							tl2::get_rand<int>(0,0xff), 
-							tl2::get_rand<int>(0,0xff), 
+							tl2::get_rand<int>(0,0xff),
+							tl2::get_rand<int>(0,0xff),
 							tl2::get_rand<int>(0,0xff));
 
 						linecolours.insert(std::make_pair(lineidx, col));

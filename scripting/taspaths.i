@@ -19,6 +19,7 @@
 	#include "src/core/PathsBuilder.h"
 %}
 
+
 // standard includes: /usr/share/swig/4.0.2/python/
 %include <std_pair.i>
 %include <std_array.i>
@@ -28,6 +29,9 @@
 %include <std_string.i>
 
 %template(PairBoolString) std::pair<bool, std::string>;
+%template(PairRealReal) std::pair<double, double>;
+%template(VectorPairRealReal) std::vector<std::pair<double, double>>;
+//%template(VectorVec) std::vector<t_vec>;
 
 %include "src/core/types.h"
 %include "src/core/Geometry.h"
@@ -35,6 +39,7 @@
 %include "src/core/Instrument.h"
 %include "src/core/InstrumentSpace.h"
 %include "src/core/PathsBuilder.h"
+//%include "tlibs2/libs/maths.h"
 
 
 // helper functions

@@ -30,7 +30,7 @@ struct InstrumentPath
 	bool ok = false;
 
 	// initial and final vertices on path
-	t_vec vec_i{}, vec_f{};
+	t_vec vec_i, vec_f;
 
 	// indices of the voronoi vertices on the path mesh
 	std::vector<std::size_t> voronoi_indices;
@@ -125,6 +125,12 @@ public:
 	// get individual vertices on an instrument path
 	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
 		bool subdivide_lines = false) const;
+
+	// get individual vertices on an instrument path
+	std::vector<std::pair<t_real, t_real>> 
+		GetPathVerticesAsPairs(const InstrumentPath& path,
+			bool subdivide_lines = false) const;
+
 
 private:
 	const InstrumentSpace *m_instrspace{};
