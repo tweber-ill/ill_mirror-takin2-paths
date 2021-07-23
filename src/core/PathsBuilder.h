@@ -67,22 +67,18 @@ public:
 	PathsBuilder();
 	~PathsBuilder();
 
-	t_vec PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
-	t_vec AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
-
+	// ------------------------------------------------------------------------
 	// input instrument
+	// ------------------------------------------------------------------------
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
 	const InstrumentSpace* GetInstrumentSpace() const { return m_instrspace; }
 
 	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
+	// ------------------------------------------------------------------------
 
-	// calculation workflow
-	bool CalculateConfigSpace(t_real da2, t_real da4,
-		t_real starta2 = 0., t_real enda2 = tl2::pi<t_real>,
-		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
-	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
-	bool CalculateLineSegments();
-	bool CalculateVoronoi(bool group_lines=true);
+	// conversion functions
+	t_vec PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
+	t_vec AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
 
 	// clear all data
 	void Clear();
@@ -104,6 +100,39 @@ public:
 	boost::signals2::connection AddProgressSlot(const t_slot& slot)
 	{ return m_sigProgress->connect(slot); }
 
+	// show progress messages on the console
+	void AddConsoleProgressHandler();
+
+	// ------------------------------------------------------------------------
+	// path mesh calculation workflow
+	// ------------------------------------------------------------------------
+	bool CalculateConfigSpace(t_real da2, t_real da4,
+		t_real starta2 = 0., t_real enda2 = tl2::pi<t_real>,
+		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
+	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
+	bool CalculateLineSegments();
+	bool CalculateVoronoi(bool group_lines=true);
+	// ------------------------------------------------------------------------
+
+	// ------------------------------------------------------------------------
+	// path calculation
+	// ------------------------------------------------------------------------
+	// find a path from an initial (a2, a4) to a final (a2, a4)
+	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
+
+	// get individual vertices on an instrument path
+	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
+		bool subdivide_lines = false, bool deg = false) const;
+
+	// get individual vertices on an instrument path
+	std::vector<std::pair<t_real, t_real>>
+		GetPathVerticesAsPairs(const InstrumentPath& path,
+			bool subdivide_lines = false, bool deg = false) const;
+	// ------------------------------------------------------------------------
+
+	// ------------------------------------------------------------------------
+	// options
+	// ------------------------------------------------------------------------
 	t_real GetEpsilon() const { return m_eps; }
 	void SetEpsilon(t_real eps) { m_eps = eps; }
 
@@ -118,18 +147,7 @@ public:
 
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
-
-	// find a path from an initial (a2, a4) to a final (a2, a4)
-	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
-
-	// get individual vertices on an instrument path
-	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
-		bool subdivide_lines = false, bool deg = false) const;
-
-	// get individual vertices on an instrument path
-	std::vector<std::pair<t_real, t_real>>
-		GetPathVerticesAsPairs(const InstrumentPath& path,
-			bool subdivide_lines = false, bool deg = false) const;
+	// ------------------------------------------------------------------------
 
 
 private:

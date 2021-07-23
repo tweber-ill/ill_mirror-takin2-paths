@@ -46,6 +46,25 @@ void PathsBuilder::Clear()
 
 
 /**
+ * show progress messages on the console
+ */
+void PathsBuilder::AddConsoleProgressHandler()
+{
+	auto handler = []
+		(bool start, bool end, t_real progress, 
+		const std::string& msg) -> bool
+	{
+		std::cout << std::fixed << "[" 
+			<< std::setw(3) << (int)(progress * 100.) 
+			<< "%] " << msg << std::endl;
+		return true;
+	};
+
+	AddProgressSlot(handler);
+}
+
+
+/**
  * convert a pixel of the plot image into the angular range of the plot
  */
 t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
@@ -426,7 +445,7 @@ bool PathsBuilder::CalculateLineSegments()
  */
 bool PathsBuilder::CalculateVoronoi(bool group_lines)
 {
-	std::string message{"Calculating voronoi diagram..."};
+	std::string message{"Calculating Voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
 
 	m_voro_results

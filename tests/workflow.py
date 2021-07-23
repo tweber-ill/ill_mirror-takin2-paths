@@ -17,11 +17,24 @@ import taspaths as tas
 
 
 # -----------------------------------------------------------------------------
+# helper functions
+# -----------------------------------------------------------------------------
+def error(msg):
+	print("Error: %s" % msg)
+	exit(-1)
+
+def warning(msg):
+	print("Warning: %s" % msg)
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
 # options
 # -----------------------------------------------------------------------------
 write_pathmesh = False
 write_path = False
 show_plot = True
+file_name = "../res/instrument.taspaths"
 # -----------------------------------------------------------------------------
 
 
@@ -30,15 +43,13 @@ show_plot = True
 # -----------------------------------------------------------------------------
 print("Loading instrument definition...")
 
-file_name = "../res/instrument.taspaths"
 instrspace = tas.InstrumentSpace()
 [file_ok, file_date] = tas.InstrumentSpace.load(file_name, instrspace)
 
 if file_ok:
-	print("Loaded \"%s\" dated %s." % (file_name, file_date))
+	print("Loaded \"%s\", dated %s." % (file_name, file_date))
 else:
-	print("Cannot load \"%s\"" % (file_name))
-	exit(-1)
+	error("Could not load \"%s\"." % (file_name))
 
 print("Instrument definition loaded.\n")
 # -----------------------------------------------------------------------------
@@ -56,6 +67,7 @@ mem.SetRealArray(senses, 1, -1)
 mem.SetRealArray(senses, 2, 1)
 
 builder = tas.PathsBuilder()
+builder.AddConsoleProgressHandler()
 builder.SetInstrumentSpace(instrspace)
 builder.SetScatteringSenses(senses)
 print("Path builder uses %d threads." % builder.GetMaxNumThreads())
@@ -73,16 +85,16 @@ if not builder.CalculateConfigSpace(
 	a2_delta, a4_delta,
 	a2_begin, a2_end,
 	a4_begin, a4_end):
-	print("Angular configuration space could not be calculated.")
+	error("Angular configuration space could not be calculated.")
 
 if not builder.CalculateWallContours(True, False):
-	print("Obstacle contours could not be calculated.")
+	error("Obstacle contours could not be calculated.")
 
 if not builder.CalculateLineSegments():
-	print("Line segments could not be calculated.")
+	error("Line segments could not be calculated.")
 
 if not builder.CalculateVoronoi(False):
-	print("Voronoi diagram could not be calculated.")
+	error("Voronoi diagram could not be calculated.")
 
 print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
@@ -100,7 +112,7 @@ a4_target = 105./180.*math.pi
 
 path = builder.FindPath(a2_start, a4_start, a2_target, a4_target)
 if not path.ok:
-	print("No path could be found.")
+	error("No path could be found.")
 
 builder.SetSubdivisionLength(0.5)
 vertices = builder.GetPathVerticesAsPairs(path, True, True)
@@ -114,7 +126,7 @@ print("Finished calculating path.\n")
 # -----------------------------------------------------------------------------
 if write_pathmesh:
 	if not builder.SaveToLinesTool("lines.xml"):
-		print("Could not save line segment diagram.")
+		warning("Could not save line segment diagram.")
 
 if write_path:
 	with open("path.dat", "w") as datafile:
