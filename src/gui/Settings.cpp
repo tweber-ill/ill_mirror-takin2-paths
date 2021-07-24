@@ -255,7 +255,7 @@ void SettingsDlg::ApplySettings()
 void SettingsDlg::accept()
 {
 	ApplySettings();
-	
+
 	if(m_sett)
 		m_sett->setValue("settings/geo", saveGeometry());
 	QDialog::accept();

@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "src/core/InstrumentSpace.h"
+#include "src/core/TasCalc.h"
 #include "src/core/PathsBuilder.h"
 
 #include "tlibs2/libs/maths.h"
@@ -91,24 +92,8 @@ private:
 	t_real m_mouseX, m_mouseY;
 	std::string m_curObj;
 
-	// crystal matrices
-	t_mat m_B = tl2::B_matrix<t_mat>(
-		5., 5., 5.,
-		tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5);
-	t_mat m_UB = tl2::unit<t_mat>(3);
-
-	// scattering plane
-	t_vec m_plane_rlu[3] = {
-		tl2::create<t_vec>({ 1, 0, 0 }),
-		tl2::create<t_vec>({ 0, 1, 0 }),
-		tl2::create<t_vec>({ 0, 0, 1 }),
-	};
-
-	// mono and ana d-spacings
-	t_real m_dspacings[2] = { 3.355, 3.355 };
-
-	// scattering senses
-	t_real m_sensesCCW[3] = { 1., -1., 1. };
+	// tas calculations
+	TasCalc m_tascalc;
 
 
 protected:

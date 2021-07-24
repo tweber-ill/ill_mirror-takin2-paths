@@ -35,17 +35,10 @@ namespace pt = boost::property_tree;
  */
 void PathsTool::UpdateUB()
 {
-	m_UB = tl2::UB_matrix<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1], m_plane_rlu[2]);
-
-	/*using namespace tl2_ops;
-	std::cout << "vec1: " << m_plane_rlu[0] << std::endl;
-	std::cout << "vec2: " << m_plane_rlu[1] << std::endl;
-	std::cout << "vec3: " << m_plane_rlu[2] << std::endl;
-	std::cout << "B matrix: " << m_B << std::endl;
-	std::cout << "UB matrix: " << m_UB << std::endl;*/
+	m_tascalc.UpdateUB();
 
 	if(m_xtalInfos)
-		m_xtalInfos->GetWidget()->SetUB(m_B, m_UB);
+		m_xtalInfos->GetWidget()->SetUB(m_tascalc.GetB(), m_tascalc.GetUB());
 }
 
 
@@ -209,23 +202,16 @@ bool PathsTool::OpenFile(const QString &file)
 				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
 
-				// get crystal coordinates corresponding to current instrument position
-				t_real ki = tl2::calc_tas_k<t_real>(monoXtalAngle, m_dspacings[0]);
-				t_real kf = tl2::calc_tas_k<t_real>(anaXtalAngle, m_dspacings[1]);
-				t_real Q = tl2::calc_tas_Q_len<t_real>(ki, kf, sampleScAngle);
-				t_real E = tl2::calc_tas_E<t_real>(ki, kf);
-
-				auto Qrlu = tl2::calc_tas_hkl<t_mat, t_vec, t_real>(
-					m_B, ki, kf, Q, sampleXtalAngle,
-					m_plane_rlu[0], m_plane_rlu[2],
-					m_sensesCCW[1], g_a3_offs);
+				auto [Qrlu, E] = m_tascalc.GethklE(monoXtalAngle, anaXtalAngle,
+					sampleXtalAngle, sampleScAngle);
 
 				SetInstrumentStatus(Qrlu, E,
 					m_instrspace.CheckAngularLimits(),
 					m_instrspace.CheckCollision2D());
 
 				if(this->m_dlgConfigSpace)
-					this->m_dlgConfigSpace->UpdateInstrument(instr, m_sensesCCW);
+					this->m_dlgConfigSpace->UpdateInstrument(
+						instr, m_tascalc.GetScatteringSenses());
 
 				if(this->m_renderer)
 					this->m_renderer->UpdateInstrument(instr);
@@ -345,9 +331,8 @@ void PathsTool::GotoCoordinates(
 	t_real ki, t_real kf,
 	bool only_set_target)
 {
-	std::optional<t_real> a1 = tl2::calc_tas_a1<t_real>(ki, m_dspacings[0]);
-	std::optional<t_real> a5 = tl2::calc_tas_a1<t_real>(kf, m_dspacings[1]);
-
+	auto [ok, a1, a5, a3, a4, dist] = m_tascalc.GetAngles(h, k, l, ki, kf);
+	
 	if(!a1)
 	{
 		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");
@@ -359,15 +344,6 @@ void PathsTool::GotoCoordinates(
 		QMessageBox::critical(this, "Error", "Invalid analyser angle.");
 		return;
 	}
-
-	*a1 *= m_sensesCCW[0];
-	*a5 *= m_sensesCCW[2];
-
-	t_vec Q = tl2::create<t_vec>({h, k, l});
-	auto [ok, a3, a4, dist] = calc_tas_a3a4<t_mat, t_vec, t_real>(
-		m_B, ki, kf, Q,
-		m_plane_rlu[0], m_plane_rlu[2],
-		m_sensesCCW[1], g_a3_offs);
 
 	if(!ok)
 	{
@@ -384,8 +360,9 @@ void PathsTool::GotoCoordinates(
 		if(!pathwidget)
 			return;
 
-		t_real a2_abs = *a1 * 2. * m_sensesCCW[0];
-		t_real a4_abs = a4 * m_sensesCCW[1];
+		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
+		t_real a2_abs = *a1 * 2. * sensesCCW[0];
+		t_real a4_abs = a4 * sensesCCW[1];
 
 		pathwidget->SetTarget(
 			a2_abs / tl2::pi<t_real> * 180.,
@@ -436,10 +413,12 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 	// set instrument angles
 	else
 	{
+		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
+
 		// set mono angle
 		if(a1)
 		{
-			*a1 *= m_sensesCCW[0];
+			*a1 *= sensesCCW[0];
 			m_instrspace.GetInstrument().GetMonochromator(). SetAxisAngleOut(t_real{2} * *a1);
 			m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
 		}
@@ -447,21 +426,21 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 		// set sample crystal angle
 		if(a3)
 		{
-			*a3 *= m_sensesCCW[1];
+			*a3 *= sensesCCW[1];
 			m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(*a3);
 		}
 
 		// set sample scattering angle
 		if(a4)
 		{
-			*a4 *= m_sensesCCW[1];
+			*a4 *= sensesCCW[1];
 			m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(*a4);
 		}
 
 		// set ana angle
 		if(a5)
 		{
-			*a5 *= m_sensesCCW[2];
+			*a5 *= sensesCCW[2];
 			m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
 			m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
 		}
@@ -744,17 +723,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(taswidget, &TASPropertiesWidget::DSpacingsChanged,
 		[this](t_real dmono, t_real dana) -> void
 		{
-			m_dspacings[0] = dmono;
-			m_dspacings[1] = dana;
+			m_tascalc.SetMonochromatorD(dmono);
+			m_tascalc.SetAnalyserD(dana);
 		});
 
 	// scattering senses
 	connect(taswidget, &TASPropertiesWidget::ScatteringSensesChanged,
 		[this](bool monoccw, bool sampleccw, bool anaccw) -> void
 		{
-			m_sensesCCW[0] = (monoccw ? 1 : -1);
-			m_sensesCCW[1] = (sampleccw ? 1 : -1);
-			m_sensesCCW[2] = (anaccw ? 1 : -1);
+			m_tascalc.SetScatteringSenses(monoccw, sampleccw, anaccw);
 		});
 
 	// camera viewing angle
@@ -802,19 +779,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(xtalwidget, &XtalPropertiesWidget::LatticeChanged,
 		[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
 		{
-			m_B = tl2::B_matrix<t_mat>(a, b, c, alpha, beta, gamma);
-			m_plane_rlu[2] = tl2::cross<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1]);
-
+			m_tascalc.UpdateB();
 			UpdateUB();
 		});
 
 	connect(xtalwidget, &XtalPropertiesWidget::PlaneChanged,
 		[this](t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z) -> void
 		{
-			m_plane_rlu[0] = tl2::create<t_vec>({vec1_x, vec1_y, vec1_z});
-			m_plane_rlu[1] = tl2::create<t_vec>({vec2_x, vec2_y, vec2_z});
-			m_plane_rlu[2] = tl2::cross<t_mat, t_vec>(m_B, m_plane_rlu[0], m_plane_rlu[1]);
-
+			m_tascalc.SetScatteringPlane(
+				vec1_x, vec1_y, vec1_z,
+				vec2_x, vec2_y, vec2_z);
 			UpdateUB();
 		});
 
@@ -837,15 +811,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real a2, t_real a4)
 		{
 			//std::cout << "target angles: " << a2 << ", " << a4 << std::endl;
+			const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
 
-			a2 = a2 / 180. * tl2::pi<t_real> * m_sensesCCW[0];
-			a4 = a4 / 180. * tl2::pi<t_real> * m_sensesCCW[1];
+			a2 = a2 / 180. * tl2::pi<t_real> * sensesCCW[0];
+			a4 = a4 / 180. * tl2::pi<t_real> * sensesCCW[1];
 
 			m_targetMonoScatteringAngle = a2;
 			m_targetSampleScatteringAngle = a4;
 
 			if(this->m_dlgConfigSpace)
-				this->m_dlgConfigSpace->UpdateTarget(a2, a4, m_sensesCCW);
+				this->m_dlgConfigSpace->UpdateTarget(a2, a4, sensesCCW);
 		});
 
 
@@ -1163,11 +1138,14 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// initialisations
 	// --------------------------------------------------------------------
+	// TODO: add to settings
+	m_tascalc.SetSampleAngleOffset(g_a3_offs);
+
 	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
 	m_pathsbuilder.SetEpsilon(g_eps);
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
-	m_pathsbuilder.SetScatteringSenses(this->m_sensesCCW);
+	m_pathsbuilder.SetScatteringSenses(m_tascalc.GetScatteringSenses());
 	m_pathsbuilder.AddProgressSlot(
 		[this](bool start, bool end, t_real progress, const std::string& message)
 		{
@@ -1206,10 +1184,12 @@ void PathsTool::CalculatePath()
 	t_real curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
 
 	// adjust scattering senses
-	curMonoScatteringAngle *= m_sensesCCW[0];
-	curSampleScatteringAngle *= m_sensesCCW[1];
-	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * m_sensesCCW[0];
-	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * m_sensesCCW[1];
+	const t_real* sensesCCW = m_tascalc.GetScatteringSenses();
+
+	curMonoScatteringAngle *= sensesCCW[0];
+	curSampleScatteringAngle *= sensesCCW[1];
+	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * sensesCCW[0];
+	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * sensesCCW[1];
 
 	// find path from current to target position
 	InstrumentPath path = m_pathsbuilder.FindPath(

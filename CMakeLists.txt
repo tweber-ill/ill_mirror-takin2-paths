@@ -155,7 +155,7 @@ if(USE_PY)
 		scripting/taspaths.i
 		src/core/Geometry.cpp src/core/Axis.cpp
 		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
-		src/core/PathsBuilder.cpp
+		src/core/PathsBuilder.cpp src/core/TasCalc.cpp
 	)
 
 	target_link_libraries(taspaths_py
@@ -209,6 +209,7 @@ add_executable(taspaths
 	src/core/Instrument.cpp src/core/Instrument.h
 	src/core/InstrumentSpace.cpp src/core/InstrumentSpace.h
 	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
+	src/core/TasCalc.cpp src/core/TasCalc.h
 	src/core/types.h
 
 	src/libs/lines.h src/libs/graphs.h
