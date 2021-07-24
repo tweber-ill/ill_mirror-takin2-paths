@@ -836,8 +836,13 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(pathwidget, &PathPropertiesWidget::TargetChanged,
 		[this](t_real a2, t_real a4)
 		{
+			//std::cout << "target angles: " << a2 << ", " << a4 << std::endl;
+
 			a2 = a2 / 180. * tl2::pi<t_real> * m_sensesCCW[0];
 			a4 = a4 / 180. * tl2::pi<t_real> * m_sensesCCW[1];
+
+			m_targetMonoScatteringAngle = a2;
+			m_targetSampleScatteringAngle = a4;
 
 			if(this->m_dlgConfigSpace)
 				this->m_dlgConfigSpace->UpdateTarget(a2, a4, m_sensesCCW);
@@ -851,6 +856,14 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// calculate path
 	connect(pathwidget, &PathPropertiesWidget::CalculatePath,
 		this, &PathsTool::CalculatePath);
+
+	// a new path has been calculated
+	connect(this, &PathsTool::PathAvailable,
+		pathwidget, &PathPropertiesWidget::PathAvailable);
+
+	// a new path vertex has been chosen on the path slider
+	connect(pathwidget, &PathPropertiesWidget::TrackPath,
+		this, &PathsTool::TrackPath);
 	// --------------------------------------------------------------------
 
 
@@ -1177,7 +1190,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
  */
 void PathsTool::CalculatePathMesh()
 {
-	std::cout << "mesh" << std::endl;
 }
 
 
@@ -1186,7 +1198,46 @@ void PathsTool::CalculatePathMesh()
  */
 void PathsTool::CalculatePath()
 {
-	std::cout << "path" << std::endl;
+	m_pathvertices.clear();
+
+	// get the scattering angles
+	const Instrument& instr = m_instrspace.GetInstrument();
+	t_real curMonoScatteringAngle = instr.GetMonochromator().GetAxisAngleOut();
+	t_real curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
+
+	// adjust scattering senses
+	curMonoScatteringAngle *= m_sensesCCW[0];
+	curSampleScatteringAngle *= m_sensesCCW[1];
+	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * m_sensesCCW[0];
+	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * m_sensesCCW[1];
+
+	// find path from current to target position
+	InstrumentPath path = m_pathsbuilder.FindPath(
+		curMonoScatteringAngle, curSampleScatteringAngle,
+		targetMonoScatteringAngle, targetSampleScatteringAngle);
+
+	if(!path.ok)
+	{
+		QMessageBox::critical(this, "Error", "No path could be found.");
+		return;
+	}
+
+	// get the vertices on the path
+	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
+	emit PathAvailable(m_pathvertices.size());
+}
+
+
+/**
+ * move the instrument to a position on the path
+ */
+void PathsTool::TrackPath(std::size_t idx)
+{
+	if(idx >= m_pathvertices.size())
+		return;
+
+	const t_vec& vert = m_pathvertices[idx];
+	GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
 }
 
 // ----------------------------------------------------------------------------

@@ -793,6 +793,9 @@ void ConfigSpaceDlg::RedrawPathPlot()
 }
 
 
+/**
+ * display a progress dialog
+ */
 bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message)
 {
 	static const int max_progress = 1000;

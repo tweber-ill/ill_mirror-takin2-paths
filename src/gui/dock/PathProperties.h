@@ -13,6 +13,7 @@
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QSlider>
 
 #include "src/core/types.h"
 
@@ -23,21 +24,24 @@ public:
 	PathPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~PathPropertiesWidget();
 
-public slots:
-	void SetTarget(t_real a2, t_real a4);
-
-signals:
-	void TargetChanged(t_real a2, t_real a4);
-	void GotoAngles(t_real a2, t_real a4);
-	void CalculatePathMesh();
-	void CalculatePath();
-
 private:
 	// number of coordinate elements
 	static constexpr std::size_t m_num_coord_elems = 2;
 
 	// path target (a2, a4) coordinates
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
+	QSlider *m_sliderPath = nullptr;
+
+public slots:
+	void SetTarget(t_real a2, t_real a4);
+	void PathAvailable(std::size_t numVertices);
+
+signals:
+	void TargetChanged(t_real a2, t_real a4);
+	void GotoAngles(t_real a2, t_real a4);
+	void CalculatePathMesh();
+	void CalculatePath();
+	void TrackPath(std::size_t);
 };
 
 

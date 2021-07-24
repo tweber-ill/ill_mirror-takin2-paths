@@ -39,7 +39,7 @@
 
 // ----------------------------------------------------------------------------
 class PathsTool : public QMainWindow
-{ /*Q_OBJECT*/
+{ Q_OBJECT
 private:
 	QSettings m_sett{"takin", "taspaths"};
 
@@ -80,6 +80,12 @@ private:
 	// instrument configuration and paths builder
 	InstrumentSpace m_instrspace;
 	PathsBuilder m_pathsbuilder;
+
+	// calculated path vertices
+	std::vector<t_vec> m_pathvertices;
+
+	t_real m_targetMonoScatteringAngle = 0;
+	t_real m_targetSampleScatteringAngle = 0;
 
 	// mouse picker
 	t_real m_mouseX, m_mouseY;
@@ -146,6 +152,17 @@ protected:
 	void RebuildRecentFiles();
 
 
+public:
+	/**
+	 * create UI
+	 */
+	PathsTool(QWidget* pParent=nullptr);
+	~PathsTool() = default;
+
+	void SetInitialInstrumentFile(const std::string& file)
+	{ m_initialInstrFile = file;  }
+
+
 protected slots:
 	// go to crystal coordinates (or set target angles)
 	void GotoCoordinates(t_real h, t_real k, t_real l,
@@ -187,15 +204,12 @@ protected slots:
 	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E,
 		bool in_angluar_limits, bool colliding);
 
-public:
-	/**
-	 * create UI
-	 */
-	PathsTool(QWidget* pParent=nullptr);
-	~PathsTool() = default;
+	// move the instrument to a position on the path
+	void TrackPath(std::size_t idx);
 
-	void SetInitialInstrumentFile(const std::string& file)
-	{ m_initialInstrFile = file;  }
+signals:
+	// signal, when a new path has been calculated
+	void PathAvailable(std::size_t numVertices);
 };
 // ----------------------------------------------------------------------------
 

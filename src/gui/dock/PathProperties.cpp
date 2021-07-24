@@ -46,6 +46,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
 	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
 	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
+	m_sliderPath = new QSlider(Qt::Horizontal, this);
 
 	const char* labels[] = {"Monochromator:", "Sample:"};
 
@@ -66,7 +67,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
 	}
 
-	auto *groupPath = new QGroupBox("Path", this);
+	auto *groupPath = new QGroupBox("Path Tracking", this);
 	{
 		auto *layoutPath = new QGridLayout(groupPath);
 		layoutPath->setHorizontalSpacing(2);
@@ -76,6 +77,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		int y = 0;
 		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 2);
 		layoutPath->addWidget(btnCalcPath, y++, 0, 1, 2);
+		layoutPath->addWidget(m_sliderPath, y++, 0, 1, 2);
 	}
 
 	auto *grid = new QGridLayout(this);
@@ -123,11 +125,18 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			emit CalculatePathMesh();
 		});
 
-	// calculate path mesh
+	// calculate path
 	connect(btnCalcPath, &QPushButton::clicked,
 		[this]() -> void
 		{
 			emit CalculatePath();
+		});
+
+	// path tracking slider value has changed
+	connect(m_sliderPath, &QSlider::valueChanged,
+		[this](int value) -> void
+		{
+			emit TrackPath((std::size_t)value);
 		});
 }
 
@@ -137,6 +146,9 @@ PathPropertiesWidget::~PathPropertiesWidget()
 }
 
 
+/**
+ * set the target angular coordinates
+ */
 void PathPropertiesWidget::SetTarget(t_real a2, t_real a4)
 {
 	this->blockSignals(true);
@@ -146,6 +158,20 @@ void PathPropertiesWidget::SetTarget(t_real a2, t_real a4)
 
 	this->blockSignals(false);
 	emit TargetChanged(a2, a4);
+}
+
+
+/**
+ * a new path has been calculated
+ */
+void PathPropertiesWidget::PathAvailable(std::size_t numVertices)
+{
+	if(!m_sliderPath || numVertices == 0)
+		return;
+
+	m_sliderPath->setMinimum(0);
+	m_sliderPath->setMaximum(numVertices-1);
+	m_sliderPath->setValue(0);
 }
 // --------------------------------------------------------------------------------
 
