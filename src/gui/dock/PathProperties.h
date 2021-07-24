@@ -29,6 +29,8 @@ public slots:
 signals:
 	void TargetChanged(t_real a2, t_real a4);
 	void GotoAngles(t_real a2, t_real a4);
+	void CalculatePathMesh();
+	void CalculatePath();
 
 private:
 	// number of coordinate elements

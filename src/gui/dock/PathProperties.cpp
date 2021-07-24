@@ -43,7 +43,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_spinFinish[0]->setValue(90.);
 	m_spinFinish[1]->setValue(90.);
 
-	QPushButton *btnGotoFinish = new QPushButton("Go to Target Angles", this);
+	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
+	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
+	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
 
 	const char* labels[] = {"Monochromator:", "Sample:"};
 
@@ -64,6 +66,18 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutFinish->addWidget(btnGotoFinish, y++, 0, 1, 2);
 	}
 
+	auto *groupPath = new QGroupBox("Path", this);
+	{
+		auto *layoutPath = new QGridLayout(groupPath);
+		layoutPath->setHorizontalSpacing(2);
+		layoutPath->setVerticalSpacing(2);
+		layoutPath->setContentsMargins(4,4,4,4);
+
+		int y = 0;
+		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 2);
+		layoutPath->addWidget(btnCalcPath, y++, 0, 1, 2);
+	}
+
 	auto *grid = new QGridLayout(this);
 	grid->setHorizontalSpacing(2);
 	grid->setVerticalSpacing(2);
@@ -71,6 +85,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 
 	int y = 0;
 	grid->addWidget(groupFinish, y++, 0, 1, 1);
+	grid->addWidget(groupPath, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
 	for(std::size_t i=0; i<m_num_coord_elems; ++i)
@@ -91,7 +106,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			});
 	}
 
-
 	// go to target angles
 	connect(btnGotoFinish, &QPushButton::clicked,
 		[this]() -> void
@@ -100,6 +114,20 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			t_real a4 = m_spinFinish[1]->value();
 
 			emit GotoAngles(a2, a4);
+		});
+
+	// calculate path mesh
+	connect(btnCalcMesh, &QPushButton::clicked,
+		[this]() -> void
+		{
+			emit CalculatePathMesh();
+		});
+
+	// calculate path mesh
+	connect(btnCalcPath, &QPushButton::clicked,
+		[this]() -> void
+		{
+			emit CalculatePath();
 		});
 }
 
@@ -127,7 +155,7 @@ void PathPropertiesWidget::SetTarget(t_real a2, t_real a4)
 // properties dock widget
 // --------------------------------------------------------------------------------
 PathPropertiesDockWidget::PathPropertiesDockWidget(QWidget *parent)
-	: QDockWidget{parent}, 
+	: QDockWidget{parent},
 		m_widget{std::make_shared<PathPropertiesWidget>(this)}
 {
 	setObjectName("PathPropertiesDockWidget");

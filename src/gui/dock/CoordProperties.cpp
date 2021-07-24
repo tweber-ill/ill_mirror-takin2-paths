@@ -55,7 +55,7 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	m_spinCoords[5]->setValue(0);
 	m_checkKfFixed->setChecked(true);
 
-	QPushButton *btnGoto = new QPushButton("Go to Coordinates", this);
+	QPushButton *btnGoto = new QPushButton("Jump to Coordinates", this);
 	QPushButton *btnTarget = new QPushButton("Set Target Angles", this);
 
 	const char* labels[] = {

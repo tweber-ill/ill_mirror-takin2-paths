@@ -13,6 +13,7 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QProgressBar>
 #include <QtWidgets/QLabel>
 
 #include <string>
@@ -51,6 +52,7 @@ private:
 	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
 
 	QStatusBar *m_statusbar{ nullptr };
+	QProgressBar *m_progress{ nullptr };
 	QLabel *m_labelStatus{ nullptr };
 	QLabel *m_labelCollisionStatus{ nullptr };
 
@@ -75,7 +77,7 @@ private:
 	QStringList m_recentFiles;
 	QString m_curFile;
 
-	// instrument configuration
+	// instrument configuration and paths builder
 	InstrumentSpace m_instrspace;
 	PathsBuilder m_pathsbuilder;
 
@@ -85,7 +87,7 @@ private:
 
 	// crystal matrices
 	t_mat m_B = tl2::B_matrix<t_mat>(
-		5., 5., 5., 
+		5., 5., 5.,
 		tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5, tl2::pi<t_real>*0.5);
 	t_mat m_UB = tl2::unit<t_mat>(3);
 
@@ -146,7 +148,7 @@ protected:
 
 protected slots:
 	// go to crystal coordinates (or set target angles)
-	void GotoCoordinates(t_real h, t_real k, t_real l, 
+	void GotoCoordinates(t_real h, t_real k, t_real l,
 		t_real ki, t_real kf,
 		bool only_set_target);
 
@@ -154,6 +156,10 @@ protected slots:
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5, bool only_set_target);
+
+	// calculation of the meshes and paths
+	void CalculatePathMesh();
+	void CalculatePath();
 
 	// called after the plotter has initialised
 	void AfterGLInitialisation();
@@ -171,19 +177,21 @@ protected slots:
 	void ObjectDragged(bool drag_start, const std::string& obj,
 		t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
 
+	// set temporary status message
+	void SetTmpStatus(const std::string& msg);
+
+	// update permanent status message
 	void UpdateStatusLabel();
 
 	// set instrument status (coordinates, collision flag)
 	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E,
 		bool in_angluar_limits, bool colliding);
 
-
 public:
 	/**
 	 * create UI
 	 */
 	PathsTool(QWidget* pParent=nullptr);
-
 	~PathsTool() = default;
 
 	void SetInitialInstrumentFile(const std::string& file)

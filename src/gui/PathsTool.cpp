@@ -26,7 +26,7 @@ namespace pt = boost::property_tree;
 
 
 #define MAX_RECENT_FILES 16
-#define PROG_TITLE "Triple-Axis Paths Tool"
+#define PROG_TITLE "Triple-Axis Path Calculator"
 
 
 // ----------------------------------------------------------------------------
@@ -169,7 +169,8 @@ bool PathsTool::OpenFile(const QString &file)
 			std::ostringstream ostr;
 			ostr << "Loaded \"" << QFileInfo{file}.fileName().toStdString() << "\" "
 				<< "dated " << msg << ".";
-			m_statusbar->showMessage(ostr.str().c_str());
+
+			SetTmpStatus(ostr.str());
 		}
 
 		SetCurrentFile(file);
@@ -340,7 +341,7 @@ void PathsTool::RebuildRecentFiles()
  * go to crystal coordinates
  */
 void PathsTool::GotoCoordinates(
-	t_real h, t_real k, t_real l, 
+	t_real h, t_real k, t_real l,
 	t_real ki, t_real kf,
 	bool only_set_target)
 {
@@ -385,9 +386,9 @@ void PathsTool::GotoCoordinates(
 
 		t_real a2_abs = *a1 * 2. * m_sensesCCW[0];
 		t_real a4_abs = a4 * m_sensesCCW[1];
-	
+
 		pathwidget->SetTarget(
-			a2_abs / tl2::pi<t_real> * 180., 
+			a2_abs / tl2::pi<t_real> * 180.,
 			a4_abs / tl2::pi<t_real> * 180.);
 	}
 
@@ -492,7 +493,7 @@ void PathsTool::AfterGLInitialisation()
 	// get camera rotation
 	t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
 	m_camProperties->GetWidget()->SetCamRotation(
-		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>, 
+		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>,
 		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
 
 	// load an initial instrument definition
@@ -538,10 +539,10 @@ void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bo
 /**
  * dragging an object
  */
-void PathsTool::ObjectDragged(bool drag_start, const std::string& obj, 
+void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
 	t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y)
 {
-	/*std::cout << "Dragging " << obj 
+	/*std::cout << "Dragging " << obj
 		<< " from (" << x_start << ", " << y_start << ")"
 		<< " to (" << x << ", " << y << ")." << std::endl;*/
 
@@ -549,11 +550,27 @@ void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
 }
 
 
+/**
+ * set temporary status message
+ */
+void PathsTool::SetTmpStatus(const std::string& msg)
+{
+	if(!m_statusbar)
+		return;
+
+	// show message for 2 seconds
+	m_statusbar->showMessage(msg.c_str(), 2000);
+}
+
+
+/**
+ * update permanent status message
+ */
 void PathsTool::UpdateStatusLabel()
 {
 	std::ostringstream ostr;
 	ostr.precision(g_prec_gui);
-	ostr << std::fixed << std::showpos 
+	ostr << std::fixed << std::showpos
 		<< "Cursor: (" << m_mouseX << ", " << m_mouseY << ") m";
 	if(m_curObj != "")
 		ostr << ", object: " << m_curObj;
@@ -562,6 +579,9 @@ void PathsTool::UpdateStatusLabel()
 }
 
 
+/**
+ * set permanent instrumetn status message
+ */
 void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E,
 	bool in_angular_limits, bool colliding)
 {
@@ -799,11 +819,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		});
 
 	// goto coordinates
-	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates, 
+	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates,
 		this, &PathsTool::GotoCoordinates);
 
 	// goto angles
-	connect(pathwidget, &PathPropertiesWidget::GotoAngles, 
+	connect(pathwidget, &PathPropertiesWidget::GotoAngles,
 		[this](t_real a2, t_real a4)
 		{
 			a2 = a2 / 180. * tl2::pi<t_real>;
@@ -812,9 +832,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->GotoAngles(a2/2., std::nullopt, a4, std::nullopt, false);
 		});
 
-
 	// target angles have changed
-	connect(pathwidget, &PathPropertiesWidget::TargetChanged, 
+	connect(pathwidget, &PathPropertiesWidget::TargetChanged,
 		[this](t_real a2, t_real a4)
 		{
 			a2 = a2 / 180. * tl2::pi<t_real> * m_sensesCCW[0];
@@ -823,6 +842,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(this->m_dlgConfigSpace)
 				this->m_dlgConfigSpace->UpdateTarget(a2, a4, m_sensesCCW);
 		});
+
+
+	// calculate path mesh
+	connect(pathwidget, &PathPropertiesWidget::CalculatePathMesh,
+		this, &PathsTool::CalculatePathMesh);
+
+	// calculate path
+	connect(pathwidget, &PathPropertiesWidget::CalculatePath,
+		this, &PathsTool::CalculatePath);
 	// --------------------------------------------------------------------
 
 
@@ -1079,6 +1107,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// status bar
 	// --------------------------------------------------------------------
+	m_progress = new QProgressBar(this);
+	m_progress->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	m_progress->setMinimum(0);
+	m_progress->setMaximum(1000);
+
 	m_labelStatus = new QLabel(this);
 	m_labelStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 	m_labelStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
@@ -1090,6 +1123,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_labelCollisionStatus->setLineWidth(1);
 
 	m_statusbar = new QStatusBar(this);
+	m_statusbar->addPermanentWidget(m_progress);
 	m_statusbar->addPermanentWidget(m_labelCollisionStatus);
 	m_statusbar->addPermanentWidget(m_labelStatus);
 	setStatusBar(m_statusbar);
@@ -1121,15 +1155,40 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
 	m_pathsbuilder.SetScatteringSenses(this->m_sensesCCW);
-	m_pathsbuilder.AddProgressSlot([](bool start, bool end, t_real progress, const std::string& message)
-	{
-		//std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
-		return true;
-	});
+	m_pathsbuilder.AddProgressSlot(
+		[this](bool start, bool end, t_real progress, const std::string& message)
+		{
+			//std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
+			if(!m_progress)
+				return true;
+
+			m_progress->setValue((int)(progress * m_progress->maximum()));
+			//m_progress->setFormat((std::string("%p% -- ") + message).c_str());
+			return true;
+		});
 
 	UpdateUB();
 	// --------------------------------------------------------------------
 }
+
+
+/**
+ * calculate the mesh of possible paths
+ */
+void PathsTool::CalculatePathMesh()
+{
+	std::cout << "mesh" << std::endl;
+}
+
+
+/**
+ * calculate the path from the current to the target position
+ */
+void PathsTool::CalculatePath()
+{
+	std::cout << "path" << std::endl;
+}
+
 // ----------------------------------------------------------------------------
 
 
