@@ -202,7 +202,7 @@ bool PathsTool::OpenFile(const QString &file)
 				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
 
-				auto [Qrlu, E] = m_tascalc.GethklE(monoXtalAngle, anaXtalAngle,
+				auto [Qrlu, E] = m_tascalc.GetQE(monoXtalAngle, anaXtalAngle,
 					sampleXtalAngle, sampleScAngle);
 
 				SetInstrumentStatus(Qrlu, E,
@@ -331,21 +331,21 @@ void PathsTool::GotoCoordinates(
 	t_real ki, t_real kf,
 	bool only_set_target)
 {
-	auto [ok, a1, a5, a3, a4, dist] = m_tascalc.GetAngles(h, k, l, ki, kf);
+	TasAngles angles = m_tascalc.GetAngles(h, k, l, ki, kf);
 	
-	if(!a1)
+	if(!angles.mono_ok)
 	{
 		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");
 		return;
 	}
 
-	if(!a5)
+	if(!angles.ana_ok)
 	{
 		QMessageBox::critical(this, "Error", "Invalid analyser angle.");
 		return;
 	}
 
-	if(!ok)
+	if(!angles.sample_ok)
 	{
 		QMessageBox::critical(this, "Error", "Invalid scattering angles.");
 		return;
@@ -356,13 +356,14 @@ void PathsTool::GotoCoordinates(
 	{
 		if(!m_pathProperties)
 			return;
+
 		auto pathwidget = m_pathProperties->GetWidget();
 		if(!pathwidget)
 			return;
 
 		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
-		t_real a2_abs = *a1 * 2. * sensesCCW[0];
-		t_real a4_abs = a4 * sensesCCW[1];
+		t_real a2_abs = angles.monoXtalAngle * 2. * sensesCCW[0];
+		t_real a4_abs = angles.sampleScatteringAngle * sensesCCW[1];
 
 		pathwidget->SetTarget(
 			a2_abs / tl2::pi<t_real> * 180.,
@@ -373,14 +374,20 @@ void PathsTool::GotoCoordinates(
 	else
 	{
 		// set scattering angles
-		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
-		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(a4);
-		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(
+			t_real{2} * angles.monoXtalAngle);
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(
+			angles.sampleScatteringAngle);
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(
+			t_real{2} * angles.anaXtalAngle);
 
 		// set crystal angles
-		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
-		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(a3);
-		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(
+			angles.monoXtalAngle);
+		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(
+			angles.sampleXtalAngle);
+		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(
+			angles.anaXtalAngle);
 	}
 }
 
@@ -771,7 +778,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 			if(m_renderer)
 				m_renderer->SetCamRotation(tl2::create<t_vec2_gl>(
-					{phi/t_real_gl{180}*tl2::pi<t_real_gl>, 
+					{phi/t_real_gl{180}*tl2::pi<t_real_gl>,
 					theta/t_real_gl{180}*tl2::pi<t_real_gl>}));
 		});
 
@@ -779,6 +786,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(xtalwidget, &XtalPropertiesWidget::LatticeChanged,
 		[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
 		{
+			m_tascalc.SetSampleLatticeConstants(a, b, c);
+			m_tascalc.SetSampleLatticeAngles(alpha, beta, gamma, true);
+
 			m_tascalc.UpdateB();
 			UpdateUB();
 		});
@@ -786,9 +796,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(xtalwidget, &XtalPropertiesWidget::PlaneChanged,
 		[this](t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z) -> void
 		{
-			m_tascalc.SetScatteringPlane(
+			m_tascalc.SetSampleScatteringPlane(
 				vec1_x, vec1_y, vec1_z,
 				vec2_x, vec2_y, vec2_z);
+
 			UpdateUB();
 		});
 

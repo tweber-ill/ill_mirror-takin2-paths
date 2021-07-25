@@ -13,13 +13,31 @@
 
 
 /**
+ * tas angles
+ */
+struct TasAngles
+{
+	bool mono_ok = false;
+	bool ana_ok = false;
+	bool sample_ok = false;
+
+	t_real monoXtalAngle = 0;
+	t_real anaXtalAngle = 0;
+	t_real sampleXtalAngle = 0;
+	t_real sampleScatteringAngle = 0;
+
+	t_real distance = 0;
+};
+
+
+/**
  * helper class for tas calculations
  */
-class TasCalc
+class TasCalculator
 {
 public:
-	TasCalc() = default;
-	~TasCalc() = default;
+	TasCalculator() = default;
+	~TasCalculator() = default;
 
 	void SetMonochromatorD(t_real d);
 	void SetAnalyserD(t_real d);
@@ -29,9 +47,9 @@ public:
 	const t_real* GetScatteringSenses() const;
 
 	void SetSampleLatticeConstants(t_real a, t_real b, t_real c);
-	void SetSampleLatticeAngles(t_real alpha, t_real beta, t_real gamma);
-
-	void SetScatteringPlane(t_real vec1_x, t_real vec1_y, t_real vec1_z,
+	void SetSampleLatticeAngles(t_real alpha, t_real beta, t_real gamma, bool deg = false);
+	void SetSampleScatteringPlane(
+		t_real vec1_x, t_real vec1_y, t_real vec1_z,
 		t_real vec2_x, t_real vec2_y, t_real vec2_z);
 
 	// get crystal matrices
@@ -45,14 +63,11 @@ public:
 
 	// calculate instrument coordinates in xtal system
 	std::tuple<std::optional<t_vec>, t_real>
-	GethklE(t_real monoXtalAngle, t_real anaXtalAngle,
+	GetQE(t_real monoXtalAngle, t_real anaXtalAngle,
 		t_real sampleXtalAngle, t_real sampleScAngle) const;
 
 	// calculate instrument angles
-	std::tuple<bool,	// ok 
-		std::optional<t_real>, std::optional<t_real>,	// a1 and a5
-		t_real, t_real, t_real>		// a3, a4, and distance
-	GetAngles(t_real h, t_real k, t_real l, t_real ki, t_real kf) const;
+	TasAngles GetAngles(t_real h, t_real k, t_real l, t_real ki, t_real kf) const;
 
 
 private:
@@ -61,8 +76,8 @@ private:
 
 	// crystal lattice angles
 	t_vec m_angles = tl2::create<t_vec>({
-		tl2::pi<t_real> * 0.5, 
-		tl2::pi<t_real> * 0.5, 
+		tl2::pi<t_real> * 0.5,
+		tl2::pi<t_real> * 0.5,
 		tl2::pi<t_real> * 0.5
 	});
 

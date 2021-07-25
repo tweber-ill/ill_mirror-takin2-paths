@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "src/core/InstrumentSpace.h"
-#include "src/core/TasCalc.h"
+#include "src/core/TasCalculator.h"
 #include "src/core/PathsBuilder.h"
 
 #include "tlibs2/libs/maths.h"
@@ -93,7 +93,7 @@ private:
 	std::string m_curObj;
 
 	// tas calculations
-	TasCalc m_tascalc;
+	TasCalculator m_tascalc;
 
 
 protected:

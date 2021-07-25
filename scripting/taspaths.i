@@ -17,7 +17,7 @@
 	#include "src/core/Instrument.h"
 	#include "src/core/InstrumentSpace.h"
 	#include "src/core/PathsBuilder.h"
-	#include "src/core/TasCalc.h"
+	#include "src/core/TasCalculator.h"
 %}
 
 
@@ -40,7 +40,7 @@
 %include "src/core/Instrument.h"
 %include "src/core/InstrumentSpace.h"
 %include "src/core/PathsBuilder.h"
-%include "src/core/TasCalc.h"
+%include "src/core/TasCalculator.h"
 //%include "tlibs2/libs/maths.h"
 
 

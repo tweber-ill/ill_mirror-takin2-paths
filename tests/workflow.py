@@ -7,7 +7,7 @@
 
 import sys
 import os
-import math
+import math as m
 
 cwd = os.getcwd()
 sys.path.append(cwd)
@@ -56,6 +56,40 @@ print("Instrument definition loaded.\n")
 
 
 # -----------------------------------------------------------------------------
+# set-up a sample
+# -----------------------------------------------------------------------------
+tascalc = tas.TasCalculator()
+tascalc.SetScatteringSenses(True, False, True)
+tascalc.SetSampleLatticeConstants(5, 5, 5)
+tascalc.SetSampleLatticeAngles(90, 90, 90, True)
+tascalc.UpdateB()
+tascalc.UpdateUB()
+
+start_angles = tascalc.GetAngles(0.5, 0., 0., 1.4, 1.4)
+target_angles = tascalc.GetAngles(1.5, -1., 0., 1.4, 1.4)
+
+start_angles.monoXtalAngle = abs(start_angles.monoXtalAngle)
+start_angles.sampleXtalAngle = abs(start_angles.sampleXtalAngle)
+start_angles.sampleScatteringAngle = abs(start_angles.sampleScatteringAngle)
+target_angles.monoXtalAngle = abs(target_angles.monoXtalAngle)
+target_angles.sampleXtalAngle = abs(target_angles.sampleXtalAngle)
+target_angles.sampleScatteringAngle = abs(target_angles.sampleScatteringAngle)
+
+print("Start angles: a1 = %.2f deg, a5 = %.2f deg, a3 = %.2f deg, a4 = %.2f deg." % (
+	start_angles.monoXtalAngle / m.pi*180.,
+	start_angles.anaXtalAngle / m.pi*180.,
+	start_angles.sampleXtalAngle / m.pi*180.,
+	start_angles.sampleScatteringAngle / m.pi*180.))
+
+print("Target angles: a1 = %.2f deg, a5 = %.2f deg, a3 = %.2f deg, a4 = %.2f deg." % (
+	target_angles.monoXtalAngle / m.pi*180.,
+	target_angles.anaXtalAngle / m.pi*180.,
+	target_angles.sampleXtalAngle / m.pi*180.,
+	target_angles.sampleScatteringAngle / m.pi*180.))
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
 # build path mesh
 # -----------------------------------------------------------------------------
 print("Building path mesh...")
@@ -74,12 +108,12 @@ print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
 # angular ranges to probe
 angle_padding = 4.
-a2_delta = 1./180.*math.pi
-a4_delta = 2./180.*math.pi
+a2_delta = 1./180.*m.pi
+a4_delta = 2./180.*m.pi
 a2_begin = 0. - angle_padding*a2_delta
-a2_end = math.pi + angle_padding*a2_delta
-a4_begin = -math.pi - angle_padding*a2_delta
-a4_end = math.pi + angle_padding*a2_delta
+a2_end = m.pi + angle_padding*a2_delta
+a4_begin = -m.pi - angle_padding*a2_delta
+a4_end = m.pi + angle_padding*a2_delta
 
 if not builder.CalculateConfigSpace(
 	a2_delta, a4_delta,
@@ -105,10 +139,15 @@ print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
 print("Calculating path...")
 
-a2_start = 40./180.*math.pi
-a4_start = -80./180.*math.pi
-a2_target = 120./180.*math.pi
-a4_target = 105./180.*math.pi
+#a2_start = 40./180.*m.pi
+#a4_start = -80./180.*m.pi
+#a2_target = 120./180.*m.pi
+#a4_target = 105./180.*m.pi
+
+a2_start = start_angles.monoXtalAngle * 2.
+a4_start = start_angles.sampleScatteringAngle
+a2_target = target_angles.monoXtalAngle * 2.
+a4_target = target_angles.sampleScatteringAngle
 
 path = builder.FindPath(a2_start, a4_start, a2_target, a4_target)
 if not path.ok:
