@@ -350,7 +350,11 @@ bool PathsBuilder::CalculateLineSegments()
 				{
 					if(m_img.GetPixel(x, y) == 0)
 					{
-						point_outside_regions = tl2::create<t_vec>({x, y});
+						point_outside_regions = 
+							tl2::create<t_vec>({
+								static_cast<double>(x), 
+								static_cast<double>(y)
+							});
 						found_point = true;
 						break;
 					}
