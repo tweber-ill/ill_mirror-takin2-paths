@@ -65,8 +65,9 @@ tascalc.SetSampleLatticeAngles(90, 90, 90, True)
 tascalc.UpdateB()
 tascalc.UpdateUB()
 
-start_angles = tascalc.GetAngles(0.5, 0., 0., 1.4, 1.4)
-target_angles = tascalc.GetAngles(1.5, -1., 0., 1.4, 1.4)
+tascalc.SetKf(1.4)
+start_angles = tascalc.GetAngles(0.5, 0., 0., 1.)
+target_angles = tascalc.GetAngles(1.5, -0.5, 0., 2.5)
 
 start_angles.monoXtalAngle = abs(start_angles.monoXtalAngle)
 start_angles.sampleXtalAngle = abs(start_angles.sampleXtalAngle)
@@ -163,21 +164,34 @@ print("Finished calculating path.\n")
 # -----------------------------------------------------------------------------
 # output
 # -----------------------------------------------------------------------------
+# write the path mesh vertices to a file
 if write_pathmesh:
 	if not builder.SaveToLinesTool("lines.xml"):
 		warning("Could not save line segment diagram.")
 
+# write the path vertices to a file
 if write_path:
 	with open("path.dat", "w") as datafile:
 		for vertex in vertices:
 			datafile.write("%.4f %.4f\n" % (vertex[0], vertex[1]))
 
+# plot the angular configuration space
 if show_plot:
 	import matplotlib.pyplot as plt
 
+	# plot obstacles
+	numgroups = builder.GetNumberOfLineSegmentRegions()
+	print("Number of regions: %d." % numgroups)
+	for regionidx in range(numgroups):
+		region = builder.GetLineSegmentRegionAsArray(regionidx)
+		x1, y1, x2, y2 = zip(*region)
+		plt.fill(x1, y1, "-", linewidth=1, fill=not builder.IsRegionInverted(regionidx), color="#ff0000")
+
+	# plot path
 	x, y = zip(*vertices)
 	plt.xlabel("Sample Scattering Angle 2\u03b8_S (deg)")
 	plt.ylabel("Monochromator Scattering Angle 2\u03b8_M (deg)")
 	plt.plot(x, y, "-", linewidth=2)
+
 	plt.show()
 # -----------------------------------------------------------------------------

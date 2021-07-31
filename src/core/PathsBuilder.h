@@ -112,6 +112,15 @@ public:
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
 	bool CalculateLineSegments();
 	bool CalculateVoronoi(bool group_lines=true);
+
+	// number of line segment groups -- for scripting interface
+	std::size_t GetNumberOfLineSegmentRegions() const { return m_linegroups.size(); }
+
+	// test if the region is inverted -- for scripting interface
+	bool IsRegionInverted(std::size_t groupidx) { return m_inverted_regions[groupidx]; }
+
+	// get line segment group -- for scripting interface
+	std::vector<std::array<t_real, 4>> GetLineSegmentRegionAsArray(std::size_t groupidx) const;
 	// ------------------------------------------------------------------------
 
 	// ------------------------------------------------------------------------
@@ -124,7 +133,7 @@ public:
 	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
 		bool subdivide_lines = false, bool deg = false) const;
 
-	// get individual vertices on an instrument path
+	// get individual vertices on an instrument path -- for scripting interface
 	std::vector<std::pair<t_real, t_real>>
 		GetPathVerticesAsPairs(const InstrumentPath& path,
 			bool subdivide_lines = false, bool deg = false) const;
@@ -187,11 +196,11 @@ private:
 	std::vector<std::vector<t_contourvec>>
 		m_wallcontours = {}, m_fullwallcontours = {};
 
-	// line segments and groups from the wall contours
+	// line segments (in pixel coordinates) and groups from the wall contours
 	std::vector<t_line> m_lines{};
 	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
-	// arbitrary points outside and inside the regions
+	// arbitrary points outside the regions
 	std::vector<t_vec> m_points_outside_regions{};
 	std::vector<bool> m_inverted_regions{};
 

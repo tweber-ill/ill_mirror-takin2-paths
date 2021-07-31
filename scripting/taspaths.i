@@ -31,7 +31,9 @@
 
 %template(PairBoolString) std::pair<bool, std::string>;
 %template(PairRealReal) std::pair<double, double>;
+%template(ArrayReal4) std::array<double, 4>;
 %template(VectorPairRealReal) std::vector<std::pair<double, double>>;
+%template(VectorArrayReal4) std::vector<std::array<double, 4>>;
 //%template(VectorVec) std::vector<t_vec>;
 
 %include "src/core/types.h"

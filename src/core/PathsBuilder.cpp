@@ -929,3 +929,33 @@ std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
 
 	return pairs;
 }
+
+
+/**
+ * get a line segment group
+ * helper function for the scripting interface
+ */
+std::vector<std::array<t_real, 4>>
+PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
+{
+	std::vector<std::array<t_real, 4>> lines;
+
+	if(groupidx >= GetNumberOfLineSegmentRegions())
+		return lines;
+	auto[startidx, endidx] = m_linegroups[groupidx];
+
+	lines.reserve(endidx - startidx);
+
+	for(std::size_t lineidx=startidx; lineidx<endidx; ++lineidx)
+	{
+		const t_line& line = m_lines[lineidx];
+
+		t_vec pt1 = PixelToAngle(std::get<0>(line)[0], std::get<0>(line)[1], true, false);
+		t_vec pt2 = PixelToAngle(std::get<1>(line)[0], std::get<1>(line)[1], true, false);
+
+		std::array<t_real, 4> arr{{ pt1[0], pt1[1], pt2[0], pt2[1] }};
+		lines.emplace_back(std::move(arr));
+	}
+
+	return lines;
+}

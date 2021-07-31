@@ -26,6 +26,12 @@ void TasCalculator::SetSampleAngleOffset(t_real offs)
 }
 
 
+void TasCalculator::SetKf(t_real kf)
+{
+	m_kf = kf;
+}
+
+
 void TasCalculator::SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw)
 {
 	m_sensesCCW[0] = (monoccw ? 1 : -1);
@@ -135,7 +141,7 @@ TasCalculator::GetQE(t_real monoXtalAngle, t_real anaXtalAngle,
 
 
 /**
- * calculate instrument angles
+ * calculate instrument angles given ki and kf
  */
 TasAngles TasCalculator::GetAngles(
 	t_real h, t_real k, t_real l, t_real ki, t_real kf) const
@@ -169,4 +175,17 @@ TasAngles TasCalculator::GetAngles(
 		m_sensesCCW[1], m_a3Offs);
 
 	return angles;
+}
+
+
+/**
+ * calculate instrument angles given E and a fixed kf
+ */
+TasAngles TasCalculator::GetAngles(
+	t_real h, t_real k, t_real l, t_real E) const
+{
+	// get ki corresponding to this energy transfer
+	t_real ki = tl2::calc_tas_ki<t_real>(m_kf, E);
+
+	return GetAngles(h, k, l, ki, m_kf);
 }

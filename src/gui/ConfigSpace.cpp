@@ -772,7 +772,7 @@ void ConfigSpaceDlg::RedrawPathPlot()
 {
 	ClearPathPlotCurve();
 
-	
+
 	// draw path curve
 	QVector<t_real> pathx, pathy;
 	pathx.reserve(m_pathvertices.size());
