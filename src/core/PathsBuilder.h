@@ -166,8 +166,9 @@ public:
 	bool SaveToLinesTool(std::ostream& ostr);
 	bool SaveToLinesTool(const std::string& filename);
 
-	void AcceptExporter(const PathsExporterBase* exporter)
-	{ exporter->Export(this); }
+	// export the path to various formats using a visitor
+	bool AcceptExporter(const PathsExporterBase *exporter)
+	{ return exporter->Export(this); }
 	// ------------------------------------------------------------------------
 
 

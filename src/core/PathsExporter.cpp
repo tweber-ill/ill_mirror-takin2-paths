@@ -9,11 +9,28 @@
 #include "PathsBuilder.h"
 
 
-void PathsExporterNomad::Export(const PathsBuilder* builder) const
+/**
+ * export the path as raw data
+ */
+bool PathsExporterRaw::Export(const PathsBuilder* builder) const
 {
+    return true;
 }
 
 
-void PathsExporterNicos::Export(const PathsBuilder* builder) const
+/**
+ * export the path into Nomad commands
+ */
+bool PathsExporterNomad::Export(const PathsBuilder* builder) const
 {
+    return true;
+}
+
+
+/**
+ * export the path into Nicos commands
+ */
+bool PathsExporterNicos::Export(const PathsBuilder* builder) const
+{
+    return true;
 }

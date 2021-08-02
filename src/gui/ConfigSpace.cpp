@@ -136,7 +136,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(m_status, y++, 0, 1, 5);
 
 
+	// ------------------------------------------------------------------------
 	// menu
+	// ------------------------------------------------------------------------
 	QMenu *menuFile = new QMenu("File", this);
 	QMenu *menuOptions = new QMenu("Options", this);
 	QMenu *menuCalc = new QMenu("Calculate", this);
@@ -150,6 +152,14 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	QAction *acSaveGraph = new QAction("Save Voronoi Graph...", menuFile);
 	menuFile->addAction(acSaveGraph);
+
+	menuFile->addSeparator();
+
+	QAction *acExportNomad = new QAction("Export Path to Nomad...", menuFile);
+	menuFile->addAction(acExportNomad);
+
+	QAction *acExportNicos = new QAction("Export Path to Nicos...", menuFile);
+	menuFile->addAction(acExportNicos);
 
 	menuFile->addSeparator();
 
@@ -209,8 +219,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
+	// ------------------------------------------------------------------------
 
 
+	// ------------------------------------------------------------------------
+	// output functions
+	// ------------------------------------------------------------------------
 	// export obstacle line segments
 	auto saveLines = [this]()
 	{
@@ -234,7 +248,6 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	auto savePDF = [this]()
 	{
 		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
-
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save PDF Figure", dirLast, "PDF Files (*.pdf)");
 		if(filename=="")
@@ -252,7 +265,6 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return;
 
 		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
-
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save DOT Graph", dirLast, "DOT Files (*.dot)");
 		if(filename=="")
@@ -266,8 +278,51 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
 	};
 
+	// export the current path to an external format
+	auto exportPath = [this](PathsExporterFormat fmt) -> bool
+	{
+		std::shared_ptr<PathsExporterBase> exporter;
 
+		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+		QString filename = QFileDialog::getSaveFileName(
+			this, "Export Path", dirLast, "Text Files (*.txt)");
+		if(filename=="")
+			return false;
+
+		switch(fmt)
+		{
+			case PathsExporterFormat::RAW:
+				exporter = std::make_shared<PathsExporterRaw>(filename.toStdString());
+				break;
+			case PathsExporterFormat::NOMAD:
+				exporter = std::make_shared<PathsExporterNomad>(filename.toStdString());
+				break;
+			case PathsExporterFormat::NICOS:
+				exporter = std::make_shared<PathsExporterNicos>(filename.toStdString());
+				break;
+		}
+
+		if(!this->m_pathsbuilder || !exporter)
+		{
+			QMessageBox::critical(this, "Error", "No path is available.");
+			return false;
+		}
+
+		if(!m_pathsbuilder->AcceptExporter(exporter.get()))
+		{
+			QMessageBox::critical(this, "Error", "path could not be exported.");
+			return false;
+		}
+
+		this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
+		return true;
+	};
+	// ------------------------------------------------------------------------
+
+
+	// ------------------------------------------------------------------------
 	// connections
+	// ------------------------------------------------------------------------
 	connect(m_plot.get(), &QCustomPlot::mousePress,
 	[this](QMouseEvent* evt)
 	{
@@ -348,6 +403,16 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		m_plot->replot();
 	});
 
+	connect(acExportNomad, &QAction::triggered, this, [exportPath]()
+	{
+		exportPath(PathsExporterFormat::NOMAD);
+	});
+
+	connect(acExportNicos, &QAction::triggered, this, [exportPath]()
+	{
+		exportPath(PathsExporterFormat::NICOS);
+	});
+
 	connect(acSaveLines, &QAction::triggered, this, saveLines);
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
 	connect(acSaveGraph, &QAction::triggered, this, saveGraph);
@@ -357,6 +422,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::CalculatePathMesh);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
 	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
+	// ------------------------------------------------------------------------
+
 
 	SetInstrumentMovable(m_moveInstr);
 }
@@ -669,6 +736,9 @@ void ConfigSpaceDlg::SetPathPlotCurve(const QVector<t_real>& x, const QVector<t_
 }
 
 
+/**
+ * redraw the path mesh
+ */
 void ConfigSpaceDlg::RedrawVoronoiPlot()
 {
 	ClearVoronoiPlotCurves();
@@ -768,6 +838,9 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 }
 
 
+/**
+ * redraw the current instrument path
+ */
 void ConfigSpaceDlg::RedrawPathPlot()
 {
 	ClearPathPlotCurve();
