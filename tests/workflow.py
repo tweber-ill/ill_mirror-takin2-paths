@@ -74,17 +74,18 @@ tascalc.UpdateUB()
 print("Building path mesh...")
 
 # set instrument scattering senses
-mem = tas.MemManager()
-senses = mem.NewRealArray(3)
-mem.SetRealArray(senses, 0, 1)
-mem.SetRealArray(senses, 1, -1)
-mem.SetRealArray(senses, 2, 1)
+#mem = tas.MemManager()
+#senses = mem.NewRealArray(3)
+#mem.SetRealArray(senses, 0, 1)
+#mem.SetRealArray(senses, 1, -1)
+#mem.SetRealArray(senses, 2, 1)
 
 # create the paths builder object
 builder = tas.PathsBuilder()
 builder.AddConsoleProgressHandler()
 builder.SetInstrumentSpace(instrspace)
-builder.SetScatteringSenses(senses)
+#builder.SetScatteringSenses(senses)
+builder.SetScatteringSenses(tascalc.GetScatteringSenses())
 print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
 # angular ranges to probe
