@@ -10,6 +10,7 @@
 
 
 #include <string>
+#include "types.h"
 
 
 class PathsBuilder;
@@ -29,7 +30,7 @@ enum class PathsExporterFormat
 class PathsExporterBase
 {
 public:
-	virtual bool Export(const PathsBuilder* builder) const = 0;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const = 0;
 };
 
 
@@ -40,9 +41,10 @@ class PathsExporterRaw : public PathsExporterBase
 {
 public:
 	PathsExporterRaw(const std::string& filename) : m_filename(filename) {};
-	virtual bool Export(const PathsBuilder* builder) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
+	std::streamsize m_prec = 6;
 	std::string m_filename;
 };
 
@@ -54,9 +56,10 @@ class PathsExporterNomad : public PathsExporterBase
 {
 public:
 	PathsExporterNomad(const std::string& filename) : m_filename(filename) {};
-	virtual bool Export(const PathsBuilder* builder) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
+	std::streamsize m_prec = 6;
 	std::string m_filename;
 };
 
@@ -68,9 +71,10 @@ class PathsExporterNicos : public PathsExporterBase
 {
 public:
 	PathsExporterNicos(const std::string& filename) : m_filename(filename) {}
-	virtual bool Export(const PathsBuilder* builder) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
+	std::streamsize m_prec = 6;
 	std::string m_filename;
 };
 

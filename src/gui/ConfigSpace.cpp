@@ -153,14 +153,18 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QAction *acSaveGraph = new QAction("Save Voronoi Graph...", menuFile);
 	menuFile->addAction(acSaveGraph);
 
-	menuFile->addSeparator();
+	QMenu *menuExportPath = new QMenu("Export Path", this);
 
-	QAction *acExportNomad = new QAction("Export Path to Nomad...", menuFile);
-	menuFile->addAction(acExportNomad);
+	QAction *acExportRaw = new QAction("To Raw...", menuFile);
+	menuExportPath->addAction(acExportRaw);
 
-	QAction *acExportNicos = new QAction("Export Path to Nicos...", menuFile);
-	menuFile->addAction(acExportNicos);
+	QAction *acExportNomad = new QAction("To Nomad...", menuFile);
+	menuExportPath->addAction(acExportNomad);
 
+	QAction *acExportNicos = new QAction("To Nicos...", menuFile);
+	menuExportPath->addAction(acExportNicos);
+
+	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
 
 	QAction *acQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
@@ -187,6 +191,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setCheckable(true);
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuOptions->addAction(acCalcVoro);
+
+	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
+	acSubdivPath->setCheckable(true);
+	acSubdivPath->setChecked(m_subdivide_path);
+	menuOptions->addAction(acSubdivPath);
 
 	QAction *acAutocalcPath = new QAction("Automatically Calculate Path", menuView);
 	acAutocalcPath->setCheckable(true);
@@ -308,7 +317,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return false;
 		}
 
-		if(!m_pathsbuilder->AcceptExporter(exporter.get()))
+		if(!m_pathsbuilder->AcceptExporter(exporter.get(), m_pathvertices))
 		{
 			QMessageBox::critical(this, "Error", "path could not be exported.");
 			return false;
@@ -388,6 +397,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
 	{ m_calcvoronoi = calc; });
 
+	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)->void
+	{ m_subdivide_path = subdiv; });
+
 	connect(acAutocalcPath, &QAction::toggled, [this](bool calc)->void
 	{ m_autocalcpath = calc; });
 
@@ -401,6 +413,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	{
 		m_plot->rescaleAxes();
 		m_plot->replot();
+	});
+
+	connect(acExportRaw, &QAction::triggered, this, [exportPath]()
+	{
+		exportPath(PathsExporterFormat::RAW);
 	});
 
 	connect(acExportNomad, &QAction::triggered, this, [exportPath]()
@@ -652,7 +669,7 @@ void ConfigSpaceDlg::CalculatePath()
 	}
 
 	// get the vertices on the path
-	m_pathvertices = m_pathsbuilder->GetPathVertices(path, false, true);
+	m_pathvertices = m_pathsbuilder->GetPathVertices(path, m_subdivide_path, true);
 
 	RedrawPathPlot();
 }

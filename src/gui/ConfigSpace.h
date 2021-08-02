@@ -74,11 +74,13 @@ private:
 	QSettings *m_sett{nullptr};
 	std::unique_ptr<QProgressDialog> m_progress{};
 
+	// start and target positions
 	t_real m_starta2 = 0.;
 	t_real m_enda2 = tl2::pi<t_real>;
 	t_real m_starta4 = -tl2::pi<t_real>;
 	t_real m_enda4 = tl2::pi<t_real>;
 
+	// plot curves
 	std::shared_ptr<QCustomPlot> m_plot;
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};
@@ -101,11 +103,13 @@ private:
 	PathsBuilder *m_pathsbuilder{};
 	boost::signals2::connection m_pathsbuilderslot{};
 
+	// options
 	bool m_grouplines = false;
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;
 	bool m_calcvoronoi = true;
 	bool m_autocalcpath = true;
+	bool m_subdivide_path = false;
 	bool m_movetarget = false;
 
 	bool m_moveInstr = true;
