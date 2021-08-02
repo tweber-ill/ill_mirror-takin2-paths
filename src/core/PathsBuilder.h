@@ -15,6 +15,7 @@
 
 #include "types.h"
 #include "InstrumentSpace.h"
+#include "PathsExporter.h"
 
 #include "tlibs2/libs/maths.h"
 #include "src/libs/img.h"
@@ -91,18 +92,6 @@ public:
 	const geo::VoronoiLinesResults<t_vec, t_line, t_graph>& GetVoronoiResults() const
 	{ return m_voro_results; }
 
-	// save contour line segments to lines test tools
-	bool SaveToLinesTool(std::ostream& ostr);
-	bool SaveToLinesTool(const std::string& filename);
-
-	// connection to progress signal
-	template<class t_slot>
-	boost::signals2::connection AddProgressSlot(const t_slot& slot)
-	{ return m_sigProgress->connect(slot); }
-
-	// show progress messages on the console
-	void AddConsoleProgressHandler();
-
 	// ------------------------------------------------------------------------
 	// path mesh calculation workflow
 	// ------------------------------------------------------------------------
@@ -156,6 +145,29 @@ public:
 
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
+	// ------------------------------------------------------------------------
+
+	// ------------------------------------------------------------------------
+	// progress status handler
+	// ------------------------------------------------------------------------
+	// connection to progress signal
+	template<class t_slot>
+	boost::signals2::connection AddProgressSlot(const t_slot& slot)
+	{ return m_sigProgress->connect(slot); }
+
+	// show progress messages on the console
+	void AddConsoleProgressHandler();
+	// ------------------------------------------------------------------------
+
+	// ------------------------------------------------------------------------
+	// exporting of data
+	// ------------------------------------------------------------------------
+	// save contour line segments to lines test tools
+	bool SaveToLinesTool(std::ostream& ostr);
+	bool SaveToLinesTool(const std::string& filename);
+
+	void AcceptExporter(const PathsExporterBase* exporter)
+	{ exporter->Export(this); }
 	// ------------------------------------------------------------------------
 
 

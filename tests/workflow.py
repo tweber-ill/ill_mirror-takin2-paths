@@ -43,6 +43,7 @@ file_name = "../res/instrument.taspaths"
 # -----------------------------------------------------------------------------
 print("Loading instrument definition...")
 
+# create the instrument space and load an instrument definition
 instrspace = tas.InstrumentSpace()
 [file_ok, file_date] = tas.InstrumentSpace.load(file_name, instrspace)
 
@@ -56,7 +57,7 @@ print("Instrument definition loaded.\n")
 
 
 # -----------------------------------------------------------------------------
-# set-up a sample
+# set-up a sample single-crystal
 # -----------------------------------------------------------------------------
 tascalc = tas.TasCalculator()
 tascalc.SetScatteringSenses(True, False, True)
@@ -64,11 +65,66 @@ tascalc.SetSampleLatticeConstants(5, 5, 5)
 tascalc.SetSampleLatticeAngles(90, 90, 90, True)
 tascalc.UpdateB()
 tascalc.UpdateUB()
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# build path mesh
+# -----------------------------------------------------------------------------
+print("Building path mesh...")
+
+# set instrument scattering senses
+mem = tas.MemManager()
+senses = mem.NewRealArray(3)
+mem.SetRealArray(senses, 0, 1)
+mem.SetRealArray(senses, 1, -1)
+mem.SetRealArray(senses, 2, 1)
+
+# create the paths builder object
+builder = tas.PathsBuilder()
+builder.AddConsoleProgressHandler()
+builder.SetInstrumentSpace(instrspace)
+builder.SetScatteringSenses(senses)
+print("Path builder uses %d threads." % builder.GetMaxNumThreads())
+
+# angular ranges to probe
+angle_padding = 4.
+a2_delta = 1./180.*m.pi
+a4_delta = 2./180.*m.pi
+a2_begin = 0. - angle_padding*a2_delta
+a2_end = m.pi + angle_padding*a2_delta
+a4_begin = -m.pi - angle_padding*a4_delta
+a4_end = m.pi + angle_padding*a4_delta
+
+if not builder.CalculateConfigSpace(
+	a2_delta, a4_delta,
+	a2_begin, a2_end,
+	a4_begin, a4_end):
+	error("Angular configuration space could not be calculated.")
+
+if not builder.CalculateWallContours(True, False):
+	error("Obstacle contours could not be calculated.")
+
+if not builder.CalculateLineSegments():
+	error("Line segments could not be calculated.")
+
+if not builder.CalculateVoronoi(False):
+	error("Voronoi diagram could not be calculated.")
+
+print("Finished building path mesh.\n")
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# set-up the start and target coordinates of a path
+# -----------------------------------------------------------------------------
+print("Calculating path...")
 
 tascalc.SetKf(1.4)
 start_angles = tascalc.GetAngles(0.5, 0., 0., 1.)
 target_angles = tascalc.GetAngles(1.5, -0.5, 0., 2.5)
 
+# take absolute angles
 start_angles.monoXtalAngle = abs(start_angles.monoXtalAngle)
 start_angles.sampleXtalAngle = abs(start_angles.sampleXtalAngle)
 start_angles.sampleScatteringAngle = abs(start_angles.sampleScatteringAngle)
@@ -91,66 +147,13 @@ print("Target angles: a1 = %.2f deg, a5 = %.2f deg, a3 = %.2f deg, a4 = %.2f deg
 
 
 # -----------------------------------------------------------------------------
-# build path mesh
-# -----------------------------------------------------------------------------
-print("Building path mesh...")
-
-mem = tas.MemManager()
-senses = mem.NewRealArray(3)
-mem.SetRealArray(senses, 0, 1)
-mem.SetRealArray(senses, 1, -1)
-mem.SetRealArray(senses, 2, 1)
-
-builder = tas.PathsBuilder()
-builder.AddConsoleProgressHandler()
-builder.SetInstrumentSpace(instrspace)
-builder.SetScatteringSenses(senses)
-print("Path builder uses %d threads." % builder.GetMaxNumThreads())
-
-# angular ranges to probe
-angle_padding = 4.
-a2_delta = 1./180.*m.pi
-a4_delta = 2./180.*m.pi
-a2_begin = 0. - angle_padding*a2_delta
-a2_end = m.pi + angle_padding*a2_delta
-a4_begin = -m.pi - angle_padding*a2_delta
-a4_end = m.pi + angle_padding*a2_delta
-
-if not builder.CalculateConfigSpace(
-	a2_delta, a4_delta,
-	a2_begin, a2_end,
-	a4_begin, a4_end):
-	error("Angular configuration space could not be calculated.")
-
-if not builder.CalculateWallContours(True, False):
-	error("Obstacle contours could not be calculated.")
-
-if not builder.CalculateLineSegments():
-	error("Line segments could not be calculated.")
-
-if not builder.CalculateVoronoi(False):
-	error("Voronoi diagram could not be calculated.")
-
-print("Finished building path mesh.\n")
-# -----------------------------------------------------------------------------
-
-
-# -----------------------------------------------------------------------------
 # find path
 # -----------------------------------------------------------------------------
-print("Calculating path...")
+#path = builder.FindPath(40./180.*m.pi, -80./180.*m.pi, 120./180.*m.pi, 105./180.*m.pi)
 
-#a2_start = 40./180.*m.pi
-#a4_start = -80./180.*m.pi
-#a2_target = 120./180.*m.pi
-#a4_target = 105./180.*m.pi
-
-a2_start = start_angles.monoXtalAngle * 2.
-a4_start = start_angles.sampleScatteringAngle
-a2_target = target_angles.monoXtalAngle * 2.
-a4_target = target_angles.sampleScatteringAngle
-
-path = builder.FindPath(a2_start, a4_start, a2_target, a4_target)
+path = builder.FindPath(
+		start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
+		target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle)
 if not path.ok:
 	error("No path could be found.")
 
