@@ -188,7 +188,9 @@ if show_plot:
 	for regionidx in range(numgroups):
 		region = builder.GetLineSegmentRegionAsArray(regionidx)
 		x1, y1, x2, y2 = zip(*region)
-		plt.fill(x1, y1, "-", linewidth=1, fill=not builder.IsRegionInverted(regionidx), color="#ff0000")
+		plt.fill(x1, y1, "-", linewidth = 1.,
+			fill = not builder.IsRegionInverted(regionidx),
+			color = "#ff0000")
 
 	# plot path
 	x, y = zip(*vertices)
