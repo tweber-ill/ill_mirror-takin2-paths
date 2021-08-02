@@ -20,7 +20,7 @@ class t_arr : public std::array<T, N>
 {
 public:
 	using allocator_type = void;
-	
+
 public:
 	t_arr() = default;
 

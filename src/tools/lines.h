@@ -47,8 +47,8 @@ enum class VoronoiCalculationMethod
 class LinesScene : public QGraphicsScene
 {
 public:
-	using t_vec = tl2::vec<t_real, std::vector>;
-	using t_mat = tl2::mat<t_real, std::vector>;
+	using t_vec = ::t_vec2;
+	using t_mat = ::t_mat22;
 	using t_graph = geo::AdjacencyList<t_real>;
 
 	static const constexpr t_real g_eps = 1e-5;

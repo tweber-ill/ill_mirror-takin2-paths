@@ -415,7 +415,8 @@ requires tl2::is_vec<t_vec>
  * @see (Berg 2008), pp. 254-256 and p. 168
  * @see (FUH 2020), ch. 6.5, pp. 298-300
  */
-template<class t_vec> requires tl2::is_vec<t_vec>
+template<class t_vec, class t_vec_dyn = t_vec>
+requires tl2::is_vec<t_vec> && tl2::is_dyn_vec<t_vec_dyn>
 std::tuple<std::vector<t_vec>, std::vector<std::vector<t_vec>>, std::vector<std::set<std::size_t>>>
 calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 {
@@ -464,7 +465,7 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 
 			// filter out non-visible part of hull
 			qh::QhullHyperplane plane = iterFacet->hyperplane();
-			t_vec normal = tl2::create<t_vec>(dim+1);
+			t_vec normal = tl2::create<t_vec_dyn>(dim+1);
 			for(int i=0; i<dim+1; ++i)
 				normal[i] = t_real{plane[i]};
 			// normal pointing upwards?

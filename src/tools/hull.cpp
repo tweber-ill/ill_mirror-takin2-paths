@@ -39,12 +39,6 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
-using t_vec = tl2::vec<t_real, std::vector>;
-using t_mat = tl2::mat<t_real, std::vector>;
-
-const constexpr t_real g_eps = 1e-5;
-const constexpr std::streamsize g_prec = 5;
-
 
 HullScene::HullScene(QWidget* parent) : QGraphicsScene(parent), m_parent{parent}
 {
@@ -256,7 +250,7 @@ void HullScene::UpdateDelaunay()
 			break;
 		case DelaunayCalculationMethod::PARABOLIC:
 			std::tie(voronoi, triags, neighbours) = 
-				geo::calc_delaunay_parabolic<t_vec>(vertices);
+				geo::calc_delaunay_parabolic<t_vec, t_vec_dyn>(vertices);
 			break;
 		default:
 			QMessageBox::critical(m_parent, "Error", "Unknown Delaunay calculation method.");

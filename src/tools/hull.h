@@ -60,6 +60,14 @@ enum class SpanCalculationMethod
 class HullScene : public QGraphicsScene
 {
 public:
+	using t_vec = ::t_vec2;
+	using t_vec_dyn = ::t_vec;
+	using t_mat = ::t_mat22;
+
+	static const constexpr t_real g_eps = 1e-5;
+	static const constexpr std::streamsize g_prec = 5;
+
+public:
 	HullScene(QWidget* parent);
 	virtual ~HullScene();
 
@@ -147,6 +155,13 @@ signals:
  */
 class HullDlg : public QDialog
 {
+public:
+	using t_vec = ::t_vec;
+	using t_mat = ::t_mat;
+	
+	static const constexpr t_real g_eps = HullScene::g_eps;
+	static const constexpr std::streamsize g_prec = HullScene::g_prec;
+
 public:
 	HullDlg(QWidget* pParent = nullptr);
 	virtual ~HullDlg() = default;

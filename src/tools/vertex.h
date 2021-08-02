@@ -12,7 +12,7 @@
 #include <QtWidgets/QGraphicsItem>
 #include <QtGui/QPainter>
 
-using t_real = double;
+#include "../core/types.h"
 
 
 class Vertex : public QGraphicsItem
