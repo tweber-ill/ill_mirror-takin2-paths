@@ -142,6 +142,49 @@ void PathsTool::SaveFileAs()
 
 
 /**
+ * File -> Export Path
+ */
+bool PathsTool::ExportPath(PathsExporterFormat fmt)
+{
+	std::shared_ptr<PathsExporterBase> exporter;
+
+	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	QString filename = QFileDialog::getSaveFileName(
+		this, "Export Path", dirLast, "Text Files (*.txt)");
+	if(filename == "")
+		return false;
+
+	switch(fmt)
+	{
+		case PathsExporterFormat::RAW:
+			exporter = std::make_shared<PathsExporterRaw>(filename.toStdString());
+			break;
+		case PathsExporterFormat::NOMAD:
+			exporter = std::make_shared<PathsExporterNomad>(filename.toStdString());
+			break;
+		case PathsExporterFormat::NICOS:
+			exporter = std::make_shared<PathsExporterNicos>(filename.toStdString());
+			break;
+	}
+
+	if(!exporter)
+	{
+		QMessageBox::critical(this, "Error", "No path is available.");
+		return false;
+	}
+
+	if(!m_pathsbuilder.AcceptExporter(exporter.get(), m_pathvertices, true))
+	{
+		QMessageBox::critical(this, "Error", "path could not be exported.");
+		return false;
+	}
+
+	m_sett.setValue("cur_dir", QFileInfo(filename).path());
+	return true;
+}
+
+
+/**
  * load file
  */
 bool PathsTool::OpenFile(const QString &file)
@@ -388,6 +431,8 @@ void PathsTool::GotoCoordinates(
 			angles.sampleXtalAngle);
 		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(
 			angles.anaXtalAngle);
+
+		m_tascalc.SetKfix(kf, true);
 	}
 }
 
@@ -869,6 +914,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings", menuFile);
 	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
 
+	// export menu
+	QMenu *menuExportPath = new QMenu("Export Path", m_menubar);
+
+	QAction *acExportRaw = new QAction("To Raw...", menuExportPath);
+	QAction *acExportNomad = new QAction("To Nomad...", menuExportPath);
+	QAction *acExportNicos = new QAction("To Nicos...", menuExportPath);
+
+	menuExportPath->addAction(acExportRaw);
+	menuExportPath->addAction(acExportNomad);
+	menuExportPath->addAction(acExportNicos);
+
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
 	actionOpen->setShortcut(QKeySequence::Open);
@@ -899,6 +955,22 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_dlgSettings->activateWindow();
 	});
 
+	connect(acExportRaw, &QAction::triggered, [this]() -> void
+	{
+		ExportPath(PathsExporterFormat::RAW);
+	});
+
+	connect(acExportNomad, &QAction::triggered, [this]() -> void
+	{
+		ExportPath(PathsExporterFormat::NOMAD);
+	});
+
+	connect(acExportNicos, &QAction::triggered, [this]() -> void
+	{
+		ExportPath(PathsExporterFormat::NICOS);
+	});
+
+
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
 	menuFile->addAction(actionOpen);
@@ -906,6 +978,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuFile->addSeparator();
 	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
+	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
 	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();

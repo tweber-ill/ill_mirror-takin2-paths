@@ -169,8 +169,8 @@ public:
 	bool SaveToLinesTool(const std::string& filename);
 
 	// export the path to various formats using a visitor
-	bool AcceptExporter(const PathsExporterBase *exporter, const std::vector<t_vec>& path)
-	{ return exporter->Export(this, path); }
+	bool AcceptExporter(const PathsExporterBase *exporter, const std::vector<t_vec>& path, bool path_in_rad = false)
+	{ return exporter->Export(this, path, path_in_rad); }
 	// ------------------------------------------------------------------------
 
 

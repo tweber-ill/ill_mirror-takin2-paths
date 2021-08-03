@@ -118,6 +118,9 @@ protected:
 	// File -> Save As
 	void SaveFileAs();
 
+	// File -> Export Path
+	bool ExportPath(PathsExporterFormat fmt);
+
 	// load file
 	bool OpenFile(const QString &file);
 

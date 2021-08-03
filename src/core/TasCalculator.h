@@ -74,6 +74,7 @@ public:
 	TasAngles GetAngles(t_real h, t_real k, t_real l, t_real ki, t_real kf) const;
 	TasAngles GetAngles(t_real h, t_real k, t_real l, t_real E) const;
 
+
 private:
 	// crystal lattice constants
 	t_vec m_lattice = tl2::create<t_vec>({ 5, 5, 5 });

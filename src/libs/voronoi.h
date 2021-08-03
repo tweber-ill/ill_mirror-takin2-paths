@@ -465,7 +465,7 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 
 			// filter out non-visible part of hull
 			qh::QhullHyperplane plane = iterFacet->hyperplane();
-			t_vec normal = tl2::create<t_vec_dyn>(dim+1);
+			t_vec_dyn normal = tl2::create<t_vec_dyn>(dim+1);
 			for(int i=0; i<dim+1; ++i)
 				normal[i] = t_real{plane[i]};
 			// normal pointing upwards?

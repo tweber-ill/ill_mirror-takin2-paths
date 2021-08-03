@@ -417,7 +417,10 @@ bool PathsBuilder::CalculateLineSegments()
 		// move a point on the contour in the direction of the contour mean
 		// to get a point inside the contour
 		t_contourvec inside_contour = contour[0] + (contour_mean-contour[0]) / 8;
-		t_contourvec outside_contour = contour[0];
+
+		// find a point outside the contour by moving a pixel away from the minimum vertex
+		auto [contour_min, contour_max] = tl2::minmax(contour);
+		t_contourvec outside_contour = contour_min;
 		for(int i = 0; i < 2; ++i)
 			outside_contour[i] -= 1;
 
@@ -439,9 +442,10 @@ bool PathsBuilder::CalculateLineSegments()
 
 #ifdef DEBUG
 			std::cout << "contour " << std::dec << contouridx 
-				<< ", pixel " << inside_contour[0] 
-				<< ", " << inside_contour[1]
-				<< ": " << std::hex << int(pix_incontour) << std::endl;
+				<< ", pixel inside " << inside_contour[0] << ", " << inside_contour[1]
+				<< ": " << std::hex << int(pix_incontour) << std::dec
+				<< "; pixel outside " << outside_contour[0] << ", " << outside_contour[1]
+				<< ": " << std::hex << int(pix_outcontour) << std::endl;
 #endif
 
 			// normal regions encircle forbidden coordinate points

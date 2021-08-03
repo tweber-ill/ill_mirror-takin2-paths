@@ -14,7 +14,8 @@
 /**
  * export the path as raw data
  */
-bool PathsExporterRaw::Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const
+bool PathsExporterRaw::Export(const PathsBuilder* builder, 
+	const std::vector<t_vec>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -44,9 +45,18 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder, const std::vector<t_v
 
 	for(const t_vec& vec : path)
 	{
+		t_real a4 = vec[0];
+		t_real a2 = vec[1];
+
+		if(path_in_rad)
+		{
+			a4 = a4 / tl2::pi<t_real> * t_real(180);
+			a2 = a2 / tl2::pi<t_real> * t_real(180);
+		}
+
 		ofstr
-			<< std::right << std::setw(m_prec*2) << vec[0] << " "
-			<< std::right << std::setw(m_prec*2) << vec[1] << "\n";
+			<< std::right << std::setw(m_prec*2) << a4 << " "
+			<< std::right << std::setw(m_prec*2) << a2 << "\n";
 	}
 
 	ofstr.flush();
@@ -57,7 +67,8 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder, const std::vector<t_v
 /**
  * export the path into Nomad commands
  */
-bool PathsExporterNomad::Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const
+bool PathsExporterNomad::Export(const PathsBuilder* builder, 
+	const std::vector<t_vec>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -85,9 +96,18 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder, const std::vector<t
 	// output motor drive commands
 	for(const t_vec& vec : path)
 	{
+		t_real a4 = vec[0];
+		t_real a2 = vec[1];
+
+		if(path_in_rad)
+		{
+			a4 = a4 / tl2::pi<t_real> * t_real(180);
+			a2 = a2 / tl2::pi<t_real> * t_real(180);
+		}
+
 		ofstr
-			<< "dr a4 " << std::left << std::setw(m_prec*2) << vec[0] << " "
-			<< "a2 " << std::left << std::setw(m_prec*2) << vec[1] << "\n";
+			<< "dr a4 " << std::left << std::setw(m_prec*2) << a4 << " "
+			<< "a2 " << std::left << std::setw(m_prec*2) << a2 << "\n";
 	}
 
 	ofstr.flush();
@@ -98,7 +118,8 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder, const std::vector<t
 /**
  * export the path into Nicos commands
  */
-bool PathsExporterNicos::Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const
+bool PathsExporterNicos::Export(const PathsBuilder* builder, 
+	const std::vector<t_vec>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -126,8 +147,17 @@ bool PathsExporterNicos::Export(const PathsBuilder* builder, const std::vector<t
 	// output motor drive commands
 	for(const t_vec& vec : path)
 	{
-		ofstr << "stt(" << vec[0] << "); ";
-		ofstr << "mtt(" << vec[1] << ");\n";
+		t_real a4 = vec[0];
+		t_real a2 = vec[1];
+
+		if(path_in_rad)
+		{
+			a4 = a4 / tl2::pi<t_real> * t_real(180);
+			a2 = a2 / tl2::pi<t_real> * t_real(180);
+		}
+
+		ofstr << "stt(" << a4 << "); ";
+		ofstr << "mtt(" << a2 << ");\n";
 	}
 
 	ofstr.flush();

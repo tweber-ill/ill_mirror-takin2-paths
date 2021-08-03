@@ -31,7 +31,8 @@ class PathsExporterBase
 {
 public:
 	virtual ~PathsExporterBase() = default;
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const = 0;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path, 
+		bool path_in_rad = false) const = 0;
 };
 
 
@@ -44,7 +45,8 @@ public:
 	PathsExporterRaw(const std::string& filename) : m_filename(filename) {};
 	virtual ~PathsExporterRaw() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path, 
+		bool path_in_rad = false) const override;
 
 private:
 	std::streamsize m_prec = 6;
@@ -61,7 +63,8 @@ public:
 	PathsExporterNomad(const std::string& filename) : m_filename(filename) {};
 	virtual ~PathsExporterNomad() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path, 
+		bool path_in_rad = false) const override;
 
 private:
 	std::streamsize m_prec = 6;
@@ -78,7 +81,8 @@ public:
 	PathsExporterNicos(const std::string& filename) : m_filename(filename) {}
 	virtual ~PathsExporterNicos() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
+	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path, 
+		bool path_in_rad = false) const override;
 
 private:
 	std::streamsize m_prec = 6;

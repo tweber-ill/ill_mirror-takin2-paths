@@ -230,7 +230,7 @@ void HullScene::UpdateDelaunay()
 	std::transform(m_vertices.begin(), m_vertices.end(), std::back_inserter(vertices),
 		[](const Vertex* vert) -> t_vec
 		{ 
-			return tl2::create<t_vec>({vert->x(), vert->y()}); 
+			return tl2::create<t_vec>({vert->x(), vert->y()});
 		});
 
 
@@ -241,15 +241,15 @@ void HullScene::UpdateDelaunay()
 	switch(m_delaunaycalculationmethod)
 	{
 		case DelaunayCalculationMethod::QHULL:
-			std::tie(voronoi, triags, neighbours) = 
+			std::tie(voronoi, triags, neighbours) =
 				geo::calc_delaunay<t_vec>(2, vertices, false);
 			break;
 		case DelaunayCalculationMethod::ITERATIVE:
-			std::tie(voronoi, triags, neighbours) = 
+			std::tie(voronoi, triags, neighbours) =
 				geo::calc_delaunay_iterative<t_vec>(vertices, g_eps);
 			break;
 		case DelaunayCalculationMethod::PARABOLIC:
-			std::tie(voronoi, triags, neighbours) = 
+			std::tie(voronoi, triags, neighbours) =
 				geo::calc_delaunay_parabolic<t_vec, t_vec_dyn>(vertices);
 			break;
 		default:
@@ -1264,7 +1264,7 @@ void HullDlg::CalculateHull()
 
 
 		// calculate hull / delaunay triangulation
-		auto [voro, triags, neighbourindices] = 
+		auto [voro, triags, neighbourindices] =
 			geo::calc_delaunay<t_vec>(dim, vertices, calc_hull);
 
 
