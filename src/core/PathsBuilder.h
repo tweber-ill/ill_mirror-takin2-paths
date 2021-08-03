@@ -15,6 +15,7 @@
 
 #include "types.h"
 #include "InstrumentSpace.h"
+#include "TasCalculator.h"
 #include "PathsExporter.h"
 
 #include "tlibs2/libs/maths.h"
@@ -74,7 +75,8 @@ public:
 	void SetInstrumentSpace(const InstrumentSpace* instr) { m_instrspace = instr; }
 	const InstrumentSpace* GetInstrumentSpace() const { return m_instrspace; }
 
-	void SetScatteringSenses(const t_real *senses) { m_sensesCCW = senses; }
+	void SetTasCalculator(const TasCalculator* tascalc) { m_tascalc = tascalc; }
+	const TasCalculator* GetTasCalculator() const { return m_tascalc; }
 	// ------------------------------------------------------------------------
 
 	// conversion functions
@@ -174,7 +176,7 @@ public:
 
 private:
 	const InstrumentSpace *m_instrspace{};
-	const t_real *m_sensesCCW{nullptr};
+	const TasCalculator *m_tascalc{};
 
 	// and-combine return values for calculation progress signal
 	struct combine_sigret

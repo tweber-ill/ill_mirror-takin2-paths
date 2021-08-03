@@ -1156,7 +1156,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetEpsilon(g_eps);
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
-	m_pathsbuilder.SetScatteringSenses(m_tascalc.GetScatteringSenses());
+	m_pathsbuilder.SetTasCalculator(&m_tascalc);
 	m_pathsbuilder.AddProgressSlot(
 		[this](bool start, bool end, t_real progress, const std::string& message)
 		{

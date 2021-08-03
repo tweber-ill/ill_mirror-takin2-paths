@@ -42,7 +42,10 @@ public:
 	void SetMonochromatorD(t_real d);
 	void SetAnalyserD(t_real d);
 	void SetSampleAngleOffset(t_real offs);
-	void SetKf(t_real kf);
+
+	void SetKfix(t_real k_fix, bool fixed_kf = true);
+	std::pair<t_real, bool> GetKfix() const;
+	void SetKf(t_real kf) { SetKfix(kf, true); }
 
 	void SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw);
 	const t_real* GetScatteringSenses() const;
@@ -70,7 +73,6 @@ public:
 	// calculate instrument angles
 	TasAngles GetAngles(t_real h, t_real k, t_real l, t_real ki, t_real kf) const;
 	TasAngles GetAngles(t_real h, t_real k, t_real l, t_real E) const;
-
 
 private:
 	// crystal lattice constants
@@ -105,8 +107,9 @@ private:
 	// sample angle offset
 	t_real m_a3Offs = tl2::pi<t_real>;
 
-	// fixed kf value
-	t_real m_kf = 1.4;
+	// fixed ki or kf value
+	bool m_fixed_kf = true;
+	t_real m_kfix = 1.4;
 };
 
 

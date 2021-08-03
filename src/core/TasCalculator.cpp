@@ -26,9 +26,16 @@ void TasCalculator::SetSampleAngleOffset(t_real offs)
 }
 
 
-void TasCalculator::SetKf(t_real kf)
+void TasCalculator::SetKfix(t_real kfix, bool fixed_kf)
 {
-	m_kf = kf;
+	m_fixed_kf = fixed_kf;
+	m_kfix = kfix;
+}
+
+
+std::pair<t_real, bool> TasCalculator::GetKfix() const
+{
+	return std::make_pair(m_kfix, m_fixed_kf);
 }
 
 
@@ -184,8 +191,23 @@ TasAngles TasCalculator::GetAngles(
 TasAngles TasCalculator::GetAngles(
 	t_real h, t_real k, t_real l, t_real E) const
 {
-	// get ki corresponding to this energy transfer
-	t_real ki = tl2::calc_tas_ki<t_real>(m_kf, E);
+	t_real ki = 0, kf = 0;
 
-	return GetAngles(h, k, l, ki, m_kf);
+	// is kf fixed?
+	if(m_fixed_kf)
+	{
+		// get ki corresponding to this energy transfer
+		kf = m_kfix;
+		ki = tl2::calc_tas_ki<t_real>(kf, E);
+	}
+
+	// is ki fixed?
+	else
+	{
+		// get ki corresponding to this energy transfer
+		ki = m_kfix;
+		kf = tl2::calc_tas_kf<t_real>(ki, E);
+	}
+
+	return GetAngles(h, k, l, ki, kf);
 }

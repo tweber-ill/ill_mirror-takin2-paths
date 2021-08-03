@@ -85,7 +85,7 @@ builder = tas.PathsBuilder()
 builder.AddConsoleProgressHandler()
 builder.SetInstrumentSpace(instrspace)
 #builder.SetScatteringSenses(senses)
-builder.SetScatteringSenses(tascalc.GetScatteringSenses())
+builder.SetTasCalculator(tascalc)
 print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
 # angular ranges to probe

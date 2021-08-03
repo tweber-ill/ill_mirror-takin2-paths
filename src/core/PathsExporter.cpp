@@ -25,6 +25,19 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder, const std::vector<t_v
 
 	ofstr.precision(m_prec);
 
+	// output tas properties
+	const TasCalculator* tascalc = builder->GetTasCalculator();
+	if(tascalc)
+	{
+		auto kfix = tascalc->GetKfix();
+
+		ofstr << "#\n";
+		ofstr << "# k_fix = " << std::get<0>(kfix) << "\n";
+		ofstr << "# k_fix_is_kf = " << std::boolalpha << std::get<1>(kfix) << "\n";
+		ofstr << "#\n";
+	}
+
+	// output path vertices
 	ofstr << "# "
 		<< std::right << std::setw(m_prec*2-2) << "a4 (deg)" << " "
 		<< std::right << std::setw(m_prec*2) << "a2 (deg)" << "\n";
@@ -55,6 +68,21 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder, const std::vector<t
 
 	ofstr.precision(m_prec);
 
+	// set-up tas properties
+	const TasCalculator* tascalc = builder->GetTasCalculator();
+	if(tascalc)
+	{
+		auto kfix = tascalc->GetKfix();
+
+		if(std::get<1>(kfix))
+			ofstr << "dr kf " << std::get<0>(kfix) << "\n";
+		else
+			ofstr << "dr ki " << std::get<0>(kfix) << "\n";
+
+		ofstr << "\n";
+	}
+
+	// output motor drive commands
 	for(const t_vec& vec : path)
 	{
 		ofstr
@@ -81,6 +109,21 @@ bool PathsExporterNicos::Export(const PathsBuilder* builder, const std::vector<t
 
 	ofstr.precision(m_prec);
 
+	// set-up tas properties
+	const TasCalculator* tascalc = builder->GetTasCalculator();
+	if(tascalc)
+	{
+		auto kfix = tascalc->GetKfix();
+
+		if(std::get<1>(kfix))
+			ofstr << "kf(" << std::get<0>(kfix) << ")\n";
+		else
+			ofstr << "ki(" << std::get<0>(kfix) << ")\n";
+
+		ofstr << "\n";
+	}
+
+	// output motor drive commands
 	for(const t_vec& vec : path)
 	{
 		ofstr << "stt(" << vec[0] << "); ";

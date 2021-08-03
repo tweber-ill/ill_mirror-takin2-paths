@@ -80,10 +80,14 @@ t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_
 		y *= t_real(180) / tl2::pi<t_real>;
 	}
 
-	if(inc_sense)
+	const t_real *sensesCCW = nullptr;
+	if(m_tascalc)
+		sensesCCW = m_tascalc->GetScatteringSenses();
+
+	if(inc_sense && sensesCCW)
 	{
-		x *= m_sensesCCW[1];
-		y *= m_sensesCCW[0];
+		x *= sensesCCW[1];
+		y *= sensesCCW[0];
 	}
 
 	return tl2::create<t_vec>({x, y});
@@ -101,10 +105,14 @@ t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool 
 		angle_y *= tl2::pi<t_real> / t_real(180);
 	}
 
-	if(inc_sense)
+	const t_real *sensesCCW = nullptr;
+	if(m_tascalc)
+		sensesCCW = m_tascalc->GetScatteringSenses();
+
+	if(inc_sense && sensesCCW)
 	{
-		angle_x *= m_sensesCCW[1];
-		angle_y *= m_sensesCCW[0];
+		angle_x *= sensesCCW[1];
+		angle_y *= sensesCCW[0];
 	}
 
 
@@ -153,16 +161,20 @@ bool PathsBuilder::CalculateConfigSpace(
 	// angles and ranges
 	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
 
-	// include scattering senses
-	if(m_sensesCCW)
-	{
-		da4 *= m_sensesCCW[1];
-		starta4 *= m_sensesCCW[1];
-		enda4 *= m_sensesCCW[1];
+	const t_real *sensesCCW = nullptr;
+	if(m_tascalc)
+		sensesCCW = m_tascalc->GetScatteringSenses();
 
-		da2 *= m_sensesCCW[0];
-		starta2 *= m_sensesCCW[0];
-		enda2 *= m_sensesCCW[0];
+	// include scattering senses
+	if(sensesCCW)
+	{
+		da4 *= sensesCCW[1];
+		starta4 *= sensesCCW[1];
+		enda4 *= sensesCCW[1];
+
+		da2 *= sensesCCW[0];
+		starta2 *= sensesCCW[0];
+		enda2 *= sensesCCW[0];
 	}
 
 	// create colour map and image
