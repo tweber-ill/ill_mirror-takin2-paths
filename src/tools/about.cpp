@@ -61,7 +61,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labDate1 = new QLabel("Date: ", this);
 	labDate1->setFont(fontLabel1);
 	grid->addWidget(labDate1, y,0,1,1);
-	QLabel *labDate2 = new QLabel("November 2020 - July 2021.", this);
+	QLabel *labDate2 = new QLabel("November 2020 - August 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
 	QSpacerItem *spacer2 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
