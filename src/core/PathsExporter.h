@@ -30,6 +30,7 @@ enum class PathsExporterFormat
 class PathsExporterBase
 {
 public:
+	virtual ~PathsExporterBase() = default;
 	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const = 0;
 };
 
@@ -41,6 +42,8 @@ class PathsExporterRaw : public PathsExporterBase
 {
 public:
 	PathsExporterRaw(const std::string& filename) : m_filename(filename) {};
+	virtual ~PathsExporterRaw() = default;
+
 	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
@@ -56,6 +59,8 @@ class PathsExporterNomad : public PathsExporterBase
 {
 public:
 	PathsExporterNomad(const std::string& filename) : m_filename(filename) {};
+	virtual ~PathsExporterNomad() = default;
+
 	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
@@ -71,6 +76,8 @@ class PathsExporterNicos : public PathsExporterBase
 {
 public:
 	PathsExporterNicos(const std::string& filename) : m_filename(filename) {}
+	virtual ~PathsExporterNicos() = default;
+
 	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec>& path) const override;
 
 private:
