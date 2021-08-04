@@ -1149,7 +1149,7 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	pTabGrid->addWidget(buttons, y++,8,1,1);
 
 
-	// table context CustomContextMenu
+	// table context menu
 	m_contextMenuTab = new QMenu(m_tab);
 	m_contextMenuTab->addAction("Add Item Before", this, 
 		[this]() { this->AddTabItem(-2); });

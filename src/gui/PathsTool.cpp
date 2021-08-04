@@ -567,6 +567,8 @@ void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bo
 		m_curContextObj = obj;
 
 		QPoint pos = m_renderer->GetMousePosition(true);
+		pos.setX(pos.x() + 8);
+		pos.setY(pos.y() + 8);
 		m_contextMenuObj->popup(pos);
 	}
 
@@ -950,6 +952,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 	actionQuit->setMenuRole(QAction::QuitRole);
 
+	// connections
 	connect(actionNew, &QAction::triggered, this, [this]() { this->NewFile(); });
 	connect(actionOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
 	connect(actionSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
@@ -1024,6 +1027,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		if(!this->m_dlgGeoBrowser)
 		{
 			this->m_dlgGeoBrowser = std::make_shared<GeometriesBrowser>(this, &m_sett);
+
+			connect(this->m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalDeleteObject,
+				this, &PathsTool::DeleteObject);
+			connect(this->m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalRenameObject,
+				this, &PathsTool::RenameObject);
+
 			this->m_dlgGeoBrowser->UpdateGeoTree(this->m_instrspace);
 		}
 
@@ -1301,11 +1310,20 @@ void PathsTool::AddPillar()
  */
 void PathsTool::DeleteCurrentObject()
 {
-	if(m_curContextObj == "")
+	DeleteObject(m_curContextObj);
+}
+
+
+/**
+ * delete the given object from the instrument space
+ */
+void PathsTool::DeleteObject(const std::string& obj)
+{
+	if(obj == "")
 		return;
 
 	// remove object from instrument space
-	if(m_instrspace.DeleteObject(m_curContextObj))
+	if(m_instrspace.DeleteObject(obj))
 	{
 		// update object browser tree
 		if(m_dlgGeoBrowser)
@@ -1313,12 +1331,39 @@ void PathsTool::DeleteCurrentObject()
 
 		// remove 3d representation of object
 		if(m_renderer)
-			m_renderer->DeleteObject(m_curContextObj);
+		{
+			m_renderer->DeleteObject(obj);
+			m_renderer->update();
+		}
 	}
 	else
 	{
 		QMessageBox::warning(this, "Warning",
-			QString("Object \"") + m_curContextObj.c_str() + QString("\" cannot be deleted."));
+			QString("Object \"") + obj.c_str() + QString("\" cannot be deleted."));
+	}
+}
+
+
+/**
+ * rename the given object in the instrument space
+ */
+void PathsTool::RenameObject(const std::string& oldid, const std::string& newid)
+{
+	if(oldid == "" || newid == "" || oldid == newid)
+		return;
+
+	if(m_instrspace.RenameObject(oldid, newid))
+	{
+		// update object browser tree
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
+		// remove 3d representation of object
+		if(m_renderer)
+		{
+			m_renderer->RenameObject(oldid, newid);
+			m_renderer->update();
+		}
 	}
 }
 

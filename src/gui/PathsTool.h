@@ -100,8 +100,15 @@ private:
 	TasCalculator m_tascalc;
 
 
-protected:
-	void UpdateUB();
+public:
+	/**
+	 * create UI
+	 */
+	PathsTool(QWidget* pParent=nullptr);
+	~PathsTool() = default;
+
+	void SetInitialInstrumentFile(const std::string& file)
+	{ m_initialInstrFile = file;  }
 
 
 protected:
@@ -109,18 +116,6 @@ protected:
 	virtual void showEvent(QShowEvent *) override;
 	virtual void hideEvent(QHideEvent *) override;
 	virtual void closeEvent(QCloseEvent *) override;
-
-	// File -> New
-	void NewFile();
-
-	// File -> Open
-	void OpenFile();
-
-	// File -> Save
-	void SaveFile();
-
-	// File -> Save As
-	void SaveFileAs();
 
 	// File -> Export Path
 	bool ExportPath(PathsExporterFormat fmt);
@@ -143,24 +138,22 @@ protected:
 	// creates the "recent files" sub-menu
 	void RebuildRecentFiles();
 
-	// add or delete 3d objects
-	void AddWall();
-	void AddPillar();
-	void DeleteCurrentObject();
-
-
-public:
-	/**
-	 * create UI
-	 */
-	PathsTool(QWidget* pParent=nullptr);
-	~PathsTool() = default;
-
-	void SetInitialInstrumentFile(const std::string& file)
-	{ m_initialInstrFile = file;  }
+	void UpdateUB();
 
 
 protected slots:
+	// File -> New
+	void NewFile();
+
+	// File -> Open
+	void OpenFile();
+
+	// File -> Save
+	void SaveFile();
+
+	// File -> Save As
+	void SaveFileAs();
+
 	// go to crystal coordinates (or set target angles)
 	void GotoCoordinates(t_real h, t_real k, t_real l,
 		t_real ki, t_real kf,
@@ -203,6 +196,13 @@ protected slots:
 
 	// move the instrument to a position on the path
 	void TrackPath(std::size_t idx);
+
+	// add or delete 3d objects
+	void AddWall();
+	void AddPillar();
+	void DeleteCurrentObject();
+	void DeleteObject(const std::string& id);
+	void RenameObject(const std::string& oldid, const std::string& newid);
 
 
 signals:

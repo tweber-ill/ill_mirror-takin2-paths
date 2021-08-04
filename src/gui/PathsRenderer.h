@@ -222,6 +222,7 @@ public:
 
 	void DeleteObject(PathsObj& obj);
 	void DeleteObject(const std::string& obj_name);
+	void RenameObject(const std::string& oldname, const std::string& newname);
 
 	void AddTriangleObject(const std::string& obj_name,
 		const std::vector<t_vec3_gl>& triag_verts,

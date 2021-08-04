@@ -166,6 +166,25 @@ bool InstrumentSpace::DeleteObject(const std::string& id)
 
 
 /**
+ * rename an object (so far only walls)
+ */
+bool InstrumentSpace::RenameObject(const std::string& oldid, const std::string& newid)
+{
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+		[&oldid](const std::shared_ptr<Geometry>& wall) -> bool
+		{
+			return wall->GetId() == oldid;
+		}); iter != m_walls.end())
+	{
+		(*iter)->SetId(newid);
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
  * check if the axis angles are within their limits
  */
 bool InstrumentSpace::CheckAngularLimits() const

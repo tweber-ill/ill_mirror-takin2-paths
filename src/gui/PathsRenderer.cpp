@@ -278,6 +278,25 @@ void PathsRenderer::DeleteObject(const std::string& obj_name)
 
 
 /**
+ * rename an object
+ */
+void PathsRenderer::RenameObject(const std::string& oldname, const std::string& newname)
+{
+	QMutexLocker _locker{&m_mutexObj};
+	auto iter = m_objs.find(oldname);
+
+	if(iter != m_objs.end())
+	{
+		// get node handle to rename key
+		decltype(m_objs)::node_type node = m_objs.extract(iter);
+		node.key() = newname;
+		m_objs.insert(std::move(node));
+	}
+
+}
+
+
+/**
  * add a polygon-based object
  */
 void PathsRenderer::AddTriangleObject(const std::string& obj_name,

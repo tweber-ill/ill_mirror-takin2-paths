@@ -185,7 +185,7 @@
 			<analyser>
 				<pos> 2.5 0 </pos>
 				<angle_in> 0 </angle_in>
-				<angle_internal> 22.5 </angle_internal>
+				<angle_internal> 45 </angle_internal>
 				<angle_out> 90 </angle_out>
 
 				<angle_out_lower_limit> 0 </angle_out_lower_limit>

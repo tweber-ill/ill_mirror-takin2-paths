@@ -14,20 +14,28 @@
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QTableWidget>
+#include <QtWidgets/QMenu>
 
 #include "src/core/InstrumentSpace.h"
 
 
 class GeometriesBrowser : public QDialog
-{
+{ Q_OBJECT
 public:
 	GeometriesBrowser(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~GeometriesBrowser();
 
 	void UpdateGeoTree(const InstrumentSpace& instrspace);
 
+
 protected:
 	virtual void accept() override;
+
+	void ShowGeoTreeContextMenu(const QPoint& pt);
+	void RenameCurrentGeoTreeObject();
+	void DeleteCurrentGeoTreeObject();
+	void GeoTreeItemChanged(QTreeWidgetItem *item, int col);
+
 
 private:
 	QSettings *m_sett{nullptr};
@@ -35,6 +43,14 @@ private:
 	QTreeWidget *m_geotree{nullptr};
 	QTableWidget *m_geosettings{nullptr};
 	QSplitter *m_splitter{nullptr};
+
+	QMenu *m_contextMenuGeoTree{nullptr};
+	QTreeWidgetItem *m_curContextItem{nullptr};
+
+
+signals:
+	void SignalDeleteObject(const std::string& id);
+	void SignalRenameObject(const std::string& oldId, const std::string& newId);
 };
 
 
