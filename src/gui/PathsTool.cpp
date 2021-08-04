@@ -1097,6 +1097,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	fs::path hullpath = fs::path(g_apppath) / fs::path("hull");
 	fs::path linespath = fs::path(g_apppath) / fs::path("lines");
+	fs::path polypath = fs::path(g_apppath) / fs::path("poly");
 
 	std::size_t num_tools = 0;
 	if(fs::exists(hullpath))
@@ -1120,6 +1121,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		connect(acLinesTool, &QAction::triggered, this, [linespath]()
 		{
 			std::system((linespath.string() + "&").c_str());
+		});
+	}
+
+	if(fs::exists(polypath))
+	{
+		QAction *acPolyTool = new QAction("Polygon...", menuTools);
+		menuTools->addAction(acPolyTool);
+		++num_tools;
+
+		connect(acPolyTool, &QAction::triggered, this, [polypath]()
+		{
+			std::system((polypath.string() + "&").c_str());
 		});
 	}
 

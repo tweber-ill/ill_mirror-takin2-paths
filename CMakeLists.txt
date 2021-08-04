@@ -241,6 +241,14 @@ if(BUILD_TEST_TOOLS)
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)
+
+	add_executable(poly
+		src/tools/poly.cpp src/tools/poly.h
+		src/tools/vertex.cpp src/tools/vertex.h
+		src/tools/about.cpp src/tools/about.h
+		src/libs/lines.h src/libs/hull.h
+		src/libs/voronoi_lines.h
+	)
 endif()
 
 
@@ -279,6 +287,12 @@ if(QT_VER EQUAL 6)
 			"${OVD_LIBRARIES}"
 			Threads::Threads
 		)
+
+		target_link_libraries(poly
+			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
+		)
 	endif()
 
 elseif(QT_VER EQUAL 5)
@@ -308,6 +322,12 @@ elseif(QT_VER EQUAL 5)
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
 			Threads::Threads
+		)
+
+		target_link_libraries(poly
+			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
+			"${Boost_LIBRARIES}"
+			"${Lapacke_LIBRARIES}"
 		)
 	endif()
 endif()

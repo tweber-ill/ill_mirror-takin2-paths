@@ -1337,5 +1337,86 @@ requires tl2::is_vec<t_vec>
 	return newverts;
 }
 
+
+/**
+ * visibility kernel of a polygon
+ */
+template<class t_vec, class t_edge = std::pair<t_vec, t_vec>,
+	class t_real = typename t_vec::value_type>
+std::vector<t_vec> ker_from_edges(const std::vector<t_edge>& edges,
+	t_real eps = std::numeric_limits<t_real>::epsilon())
+requires tl2::is_vec<t_vec>
+{
+	const std::size_t num_edges = edges.size();
+
+	std::vector<t_vec> intersections;
+	intersections.reserve(num_edges*num_edges / 2);
+
+	for(std::size_t i=0; i<num_edges; ++i)
+	{
+		for(std::size_t j=i+1; j<num_edges; ++j)
+		{
+			if(auto [ok, inters] = intersect_lines<t_vec>(
+				edges[i].first, edges[i].second,
+				edges[j].first, edges[j].second, false, eps); ok)
+			{
+				intersections.emplace_back(std::move(inters));
+			}
+		}
+	}
+
+
+	std::vector<t_vec> ker;
+	ker.reserve(intersections.size());
+
+	for(const t_vec& inters : intersections)
+	{
+		bool in_ker = true;
+		for(const t_edge& edge : edges)
+		{
+			if(side_of_line<t_vec>(edge.first, edge.second, inters) < -eps)
+			{
+				in_ker = false;
+				break;
+			}
+		}
+
+		if(in_ker)
+			ker.push_back(inters);
+	}
+
+	std::tie(ker, std::ignore) = sort_vertices_by_angle<t_vec>(ker);
+	return ker;
+}
+
+
+/**
+ * visibility kernel of a polygon
+ * (still O(n^2), TODO: only check contributing edges)
+ * vertices have to be sorted in ccw order
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
+std::vector<t_vec> calc_ker(const std::vector<t_vec>& verts,
+	t_real eps = std::numeric_limits<t_real>::epsilon())
+requires tl2::is_vec<t_vec>
+{
+	using t_edge = std::pair<t_vec, t_vec>;
+	const std::size_t num_verts = verts.size();
+
+	if(num_verts < 3)
+		return std::vector<t_vec>({});
+
+	std::vector<t_edge> edges;
+	edges.reserve(num_verts);
+
+	for(std::size_t vertidx=0; vertidx<num_verts; ++vertidx)
+	{
+		std::size_t vertidxNext = (vertidx+1) % num_verts;
+		edges.emplace_back(std::make_pair(verts[vertidx], verts[vertidxNext]));
+	}
+
+	return ker_from_edges<t_vec, t_edge>(edges, eps);
+}
+
 }
 #endif

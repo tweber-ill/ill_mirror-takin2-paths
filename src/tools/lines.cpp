@@ -187,14 +187,16 @@ void LinesScene::UpdateLines()
 	}
 	m_elems_lines.clear();
 
-
 	// get new lines
 	m_lines.clear();
-	if(m_elems_vertices.size() < 2)
-		return;
-	m_lines.reserve(m_elems_vertices.size()/2);
 
-	for(std::size_t i=0; i<m_elems_vertices.size()-1; i+=2)
+	const std::size_t num_vertices = m_elems_vertices.size();
+	if(num_vertices < 2)
+		return;
+
+	m_lines.reserve(num_vertices/2);
+
+	for(std::size_t i=0; i<num_vertices-1; i+=2)
 	{
 		const Vertex* _vert1 = m_elems_vertices[i];
 		const Vertex* _vert2 = m_elems_vertices[i+1];
@@ -211,6 +213,8 @@ void LinesScene::UpdateLines()
 	penEdge.setWidthF(2.);
 	penEdge.setColor(QColor::fromRgbF(0., 0., 1.));
 
+
+	m_elems_lines.reserve(m_lines.size());
 
 	for(const auto& line : m_lines)
 	{
@@ -266,6 +270,9 @@ void LinesScene::UpdateIntersections()
 	QBrush brush;
 	brush.setStyle(Qt::SolidPattern);
 	brush.setColor(QColor::fromRgbF(0., 0.75, 0.));
+
+
+	m_elems_inters.reserve(intersections.size());
 
 	for(const auto& intersection : intersections)
 	{
@@ -404,6 +411,8 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 	QString msg = QString("Calculating Voronoi regions in %1 threads...").arg(num_threads);
 	progdlg.setLabel(new QLabel(msg));
 
+	packages.reserve(height);
+
 	for(int y=0; y<height; ++y)
 	{
 		auto package = std::make_shared<std::packaged_task<void()>>(
@@ -525,6 +534,9 @@ void LinesScene::UpdateVoro()
 				"Unknown voronoi diagram calculation method.");
 			break;
 	};
+
+
+	m_elems_voro.reserve(results.linear_edges.size() + results.parabolic_edges.size() + results.vertices.size());
 
 	// voronoi edges
 	if(m_calcvoro)
@@ -1323,7 +1335,7 @@ int main(int argc, char** argv)
 	}
 	catch(const std::exception& ex)
 	{
-		std::cerr << ex.what() << std::endl;
+		std::cerr << "Error: " << ex.what() << std::endl;
 	}
 
 	return -1;

@@ -321,6 +321,8 @@ void HullScene::UpdateDelaunay()
 			const auto& thetriag = triags[idx];
 
 			std::vector<const t_vec*> neighbourverts;
+			neighbourverts.reserve(neighbours[idx].size());
+
 			for(std::size_t neighbourIdx : neighbours[idx])
 			{
 				const t_vec& neighbourvert = voronoi[neighbourIdx];
@@ -336,6 +338,8 @@ void HullScene::UpdateDelaunay()
 			{
 				// slopes of existing voronoi edges
 				std::vector<t_real> slopes;
+				slopes.reserve(neighbourverts.size());
+
 				for(const t_vec* vec : neighbourverts)
 					slopes.push_back(geo::line_angle(voronoivert, *vec));
 
@@ -1232,6 +1236,7 @@ void HullDlg::CalculateHull()
 
 		// get vertices
 		std::vector<t_vec> vertices;
+		vertices.reserve(rows);
 
 		for(int row=0; row<rows; ++row)
 		{
@@ -1490,7 +1495,7 @@ int main(int argc, char** argv)
 	}
 	catch(const std::exception& ex)
 	{
-		std::cerr << ex.what() << std::endl;
+		std::cerr << "Error: " << ex.what() << std::endl;
 	}
 
 	return -1;

@@ -1049,7 +1049,7 @@ std::vector<std::vector<t_vec>> convex_split(
 				tl2::intersect_line_line<t_vec, t_real>(
 					vert1, dir1, vert3, dir2, eps);
 
-			if(valid && param2>=0. && param2<1. &&
+			if(valid && param2>=0. && param2<1. && param1>=0. &&
 				tl2::equals<t_vec>(pt1, pt2, eps))
 			{
 				auto iterInters = (iter+1).GetIter();
@@ -1062,10 +1062,10 @@ std::vector<std::vector<t_vec>> convex_split(
 
 
 	// split polygon
-	split.reserve(N);
-
 	if(idx_concave && idx_intersection)
 	{
+		split.reserve(N);
+
 		circular_wrapper circularverts(const_cast<std::vector<t_vec>&>(poly));
 
 		auto iter1 = circularverts.begin() + (*idx_concave);
@@ -1098,7 +1098,10 @@ std::vector<std::vector<t_vec>> convex_split(
 		}
 		//poly2.push_back(intersection);
 
-		// recursively split new polygons
+		if(poly1.size() < 3 || poly2.size() < 3)
+			throw std::logic_error("Invalid split polygon. Intersecting edges?");
+
+		// recursively split new sub-polygon 1
 		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1, eps);
 			subsplit1.size())
 		{
@@ -1114,6 +1117,7 @@ std::vector<std::vector<t_vec>> convex_split(
 			split.emplace_back(std::move(poly1));
 		}
 
+		// recursively split new sub-polygon 2
 		if(auto subsplit2 = convex_split<t_vec, t_real>(poly2, eps);
 			subsplit2.size())
 		{

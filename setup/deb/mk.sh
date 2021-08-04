@@ -51,6 +51,7 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v build/taspaths		${APPDIRNAME}/usr/local/bin
 	cp -v build/lines		${APPDIRNAME}/usr/local/bin
 	cp -v build/hull		${APPDIRNAME}/usr/local/bin
+	cp -v build/poly		${APPDIRNAME}/usr/local/bin
 
 	# resources
 	cp -rv res/*			${APPDIRNAME}/usr/local/share/${APPNAME}/res/

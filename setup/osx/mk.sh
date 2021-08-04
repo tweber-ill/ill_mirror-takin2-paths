@@ -104,6 +104,7 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v build/taspaths "${APPDIRNAME}/Contents/MacOS/"
 	cp -v build/lines "${APPDIRNAME}/Contents/MacOS/"
 	cp -v build/hull "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/poly "${APPDIRNAME}/Contents/MacOS/"
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
 
 	# libraries
