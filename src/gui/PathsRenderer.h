@@ -94,6 +94,7 @@ private:
 	bool m_arrowDown[4] = { 0, 0, 0, 0 };	// l, r, u, d
 	bool m_pageDown[2] = { 0, 0 };
 
+
 protected slots:
 	void tick();
 
@@ -112,6 +113,7 @@ public slots:
 
 	void EnableTimer(bool enable=true);
 
+
 signals:
 	void AfterGLInitialisation();
 
@@ -121,6 +123,7 @@ signals:
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
 	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
+
 
 protected:
 	// ------------------------------------------------------------------------
@@ -229,6 +232,8 @@ public:
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 	void CentreCam(const std::string& obj);
+
+	QPoint GetMousePosition(bool global_pos = false) const;
 };
 
 

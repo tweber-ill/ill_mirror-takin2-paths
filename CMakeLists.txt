@@ -193,6 +193,7 @@ add_compile_options(${Boost_CXX_FLAGS})
 # target executable settings
 # -----------------------------------------------------------------------------
 add_executable(taspaths
+	src/gui/main.cpp
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/Settings.cpp src/gui/Settings.h
 	src/gui/About.cpp src/gui/About.h

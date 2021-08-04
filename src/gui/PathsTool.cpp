@@ -7,9 +7,6 @@
 
 #include "PathsTool.h"
 
-#include <QtCore/QDir>
-#include <QtCore/QLoggingCategory>
-#include <QtWidgets/QApplication>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
@@ -29,7 +26,6 @@ namespace pt = boost::property_tree;
 #define PROG_TITLE "Triple-Axis Path Calculator"
 
 
-// ----------------------------------------------------------------------------
 /**
  * event signalling that the crystal UB matrix needs an update
  */
@@ -562,8 +558,23 @@ void PathsTool::PickerIntersection(const t_vec3_gl* pos, std::string obj_name, c
  */
 void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bool right)
 {
-	if(middle || right)
+	if(!m_renderer)
+		return;
+
+	// show context menu for object
+	if(right && obj != "")
+	{
+		m_curContextObj = obj;
+
+		QPoint pos = m_renderer->GetMousePosition(true);
+		m_contextMenuObj->popup(pos);
+	}
+
+	// centre scene around object
+	if(middle)
+	{
 		m_renderer->CentreCam(obj);
+	}
 }
 
 
@@ -1005,48 +1016,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionAddCylindricalWall = new QAction("Add Pillar", menuGeo);
 	QAction *actionGeoBrowser = new QAction("Geometries Browser...", menuGeo);
 
-	connect(actionAddCuboidWall, &QAction::triggered, this, [this]()
-	{
-		auto wall = std::make_shared<BoxGeometry>();
-		wall->SetHeight(4.);
-		wall->SetDepth(0.5);
-		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
-		wall->SetLength(4.);
-		wall->UpdateTrafo();
-
-		static std::size_t wallcnt = 1;
-		std::ostringstream ostrId;
-		ostrId << "new wall " << wallcnt++;
-
-		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
-
-		if(m_dlgGeoBrowser)
-			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
-
-		if(m_renderer)
-			m_renderer->AddWall(*wall, true);
-	});
-
-	connect(actionAddCylindricalWall, &QAction::triggered, this, [this]()
-	{
-		auto wall = std::make_shared<CylinderGeometry>();
-		wall->SetHeight(4.);
-		wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
-		wall->SetRadius(0.5);
-		wall->UpdateTrafo();
-
-		static std::size_t wallcnt = 1;
-		std::ostringstream ostrId;
-		ostrId << "new pillar " << wallcnt++;
-
-		m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
-
-		if(m_dlgGeoBrowser)
-			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
-
-		if(m_renderer)
-			m_renderer->AddWall(*wall, true);
-	});
+	connect(actionAddCuboidWall, &QAction::triggered, this, &PathsTool::AddWall);
+	connect(actionAddCylindricalWall, &QAction::triggered, this, &PathsTool::AddPillar);
 
 	connect(actionGeoBrowser, &QAction::triggered, this, [this]()
 	{
@@ -1190,6 +1161,14 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 
 	// --------------------------------------------------------------------
+	// context menu
+	// --------------------------------------------------------------------
+	m_contextMenuObj = new QMenu(this);
+	m_contextMenuObj->addAction("Delete Object", this, &PathsTool::DeleteCurrentObject);
+	// --------------------------------------------------------------------
+
+
+	// --------------------------------------------------------------------
 	// status bar
 	// --------------------------------------------------------------------
 	m_progress = new QProgressBar(this);
@@ -1261,6 +1240,90 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 
 /**
+ * add a wall to the instrument space
+ */
+void PathsTool::AddWall()
+{
+	auto wall = std::make_shared<BoxGeometry>();
+	wall->SetHeight(4.);
+	wall->SetDepth(0.5);
+	wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+	wall->SetLength(4.);
+	wall->UpdateTrafo();
+
+	static std::size_t wallcnt = 1;
+	std::ostringstream ostrId;
+	ostrId << "new wall " << wallcnt++;
+
+	// add wall to instrument space
+	m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+
+	// update object browser tree
+	if(m_dlgGeoBrowser)
+		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
+	// add a 3d representation of the wall
+	if(m_renderer)
+		m_renderer->AddWall(*wall, true);
+}
+
+
+/**
+ * add a pillar to the instrument space
+ */
+void PathsTool::AddPillar()
+{
+	auto wall = std::make_shared<CylinderGeometry>();
+	wall->SetHeight(4.);
+	wall->SetCentre(tl2::create<t_vec>({0, 0, wall->GetHeight()*0.5}));
+	wall->SetRadius(0.5);
+	wall->UpdateTrafo();
+
+	static std::size_t wallcnt = 1;
+	std::ostringstream ostrId;
+	ostrId << "new pillar " << wallcnt++;
+
+	// add pillar to instrument space
+	m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
+
+	// update object browser tree
+	if(m_dlgGeoBrowser)
+		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
+	// add a 3d representation of the pillar
+	if(m_renderer)
+		m_renderer->AddWall(*wall, true);
+}
+
+
+/**
+ * delete 3d object under the cursor
+ */
+void PathsTool::DeleteCurrentObject()
+{
+	if(m_curContextObj == "")
+		return;
+
+	// remove object from instrument space
+	if(m_instrspace.DeleteObject(m_curContextObj))
+	{
+		// update object browser tree
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
+		// remove 3d representation of object
+		if(m_renderer)
+			m_renderer->DeleteObject(m_curContextObj);
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning",
+			QString("Object \"") + m_curContextObj.c_str() + QString("\" cannot be deleted."));
+	}
+}
+
+
+/**
  * calculate the mesh of possible paths
  */
 void PathsTool::CalculatePathMesh()
@@ -1316,85 +1379,3 @@ void PathsTool::TrackPath(std::size_t idx)
 	const t_vec& vert = m_pathvertices[idx];
 	GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
 }
-
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-/**
- * main
- */
-int main(int argc, char** argv)
-{
-	try
-	{
-		// qt log handler
-		QLoggingCategory::setFilterRules("*=true\n*.debug=false\n*.info=false\n");
-		qInstallMessageHandler([](QtMsgType ty, const QMessageLogContext& ctx, const QString& log) -> void
-		{
-			auto get_msg_type = [](const QtMsgType& _ty) -> std::string
-			{
-				switch(_ty)
-				{
-					case QtDebugMsg: return "debug";
-					case QtWarningMsg: return "warning";
-					case QtCriticalMsg: return "critical error";
-					case QtFatalMsg: return "fatal error";
-					case QtInfoMsg: return "info";
-					default: return "<n/a>";
-				}
-			};
-
-			auto get_str = [](const char* pc) -> std::string
-			{
-				if(!pc) return "<n/a>";
-				return std::string{"\""} + std::string{pc} + std::string{"\""};
-			};
-
-			std::cerr << "Qt " << get_msg_type(ty);
-			if(ctx.function)
-			{
-				std::cerr << " in "
-					<< "file " << get_str(ctx.file) << ", "
-					<< "function " << get_str(ctx.function) << ", "
-					<< "line " << ctx.line;
-			}
-			std::cerr << ": " << log.toStdString() << std::endl;
-		});
-
-		// default gl surface format
-		tl2::set_gl_format(true, _GL_MAJ_VER, _GL_MIN_VER, 8);
-		tl2::set_locales();
-
-		// set maximum number of threads
-		g_maxnum_threads = std::max<unsigned int>(1, std::thread::hardware_concurrency()/2);
-
-		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
-		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
-		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
-
-		auto app = std::make_unique<QApplication>(argc, argv);
-		g_apppath = app->applicationDirPath().toStdString();
-		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
-			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
-		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
-
-		auto mainwnd = std::make_unique<PathsTool>(nullptr);
-		if(argc > 1)
-			mainwnd->SetInitialInstrumentFile(argv[1]);
-		mainwnd->show();
-		mainwnd->raise();
-		mainwnd->activateWindow();
-
-		return app->exec();
-	}
-	catch(const std::exception& ex)
-	{
-		std::cerr << "Error: " << ex.what() << std::endl;
-		return -1;
-	}
-
-	return 0;
-}
-// ----------------------------------------------------------------------------

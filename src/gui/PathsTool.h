@@ -60,6 +60,10 @@ private:
 	QMenu *m_menuOpenRecent{ nullptr };
 	QMenuBar *m_menubar{ nullptr };
 
+	// context menu for 3d objects
+	QMenu *m_contextMenuObj{ nullptr };
+	std::string m_curContextObj;
+
 	// dialogs and docks
 	std::shared_ptr<AboutDlg> m_dlgAbout;
 	std::shared_ptr<SettingsDlg> m_dlgSettings;
@@ -139,6 +143,11 @@ protected:
 	// creates the "recent files" sub-menu
 	void RebuildRecentFiles();
 
+	// add or delete 3d objects
+	void AddWall();
+	void AddPillar();
+	void DeleteCurrentObject();
+
 
 public:
 	/**
@@ -194,6 +203,7 @@ protected slots:
 
 	// move the instrument to a position on the path
 	void TrackPath(std::size_t idx);
+
 
 signals:
 	// signal, when a new path has been calculated

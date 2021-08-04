@@ -148,6 +148,24 @@ void InstrumentSpace::AddWall(const std::vector<std::shared_ptr<Geometry>>& wall
 
 
 /**
+ * delete an object (so far only walls)
+ */
+bool InstrumentSpace::DeleteObject(const std::string& id)
+{
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), [&id](const std::shared_ptr<Geometry>& wall) -> bool
+	{
+		return wall->GetId() == id;
+	}); iter != m_walls.end())
+	{
+		m_walls.erase(iter);
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
  * check if the axis angles are within their limits
  */
 bool InstrumentSpace::CheckAngularLimits() const

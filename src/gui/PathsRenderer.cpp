@@ -1119,6 +1119,15 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 }
 
 
+QPoint PathsRenderer::GetMousePosition(bool global_pos) const
+{
+	QPoint pos = m_posMouse.toPoint();
+	if(global_pos)
+		pos = mapToGlobal(pos);
+	return pos;
+}
+
+
 void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 {
 	m_mouseMovedBetweenDownAndUp = false;

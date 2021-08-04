@@ -41,6 +41,7 @@ public:
 	boost::property_tree::ptree Save() const;
 
 	void AddWall(const std::vector<std::shared_ptr<Geometry>>& wallsegs, const std::string& id);
+	bool DeleteObject(const std::string& id);
 
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
 	t_real GetFloorLenY() const { return m_floorlen[1]; }
