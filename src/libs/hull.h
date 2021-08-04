@@ -540,11 +540,74 @@ template<class t_vec, class t_real = typename t_vec::value_type>
 void simplify_contour(
 	std::vector<t_vec>& contour,
 	t_real min_dist = 0.01,
-	t_real eps = 0.01/180.*tl2::pi<t_real>)
+	t_real angular_eps = 0.01/180.*tl2::pi<t_real>,
+	t_real eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
+	// ------------------------------------------------------------------------
+	// helper functions
+	// ------------------------------------------------------------------------
+
+	// check if removing a vertex creates intersecting lines in the contour
+	auto can_remove_vertex = [&contour, eps](
+		const t_vec& vertPrev, const t_vec& vert, const t_vec& vertNext) -> bool
+	{
+		// ensure real vectors as t_vec can be an interger vector
+		using t_vec_real = tl2::vec<t_real, std::vector>;
+
+		t_vec_real vert1 = tl2::create<t_vec_real>({ t_real(vertPrev[0]), t_real(vertPrev[1]) });
+		t_vec_real vert2 = tl2::create<t_vec_real>({ t_real(vert[0]), t_real(vert[1]) });
+		t_vec_real vert3 = tl2::create<t_vec_real>({ t_real(vertNext[0]), t_real(vertNext[1]) });
+
+		// iterate all line segments on the contour and check for intersection with new [vert1, vert3] line segment
+		for(std::size_t vert1idx=0; vert1idx<contour.size(); ++vert1idx)
+		{
+			std::size_t vert2idx = (vert1idx+1) % contour.size();
+
+			const t_vec_real cont_vert1 = tl2::create<t_vec_real>({ 
+				t_real(contour[vert1idx][0]), t_real(contour[vert1idx][1]) });
+			const t_vec_real cont_vert2 = tl2::create<t_vec_real>({ 
+				t_real(contour[vert2idx][0]), t_real(contour[vert2idx][1]) });
+
+			// don't check self-intersections of the new line segment
+			if(tl2::equals<t_vec_real>(cont_vert1, vert1, eps) || 
+				tl2::equals<t_vec_real>(cont_vert1, vert2, eps) || 
+				tl2::equals<t_vec_real>(cont_vert2, vert2, eps) || 
+				tl2::equals<t_vec_real>(cont_vert2, vert3, eps))
+				continue;
+
+			auto [intersects, intersection] = 
+				intersect_lines<t_vec_real, t_real>(vert1, vert3, cont_vert1, cont_vert2, true, eps, false);
+			if(intersects)
+			{
+				//std::cout << "intersection" << std::endl;
+				return false;
+			}
+		}
+
+		// no intersection found
+		return true;
+	};
+
+	// ------------------------------------------------------------------------
+
+
 	// circular iteration of the contour line
 	circular_wrapper circularverts(contour);
+
+
+	// remove contour vertices that are too close together
+	for(std::size_t curidx = 0; curidx < contour.size()+1; ++curidx)
+	{
+		const t_vec& vert1 = circularverts[curidx];
+		const t_vec& vert2 = circularverts[curidx+1];
+
+		if(tl2::equals<t_vec, t_real>(vert1, vert2, eps))
+		{
+			circularverts.erase(circularverts.begin() + curidx);
+			--curidx;
+		}
+	}
 
 
 	// remove "staircase" artefacts from the contour line
@@ -564,10 +627,10 @@ requires tl2::is_vec<t_vec>
 		//std::cout << angle/tl2::pi<t_real>*180. << std::endl;
 
 		// line horizontal or vertical?
-		if(tl2::equals_0<t_real>(angle, eps)
-			|| tl2::equals<t_real>(angle, tl2::pi<t_real>, eps)
-			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(2), eps)
-			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(3./2.), eps))
+		if(tl2::equals_0<t_real>(angle, angular_eps)
+			|| tl2::equals<t_real>(angle, tl2::pi<t_real>, angular_eps)
+			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(2), angular_eps)
+			|| tl2::equals<t_real>(angle, tl2::pi<t_real>/t_real(3./2.), angular_eps))
 		{
 			t_real angle1 = line_angle<t_vec, t_real>(vert1, vert2);
 			t_real angle2 = line_angle<t_vec, t_real>(vert3, vert4);
@@ -578,11 +641,10 @@ requires tl2::is_vec<t_vec>
 			// line angles before and after horizontal or vertical line equal?
 			//std::cout << angle1/tl2::pi<t_real>*180. << ", ";
 			//std::cout << angle2/tl2::pi<t_real>*180. << std::endl;
-			if(tl2::equals<t_real>(angle1, angle2, eps))
+			if(tl2::equals<t_real>(angle1, angle2, angular_eps))
 			{
 				circularverts.erase(circularverts.begin() + curidx+3);
 				circularverts.erase(circularverts.begin() + curidx+2);
-				//++removed_staircases;
 			}
 		}
 	}
@@ -606,7 +668,9 @@ requires tl2::is_vec<t_vec>
 		//std::cout << "angle between " << vert1 << " ... " << vert2 << " ... " << vert3 << ": "
 		//	<< angle/tl2::pi<t_real> * 180. << std::endl;
 
-		if(std::abs(angle) < eps)
+		if((std::abs(angle) < angular_eps	// staight line
+			|| tl2::equals<t_real>(std::abs(angle), tl2::pi<t_real>, angular_eps)) // moving backwards
+			&& can_remove_vertex(vert1, vert2, vert3))
 		{
 			circularverts.erase(circularverts.begin() + curidx);
 			--curidx;

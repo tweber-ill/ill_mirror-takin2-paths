@@ -175,7 +175,8 @@ protected:
 signals:
 	void SignalMouseCoordinates(
 		t_real scenex, t_real sceney, t_real vpx, t_real vpy,
-		const std::vector<std::size_t>& cursor_regions);
+		const std::vector<std::size_t>& cursor_regions,
+		const std::vector<std::size_t>& vert_indices);
 };
 
 

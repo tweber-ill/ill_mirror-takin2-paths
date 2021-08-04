@@ -227,6 +227,9 @@ private:
 	t_real m_eps_angular = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
 
+	// minimum distance to consider "staircase artefacts"
+	t_real m_simplify_mindist = 3.;
+
 	// line segment length for subdivisions
 	t_real m_subdiv_len = 0.1;
 

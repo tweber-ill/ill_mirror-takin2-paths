@@ -242,8 +242,8 @@ bool PathsBuilder::CalculateConfigSpace(
 
 	// get results
 	std::size_t num_tasks = tasks.size();
-	// send no more than half-percentage update signals
-	std::size_t signal_skip = num_tasks / 200;
+	// send no more than one-percent update signals
+	std::size_t signal_skip = num_tasks / 100;
 
 	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
 	{
@@ -294,7 +294,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 			//contour = tl2::convert<t_contourvec, t_vec, std::vector>(hull_verts);
 
 			// simplify hull contour
-			geo::simplify_contour<t_contourvec, t_real>(contour, 2., m_eps_angular);
+			geo::simplify_contour<t_contourvec, t_real>(contour, m_simplify_mindist, m_eps_angular, m_eps);
 		}
 	}
 

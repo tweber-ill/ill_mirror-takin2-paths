@@ -671,12 +671,13 @@ void LinesView::mousePressEvent(QMouseEvent *evt)
 	QGraphicsItem* item = nullptr;
 	bool item_is_vertex = false;
 	auto &verts = m_scene->GetVertexElems();
+	decltype(verts.begin()) vertiter;
 
 	for(int itemidx=0; itemidx<items.size(); ++itemidx)
 	{
 		item = items[itemidx];
-		auto iter = std::find(verts.begin(), verts.end(), static_cast<Vertex*>(item));
-		item_is_vertex = (iter != verts.end());
+		vertiter = std::find(verts.begin(), verts.end(), static_cast<Vertex*>(item));
+		item_is_vertex = (vertiter != verts.end());
 		if(item_is_vertex)
 			break;
 	}
@@ -708,18 +709,16 @@ void LinesView::mousePressEvent(QMouseEvent *evt)
 	else if(evt->button() == Qt::RightButton)
 	{
 		// if a vertex is at this position, remove it
-		if(item && item_is_vertex)
+		if(item && item_is_vertex && vertiter != verts.end())
 		{
 			m_scene->removeItem(item);
-			auto iter = std::find(verts.begin(), verts.end(), static_cast<Vertex*>(item));
-
-			std::size_t idx = iter - verts.begin();
-			if(iter != verts.end())
-				iter = verts.erase(iter);
+			vertiter = verts.erase(vertiter);
 			delete item;
 
 			// move remaining vertex of line to the end
+			std::size_t idx = vertiter - verts.begin();
 			std::size_t otheridx = (idx % 2 == 0 ? idx : idx-1);
+
 			if(otheridx < verts.size())
 			{
 				Vertex* vert = verts[otheridx];
@@ -758,6 +757,7 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 	QPoint posVP = evt->pos();
 	QPointF posScene = mapToScene(posVP);
 
+
 	// get the regions the cursor is in
 	std::vector<std::size_t> cursor_regions;
 	for(std::size_t regionidx=0; regionidx<m_scene->GetRegions().size(); ++regionidx)
@@ -772,7 +772,22 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 			cursor_regions.push_back(regionidx);
 	}
 
-	emit SignalMouseCoordinates(posScene.x(), posScene.y(), posVP.x(), posVP.y(), cursor_regions);
+
+	// get the vertices the cursor is on (if any)
+	QList<QGraphicsItem*> items = this->items(posVP);
+	const auto &verts = m_scene->GetVertexElems();
+	std::vector<std::size_t> vert_indices;
+
+	for(int itemidx=0; itemidx<items.size(); ++itemidx)
+	{
+		QGraphicsItem* item = items[itemidx];
+		auto iter = std::find(verts.begin(), verts.end(), static_cast<Vertex*>(item));
+		if(iter != verts.end())
+			vert_indices.push_back(iter - verts.begin());
+	}
+
+
+	emit SignalMouseCoordinates(posScene.x(), posScene.y(), posVP.x(), posVP.y(), cursor_regions, vert_indices);
 }
 
 
@@ -1263,7 +1278,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	// connections
 	connect(m_view.get(), &LinesView::SignalMouseCoordinates,
 	[this](t_real x, t_real y, t_real vpx, t_real vpy, 
-		const std::vector<std::size_t>& cursor_regions)
+		const std::vector<std::size_t>& cursor_regions,
+		const std::vector<std::size_t>& vert_indices)
 	{
 		QString cursormsg = QString("Scene: x=%1, y=%2, Viewport: x=%3, y=%4.")
 			.arg(x, 5).arg(y, 5).arg(vpx, 5).arg(vpy, 5);
@@ -1281,7 +1297,20 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 			regionmsg += ".";
 		}
 
-		SetStatusMessage(cursormsg + regionmsg);
+		QString vertmsg;
+		if(vert_indices.size())
+		{
+			vertmsg = QString(" Cursor is on vertices ");
+			for(std::size_t vertidx=0; vertidx<vert_indices.size(); ++vertidx)
+			{
+				vertmsg += QString::number(vert_indices[vertidx]);
+				if(vertidx < vert_indices.size()-1)
+					vertmsg += ", ";
+			}
+			vertmsg += ".";
+		}
+
+		SetStatusMessage(cursormsg + regionmsg + vertmsg);
 	});
 
 

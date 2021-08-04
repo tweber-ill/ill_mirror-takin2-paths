@@ -116,7 +116,7 @@ std::ostream& print_line(std::ostream& ostr, const t_line& line)
 /**
  * checks if two line segments intersect and calculates the intersection point
  */
-template<class t_vec, class t_real=typename t_vec::value_type>
+template<class t_vec, class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::pair<bool, t_vec> intersect_lines(
 	const t_vec& pos1a, const t_vec& pos1b,
@@ -139,7 +139,7 @@ std::pair<bool, t_vec> intersect_lines(
 	t_vec dir2 = pos2b - pos2a;
 
 	auto[pt1, pt2, valid, dist, param1, param2] =
-		tl2::intersect_line_line(pos1a, dir1, pos2a, dir2, eps);
+		tl2::intersect_line_line<t_vec, t_real>(pos1a, dir1, pos2a, dir2, eps);
 
 	if(!valid)
 		return std::make_pair(false, tl2::create<t_vec>({}));
@@ -863,7 +863,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 		else
 		{
 			// get angles relative to y axis
-			t_real angle_to_y = line_angle<t_vec>(
+			t_real angle_to_y = line_angle<t_vec, t_real>(
 				std::get<0>(line), std::get<1>(line)) + tl2::pi<t_real>/t_real(2);
 			angle_to_y = tl2::mod_pos<t_real>(angle_to_y, t_real(2)*tl2::pi<t_real>);
 

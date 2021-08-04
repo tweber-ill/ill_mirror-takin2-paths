@@ -133,12 +133,14 @@ void PolyView::mousePressEvent(QMouseEvent *evt)
 		// if a vertex is at this position, remove it
 		if(item && item_is_vertex)
 		{
-			m_scene->removeItem(item);
 			auto iter = std::find(m_elems_vertices.begin(), m_elems_vertices.end(), static_cast<Vertex*>(item));
 			if(iter != m_elems_vertices.end())
+			{
+				m_scene->removeItem(item);
+				delete item;
 				iter = m_elems_vertices.erase(iter);
-			delete item;
-			UpdateAll();
+				UpdateAll();
+			}
 		}
 	}
 
