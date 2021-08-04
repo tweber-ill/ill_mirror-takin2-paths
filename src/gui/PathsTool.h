@@ -203,6 +203,8 @@ protected slots:
 	void DeleteCurrentObject();
 	void DeleteObject(const std::string& id);
 	void RenameObject(const std::string& oldid, const std::string& newid);
+	void ShowCurrentObjectProperties();
+	void ShowGeometriesBrowser();
 
 
 signals:

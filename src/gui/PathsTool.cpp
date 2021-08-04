@@ -1021,25 +1021,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	connect(actionAddCuboidWall, &QAction::triggered, this, &PathsTool::AddWall);
 	connect(actionAddCylindricalWall, &QAction::triggered, this, &PathsTool::AddPillar);
-
-	connect(actionGeoBrowser, &QAction::triggered, this, [this]()
-	{
-		if(!this->m_dlgGeoBrowser)
-		{
-			this->m_dlgGeoBrowser = std::make_shared<GeometriesBrowser>(this, &m_sett);
-
-			connect(this->m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalDeleteObject,
-				this, &PathsTool::DeleteObject);
-			connect(this->m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalRenameObject,
-				this, &PathsTool::RenameObject);
-
-			this->m_dlgGeoBrowser->UpdateGeoTree(this->m_instrspace);
-		}
-
-		m_dlgGeoBrowser->show();
-		m_dlgGeoBrowser->raise();
-		m_dlgGeoBrowser->activateWindow();
-	});
+	connect(actionGeoBrowser, &QAction::triggered, this, &PathsTool::ShowGeometriesBrowser);
 
 	menuGeo->addAction(actionAddCuboidWall);
 	menuGeo->addAction(actionAddCylindricalWall);
@@ -1173,7 +1155,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// context menu
 	// --------------------------------------------------------------------
 	m_contextMenuObj = new QMenu(this);
-	m_contextMenuObj->addAction("Delete Object", this, &PathsTool::DeleteCurrentObject);
+
+	QAction *actionObjDel = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object", m_contextMenuObj);
+	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Properties", m_contextMenuObj);
+
+	m_contextMenuObj->addAction(actionObjDel);
+	m_contextMenuObj->addAction(actionObjProp);
+
+	connect(actionObjDel, &QAction::triggered, this, &PathsTool::DeleteCurrentObject);
+	connect(actionObjProp, &QAction::triggered, this, &PathsTool::ShowCurrentObjectProperties);
 	// --------------------------------------------------------------------
 
 
@@ -1341,6 +1331,43 @@ void PathsTool::DeleteObject(const std::string& obj)
 		QMessageBox::warning(this, "Warning",
 			QString("Object \"") + obj.c_str() + QString("\" cannot be deleted."));
 	}
+}
+
+
+/**
+ * open geometries browser and point to currently selected object
+ */
+void PathsTool::ShowCurrentObjectProperties()
+{
+	ShowGeometriesBrowser();
+
+	if(m_dlgGeoBrowser)
+	{
+		m_dlgGeoBrowser->SelectObject(m_curContextObj);
+	}
+}
+
+
+/**
+ * open the geometry browser dialog
+ */
+void PathsTool::ShowGeometriesBrowser()
+{
+	if(!m_dlgGeoBrowser)
+	{
+		m_dlgGeoBrowser = std::make_shared<GeometriesBrowser>(this, &m_sett);
+
+		connect(m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalDeleteObject,
+				this, &PathsTool::DeleteObject);
+		connect(m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalRenameObject,
+				this, &PathsTool::RenameObject);
+
+		this->m_dlgGeoBrowser->UpdateGeoTree(this->m_instrspace);
+	}
+
+	m_dlgGeoBrowser->show();
+	m_dlgGeoBrowser->raise();
+	m_dlgGeoBrowser->activateWindow();
 }
 
 

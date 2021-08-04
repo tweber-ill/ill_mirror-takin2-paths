@@ -26,6 +26,7 @@ public:
 	virtual ~GeometriesBrowser();
 
 	void UpdateGeoTree(const InstrumentSpace& instrspace);
+	void SelectObject(const std::string& obj);
 
 
 protected:

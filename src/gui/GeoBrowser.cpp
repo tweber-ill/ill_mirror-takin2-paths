@@ -12,6 +12,7 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QMessageBox>
 
 
 /**
@@ -36,8 +37,14 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 	// tree context menu
 	m_contextMenuGeoTree = new QMenu(m_geotree);
-	m_contextMenuGeoTree->addAction("Rename Object", this, &GeometriesBrowser::RenameCurrentGeoTreeObject);
-	m_contextMenuGeoTree->addAction("Delete Object", this, &GeometriesBrowser::DeleteCurrentGeoTreeObject);
+	QAction *actionRenObj = new QAction(QIcon::fromTheme("edit-find-replace"), "Rename Object");
+	QAction *actionDelObj = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object");
+
+	m_contextMenuGeoTree->addAction(actionRenObj);
+	m_contextMenuGeoTree->addAction(actionDelObj);
+
+	connect(actionRenObj, &QAction::triggered, this, &GeometriesBrowser::RenameCurrentGeoTreeObject);
+	connect(actionDelObj, &QAction::triggered, this, &GeometriesBrowser::DeleteCurrentGeoTreeObject);
 
 
 	// geometry settings table
@@ -86,6 +93,8 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	{
 		if(m_sett->contains("geobrowser/geo"))
 			restoreGeometry(m_sett->value("geobrowser/geo").toByteArray());
+		else
+			resize(600, 400);
 		if(m_sett->contains("geobrowser/splitter"))
 			m_splitter->restoreState(m_sett->value("geobrowser/splitter").toByteArray());
 	}
@@ -248,4 +257,23 @@ void GeometriesBrowser::UpdateGeoTree(const InstrumentSpace& instrspace)
 	}
 
 	m_geotree->expandItem(instritem);
+}
+
+
+/**
+ * select an object in the geometries tree
+ */
+void GeometriesBrowser::SelectObject(const std::string& obj)
+{
+	QList<QTreeWidgetItem*> items = m_geotree->findItems(obj.c_str(), Qt::MatchRecursive, 0);
+
+	if(items.size())
+	{
+		m_geotree->setCurrentItem(items[0], QItemSelectionModel::Select);
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning",
+			QString("Object \"") + obj.c_str() + QString("\" was not found."));
+	}
 }
