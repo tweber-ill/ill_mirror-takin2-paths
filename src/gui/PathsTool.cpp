@@ -1207,6 +1207,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// recent files
 	if(m_sett.contains("recent_files"))
 		SetRecentFiles(m_sett.value("recent_files").toStringList());
+
+	// TODO: font
+	//QFont font = this->font();
+	//font.setPointSizeF(14.);
+	//this->setFont(font);
 	// --------------------------------------------------------------------
 
 
