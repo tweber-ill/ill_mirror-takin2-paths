@@ -11,6 +11,8 @@
 #include <QtCore/QSettings>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QTableWidget>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QComboBox>
 
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
@@ -44,6 +46,12 @@ extern t_real g_a3_offs;
 
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;
+
+// gui theme
+extern QString g_theme;
+
+// gui font
+extern QString g_font;
 // ----------------------------------------------------------------------------
 
 
@@ -73,10 +81,14 @@ public:
 protected:
 	virtual void accept() override;
 	void ApplySettings();
+	static void ApplyGuiSettings();
 
 private:
 	QSettings *m_sett{nullptr};
-	QTableWidget *m_tab{nullptr};
+	QTableWidget *m_table{nullptr};
+
+	QComboBox *m_comboTheme{nullptr};
+	QLineEdit *m_editFont{nullptr};
 };
 
 #endif

@@ -578,7 +578,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionSplit->setChecked(m_view->GetCalcSplitPolygon());
 	connect(actionSplit, &QAction::toggled, [this](bool b) { m_view->SetCalcSplitPolygon(b); });
 
-	QAction *actionKer = new QAction{"Kernel", this};
+	QAction *actionKer = new QAction{"Visibility Kernel", this};
 	actionKer->setCheckable(true);
 	actionKer->setChecked(m_view->GetCalcKernel());
 	connect(actionKer, &QAction::toggled, [this](bool b) { m_view->SetCalcKernel(b); });
