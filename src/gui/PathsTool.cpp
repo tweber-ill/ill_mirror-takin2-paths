@@ -924,7 +924,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
 	QAction *actionSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
 	QAction *actionSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
-	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings", menuFile);
+	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", menuFile);
 	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
 
 	// export menu
