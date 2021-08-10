@@ -1033,7 +1033,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// calculate menu
 	QMenu *menuCalc = new QMenu("Calculation", m_menubar);
 
-	QAction *actionConfigSpace = new QAction("Configuration Space...", menuCalc);
+	QAction *actionConfigSpace = new QAction("Angular Configuration Space...", menuCalc);
+	QAction *actionXtalConfigSpace = new QAction("Crystal Configuration Space...", menuCalc);
 
 	connect(actionConfigSpace, &QAction::triggered, this, [this]()
 	{
@@ -1051,7 +1052,22 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_dlgConfigSpace->activateWindow();
 	});
 
+	connect(actionXtalConfigSpace, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgXtalConfigSpace)
+		{
+			this->m_dlgXtalConfigSpace = std::make_shared<XtalConfigSpaceDlg>(this, &m_sett);
+			this->m_dlgXtalConfigSpace->SetInstrumentSpace(&this->m_instrspace);
+			this->m_dlgXtalConfigSpace->SetTasCalculator(&this->m_tascalc);
+		}
+
+		m_dlgXtalConfigSpace->show();
+		m_dlgXtalConfigSpace->raise();
+		m_dlgXtalConfigSpace->activateWindow();
+	});
+
 	menuCalc->addAction(actionConfigSpace);
+	menuCalc->addAction(actionXtalConfigSpace);
 
 
 	// tools menu
@@ -1225,7 +1241,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetEpsilon(g_eps);
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
-	m_pathsbuilder.SetTasCalculator(&m_tascalc);
+	m_pathsbuilder.SetTasCalculator(&this->m_tascalc);
 	m_pathsbuilder.AddProgressSlot(
 		[this](bool start, bool end, t_real progress, const std::string& message)
 		{

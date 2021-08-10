@@ -55,6 +55,7 @@ public:
 	void SetSampleScatteringPlane(
 		t_real vec1_x, t_real vec1_y, t_real vec1_z,
 		t_real vec2_x, t_real vec2_y, t_real vec2_z);
+	const t_vec& GetSampleScatteringPlane(std::size_t vecidx) const;
 
 	// get crystal matrices
 	const t_mat& GetB() const;

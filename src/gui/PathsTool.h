@@ -27,6 +27,7 @@
 
 #include "PathsRenderer.h"
 #include "ConfigSpace.h"
+#include "XtalConfigSpace.h"
 #include "GeoBrowser.h"
 #include "About.h"
 #include "Settings.h"
@@ -69,6 +70,7 @@ private:
 	std::shared_ptr<SettingsDlg> m_dlgSettings;
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser;
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace;
+	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace;
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
 	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos;

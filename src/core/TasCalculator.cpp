@@ -82,6 +82,12 @@ void TasCalculator::SetSampleScatteringPlane(t_real vec1_x, t_real vec1_y, t_rea
 }
 
 
+const t_vec& TasCalculator::GetSampleScatteringPlane(std::size_t vecidx) const
+{
+	return m_plane_rlu[vecidx];
+}
+
+
 const t_mat& TasCalculator::GetB() const
 {
 	return m_B;

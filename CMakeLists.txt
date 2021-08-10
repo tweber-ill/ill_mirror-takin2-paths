@@ -204,6 +204,7 @@ add_executable(taspaths
 	src/gui/dock/PathProperties.cpp src/gui/dock/PathProperties.h
 	src/gui/dock/CamProperties.cpp src/gui/dock/CamProperties.h
 	src/gui/ConfigSpace.cpp src/gui/ConfigSpace.h
+	src/gui/XtalConfigSpace.cpp src/gui/XtalConfigSpace.h
 	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
 
 	src/core/Geometry.cpp src/core/Geometry.h

@@ -1,5 +1,5 @@
 /**
- * TAS paths tool
+ * angular configuration space dialog
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @license GPLv3, see 'LICENSE' file

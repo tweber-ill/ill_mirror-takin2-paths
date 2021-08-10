@@ -1,5 +1,5 @@
 /**
- * TAS paths tool
+ * angular configuration space dialog
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @license GPLv3, see 'LICENSE' file
@@ -26,7 +26,7 @@
 ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
-	setWindowTitle("Configuration Space");
+	setWindowTitle("Angular Configuration Space");
 
 	// restore dialog geometry
 	if(m_sett && m_sett->contains("configspace/geo"))
