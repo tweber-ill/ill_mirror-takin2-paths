@@ -18,8 +18,9 @@
 
 #include "qcustomplot/qcustomplot.h"
 
-#include "../core/InstrumentSpace.h"
-#include "../core/TasCalculator.h"
+#include "src/libs/img.h"
+#include "src/core/InstrumentSpace.h"
+#include "src/core/TasCalculator.h"
 
 
 class XtalConfigSpaceDlg : public QDialog
@@ -45,6 +46,8 @@ public:
 protected:
 	virtual void accept() override;
 
+	void RedrawPlot();
+
 	// either move instrument by clicking in the plot or enable plot zoom mode
 	void SetInstrumentMovable(bool moveInstr);
 
@@ -57,12 +60,14 @@ private:
 	QCPColorMap* m_colourMap{};
 
 	QLabel *m_status{};
-	QDoubleSpinBox *m_spinVec1Start{}, *m_spinVec1End{};
-	QDoubleSpinBox *m_spinVec2Start{}, *m_spinVec2End{};
+	QDoubleSpinBox *m_spinVec1Start{}, *m_spinVec1End{}, *m_spinVec1Delta{};
+	QDoubleSpinBox *m_spinVec2Start{}, *m_spinVec2End{}, *m_spinVec2Delta{};
+	QDoubleSpinBox *m_spinE{};
 
 	const InstrumentSpace *m_instrspace{};
     const TasCalculator *m_tascalc{};
 
+	geo::Image<std::uint8_t> m_img{};
 	bool m_moveInstr = true;
 };
 

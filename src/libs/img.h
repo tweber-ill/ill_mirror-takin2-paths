@@ -8,6 +8,8 @@
  * @references:
  *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
  */
+#ifndef __GEO_ALGOS_IMG_H__
+#define __GEO_ALGOS_IMG_H__
 
 #include <concepts>
 #include <cstdlib>
@@ -392,3 +394,5 @@ std::vector<std::vector<t_vec>> trace_boundary(
 // ----------------------------------------------------------------------------
 
 } // geo
+
+#endif

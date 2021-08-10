@@ -22,6 +22,12 @@
 
 #include "Settings.h"
 
+#include <boost/asio.hpp>
+namespace asio = boost::asio;
+
+using t_task = std::packaged_task<void()>;
+using t_taskptr = std::shared_ptr<t_task>;
+
 
 XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
@@ -58,23 +64,50 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// spin boxes
 	m_spinVec1Start = new QDoubleSpinBox(this);
 	m_spinVec1End = new QDoubleSpinBox(this);
-
-	m_spinVec1Start->setPrefix("x_start = ");
-	m_spinVec1Start->setValue(0.0);
-	m_spinVec1Start->setSingleStep(0.1);
-	m_spinVec1End->setPrefix("x_end = ");
-	m_spinVec1End->setValue(1.0);
-	m_spinVec1End->setSingleStep(0.1);
-
 	m_spinVec2Start = new QDoubleSpinBox(this);
 	m_spinVec2End = new QDoubleSpinBox(this);
+	m_spinVec1Delta = new QDoubleSpinBox(this);
+	m_spinVec2Delta = new QDoubleSpinBox(this);
+	m_spinE = new QDoubleSpinBox(this);
+
+	m_spinVec1Start->setPrefix("x_start = ");
+	m_spinVec1Start->setMinimum(-999.);
+	m_spinVec1Start->setMaximum(999.);
+	m_spinVec1Start->setValue(-1.0);
+	m_spinVec1Start->setSingleStep(0.1);
+	m_spinVec1End->setPrefix("x_end = ");
+	m_spinVec1End->setMinimum(-999.);
+	m_spinVec1End->setMaximum(999.);
+	m_spinVec1End->setValue(1.0);
+	m_spinVec1End->setSingleStep(0.1);
+	m_spinVec1Delta->setPrefix("Δx = ");
+	m_spinVec1Delta->setMinimum(0.0001);
+	m_spinVec1Delta->setMaximum(999.);
+	m_spinVec1Delta->setValue(0.05);
+	m_spinVec1Delta->setSingleStep(0.01);
 
 	m_spinVec2Start->setPrefix("y_start = ");
-	m_spinVec2Start->setValue(0.0);
+	m_spinVec2Start->setMinimum(-999);
+	m_spinVec2Start->setMaximum(999);
+	m_spinVec2Start->setValue(-1.0);
 	m_spinVec2Start->setSingleStep(0.1);
 	m_spinVec2End->setPrefix("y_end = ");
+	m_spinVec2End->setMinimum(-999);
+	m_spinVec2End->setMaximum(999);
 	m_spinVec2End->setValue(1.0);
 	m_spinVec2End->setSingleStep(0.1);
+	m_spinVec2Delta->setPrefix("Δy = ");
+	m_spinVec2Delta->setMinimum(0.0001);
+	m_spinVec2Delta->setMaximum(999.);
+	m_spinVec2Delta->setValue(0.05);
+	m_spinVec2Delta->setSingleStep(0.01);
+
+	m_spinE->setPrefix("E = ");
+	m_spinE->setSuffix(" meV");
+	m_spinE->setMinimum(-999.);
+	m_spinE->setMaximum(999.);
+	m_spinE->setValue(0.);
+	m_spinE->setSingleStep(0.1);
 
 	UpdatePlotRanges();
 
@@ -93,6 +126,9 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(m_spinVec1End, y, 1, 1, 1);
 	grid->addWidget(m_spinVec2Start, y, 2, 1, 1);
 	grid->addWidget(m_spinVec2End, y++, 3, 1, 1);
+	grid->addWidget(m_spinVec1Delta, y, 0, 1, 1);
+	grid->addWidget(m_spinVec2Delta, y, 1, 1, 1);
+	grid->addWidget(m_spinE, y++, 3, 1, 1);
 	grid->addWidget(btnCalc, y, 1, 1, 1);
 	grid->addWidget(btnSave, y, 2, 1, 1);
 	grid->addWidget(btnClose, y++, 3, 1, 1);
@@ -275,7 +311,38 @@ void XtalConfigSpaceDlg::UpdatePlotRanges()
 
 
 /**
- * calculate the obstacles
+ * redraw plot
+ */
+void XtalConfigSpaceDlg::RedrawPlot()
+{
+	// draw wall image
+	const std::size_t width = m_img.GetWidth();
+	const std::size_t height = m_img.GetHeight();
+
+	m_colourMap->data()->setSize(width, height);
+
+	for(std::size_t y=0; y<height; ++y)
+	{
+		for(std::size_t x=0; x<width; ++x)
+		{
+			using t_pixel = typename std::decay_t<decltype(m_img)>::value_type;
+			t_pixel pixel_val = m_img.GetPixel(x, y);
+
+			// val > 0 => colliding
+			t_real val = std::lerp(t_real(0), t_real(1), 
+				t_real(pixel_val)/t_real(std::numeric_limits<t_pixel>::max()));
+			m_colourMap->data()->setCell(x, y, val);
+		}
+	}
+
+	// replot
+	m_plot->rescaleAxes();
+	m_plot->replot();
+}
+
+
+/**
+ * calculate the obstacle representations in the crystal configuration space
  */
 void XtalConfigSpaceDlg::Calculate()
 {
@@ -286,9 +353,113 @@ void XtalConfigSpaceDlg::Calculate()
 	const t_vec& vec1 = m_tascalc->GetSampleScatteringPlane(0);
 	const t_vec& vec2 = m_tascalc->GetSampleScatteringPlane(1);
 
+	// fixed energy
+	t_real E = m_spinE->value();
+
 	// ranges
 	t_real vec1start = m_spinVec1Start->value();
 	t_real vec1end = m_spinVec1End->value();
 	t_real vec2start = m_spinVec2Start->value();
 	t_real vec2end = m_spinVec2End->value();
+	t_real vec1step = m_spinVec1Delta->value();
+	t_real vec2step = m_spinVec2Delta->value();
+
+	// create colour map and image
+	std::size_t img_w = (vec1end-vec1start) / vec1step;
+	std::size_t img_h = (vec2end-vec2start) / vec2step;
+
+	m_img.Init(img_w, img_h);
+
+	// create thread pool
+	asio::thread_pool pool(g_maxnum_threads);
+
+	std::vector<t_taskptr> tasks;
+	tasks.reserve(img_h);
+
+	// set image pixels
+	for(std::size_t img_row=0; img_row<img_h; ++img_row)
+	{
+		t_real yparam = std::lerp(vec2start, vec2end, img_row / t_real(img_h));
+
+		auto task = [this, img_w, img_row, vec1start, vec1end, &vec1, &vec2, yparam, E]()
+		{
+			InstrumentSpace instrspace_cpy = *this->m_instrspace;
+
+			for(std::size_t img_col=0; img_col<img_w; ++img_col)
+			{
+				t_real xparam = std::lerp(vec1start, vec1end, img_col / t_real(img_w));
+				t_vec xvec = xparam * vec1;
+				t_vec yvec = yparam * vec2;
+				t_vec Q = xvec + yvec;
+
+				TasAngles angles = m_tascalc->GetAngles(Q[0], Q[1], Q[2], E);
+				if(angles.mono_ok && angles.ana_ok && angles.sample_ok)
+				{
+					// set scattering angles
+					instrspace_cpy.GetInstrument().GetMonochromator().
+						SetAxisAngleOut(angles.monoXtalAngle*2.);
+					instrspace_cpy.GetInstrument().GetSample().
+						SetAxisAngleOut(angles.sampleScatteringAngle);
+					instrspace_cpy.GetInstrument().GetAnalyser().
+						SetAxisAngleOut(angles.anaXtalAngle*2.);
+
+					// set crystal angles
+					instrspace_cpy.GetInstrument().GetMonochromator().
+						SetAxisAngleInternal(angles.monoXtalAngle);
+					instrspace_cpy.GetInstrument().GetSample().
+						SetAxisAngleInternal(angles.sampleXtalAngle);
+					instrspace_cpy.GetInstrument().GetAnalyser().
+						SetAxisAngleInternal(angles.anaXtalAngle);
+				}
+				else
+				{
+					m_img.SetPixel(img_col, img_row, 0xe0);
+					continue;
+				}
+
+				// set image value
+				bool angle_ok = instrspace_cpy.CheckAngularLimits();
+
+				if(!angle_ok)
+				{
+					m_img.SetPixel(img_col, img_row, 0xf0);
+				}
+				else
+				{
+					bool colliding = instrspace_cpy.CheckCollision2D();
+					m_img.SetPixel(img_col, img_row, colliding ? 0xff : 0x00);
+				}
+			}
+		};
+
+		t_taskptr taskptr = std::make_shared<t_task>(task);
+		tasks.push_back(taskptr);
+		asio::post(pool, [taskptr]() { (*taskptr)(); });
+	}
+
+
+	// get results
+	std::size_t num_tasks = tasks.size();
+	// send no more than one-percent update signals
+	std::size_t signal_skip = num_tasks / 100;
+
+	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
+	{
+		// prevent sending too many progress signals
+		if(signal_skip && taskidx % signal_skip == 0)
+		{
+			/*if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
+			{
+				pool.stop();
+				break;
+			}*/
+		}
+
+		tasks[taskidx]->get_future().get();
+	}
+
+	pool.join();
+	//(*m_sigProgress)(false, true, 1, ostrmsg.str());
+
+	RedrawPlot();
 }
