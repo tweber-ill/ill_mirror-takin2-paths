@@ -898,7 +898,7 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 		m_progress->setMinimum(0);
 		m_progress->setMaximum(max_progress);
 		m_progress->setAutoReset(false);
-		m_progress->setMinimumDuration(2000);
+		m_progress->setMinimumDuration(1000);
 	}
 
 	m_progress->setValue(int(progress*max_progress));

@@ -10,7 +10,6 @@
 
 #include <QtCore/QSettings>
 #include <QtWidgets/QDialog>
-#include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QDoubleSpinBox>
 
 #include <cstdint>
@@ -51,6 +50,9 @@ protected:
 	// either move instrument by clicking in the plot or enable plot zoom mode
 	void SetInstrumentMovable(bool moveInstr);
 
+	// calculate crystal coordinates from graph position
+	std::tuple<t_vec, t_real, t_real> GetQkikf(t_real x, t_real y) const;
+
 
 private:
 	QSettings *m_sett{nullptr};
@@ -69,6 +71,10 @@ private:
 
 	geo::Image<std::uint8_t> m_img{};
 	bool m_moveInstr = true;
+
+
+signals:
+	void GotoCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 };
 
 #endif

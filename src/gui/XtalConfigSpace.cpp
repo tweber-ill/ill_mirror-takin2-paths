@@ -19,6 +19,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QProgressDialog>
 
 #include "Settings.h"
 
@@ -81,6 +82,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_spinVec1End->setValue(1.0);
 	m_spinVec1End->setSingleStep(0.1);
 	m_spinVec1Delta->setPrefix("Δx = ");
+	m_spinVec1Delta->setDecimals(4);
 	m_spinVec1Delta->setMinimum(0.0001);
 	m_spinVec1Delta->setMaximum(999.);
 	m_spinVec1Delta->setValue(0.05);
@@ -97,6 +99,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_spinVec2End->setValue(1.0);
 	m_spinVec2End->setSingleStep(0.1);
 	m_spinVec2Delta->setPrefix("Δy = ");
+	m_spinVec2Delta->setDecimals(4);
 	m_spinVec2Delta->setMinimum(0.0001);
 	m_spinVec2Delta->setMaximum(999.);
 	m_spinVec2Delta->setValue(0.05);
@@ -192,11 +195,14 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_plot || !m_moveInstr)
 			return;
 
+		// coordinates
 		const t_real x = this->m_plot->xAxis->pixelToCoord(evt->x());
 		const t_real y = this->m_plot->yAxis->pixelToCoord(evt->y());
 
+		auto [Q, ki, kf] = GetQkikf(x, y);
+
 		// move instrument
-		//this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+		emit GotoCoordinates(Q[0], Q[1], Q[2], ki, kf);
 	});
 
 	connect(m_plot.get(), &QCustomPlot::mouseMove,
@@ -205,15 +211,20 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_plot)
 			return;
 
+		// coordinates
 		const int _x = evt->x();
 		const int _y = evt->y();
+
 		const t_real x = this->m_plot->xAxis->pixelToCoord(_x);
 		const t_real y = this->m_plot->yAxis->pixelToCoord(_y);
+
+		// crystal coordinates
+		auto [Q, ki, kf] = GetQkikf(x, y);
 
 		// move instrument
 		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
 		{
-			//this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+			emit GotoCoordinates(Q[0], Q[1], Q[2], ki, kf);
 		}
 
 		// set status
@@ -221,7 +232,9 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		ostr.precision(g_prec_gui);
 
 		// show coordinates
-		ostr << "x = " << x << ", y = " << y << ".";
+		ostr << "x = " << x << ", y = " << y << ";";
+		ostr << " Q = (" << Q[0] << ", " << Q[1] << ", " << Q[2] << ")"
+			<< "; ki = " << ki << ", kf = " << kf << ".";
 
 		m_status->setText(ostr.str().c_str());
 	});
@@ -342,16 +355,46 @@ void XtalConfigSpaceDlg::RedrawPlot()
 
 
 /**
+ * calculate crystal coordinates from graph position
+ */
+std::tuple<t_vec, t_real, t_real> XtalConfigSpaceDlg::GetQkikf(t_real x, t_real y) const
+{
+	// orientation vectors
+	const t_vec& vec1 = m_tascalc->GetSampleScatteringPlane(0);
+	const t_vec& vec2 = m_tascalc->GetSampleScatteringPlane(1);
+
+	// momentum
+	t_vec Q = x*vec1 + y*vec2;
+
+	// fixed energy
+	t_real E = m_spinE->value();
+
+	// wavenumbers
+	t_real ki, kf;
+	auto [kfix, fixed_kf] = m_tascalc->GetKfix();
+
+	if(fixed_kf)
+	{
+		kf = kfix;
+		ki = tl2::calc_tas_ki(kf, E);
+	}
+	else
+	{
+		ki = kfix;
+		kf = tl2::calc_tas_ki(ki, E);
+	}
+
+	return std::make_tuple(Q, ki, kf);
+}
+
+
+/**
  * calculate the obstacle representations in the crystal configuration space
  */
 void XtalConfigSpaceDlg::Calculate()
 {
 	if(!m_instrspace || !m_tascalc)
 		return;
-
-	// orientation vectors
-	const t_vec& vec1 = m_tascalc->GetSampleScatteringPlane(0);
-	const t_vec& vec2 = m_tascalc->GetSampleScatteringPlane(1);
 
 	// fixed energy
 	t_real E = m_spinE->value();
@@ -381,16 +424,16 @@ void XtalConfigSpaceDlg::Calculate()
 	{
 		t_real yparam = std::lerp(vec2start, vec2end, img_row / t_real(img_h));
 
-		auto task = [this, img_w, img_row, vec1start, vec1end, &vec1, &vec2, yparam, E]()
+		auto task = [this, img_w, img_row, vec1start, vec1end, yparam, E]()
 		{
 			InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
 			for(std::size_t img_col=0; img_col<img_w; ++img_col)
 			{
 				t_real xparam = std::lerp(vec1start, vec1end, img_col / t_real(img_w));
-				t_vec xvec = xparam * vec1;
-				t_vec yvec = yparam * vec2;
-				t_vec Q = xvec + yvec;
+
+				// crystal coordinates
+				auto [Q, ki, kf] = GetQkikf(xparam, yparam);
 
 				TasAngles angles = m_tascalc->GetAngles(Q[0], Q[1], Q[2], E);
 				if(angles.mono_ok && angles.ana_ok && angles.sample_ok)
@@ -437,29 +480,36 @@ void XtalConfigSpaceDlg::Calculate()
 		asio::post(pool, [taskptr]() { (*taskptr)(); });
 	}
 
+	std::size_t num_tasks = tasks.size();
+
 
 	// get results
-	std::size_t num_tasks = tasks.size();
-	// send no more than one-percent update signals
-	std::size_t signal_skip = num_tasks / 100;
+	auto progress = std::make_unique<QProgressDialog>(this);
+	progress->setWindowModality(Qt::WindowModal);
+	progress->setLabelText(
+		QString("Calculating configuration space in %1 threads...")
+			.arg(g_maxnum_threads));
+	progress->setAutoReset(true);
+	progress->setAutoClose(true);
+	progress->setMinimumDuration(1000);
+	progress->setMinimum(0);
+	progress->setMaximum(num_tasks);
 
 	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
 	{
-		// prevent sending too many progress signals
-		if(signal_skip && taskidx % signal_skip == 0)
+		progress->setValue(taskidx);
+
+		if(progress->wasCanceled())
 		{
-			/*if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
-			{
-				pool.stop();
-				break;
-			}*/
+			pool.stop();
+			break;
 		}
 
 		tasks[taskidx]->get_future().get();
+		RedrawPlot();
 	}
 
 	pool.join();
-	//(*m_sigProgress)(false, true, 1, ostrmsg.str());
-
+	progress->setValue(num_tasks);
 	RedrawPlot();
 }

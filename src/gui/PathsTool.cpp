@@ -862,8 +862,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		});
 
 	// goto coordinates
+	using t_gotocoords = 
+		void (PathsTool::*)(t_real, t_real, t_real, t_real, t_real, bool);
+
 	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates,
-		this, &PathsTool::GotoCoordinates);
+		this, static_cast<t_gotocoords>(&PathsTool::GotoCoordinates));
 
 	// goto angles
 	connect(pathwidget, &PathPropertiesWidget::GotoAngles,
@@ -1059,6 +1062,13 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->m_dlgXtalConfigSpace = std::make_shared<XtalConfigSpaceDlg>(this, &m_sett);
 			this->m_dlgXtalConfigSpace->SetInstrumentSpace(&this->m_instrspace);
 			this->m_dlgXtalConfigSpace->SetTasCalculator(&this->m_tascalc);
+
+			using t_gotocoords = 
+				void (PathsTool::*)(t_real, t_real, t_real, t_real, t_real);
+
+			this->connect(
+				this->m_dlgXtalConfigSpace.get(), &XtalConfigSpaceDlg::GotoCoordinates,
+				this, static_cast<t_gotocoords>(&PathsTool::GotoCoordinates));
 		}
 
 		m_dlgXtalConfigSpace->show();

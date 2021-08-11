@@ -160,6 +160,11 @@ protected slots:
 	void GotoCoordinates(t_real h, t_real k, t_real l,
 		t_real ki, t_real kf,
 		bool only_set_target);
+	void GotoCoordinates(t_real h, t_real k, t_real l,
+		t_real ki, t_real kf)
+	{
+		GotoCoordinates(h, k, l, ki, kf, false);
+	}
 
 	// go to instrument angles
 	void GotoAngles(std::optional<t_real> a1,

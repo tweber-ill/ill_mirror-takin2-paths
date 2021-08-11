@@ -43,12 +43,6 @@ public:
 		std::optional<t_real> a5);
 
 
-signals:
-	void GotoAngles(std::optional<t_real> a1,
-		std::optional<t_real> a3, std::optional<t_real> a4,
-		std::optional<t_real> a5, bool move_target);
-
-
 protected:
 	virtual void accept() override;
 
@@ -113,6 +107,12 @@ private:
 	bool m_movetarget = false;
 
 	bool m_moveInstr = true;
+
+
+signals:
+	void GotoAngles(std::optional<t_real> a1,
+		std::optional<t_real> a3, std::optional<t_real> a4,
+		std::optional<t_real> a5, bool move_target);
 };
 
 
