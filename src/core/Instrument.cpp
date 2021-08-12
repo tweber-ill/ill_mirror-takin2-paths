@@ -53,7 +53,9 @@ const Instrument& Instrument::operator=(const Instrument& instr)
 	this->m_sample.SetNextAxis(&this->m_ana);
 	this->m_ana.SetNextAxis(nullptr);
 
+	this->m_drag_pos_axis_start =  instr.m_drag_pos_axis_start;
 	this->m_sigUpdate = std::make_shared<t_sig_update>();
+
 	return *this;
 }
 

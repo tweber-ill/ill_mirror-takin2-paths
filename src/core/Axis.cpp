@@ -73,7 +73,7 @@ const Axis& Axis::operator=(const Axis& axis)
 
 void Axis::SetPreviousAxis(const Axis* axis)
 {
-	m_prev = axis; 
+	m_prev = axis;
 	m_trafos_need_update = true;
 }
 

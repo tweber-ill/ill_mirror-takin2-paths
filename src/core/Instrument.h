@@ -43,7 +43,7 @@ public:
 	Axis& GetSample() { return m_sample; }
 	Axis& GetAnalyser() { return m_ana; }
 
-	void DragObject(bool drag_start, const std::string& obj, 
+	void DragObject(bool drag_start, const std::string& obj,
 		t_real x_start, t_real y_start, t_real x, t_real y);
 
 	// connection to update signal
@@ -52,6 +52,7 @@ public:
 		{ m_sigUpdate->connect(slot); }
 
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
+
 
 private:
 	Axis m_mono{"monochromator", nullptr, &m_sample, this};

@@ -371,7 +371,7 @@ void PathsTool::GotoCoordinates(
 	bool only_set_target)
 {
 	TasAngles angles = m_tascalc.GetAngles(h, k, l, ki, kf);
-	
+
 	if(!angles.mono_ok)
 	{
 		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");

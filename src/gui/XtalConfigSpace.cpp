@@ -50,7 +50,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// wall contours
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);
-	m_colourMap->setGradient(QCPColorGradient::gpJet);
+	m_colourMap->setGradient(QCPColorGradient::gpJet /*gpGrayscale*/);
 	m_colourMap->setDataRange(QCPRange{0, 1});
 	m_colourMap->setDataScaleType(QCPAxis::stLinear);
 	m_colourMap->setInterpolate(false);
@@ -328,6 +328,22 @@ void XtalConfigSpaceDlg::UpdatePlotRanges()
  */
 void XtalConfigSpaceDlg::RedrawPlot()
 {
+	// print scattering plane vectors as axis labels
+	if(m_tascalc)
+	{
+		const t_vec& vec1 = m_tascalc->GetSampleScatteringPlane(0);
+		const t_vec& vec2 = m_tascalc->GetSampleScatteringPlane(1);
+
+		std::ostringstream xlabel, ylabel;
+		xlabel << "x * [" << vec1[0] << ", " << vec1[1] << ", " << vec1[2] << "]";
+		ylabel << "y * [" << vec2[0] << ", " << vec2[1] << ", " << vec2[2] << "]";
+
+		m_plot->xAxis->setLabel(xlabel.str().c_str());
+		m_plot->yAxis->setLabel(ylabel.str().c_str());
+	}
+
+	UpdatePlotRanges();
+
 	// draw wall image
 	const std::size_t width = m_img.GetWidth();
 	const std::size_t height = m_img.GetHeight();
@@ -357,7 +373,8 @@ void XtalConfigSpaceDlg::RedrawPlot()
 /**
  * calculate crystal coordinates from graph position
  */
-std::tuple<t_vec, t_real, t_real> XtalConfigSpaceDlg::GetQkikf(t_real x, t_real y) const
+std::tuple<t_vec, t_real, t_real> 
+XtalConfigSpaceDlg::GetQkikf(t_real x, t_real y) const
 {
 	// orientation vectors
 	const t_vec& vec1 = m_tascalc->GetSampleScatteringPlane(0);
@@ -440,11 +457,11 @@ void XtalConfigSpaceDlg::Calculate()
 				{
 					// set scattering angles
 					instrspace_cpy.GetInstrument().GetMonochromator().
-						SetAxisAngleOut(angles.monoXtalAngle*2.);
+						SetAxisAngleOut(angles.monoXtalAngle * t_real{2});
 					instrspace_cpy.GetInstrument().GetSample().
 						SetAxisAngleOut(angles.sampleScatteringAngle);
 					instrspace_cpy.GetInstrument().GetAnalyser().
-						SetAxisAngleOut(angles.anaXtalAngle*2.);
+						SetAxisAngleOut(angles.anaXtalAngle * t_real{2});
 
 					// set crystal angles
 					instrspace_cpy.GetInstrument().GetMonochromator().

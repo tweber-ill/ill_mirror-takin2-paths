@@ -43,7 +43,9 @@ const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
 	this->m_walls = instr.m_walls;
 	this->m_instr = instr.m_instr;
 
+	this->m_drag_pos_axis_start = instr.m_drag_pos_axis_start;
 	this->m_sigUpdate = std::make_shared<t_sig_update>();
+
 	return *this;
 }
 

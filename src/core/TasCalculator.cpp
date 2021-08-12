@@ -180,7 +180,7 @@ TasAngles TasCalculator::GetAngles(
 
 	t_vec Q = tl2::create<t_vec>({ h, k, l });
 	std::tie(angles.sample_ok,
-		angles.sampleXtalAngle, 
+		angles.sampleXtalAngle,
 		angles.sampleScatteringAngle,
 		angles.distance) = calc_tas_a3a4<t_mat, t_vec, t_real>(
 		m_B, ki, kf, Q,

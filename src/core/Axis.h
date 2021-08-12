@@ -88,6 +88,7 @@ public:
 
 	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
 
+
 private:
 	// identifier
 	std::string m_id;
