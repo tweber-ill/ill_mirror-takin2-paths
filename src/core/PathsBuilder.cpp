@@ -615,7 +615,21 @@ InstrumentPath PathsBuilder::FindPath(
 
 	std::size_t idx_i = 0;
 	std::size_t idx_f = 0;
+	
+	// calculation of closest voronoi vertices using the index tree
+	std::vector<std::size_t> indices_i = 
+		m_voro_results.GetClosestVoronoiVertices(path.vec_i, 1);
+	if(indices_i.size())
+		idx_i = indices_i[0];
 
+	std::vector<std::size_t> indices_f = 
+		m_voro_results.GetClosestVoronoiVertices(path.vec_f, 1);
+	if(indices_f.size())
+		idx_f = indices_f[0];
+
+
+	/*
+	// alternate calculation without index tree
 	t_real mindist_i = std::numeric_limits<t_real>::max();
 	t_real mindist_f = std::numeric_limits<t_real>::max();
 
@@ -642,6 +656,7 @@ InstrumentPath PathsBuilder::FindPath(
 			idx_f = idx_vert;
 		}
 	}
+	*/
 
 #ifdef DEBUG
 	std::cout << "Nearest voronoi vertices: " << idx_i << ", " << idx_f << "." << std::endl;

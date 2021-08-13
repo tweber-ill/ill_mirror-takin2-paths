@@ -9,10 +9,20 @@
  *   - (Klein 2005) "Algorithmische Geometrie" (2005), ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
  *   - (FUH 2020) "Algorithmische Geometrie" (2020), Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
+ *
+ * References for the spatial index tree: 
+ *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html
+ *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/spatial_indexes/rtree_examples.html
+ *  - https://github.com/boostorg/geometry/tree/develop/example
+
  */
 
 #ifndef __GEO_ALGOS_VORONOI_LINES_H__
 #define __GEO_ALGOS_VORONOI_LINES_H__
+
+#include <boost/geometry.hpp>
+#include <boost/geometry/index/rtree.hpp>
+#include <boost/function_output_iterator.hpp>
 
 #include <boost/polygon/polygon.hpp>
 #include <boost/polygon/voronoi.hpp>
@@ -85,9 +95,11 @@ namespace geo {
 template<class t_vec, 
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>>
-requires tl2::is_vec<t_vec>
+requires tl2::is_vec<t_vec> && is_graph<t_graph>
 struct VoronoiLinesResults
 {
+	using t_scalar = typename t_vec::value_type;
+
 	using t_vert_index = std::size_t;
 	using t_vert_indices = std::pair<t_vert_index, t_vert_index>;
 
@@ -95,6 +107,7 @@ struct VoronoiLinesResults
 	using t_vert_indices_opt = std::pair<t_vert_index_opt, t_vert_index_opt>;
 
 
+	// ------------------------------------------------------------------------
 	/**
 	 * hash function for vertex indices in arbitrary order
 	 */
@@ -159,8 +172,10 @@ struct VoronoiLinesResults
 			return t_vert_equ{}(_a, _b);
 		}
 	};
+	// ------------------------------------------------------------------------
 
 
+	// ------------------------------------------------------------------------
 	// linear bisectors
 	std::unordered_map<t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>
 		linear_edges{};
@@ -168,13 +183,68 @@ struct VoronoiLinesResults
 	// quadratic bisectors
 	std::unordered_map<t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>
 		parabolic_edges{};
+	// ------------------------------------------------------------------------
 
+
+	// ------------------------------------------------------------------------
 	// vertices
 	std::vector<t_vec> vertices{};
 
 	// voronoi vertex graph
 	// graph vertex indices correspond to those of the "vertices" vector
 	t_graph graph;
+	// ------------------------------------------------------------------------
+
+
+	// ------------------------------------------------------------------------
+	// voronoi vertex spatial index tree
+	template<class T = t_real>
+	using t_idxvertex = boost::geometry::model::point<
+		T, 2, boost::geometry::cs::cartesian>;
+
+	using t_idxtree = boost::geometry::index::rtree<
+		std::tuple<t_idxvertex<t_scalar>, std::size_t>, 
+		boost::geometry::index::dynamic_rstar>;
+
+	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+
+
+	/**
+	 * create a spatial index tree
+	 */
+	void CreateIndexTree()
+	{
+		// iterate voronoi vertices
+		for(std::size_t idx=0; idx<vertices.size(); ++idx)
+		{
+			// convert vertex to index vertex and insert it into the tree
+			const t_vec& vert = vertices[idx];
+			t_idxvertex<t_scalar> idxvert{vert[0], vert[1]};
+
+			idxtree.insert(std::make_tuple(idxvert, idx));
+		}
+	}
+
+
+	/**
+	 * get the index of the closest n voronoi vertices
+	 */
+	std::vector<std::size_t> 
+	GetClosestVoronoiVertices(const t_vec& vec, std::size_t n = 1) const
+	{
+		std::vector<std::size_t> indices;
+		indices.reserve(n);
+
+		idxtree.query(boost::geometry::index::nearest(
+			t_idxvertex<t_scalar>(vec[0], vec[1]), n),
+			boost::make_function_output_iterator([&indices](const auto& val)
+			{
+				indices.push_back(std::get<1>(val));
+			}));
+
+		return indices;
+	}
+	// ------------------------------------------------------------------------
 
 	
 	void Clear()
@@ -183,6 +253,7 @@ struct VoronoiLinesResults
 		linear_edges.clear();
 		parabolic_edges.clear();
 		graph.Clear();
+		idxtree.clear();
 	}
 };
 
@@ -208,8 +279,11 @@ calc_voro(const std::vector<t_line>& lines,
 	const std::vector<bool> *inverted_regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
-	using t_real = typename t_vec::value_type;
 	namespace poly = boost::polygon;
+	namespace geo = boost::geometry;
+
+	using t_real = typename t_vec::value_type;
+
 
 	VoronoiLinesResults<t_vec, t_line, t_graph> results;
 
@@ -763,6 +837,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				std::move(std::get<0>(edge))));
 	}
 
+
+	results.CreateIndexTree();
 	return results;
 }
 
@@ -962,6 +1038,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 	}
 
+	results.CreateIndexTree();
 	return results;
 }
 #endif

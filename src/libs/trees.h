@@ -214,6 +214,10 @@ struct RbTreeNodeTraits : public BasicNodeTraits<t_tree_node>
 };
 
 
+/**
+ * output the graph in the DOT format
+ * @see https://en.wikipedia.org/wiki/DOT_(graph_description_language)
+ */
 template<class t_node>
 void write_graph(std::ostream& ostrStates, std::ostream& ostrTransitions,
 	const std::unordered_map<const t_node*, std::size_t>& nodeMap, const t_node* node)
@@ -243,6 +247,9 @@ requires is_tree_node<t_node>
 }
 
 
+/**
+ * number and save all unique graph nodes in a map
+ */
 template<class t_node>
 void number_nodes(std::unordered_map<const t_node*, std::size_t>& map, const t_node* node, std::size_t &num)
 requires is_tree_node<t_node>
@@ -257,6 +264,10 @@ requires is_tree_node<t_node>
 }
 
 
+/**
+ * output the graph in the DOT format
+ * @see https://en.wikipedia.org/wiki/DOT_(graph_description_language)
+ */
 template<class t_node>
 void write_graph(std::ostream& ostr, const t_node* node)
 requires is_tree_node<t_node>
