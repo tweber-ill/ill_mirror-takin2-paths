@@ -536,7 +536,9 @@ void LinesScene::UpdateVoro()
 	};
 
 
-	m_elems_voro.reserve(results.linear_edges.size() + results.parabolic_edges.size() + results.vertices.size());
+	m_elems_voro.reserve(results.GetLinearEdges().size() + 
+		results.GetParabolicEdges().size() + 
+		results.GetVoronoiVertices().size());
 
 	// voronoi edges
 	if(m_calcvoro)
@@ -547,7 +549,7 @@ void LinesScene::UpdateVoro()
 		penLinEdge.setWidthF(1.);
 		penLinEdge.setColor(QColor::fromRgbF(0.,0.,0.));
 
-		for(const auto& linear_edge : results.linear_edges)
+		for(const auto& linear_edge : results.GetLinearEdges())
 		{
 			const auto& linear_bisector = std::get<1>(linear_edge);
 
@@ -562,7 +564,7 @@ void LinesScene::UpdateVoro()
 		// parabolic voronoi edges
 		QPen penParaEdge = penLinEdge;
 
-		for(const auto& parabolic_edges : results.parabolic_edges)
+		for(const auto& parabolic_edges : results.GetParabolicEdges())
 		{
 			const auto& parabolic_points = std::get<1>(parabolic_edges);
 
@@ -591,7 +593,7 @@ void LinesScene::UpdateVoro()
 		brushVertex.setStyle(Qt::SolidPattern);
 		brushVertex.setColor(QColor::fromRgbF(0.75, 0., 0.));
 
-		for(const t_vec& vertex : results.vertices)
+		for(const t_vec& vertex : results.GetVoronoiVertices())
 		{
 			//tl2_ops::operator<<(std::cout, vertex) << std::endl;
 			const t_real width = 8.;

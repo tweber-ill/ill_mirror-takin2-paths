@@ -280,7 +280,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return;
 
 		std::ofstream ofstr(filename.toStdString());
-		bool ok = geo::print_graph(this->m_pathsbuilder->GetVoronoiResults().graph, ofstr);
+		bool ok = geo::print_graph(this->m_pathsbuilder->
+			GetVoronoiResults().GetVoronoiGraph(), ofstr);
 		ofstr << std::endl;
 
 		if(ok)
@@ -793,7 +794,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 	// draw linear voronoi edges
 	const t_real edge_eps = m_pathsbuilder->GetVoronoiEdgeEpsilon();
 
-	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().linear_edges)
+	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().GetLinearEdges())
 	{
 		const auto& line = std::get<1>(edge);
 
@@ -822,7 +823,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 
 
 	// draw parabolic voronoi edges
-	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().parabolic_edges)
+	for(const auto& edge : m_pathsbuilder->GetVoronoiResults().GetParabolicEdges())
 	{
 		const auto& points = std::get<1>(edge);
 

@@ -606,7 +606,7 @@ InstrumentPath PathsBuilder::FindPath(
 #endif
 
 	// find closest voronoi vertices
-	const auto& voro_vertices = m_voro_results.vertices;
+	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
 
 	// no voronoi vertices available
 	if(voro_vertices.size() == 0)
@@ -615,48 +615,51 @@ InstrumentPath PathsBuilder::FindPath(
 
 	std::size_t idx_i = 0;
 	std::size_t idx_f = 0;
-	
+
 	// calculation of closest voronoi vertices using the index tree
-	std::vector<std::size_t> indices_i = 
-		m_voro_results.GetClosestVoronoiVertices(path.vec_i, 1);
-	if(indices_i.size())
-		idx_i = indices_i[0];
-
-	std::vector<std::size_t> indices_f = 
-		m_voro_results.GetClosestVoronoiVertices(path.vec_f, 1);
-	if(indices_f.size())
-		idx_f = indices_f[0];
-
-
-	/*
-	// alternate calculation without index tree
-	t_real mindist_i = std::numeric_limits<t_real>::max();
-	t_real mindist_f = std::numeric_limits<t_real>::max();
-
-	for(std::size_t idx_vert = 0; idx_vert < voro_vertices.size(); ++idx_vert)
+	if(m_voro_results.GetIndexTreeSize())
 	{
-		const t_vec& cur_vert = voro_vertices[idx_vert];
-		//std::cout << "cur_vert: " << cur_vert[0] << " " << cur_vert[1] << std::endl;
+		std::vector<std::size_t> indices_i = 
+			m_voro_results.GetClosestVoronoiVertices(path.vec_i, 1);
+		if(indices_i.size())
+			idx_i = indices_i[0];
 
-		t_vec diff_i = path.vec_i - cur_vert;
-		t_vec diff_f = path.vec_f - cur_vert;
+		std::vector<std::size_t> indices_f = 
+			m_voro_results.GetClosestVoronoiVertices(path.vec_f, 1);
+		if(indices_f.size())
+			idx_f = indices_f[0];
+	}
 
-		t_real dist_i_sq = tl2::inner<t_vec>(diff_i, diff_i);
-		t_real dist_f_sq = tl2::inner<t_vec>(diff_f, diff_f);
+	// alternate calculation without index tree
+	else
+	{
+		t_real mindist_i = std::numeric_limits<t_real>::max();
+		t_real mindist_f = std::numeric_limits<t_real>::max();
 
-		if(dist_i_sq < mindist_i)
+		for(std::size_t idx_vert = 0; idx_vert < voro_vertices.size(); ++idx_vert)
 		{
-			mindist_i = dist_i_sq;
-			idx_i = idx_vert;
-		}
+			const t_vec& cur_vert = voro_vertices[idx_vert];
+			//std::cout << "cur_vert: " << cur_vert[0] << " " << cur_vert[1] << std::endl;
 
-		if(dist_f_sq < mindist_f)
-		{
-			mindist_f = dist_f_sq;
-			idx_f = idx_vert;
+			t_vec diff_i = path.vec_i - cur_vert;
+			t_vec diff_f = path.vec_f - cur_vert;
+
+			t_real dist_i_sq = tl2::inner<t_vec>(diff_i, diff_i);
+			t_real dist_f_sq = tl2::inner<t_vec>(diff_f, diff_f);
+
+			if(dist_i_sq < mindist_i)
+			{
+				mindist_i = dist_i_sq;
+				idx_i = idx_vert;
+			}
+
+			if(dist_f_sq < mindist_f)
+			{
+				mindist_f = dist_f_sq;
+				idx_f = idx_vert;
+			}
 		}
 	}
-	*/
 
 #ifdef DEBUG
 	std::cout << "Nearest voronoi vertices: " << idx_i << ", " << idx_f << "." << std::endl;
@@ -664,7 +667,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 	// find the shortest path between the voronoi vertices
-	const auto& voro_graph = m_voro_results.graph;
+	const auto& voro_graph = m_voro_results.GetVoronoiGraph();
 
 	// are the graph vertex indices valid?
 	if(idx_i >= voro_graph.GetNumVertices() || idx_f >= voro_graph.GetNumVertices())
@@ -835,7 +838,7 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 		return path_vertices;
 
 	const auto& voro_results = GetVoronoiResults();
-	const auto& voro_vertices = voro_results.vertices;
+	const auto& voro_vertices = voro_results.GetVoronoiVertices();
 
 
 	// convert pixel to angular coordinates and add vertex to path
@@ -858,10 +861,10 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 		// check if the current one is a quadratic bisector
 		std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
-		auto iter_quadr = voro_results.parabolic_edges.find(
+		auto iter_quadr = voro_results.GetParabolicEdges().find(
 			std::make_pair(prev_voro_idx, voro_idx));
 
-		if(iter_quadr != voro_results.parabolic_edges.end())
+		if(iter_quadr != voro_results.GetParabolicEdges().end())
 		{
 			// it's a quadratic bisector
 			is_linear_bisector = false;

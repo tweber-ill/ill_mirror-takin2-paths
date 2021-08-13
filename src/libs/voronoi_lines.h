@@ -96,8 +96,9 @@ template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>>
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
-struct VoronoiLinesResults
+class VoronoiLinesResults
 {
+public:
 	using t_scalar = typename t_vec::value_type;
 
 	using t_vert_index = std::size_t;
@@ -105,6 +106,14 @@ struct VoronoiLinesResults
 
 	using t_vert_index_opt = std::optional<t_vert_index>;
 	using t_vert_indices_opt = std::pair<t_vert_index_opt, t_vert_index_opt>;
+
+	template<class T = t_real>
+	using t_idxvertex = boost::geometry::model::point<
+		T, 2, boost::geometry::cs::cartesian>;
+
+	using t_idxtree = boost::geometry::index::rtree<
+		std::tuple<t_idxvertex<t_scalar>, std::size_t>, 
+		boost::geometry::index::dynamic_rstar>;
 
 
 	// ------------------------------------------------------------------------
@@ -175,38 +184,23 @@ struct VoronoiLinesResults
 	// ------------------------------------------------------------------------
 
 
-	// ------------------------------------------------------------------------
-	// linear bisectors
-	std::unordered_map<t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>
-		linear_edges{};
+	using t_edgemap_lin = 
+		std::unordered_map<
+			t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>;
 
-	// quadratic bisectors
-	std::unordered_map<t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>
-		parabolic_edges{};
-	// ------------------------------------------------------------------------
+	using t_edgemap_quadr =
+		std::unordered_map<
+			t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>;
 
 
 	// ------------------------------------------------------------------------
-	// vertices
-	std::vector<t_vec> vertices{};
-
-	// voronoi vertex graph
-	// graph vertex indices correspond to those of the "vertices" vector
-	t_graph graph;
-	// ------------------------------------------------------------------------
-
-
-	// ------------------------------------------------------------------------
-	// voronoi vertex spatial index tree
-	template<class T = t_real>
-	using t_idxvertex = boost::geometry::model::point<
-		T, 2, boost::geometry::cs::cartesian>;
-
-	using t_idxtree = boost::geometry::index::rtree<
-		std::tuple<t_idxvertex<t_scalar>, std::size_t>, 
-		boost::geometry::index::dynamic_rstar>;
-
-	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+	/**
+	 * number of elements in the index tree
+	 */
+	typename t_idxtree::size_type GetIndexTreeSize() const
+	{
+		return idxtree.size();
+	}
 
 
 	/**
@@ -255,6 +249,45 @@ struct VoronoiLinesResults
 		graph.Clear();
 		idxtree.clear();
 	}
+
+
+	// ------------------------------------------------------------------------
+	// getters
+	// ------------------------------------------------------------------------
+	const t_edgemap_lin& GetLinearEdges() const { return linear_edges; }
+	const t_edgemap_quadr& GetParabolicEdges() const { return parabolic_edges; }
+	const std::vector<t_vec>& GetVoronoiVertices() const { return vertices; }
+	const t_graph& GetVoronoiGraph() const { return graph; }
+	const t_idxtree& GetVoronoiIndexTree() const { return idxtree; }
+
+	t_edgemap_lin& GetLinearEdges() { return linear_edges; }
+	t_edgemap_quadr& GetParabolicEdges() { return parabolic_edges; }
+	std::vector<t_vec>& GetVoronoiVertices() { return vertices; }
+	t_graph& GetVoronoiGraph() { return graph; }
+// ------------------------------------------------------------------------
+
+
+private:
+	// ------------------------------------------------------------------------
+	// linear bisectors
+	t_edgemap_lin linear_edges{};
+
+	// quadratic bisectors
+	t_edgemap_quadr parabolic_edges{};
+	// ------------------------------------------------------------------------
+
+
+	// ------------------------------------------------------------------------
+	// vertices
+	std::vector<t_vec> vertices{};
+
+	// voronoi vertex graph
+	// graph vertex indices correspond to those of the "vertices" vector
+	t_graph graph;
+
+	// voronoi vertex spatial index tree
+	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+	// ------------------------------------------------------------------------
 };
 
 
@@ -314,7 +347,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		{
 			bool operator()(const vertex_type& vert1, const vertex_type& vert2) const
 			{
+				// TODO: use external epsilon value
 				const t_real eps = 1e-3;
+
 				return tl2::equals(vert1.x(), vert2.x(), eps)
 					&& tl2::equals(vert1.y(), vert2.y(), eps);
 			}
@@ -367,11 +402,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// graph of voronoi vertices
-	t_graph& graph = results.graph;
+	t_graph& graph = results.GetVoronoiGraph();
 
 	// voronoi vertices
 	std::vector<const typename t_vorotraits::vertex_type*> vorovertices;
-	auto& vertices = results.vertices;
+	auto& vertices = results.GetVoronoiVertices();
 	vorovertices.reserve(voro.vertices().size());
 	vertices.reserve(voro.vertices().size());
 
@@ -407,8 +442,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// edges
-	auto& all_parabolic_edges = results.parabolic_edges;
-	auto& linear_edges = results.linear_edges;
+	auto& all_parabolic_edges = results.GetParabolicEdges();
+	auto& linear_edges = results.GetLinearEdges();
 
 	// TODO: get rid of these and use the above maps directly
 	std::vector<std::tuple<t_line,
@@ -865,10 +900,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	using t_real = typename t_vec::value_type;
 
 	VoronoiLinesResults<t_vec, t_line, t_graph> results;
-	auto& vertices = results.vertices;;
-	auto& linear_edges = results.linear_edges;
-	auto& all_parabolic_edges = results.parabolic_edges;
-	t_graph& graph = results.graph;
+	auto& vertices = results.GetVoronoiVertices();
+	auto& linear_edges = results.GetLinearEdges();
+	auto& all_parabolic_edges = results.GetParabolicEdges();
+	t_graph& graph = results.GetVoronoiGraph();
 
 	// get minimal and maximal extents of vertices
 	t_real maxRadSq = 1.;
