@@ -1182,12 +1182,19 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	m_contextMenuObj = new QMenu(this);
 
+	QAction *actionObjRotP45 = new QAction(QIcon::fromTheme("object-rotate-left"), "Rotate Object by +45°", m_contextMenuObj);
+	QAction *actionObjRotM45 = new QAction(QIcon::fromTheme("object-rotate-right"), "Rotate Object by -45°", m_contextMenuObj);
 	QAction *actionObjDel = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object", m_contextMenuObj);
-	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Properties", m_contextMenuObj);
+	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Object Properties", m_contextMenuObj);
 
+	m_contextMenuObj->addAction(actionObjRotP45);
+	m_contextMenuObj->addAction(actionObjRotM45);
+	m_contextMenuObj->addSeparator();
 	m_contextMenuObj->addAction(actionObjDel);
 	m_contextMenuObj->addAction(actionObjProp);
 
+	connect(actionObjRotP45, &QAction::triggered, [this]() { RotateCurrentObject(45./180.*tl2::pi<t_real>); });
+	connect(actionObjRotM45, &QAction::triggered, [this]() { RotateCurrentObject(-45./180.*tl2::pi<t_real>); });
 	connect(actionObjDel, &QAction::triggered, this, &PathsTool::DeleteCurrentObject);
 	connect(actionObjProp, &QAction::triggered, this, &PathsTool::ShowCurrentObjectProperties);
 	// --------------------------------------------------------------------
@@ -1361,6 +1368,45 @@ void PathsTool::DeleteObject(const std::string& obj)
 	{
 		QMessageBox::warning(this, "Warning",
 			QString("Object \"") + obj.c_str() + QString("\" cannot be deleted."));
+	}
+}
+
+
+/**
+ * rotate 3d object under the cursor
+ */
+void PathsTool::RotateCurrentObject(t_real angle)
+{
+	RotateObject(m_curContextObj, angle);
+}
+
+
+/**
+ * rotate the given object
+ */
+void PathsTool::RotateObject(const std::string& obj, t_real angle)
+{
+	if(obj == "")
+		return;
+
+	// remove object from instrument space
+	if(auto [ok, objgeo] = m_instrspace.RotateObject(obj, angle); ok)
+	{
+		// update object browser tree
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+
+		// remove old 3d representation of object and create a new one
+		if(m_renderer)
+		{
+			m_renderer->DeleteObject(obj);
+			m_renderer->AddWall(*objgeo, true);
+		}
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning",
+			QString("Object \"") + obj.c_str() + QString("\" cannot be rotated."));
 	}
 }
 

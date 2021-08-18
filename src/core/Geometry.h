@@ -68,6 +68,8 @@ public:
 	virtual const t_vec& GetColour() const { return m_colour; }
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
+	virtual void Rotate(t_real angle) = 0;
+
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 		load(const boost::property_tree::ptree& prop);
 
@@ -112,6 +114,8 @@ public:
 	void SetDepth(t_real d) { m_depth = d; m_trafo_needs_update = true; }
 	void SetLength(t_real l);
 
+	virtual void Rotate(t_real angle) override;
+
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({-0.5, 0, 0});
 	t_vec m_pos2 = tl2::create<t_vec>({0.5, 0, 0});
@@ -152,6 +156,8 @@ public:
 	t_real GetRadius() const { return m_radius; }
 	void SetRadius(t_real rad) { m_radius = rad; m_trafo_needs_update = true; }
 
+	virtual void Rotate(t_real angle) override;
+
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
 	t_real m_height = 0, m_radius = 0;
@@ -187,6 +193,8 @@ public:
 
 	t_real GetRadius() const { return m_radius; }
 	void SetRadius(t_real rad) { m_radius = rad; m_trafo_needs_update = true; }
+
+	virtual void Rotate(t_real angle) override;
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});

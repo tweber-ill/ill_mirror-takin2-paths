@@ -246,15 +246,24 @@ pt::ptree BoxGeometry::Save() const
 }
 
 
+/**
+ * update the trafo matrix
+ */
 void BoxGeometry::UpdateTrafo() const
 {
+	t_vec upDir = tl2::create<t_vec>({0, 0, 1});
 	t_vec vecFrom = tl2::create<t_vec>({1, 0, 0});
 	t_vec vecTo = m_pos2 - m_pos1;
 	t_vec preTranslate = 0.5*(m_pos1 + m_pos2);
 	t_vec postTranslate = tl2::create<t_vec>({0, 0, m_height*0.5});
 
+	//using namespace tl2_ops;
+	//std::cout << vecFrom << " -> " << vecTo << std::endl;
+
 	m_trafo = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
-		vecTo, 1., postTranslate, vecFrom, 1., preTranslate);
+		vecTo, 1., postTranslate, vecFrom, 1., preTranslate, upDir);
+
+	//std::cout << tl2::det<t_mat>(m_trafo) << std::endl;
 }
 
 
@@ -266,6 +275,30 @@ BoxGeometry::GetTriangles() const
 
 	//tl2::transform_obj(verts, norms, mat, true);
 	return std::make_tuple(verts, norms, uvs);
+}
+
+
+/**
+ * rotate the box around the z axis
+ */
+void BoxGeometry::Rotate(t_real angle)
+{
+	// create the rotation matrix
+	t_vec axis = tl2::create<t_vec>({0, 0, 1});
+	t_mat R = tl2::rotation<t_mat, t_vec>(axis, angle);
+
+	// remove translation
+	t_vec centre = GetCentre();
+	SetCentre(tl2::create<t_vec>({0, 0, 0}));
+
+	// rotate the position vectors
+	m_pos1 = R*m_pos1;
+	m_pos2 = R*m_pos2;
+
+	// restore translation
+	SetCentre(centre);
+
+	UpdateTrafo();
 }
 
 // ----------------------------------------------------------------------------
@@ -368,6 +401,14 @@ CylinderGeometry::GetTriangles() const
 	return std::make_tuple(verts, norms, uvs);
 }
 
+
+/**
+ * empty rotation function, nothing to be done
+ */
+void CylinderGeometry::Rotate(t_real)
+{
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -467,6 +508,14 @@ SphereGeometry::GetTriangles() const
 
 	//tl2::transform_obj(verts, norms, mat, true);
 	return std::make_tuple(triagverts, norms, uvs);
+}
+
+
+/**
+ * empty rotation function, nothing to be done
+ */
+void SphereGeometry::Rotate(t_real)
+{
 }
 
 // ----------------------------------------------------------------------------

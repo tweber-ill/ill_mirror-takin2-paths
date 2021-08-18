@@ -154,6 +154,7 @@ void InstrumentSpace::AddWall(const std::vector<std::shared_ptr<Geometry>>& wall
  */
 bool InstrumentSpace::DeleteObject(const std::string& id)
 {
+	// find the wall with the given id
 	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), [&id](const std::shared_ptr<Geometry>& wall) -> bool
 	{
 		return wall->GetId() == id;
@@ -172,6 +173,7 @@ bool InstrumentSpace::DeleteObject(const std::string& id)
  */
 bool InstrumentSpace::RenameObject(const std::string& oldid, const std::string& newid)
 {
+	// find the wall with the given id
 	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
 		[&oldid](const std::shared_ptr<Geometry>& wall) -> bool
 		{
@@ -183,6 +185,25 @@ bool InstrumentSpace::RenameObject(const std::string& oldid, const std::string& 
 	}
 
 	return false;
+}
+
+
+/**
+ * rotate an object by the given angle
+ */
+std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::RotateObject(const std::string& id, t_real angle)
+{
+	// find the wall with the given id
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), [&id](const std::shared_ptr<Geometry>& wall) -> bool
+	{
+		return wall->GetId() == id;
+	}); iter != m_walls.end())
+	{
+		(*iter)->Rotate(angle);
+		return std::make_tuple(true, *iter);
+	}
+
+	return std::make_tuple(false, nullptr);
 }
 
 

@@ -207,11 +207,15 @@ protected slots:
 	// add or delete 3d objects
 	void AddWall();
 	void AddPillar();
+
 	void DeleteCurrentObject();
-	void DeleteObject(const std::string& id);
-	void RenameObject(const std::string& oldid, const std::string& newid);
+	void RotateCurrentObject(t_real angle);
 	void ShowCurrentObjectProperties();
 	void ShowGeometriesBrowser();
+
+	void RotateObject(const std::string& id, t_real angle);
+	void DeleteObject(const std::string& id);
+	void RenameObject(const std::string& oldid, const std::string& newid);
 
 
 signals:
