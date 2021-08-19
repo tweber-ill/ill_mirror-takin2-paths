@@ -36,9 +36,11 @@ protected:
 	void RenameCurrentGeoTreeObject();
 	void DeleteCurrentGeoTreeObject();
 	void GeoTreeItemChanged(QTreeWidgetItem *item, int col);
+	void GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem *previtem);
 
 
 private:
+	const InstrumentSpace* m_instrspace{nullptr};
 	QSettings *m_sett{nullptr};
 
 	QTreeWidget *m_geotree{nullptr};

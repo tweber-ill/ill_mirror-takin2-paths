@@ -11,6 +11,8 @@
 #include <tuple>
 #include <memory>
 #include <string>
+#include <variant>
+#include <vector>
 
 #include <boost/property_tree/ptree.hpp>
 
@@ -42,6 +44,17 @@ enum class GeometryType
 };
 
 
+/**
+ * representation of a property of a geometry object
+ * for easy data exchange
+ */
+struct GeometryProperty
+{
+	std::string key;
+	std::variant<t_real, t_vec> value;
+};
+
+
 class Geometry
 {
 public:
@@ -69,6 +82,8 @@ public:
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
 	virtual void Rotate(t_real angle) = 0;
+
+	virtual std::vector<GeometryProperty> GetProperties() const = 0;
 
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 		load(const boost::property_tree::ptree& prop);
@@ -116,6 +131,8 @@ public:
 
 	virtual void Rotate(t_real angle) override;
 
+	virtual std::vector<GeometryProperty> GetProperties() const override;
+
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({-0.5, 0, 0});
 	t_vec m_pos2 = tl2::create<t_vec>({0.5, 0, 0});
@@ -158,6 +175,8 @@ public:
 
 	virtual void Rotate(t_real angle) override;
 
+	virtual std::vector<GeometryProperty> GetProperties() const override;
+
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
 	t_real m_height = 0, m_radius = 0;
@@ -195,6 +214,8 @@ public:
 	void SetRadius(t_real rad) { m_radius = rad; m_trafo_needs_update = true; }
 
 	virtual void Rotate(t_real angle) override;
+
+	virtual std::vector<GeometryProperty> GetProperties() const override;
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});

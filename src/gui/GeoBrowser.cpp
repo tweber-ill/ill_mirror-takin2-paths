@@ -105,9 +105,10 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 	connect(m_geotree, &QTreeWidget::customContextMenuRequested,
 		this, &GeometriesBrowser::ShowGeoTreeContextMenu);
-
-	connect(m_geotree, &QTreeWidget::itemChanged,
+	connect(m_geotree, &QTreeWidget::itemChanged, 
 		this, &GeometriesBrowser::GeoTreeItemChanged);
+	connect(m_geotree, &QTreeWidget::currentItemChanged, 
+		this, &GeometriesBrowser::GeoTreeCurrentItemChanged);
 }
 
 
@@ -181,6 +182,32 @@ void GeometriesBrowser::GeoTreeItemChanged(QTreeWidgetItem *item, int col)
 
 
 /**
+ * an object has been selected
+ */
+void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem *previtem)
+{
+	if(!item || !m_instrspace)
+		return;
+
+	std::string itemid = item->text(0).toStdString();
+	if(itemid == "")
+		return;
+
+	// get the geometry object properties and insert them in the table
+	const auto& props = m_instrspace->GetGeoProperties(itemid);
+
+	m_geosettings->clearContents();
+	m_geosettings->setRowCount(props.size());
+
+	for(std::size_t row=0; row<props.size(); ++row)
+	{
+		const auto& prop = props[row];
+		m_geosettings->setItem(row, 0, new QTableWidgetItem(prop.key.c_str()));
+	}
+}
+
+
+/**
  * close the dialog
  */
 void GeometriesBrowser::accept()
@@ -190,15 +217,20 @@ void GeometriesBrowser::accept()
 		m_sett->setValue("geobrowser/geo", saveGeometry());
 		m_sett->setValue("geobrowser/splitter", m_splitter->saveState());
 	}
+
 	QDialog::accept();
 }
 
 
 /**
- * refresh the information in the geometries object tree
+ * set an instrument space and refresh the information in the geometries object tree
  */
 void GeometriesBrowser::UpdateGeoTree(const InstrumentSpace& instrspace)
 {
+	// remember the current instrument space
+	m_instrspace = &instrspace;
+
+	// clear old tree
 	m_geotree->clear();
 
 

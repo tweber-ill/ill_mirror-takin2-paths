@@ -65,9 +65,13 @@ public:
 
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
+	std::vector<GeometryProperty> GetGeoProperties(const std::string& obj) const;
+
+
 public:
 	static std::pair<bool, std::string> load(
 		const std::string& filename, InstrumentSpace& instrspace);
+
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };

@@ -724,3 +724,22 @@ std::pair<bool, std::string> InstrumentSpace::load(
 
 	return std::make_pair(true, timestamp.str());
 }
+
+
+/**
+ * get the properties of a geometry object in the instrument space
+ */
+std::vector<GeometryProperty> InstrumentSpace::GetGeoProperties(const std::string& obj) const
+{
+	// find the wall with the given id
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+		[&obj](const std::shared_ptr<Geometry>& wall) -> bool
+		{
+			return wall->GetId() == obj;
+		}); iter != m_walls.end())
+	{
+		return (*iter)->GetProperties();
+	}
+
+	return {};
+}
