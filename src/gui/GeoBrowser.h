@@ -38,6 +38,8 @@ protected:
 	void GeoTreeItemChanged(QTreeWidgetItem *item, int col);
 	void GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem *previtem);
 
+	void GeoSettingsItemChanged(QTableWidgetItem *item);
+
 
 private:
 	const InstrumentSpace* m_instrspace{nullptr};
@@ -50,10 +52,16 @@ private:
 	QMenu *m_contextMenuGeoTree{nullptr};
 	QTreeWidgetItem *m_curContextItem{nullptr};
 
+	// currently selected geometry object
+	std::string m_curObject;
+	bool m_ignoresettingschanges{false};
+
 
 signals:
 	void SignalDeleteObject(const std::string& id);
 	void SignalRenameObject(const std::string& oldId, const std::string& newId);
+
+	void SignalChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
 };
 
 

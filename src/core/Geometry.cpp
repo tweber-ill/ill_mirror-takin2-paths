@@ -298,7 +298,7 @@ void BoxGeometry::Rotate(t_real angle)
 	// restore translation
 	SetCentre(centre);
 
-	UpdateTrafo();
+	m_trafo_needs_update = true;
 }
 
 
@@ -317,6 +317,33 @@ std::vector<GeometryProperty> BoxGeometry::GetProperties() const
 
 	return props;
 }
+
+
+/**
+ * set the properties of the geometry object
+ */
+void BoxGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+{
+	for(const auto& prop : props)
+	{
+		if(prop.key == "position 1")
+			m_pos1 = std::get<t_vec>(prop.value);
+		else if(prop.key == "position 2")
+			m_pos2 = std::get<t_vec>(prop.value);
+		else if(prop.key == "height")
+			m_height = std::get<t_real>(prop.value);
+		else if(prop.key == "depth")
+			m_depth = std::get<t_real>(prop.value);
+		else if(prop.key == "colour")
+			m_colour = std::get<t_vec>(prop.value);
+	}
+
+	// calculate dependent parameters
+	m_length = tl2::norm<t_vec>(m_pos1 - m_pos2);
+
+	m_trafo_needs_update = true;
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -440,6 +467,28 @@ std::vector<GeometryProperty> CylinderGeometry::GetProperties() const
 
 	return props;
 }
+
+
+/**
+ * set the properties of the geometry object
+ */
+void CylinderGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+{
+	for(const auto& prop : props)
+	{
+		if(prop.key == "position")
+			m_pos = std::get<t_vec>(prop.value);
+		else if(prop.key == "height")
+			m_height = std::get<t_real>(prop.value);
+		else if(prop.key == "radius")
+			m_radius = std::get<t_real>(prop.value);
+		else if(prop.key == "colour")
+			m_colour = std::get<t_vec>(prop.value);
+	}
+
+	m_trafo_needs_update = true;
+}
+
 // ----------------------------------------------------------------------------
 
 
@@ -563,4 +612,24 @@ std::vector<GeometryProperty> SphereGeometry::GetProperties() const
 
 	return props;
 }
+
+
+/**
+ * set the properties of the geometry object
+ */
+void SphereGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+{
+	for(const auto& prop : props)
+	{
+		if(prop.key == "position")
+			m_pos = std::get<t_vec>(prop.value);
+		else if(prop.key == "radius")
+			m_radius = std::get<t_real>(prop.value);
+		else if(prop.key == "colour")
+			m_colour = std::get<t_vec>(prop.value);
+	}
+
+	m_trafo_needs_update = true;
+}
+
 // ----------------------------------------------------------------------------

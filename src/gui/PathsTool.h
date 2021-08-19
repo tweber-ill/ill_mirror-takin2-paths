@@ -216,6 +216,7 @@ protected slots:
 	void RotateObject(const std::string& id, t_real angle);
 	void DeleteObject(const std::string& id);
 	void RenameObject(const std::string& oldid, const std::string& newid);
+	void ChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
 
 
 signals:

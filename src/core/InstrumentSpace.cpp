@@ -164,6 +164,7 @@ bool InstrumentSpace::DeleteObject(const std::string& id)
 		return true;
 	}
 
+	// TODO: handle other cases besides walls
 	return false;
 }
 
@@ -184,6 +185,7 @@ bool InstrumentSpace::RenameObject(const std::string& oldid, const std::string& 
 		return true;
 	}
 
+	// TODO: handle other cases besides walls
 	return false;
 }
 
@@ -203,6 +205,7 @@ std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::RotateObject(const 
 		return std::make_tuple(true, *iter);
 	}
 
+	// TODO: handle other cases besides walls
 	return std::make_tuple(false, nullptr);
 }
 
@@ -741,5 +744,28 @@ std::vector<GeometryProperty> InstrumentSpace::GetGeoProperties(const std::strin
 		return (*iter)->GetProperties();
 	}
 
+	// TODO: handle other cases besides walls
 	return {};
+}
+
+
+/**
+ * set the properties of a geometry object in the instrument space
+ */
+std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::SetGeoProperties(
+	const std::string& obj, const std::vector<GeometryProperty>& props)
+{
+	// find the wall with the given id
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+		[&obj](const std::shared_ptr<Geometry>& wall) -> bool
+		{
+			return wall->GetId() == obj;
+		}); iter != m_walls.end())
+	{
+		(*iter)->SetProperties(props);
+		return std::make_tuple(true, *iter);
+	}
+
+	// TODO: handle other cases besides walls
+	return std::make_tuple(false, nullptr);
 }

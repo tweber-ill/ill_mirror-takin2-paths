@@ -66,6 +66,8 @@ public:
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
 	std::vector<GeometryProperty> GetGeoProperties(const std::string& obj) const;
+	std::tuple<bool, std::shared_ptr<Geometry>> SetGeoProperties(
+		const std::string& obj, const std::vector<GeometryProperty>& props);
 
 
 public:

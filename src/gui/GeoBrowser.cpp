@@ -6,6 +6,7 @@
  */
 
 #include "GeoBrowser.h"
+#include "Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
@@ -13,6 +14,17 @@
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMessageBox>
+
+#include <boost/scope_exit.hpp>
+
+#include "tlibs2/libs/expr.h"
+#include "tlibs2/libs/str.h"
+
+
+// columns in the settings table
+#define GEOBROWSER_SETTINGS_KEY 0
+#define GEOBROWSER_SETTINGS_TYPE 1
+#define GEOBROWSER_SETTINGS_VALUE 2
 
 
 /**
@@ -57,11 +69,13 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	m_geosettings->horizontalHeader()->setDefaultSectionSize(200);
 	m_geosettings->verticalHeader()->setDefaultSectionSize(32);
 	m_geosettings->verticalHeader()->setVisible(false);
-	m_geosettings->setColumnCount(2);
-	m_geosettings->setColumnWidth(0, 200);
-	m_geosettings->setColumnWidth(1, 200);
-	m_geosettings->setHorizontalHeaderItem(0, new QTableWidgetItem{"Key"});
-	m_geosettings->setHorizontalHeaderItem(1, new QTableWidgetItem{"Value"});
+	m_geosettings->setColumnCount(3);
+	m_geosettings->setColumnWidth(0, 150);
+	m_geosettings->setColumnWidth(1, 75);
+	m_geosettings->setColumnWidth(2, 150);
+	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_KEY, new QTableWidgetItem{"Key"});
+	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_TYPE, new QTableWidgetItem{"Type"});
+	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem{"Value"});
 
  	QSizePolicy spsettings(QSizePolicy::Preferred, QSizePolicy::Expanding, QSizePolicy::Frame);
     spsettings.setHorizontalStretch(2);
@@ -109,6 +123,9 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 		this, &GeometriesBrowser::GeoTreeItemChanged);
 	connect(m_geotree, &QTreeWidget::currentItemChanged, 
 		this, &GeometriesBrowser::GeoTreeCurrentItemChanged);
+
+	connect(m_geosettings, &QTableWidget::itemChanged, 
+		this, &GeometriesBrowser::GeoSettingsItemChanged);
 }
 
 
@@ -193,16 +210,142 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 	if(itemid == "")
 		return;
 
+	m_curObject = itemid;
+	
+	// ignore programmatic settings changes
+	m_ignoresettingschanges = true;
+	GeometriesBrowser* pThis = this;
+	BOOST_SCOPE_EXIT(pThis) { pThis->m_ignoresettingschanges = false; } BOOST_SCOPE_EXIT_END
+
+
 	// get the geometry object properties and insert them in the table
-	const auto& props = m_instrspace->GetGeoProperties(itemid);
+	const auto& props = m_instrspace->GetGeoProperties(m_curObject);
 
 	m_geosettings->clearContents();
 	m_geosettings->setRowCount(props.size());
+	bool sorting_enabled = m_geosettings->isSortingEnabled();
+	m_geosettings->setSortingEnabled(false);
 
+	// iterate object properties
 	for(std::size_t row=0; row<props.size(); ++row)
 	{
 		const auto& prop = props[row];
-		m_geosettings->setItem(row, 0, new QTableWidgetItem(prop.key.c_str()));
+
+		// key
+		auto* itemKey = new QTableWidgetItem(prop.key.c_str());
+		itemKey->setFlags(itemKey->flags() & ~Qt::ItemIsEditable);
+		m_geosettings->setItem(row, GEOBROWSER_SETTINGS_KEY, itemKey);
+
+		// real value
+		if(std::holds_alternative<t_real>(prop.value))
+		{
+			t_real val = std::get<t_real>(prop.value);
+
+			std::ostringstream ostr;
+			ostr.precision(g_prec);
+			ostr << val;
+
+			// type
+			auto* itemType = new QTableWidgetItem("real");
+			itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
+
+			// value
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem(ostr.str().c_str()));
+		}
+
+		// vector value
+		else if(std::holds_alternative<t_vec>(prop.value))
+		{
+			const t_vec& val = std::get<t_vec>(prop.value);
+
+			std::ostringstream ostr;
+			ostr.precision(g_prec);
+
+			using namespace tl2_ops;
+			ostr << val;
+
+			/*for(std::size_t i=0; i<val.size(); ++i)
+			{
+				ostr << val[i];
+				if(i != val.size()-1)
+					ostr << ", ";
+			}*/
+
+			// type
+			auto* itemType = new QTableWidgetItem("vector");
+			itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
+
+			// value
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem(ostr.str().c_str()));
+		}
+	}
+
+	m_geosettings->setSortingEnabled(sorting_enabled);
+}
+
+
+/**
+ * an entry in the settings table has been changed
+ */
+void GeometriesBrowser::GeoSettingsItemChanged(QTableWidgetItem *item)
+{
+	if(!item || m_curObject == "" || m_ignoresettingschanges)
+		return;
+
+	try
+	{
+		int row = m_geosettings->row(item);
+
+		QTableWidgetItem* itemKey = m_geosettings->item(row, GEOBROWSER_SETTINGS_KEY);
+		QTableWidgetItem* itemType = m_geosettings->item(row, GEOBROWSER_SETTINGS_TYPE);
+		QTableWidgetItem* itemVal = m_geosettings->item(row, GEOBROWSER_SETTINGS_VALUE);
+
+		if(!itemKey || !itemType || !itemVal)
+			return;
+
+		std::string ty = itemType->text().toStdString();
+		std::string val = itemVal->text().toStdString();
+
+		GeometryProperty prop;
+		prop.key = itemKey->text().toStdString();
+
+		// real value
+		if(ty == "real")
+		{
+			// parse the expression to yield a real value
+			tl2::ExprParser<t_real> parser;
+			if(!parser.parse(val))
+				throw std::logic_error("Could not parse expression.");
+			prop.value = parser.eval();
+		}
+
+		// vector value
+		else if(ty == "vector")
+		{
+			// get the components of the vector
+			std::vector<std::string> tokens;
+			tl2::get_tokens<std::string, std::string>(val, ";,", tokens);
+
+			t_vec vec = tl2::create<t_vec>(tokens.size());
+			for(std::size_t tokidx=0; tokidx<tokens.size(); ++tokidx)
+			{
+				// parse the vector component expression to yield a real value
+				tl2::ExprParser<t_real> parser;
+				if(!parser.parse(tokens[tokidx]))
+					throw std::logic_error("Could not parse vector expression.");
+				vec[tokidx] = parser.eval();
+			}
+
+			prop.value = vec;
+		}
+
+		emit SignalChangeObjectProperty(m_curObject, prop);
+	}
+	catch(const std::exception& ex)
+	{
+		QMessageBox::critical(this, "Error", ex.what());
 	}
 }
 
