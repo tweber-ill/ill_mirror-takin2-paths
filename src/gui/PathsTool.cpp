@@ -1513,6 +1513,58 @@ void PathsTool::ChangeObjectProperty(const std::string& obj, const GeometryPrope
  */
 void PathsTool::CalculatePathMesh()
 {
+	const auto& instr = m_instrspace.GetInstrument();
+
+	// TODO: angular steps
+	t_real da2 = 1. / 180. * tl2::pi<t_real>;
+	t_real da4 = 1. / 180. * tl2::pi<t_real>;
+
+	// get the angular limits from the instrument model
+	t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+	t_real enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+	t_real starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
+	t_real enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
+
+	// angular padding
+	t_real padding = 4;
+	starta2 -= padding * da2;
+	enda2 += padding * da2;
+	starta4 -= padding * da4;
+	enda4 += padding * da4;
+
+	SetTmpStatus("Clearing old paths.");
+	m_pathsbuilder.Clear();
+
+	SetTmpStatus("Calculating configuration space.");
+	if(!m_pathsbuilder.CalculateConfigSpace(da2, da4, 
+		starta2, enda2, starta4, enda4))
+	{
+		QMessageBox::critical(this, "Error", "Configuration space calculation failed.");
+		return;
+	}
+
+	SetTmpStatus("Calculating obstacle contour lines.");
+	if(!m_pathsbuilder.CalculateWallContours(true, false))
+	{
+		QMessageBox::critical(this, "Error", "Obstacle contour lines calculation failed.");
+		return;
+	}
+
+	SetTmpStatus("Calculating line segments.");
+	if(!m_pathsbuilder.CalculateLineSegments())
+	{
+		QMessageBox::critical(this, "Error", "Line segment calculation failed.");
+		return;
+	}
+
+	SetTmpStatus("Calculating Voronoi regions.");
+	if(!m_pathsbuilder.CalculateVoronoi(false))
+	{
+		QMessageBox::critical(this, "Error", "Voronoi regions calculation failed.");
+		return;
+	}
+
+	SetTmpStatus("Calculation finished.");
 }
 
 
