@@ -642,6 +642,7 @@ void PathsRenderer::initializeGL()
 	{
 		algo::replace_all(*strSrc, std::string("${GLSL_VERSION}"), strGlsl);
 		algo::replace_all(*strSrc, std::string("${PI}"), strPi);
+		algo::replace_all(*strSrc, std::string("${MAX_LIGHTS}"), tl2::var_to_str<unsigned int>(MAX_LIGHTS));
 	}
 
 
@@ -699,14 +700,14 @@ void PathsRenderer::initializeGL()
 	m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
 
 	// get uniform handles from shaders
-	m_uniMatrixCam = m_pShaders->uniformLocation("cam");
-	m_uniMatrixCamInv = m_pShaders->uniformLocation("cam_inv");
-	m_uniMatrixProj = m_pShaders->uniformLocation("proj");
-	m_uniMatrixObj = m_pShaders->uniformLocation("obj");
+	m_uniMatrixCam = m_pShaders->uniformLocation("trafos_cam");
+	m_uniMatrixCamInv = m_pShaders->uniformLocation("trafos_cam_inv");
+	m_uniMatrixProj = m_pShaders->uniformLocation("trafos_proj");
+	m_uniMatrixObj = m_pShaders->uniformLocation("trafos_obj");
 
-	m_uniConstCol = m_pShaders->uniformLocation("const_col");
-	m_uniLightPos = m_pShaders->uniformLocation("lightpos");
-	m_uniNumActiveLights = m_pShaders->uniformLocation("activelights");
+	m_uniConstCol = m_pShaders->uniformLocation("lights_const_col");
+	m_uniLightPos = m_pShaders->uniformLocation("lights_pos");
+	m_uniNumActiveLights = m_pShaders->uniformLocation("lights_numactive");
 
 	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
 	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");

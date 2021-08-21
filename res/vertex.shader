@@ -10,36 +10,51 @@
  */
 
 #version ${GLSL_VERSION}
-#define t_real float
 
+#define t_real float
+#define MAX_LIGHTS ${MAX_LIGHTS}
 
 const t_real pi = ${PI};
 
+
+
+// ----------------------------------------------------------------------------
+// inputs to vertex shader
+// ----------------------------------------------------------------------------
 in vec4 vertex;
 in vec4 normal;
 in vec4 vertex_col;
 in vec2 tex_coords;
+// ----------------------------------------------------------------------------
 
-out vec4 frag_col;
-out vec2 frag_coords;
+
+// ----------------------------------------------------------------------------
+// outputs from vertex shader
+// ----------------------------------------------------------------------------
+out VertexOut
+{
+	vec4 col;
+	vec2 coords;
+} vertex_out;
+// ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // transformations
 // ----------------------------------------------------------------------------
-uniform mat4 proj = mat4(1.);
-uniform mat4 cam = mat4(1.);
-uniform mat4 cam_inv = mat4(1.);
-uniform mat4 obj = mat4(1.);
+uniform mat4 trafos_proj = mat4(1.);
+uniform mat4 trafos_cam = mat4(1.);
+uniform mat4 trafos_cam_inv = mat4(1.);
+uniform mat4 trafos_obj = mat4(1.);
 // ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // lighting
 // ----------------------------------------------------------------------------
-uniform vec4 const_col = vec4(1, 1, 1, 1);
-uniform vec3 lightpos[] = vec3[]( vec3(5, 5, 5), vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0) );
-uniform int activelights = 1;	// how many lights to use?
+uniform vec4 lights_const_col = vec4(1, 1, 1, 1);
+uniform vec3 lights_pos[MAX_LIGHTS];
+uniform int lights_numactive = 1;	// how many lights to use?
 
 t_real g_diffuse = 1.;
 t_real g_specular = 0.25;
@@ -67,8 +82,8 @@ mat3 reflect(vec3 n)
  */
 vec3 get_campos()
 {
-	vec4 trans = -vec4(cam[3].xyz, 0);
-	return (cam_inv*trans).xyz;
+	vec4 trans = -vec4(trafos_cam[3].xyz, 0);
+	return (trafos_cam_inv * trans).xyz;
 }
 
 
@@ -86,14 +101,16 @@ t_real lighting(vec4 objVert, vec4 objNorm)
 		dirToCam = normalize(get_campos() - objVert.xyz);
 
 	// iterate (active) light sources
-	for(int lightidx=0; lightidx<min(lightpos.length(), activelights); ++lightidx)
+	for(int lightidx=0;
+		lightidx<min(lights_pos.length(), lights_numactive);
+		++lightidx)
 	{
 		t_real atten = 1.;
 		t_real I_diff = 0.;
 		t_real I_spec = 0.;
 
 		// diffuse lighting
-		vec3 vertToLight = lightpos[lightidx] - objVert.xyz;
+		vec3 vertToLight = lights_pos[lightidx] - objVert.xyz;
 		t_real distVertLight = length(vertToLight);
 		vec3 dirLight = vertToLight / distVertLight;
 
@@ -146,14 +163,14 @@ t_real lighting(vec4 objVert, vec4 objNorm)
 
 void main()
 {
-	vec4 objPos = obj * vertex;
-	vec4 objNorm = normalize(obj * normal);
-	gl_Position = proj * cam * objPos;
+	vec4 objPos = trafos_obj * vertex;
+	vec4 objNorm = normalize(trafos_obj * normal);
+	gl_Position = trafos_proj * trafos_cam * objPos;
 
 	t_real I = lighting(objPos, objNorm);
-	frag_col.rgb = vertex_col.rgb * I;
-	//frag_col.a = 1;
-	frag_col *= const_col;
+	vertex_out.col.rgb = vertex_col.rgb * I;
+	//vertex_out.col.a = 1;
+	vertex_out.col *= lights_const_col;
 
-	frag_coords = tex_coords;
+	vertex_out.coords = tex_coords;
 }

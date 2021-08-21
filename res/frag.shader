@@ -13,12 +13,23 @@
 #define t_real float
 
 
-// colour
-in vec4 frag_col;
-out vec4 out_col;
+// ----------------------------------------------------------------------------
+// inputs to fragment shader (output from vertex shader)
+// ----------------------------------------------------------------------------
+in VertexOut
+{
+	vec4 col;
+	vec2 coords;
+} frag_in;
+// ----------------------------------------------------------------------------
 
-// fragment coordinates
-in vec2 frag_coords;
+
+// ----------------------------------------------------------------------------
+// outputs from fragment shader
+// ----------------------------------------------------------------------------
+out vec4 frag_out_col;
+// ----------------------------------------------------------------------------
+
 
 // current cursor position
 uniform bool cursor_active = true;
@@ -27,8 +38,8 @@ uniform vec2 cursor_coords = vec2(0.5, 0.5);
 
 void main()
 {
-	out_col = frag_col;
+	frag_out_col = frag_in.col;
 
-	if(cursor_active && length(frag_coords - cursor_coords) < 0.01)
-		out_col = vec4(1, 0, 0, 1);
+	if(cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
+		frag_out_col = vec4(1, 0, 0, 1);
 }
