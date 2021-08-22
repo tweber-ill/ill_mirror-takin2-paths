@@ -1030,9 +1030,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// geometry menu
 	QMenu *menuGeo = new QMenu("Geometry", m_menubar);
 
-	QAction *actionAddCuboidWall = new QAction("Add Wall", menuGeo);
-	QAction *actionAddCylindricalWall = new QAction("Add Pillar", menuGeo);
-	QAction *actionGeoBrowser = new QAction("Geometries Browser...", menuGeo);
+	QAction *actionAddCuboidWall = new QAction(QIcon::fromTheme("insert-object"), "Add Wall", menuGeo);
+	QAction *actionAddCylindricalWall = new QAction(QIcon::fromTheme("insert-object"), "Add Pillar", menuGeo);
+	QAction *actionGeoBrowser = new QAction(QIcon::fromTheme("document-properties"), "Object Browser...", menuGeo);
 
 	connect(actionAddCuboidWall, &QAction::triggered, this, &PathsTool::AddWall);
 	connect(actionAddCylindricalWall, &QAction::triggered, this, &PathsTool::AddPillar);
@@ -1196,19 +1196,28 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	QAction *actionObjRotP45 = new QAction(QIcon::fromTheme("object-rotate-left"), "Rotate Object by +45°", m_contextMenuObj);
 	QAction *actionObjRotM45 = new QAction(QIcon::fromTheme("object-rotate-right"), "Rotate Object by -45°", m_contextMenuObj);
+	QAction *actionObjCentreCam = new QAction(QIcon::fromTheme("camera-video"), "Centre Camera on Object", m_contextMenuObj);
 	QAction *actionObjDel = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object", m_contextMenuObj);
-	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Object Properties", m_contextMenuObj);
+	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Object Properties...", m_contextMenuObj);
 
 	m_contextMenuObj->addAction(actionObjRotP45);
 	m_contextMenuObj->addAction(actionObjRotM45);
 	m_contextMenuObj->addSeparator();
+	m_contextMenuObj->addAction(actionObjCentreCam);
+	m_contextMenuObj->addSeparator();
 	m_contextMenuObj->addAction(actionObjDel);
 	m_contextMenuObj->addAction(actionObjProp);
 
-	connect(actionObjRotP45, &QAction::triggered, [this]() { RotateCurrentObject(45./180.*tl2::pi<t_real>); });
-	connect(actionObjRotM45, &QAction::triggered, [this]() { RotateCurrentObject(-45./180.*tl2::pi<t_real>); });
-	connect(actionObjDel, &QAction::triggered, this, &PathsTool::DeleteCurrentObject);
-	connect(actionObjProp, &QAction::triggered, this, &PathsTool::ShowCurrentObjectProperties);
+	connect(actionObjRotP45, &QAction::triggered,
+		[this]() { RotateCurrentObject(45./180.*tl2::pi<t_real>); });
+	connect(actionObjRotM45, &QAction::triggered,
+		[this]() { RotateCurrentObject(-45./180.*tl2::pi<t_real>); });
+	connect(actionObjDel, &QAction::triggered, this,
+		&PathsTool::DeleteCurrentObject);
+	connect(actionObjProp, &QAction::triggered, this,
+		&PathsTool::ShowCurrentObjectProperties);
+	connect(actionObjCentreCam, &QAction::triggered,
+		[this]() { if(m_renderer) m_renderer->CentreCam(m_curContextObj); });
 	// --------------------------------------------------------------------
 
 

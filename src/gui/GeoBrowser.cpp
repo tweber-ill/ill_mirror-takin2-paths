@@ -33,7 +33,7 @@
 GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
-	setWindowTitle("Geometries Browser");
+	setWindowTitle("Object Browser");
 
 
 	// geometry object tree
