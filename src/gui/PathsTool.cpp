@@ -1566,12 +1566,13 @@ void PathsTool::CalculatePathMesh()
 	// start calculation in a background thread
 	m_futCalc = std::async(std::launch::async, [this]()
 	{
+		// check if a stop has been requested
 		#define CHECK_STOP \
-		if(m_stop_requested) \
-		{ \
-			SetTmpStatus("Calculation aborted."); \
-			return; \
-		}
+			if(m_stop_requested) \
+			{ \
+				SetTmpStatus("Calculation aborted."); \
+				return; \
+			}
 
 		const auto& instr = m_instrspace.GetInstrument();
 
@@ -1634,6 +1635,7 @@ void PathsTool::CalculatePathMesh()
 		SetTmpStatus("Path mesh calculated.");
 	});
 
+	// block till the calculations are finished
 	//m_futCalc.get();
 }
 

@@ -599,6 +599,8 @@ bool InstrumentSpace::CheckCollision2D() const
 		}
 	}
 
+
+	// check for instrument self-collisions
 	if(check_collision_circle_circle(monoCircles, sampleCircles))
 		return true;
 	if(check_collision_circle_circle(sampleCircles, anaCircles))
@@ -617,6 +619,9 @@ bool InstrumentSpace::CheckCollision2D() const
 	if(check_collision_circle_poly(anaCircles, monoPolys, anaCircleBB, monoBB))
 		return true;
 	if(check_collision_circle_poly(anaCircles, samplePolysIn, anaCircleBB, sampleInBB))
+		return true;
+
+	if(check_collision_poly_poly(anaPolys, monoPolys, anaBB, monoBB))
 		return true;
 
 	return false;
