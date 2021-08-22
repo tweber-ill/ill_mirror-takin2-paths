@@ -67,10 +67,18 @@ int main(int argc, char** argv)
 		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
 
 		auto app = std::make_unique<QApplication>(argc, argv);
+		app->setApplicationName("TASPaths");
+
 		g_apppath = app->applicationDirPath().toStdString();
 		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
 			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
+
+		// make type definitions known as qt meta objects
+		qRegisterMetaType<t_real>("t_real");
+		qRegisterMetaType<t_vec>("t_vec");
+		qRegisterMetaType<t_mat>("t_mat");
+		qRegisterMetaType<std::string>("std::string");
 
 		auto mainwnd = std::make_unique<PathsTool>(nullptr);
 		if(argc > 1)

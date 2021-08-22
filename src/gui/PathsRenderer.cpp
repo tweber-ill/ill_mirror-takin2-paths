@@ -13,12 +13,13 @@
 #include "PathsRenderer.h"
 #include "Settings.h"
 
+#include <QtCore/QtGlobal>
+#include <QtCore/QThread>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtGui/QSurfaceFormat>
 #include <QtGui/QPainter>
 #include <QtGui/QGuiApplication>
-#include <QtCore/QtGlobal>
 
 #include <iostream>
 #include <boost/scope_exit.hpp>
@@ -62,7 +63,6 @@ void PathsRenderer::EnableTimer(bool enabled)
 	else
 		m_timer.stop();
 }
-
 
 
 /**
@@ -846,7 +846,7 @@ void PathsRenderer::UpdateViewport()
 
 void PathsRenderer::paintGL()
 {
-	if(!m_initialised)
+	if(!m_initialised || thread() != QThread::currentThread())
 		return;
 
 	QMutexLocker _locker{&m_mutexObj};

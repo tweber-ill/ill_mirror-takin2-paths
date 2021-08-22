@@ -46,8 +46,6 @@ public:
 protected:
 	virtual void accept() override;
 
-	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
-
 	// voronoi / path mesh plot curves
 	void ClearVoronoiPlotCurves();
 	void AddVoronoiPlotCurve(const QVector<t_real>& x, const QVector<t_real>& y,
@@ -113,6 +111,10 @@ signals:
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5, bool move_target);
+
+
+protected slots:
+	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
 };
 
 

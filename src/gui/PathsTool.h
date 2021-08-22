@@ -14,10 +14,12 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QProgressBar>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
 
 #include <string>
 #include <memory>
+#include <future>
 
 #include "src/core/InstrumentSpace.h"
 #include "src/core/TasCalculator.h"
@@ -55,8 +57,12 @@ private:
 
 	QStatusBar *m_statusbar{ nullptr };
 	QProgressBar *m_progress{ nullptr };
+	QPushButton *m_buttonStop{ nullptr };
 	QLabel *m_labelStatus{ nullptr };
 	QLabel *m_labelCollisionStatus{ nullptr };
+
+	bool m_stop_requested{ false };
+	std::future<void> m_futCalc{};
 
 	QMenu *m_menuOpenRecent{ nullptr };
 	QMenuBar *m_menubar{ nullptr };

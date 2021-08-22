@@ -7,6 +7,8 @@
 
 #include "PathsTool.h"
 
+#include <QtCore/QMetaObject>
+#include <QtCore/QThread>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
@@ -603,7 +605,19 @@ void PathsTool::SetTmpStatus(const std::string& msg)
 		return;
 
 	// show message for 2 seconds
-	m_statusbar->showMessage(msg.c_str(), 2000);
+	int msg_duration = 2000;
+	if(thread() == QThread::currentThread())
+	{
+		m_statusbar->showMessage(msg.c_str(), msg_duration);
+	}
+	else
+	{
+		// alternate call via meta object when coming from another thread
+		QMetaObject::invokeMethod(m_statusbar, "showMessage", Qt::QueuedConnection,
+			Q_ARG(QString, msg.c_str()),
+			Q_ARG(int, msg_duration)
+		);
+	}
 }
 
 
@@ -1208,6 +1222,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_progress->setMinimum(0);
 	m_progress->setMaximum(1000);
 
+	m_buttonStop = new QPushButton(QIcon::fromTheme("process-stop"), "", this);
+	m_buttonStop->setToolTip("Stop Calculation");
+
 	m_labelStatus = new QLabel(this);
 	m_labelStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 	m_labelStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
@@ -1220,9 +1237,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	m_statusbar = new QStatusBar(this);
 	m_statusbar->addPermanentWidget(m_progress);
+	m_statusbar->addPermanentWidget(m_buttonStop);
 	m_statusbar->addPermanentWidget(m_labelCollisionStatus);
 	m_statusbar->addPermanentWidget(m_labelStatus);
 	setStatusBar(m_statusbar);
+
+	connect(m_buttonStop, &QPushButton::clicked, [this]() { this->m_stop_requested = true; });
 	// --------------------------------------------------------------------
 
 
@@ -1266,8 +1286,22 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(!m_progress)
 				return true;
 
-			m_progress->setValue((int)(progress * m_progress->maximum()));
-			//m_progress->setFormat((std::string("%p% -- ") + message).c_str());
+			if(m_stop_requested)
+				return false;
+
+			if(this->thread() == QThread::currentThread())
+			{
+				//m_progress->setFormat((std::string("%p% -- ") + message).c_str());
+				m_progress->setValue((int)(progress * m_progress->maximum()));
+			}
+			else
+			{
+				// alternate call via meta object when coming from another thread
+				QMetaObject::invokeMethod(m_progress, "setValue", Qt::QueuedConnection,
+					Q_ARG(int, (int)(progress * m_progress->maximum())));
+				//QMetaObject::invokeMethod(m_progress, "update", Qt::QueuedConnection);
+			}
+
 			return true;
 		});
 
@@ -1513,58 +1547,81 @@ void PathsTool::ChangeObjectProperty(const std::string& obj, const GeometryPrope
  */
 void PathsTool::CalculatePathMesh()
 {
-	const auto& instr = m_instrspace.GetInstrument();
+	m_stop_requested = false;
 
-	// TODO: angular steps
-	t_real da2 = 1. / 180. * tl2::pi<t_real>;
-	t_real da4 = 1. / 180. * tl2::pi<t_real>;
-
-	// get the angular limits from the instrument model
-	t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
-	t_real enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
-	t_real starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
-	t_real enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
-
-	// angular padding
-	t_real padding = 4;
-	starta2 -= padding * da2;
-	enda2 += padding * da2;
-	starta4 -= padding * da4;
-	enda4 += padding * da4;
-
-	SetTmpStatus("Clearing old paths.");
-	m_pathsbuilder.Clear();
-
-	SetTmpStatus("Calculating configuration space.");
-	if(!m_pathsbuilder.CalculateConfigSpace(da2, da4, 
-		starta2, enda2, starta4, enda4))
+	// start calculation in a background thread
+	m_futCalc = std::async(std::launch::async, [this]()
 	{
-		QMessageBox::critical(this, "Error", "Configuration space calculation failed.");
-		return;
-	}
+		const auto& instr = m_instrspace.GetInstrument();
 
-	SetTmpStatus("Calculating obstacle contour lines.");
-	if(!m_pathsbuilder.CalculateWallContours(true, false))
-	{
-		QMessageBox::critical(this, "Error", "Obstacle contour lines calculation failed.");
-		return;
-	}
+		// TODO: angular steps
+		t_real da2 = 0.5 / 180. * tl2::pi<t_real>;
+		t_real da4 = 1. / 180. * tl2::pi<t_real>;
 
-	SetTmpStatus("Calculating line segments.");
-	if(!m_pathsbuilder.CalculateLineSegments())
-	{
-		QMessageBox::critical(this, "Error", "Line segment calculation failed.");
-		return;
-	}
+		// get the angular limits from the instrument model
+		t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+		t_real enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+		t_real starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
+		t_real enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
 
-	SetTmpStatus("Calculating Voronoi regions.");
-	if(!m_pathsbuilder.CalculateVoronoi(false))
-	{
-		QMessageBox::critical(this, "Error", "Voronoi regions calculation failed.");
-		return;
-	}
+		// angular padding
+		t_real padding = 4;
+		starta2 -= padding * da2;
+		enda2 += padding * da2;
+		starta4 -= padding * da4;
+		enda4 += padding * da4;
 
-	SetTmpStatus("Calculation finished.");
+		SetTmpStatus("Clearing old paths.");
+		m_pathsbuilder.Clear();
+
+		if(m_stop_requested)
+			return;
+
+		SetTmpStatus("Calculating configuration space.");
+		if(!m_pathsbuilder.CalculateConfigSpace(da2, da4,
+			starta2, enda2, starta4, enda4))
+		{
+			SetTmpStatus("Error: Configuration space calculation failed.");
+			return;
+		}
+
+		if(m_stop_requested)
+			return;
+
+		SetTmpStatus("Calculating obstacle contour lines.");
+		if(!m_pathsbuilder.CalculateWallContours(true, false))
+		{
+			SetTmpStatus("Error: Obstacle contour lines calculation failed.");
+			return;
+		}
+
+		if(m_stop_requested)
+			return;
+
+		SetTmpStatus("Calculating line segments.");
+		if(!m_pathsbuilder.CalculateLineSegments())
+		{
+			SetTmpStatus("Error: Line segment calculation failed.");
+			return;
+		}
+
+		if(m_stop_requested)
+			return;
+
+		SetTmpStatus("Calculating Voronoi regions.");
+		if(!m_pathsbuilder.CalculateVoronoi(false))
+		{
+			SetTmpStatus("Error: Voronoi regions calculation failed.");
+			return;
+		}
+
+		if(m_stop_requested)
+			return;
+
+		SetTmpStatus("Calculation finished.");
+	});
+
+	//m_futCalc.get();
 }
 
 
@@ -1573,6 +1630,7 @@ void PathsTool::CalculatePathMesh()
  */
 void PathsTool::CalculatePath()
 {
+	m_stop_requested = false;
 	m_pathvertices.clear();
 
 	// get the scattering angles

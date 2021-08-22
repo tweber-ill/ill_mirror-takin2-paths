@@ -13,6 +13,8 @@
 
 #include "ConfigSpace.h"
 
+#include <QtCore/QMetaObject>
+#include <QtCore/QThread>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
@@ -676,6 +678,9 @@ void ConfigSpaceDlg::CalculatePath()
 }
 
 
+/**
+ * associate a PathsBuilder and register the progress dialog callback
+ */
 void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 {
 	UnsetPathsBuilder();
@@ -684,11 +689,30 @@ void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 	m_pathsbuilderslot = m_pathsbuilder->AddProgressSlot(
 		[this](bool start, bool end, t_real progress, const std::string& message) -> bool
 		{
-			return this->PathsBuilderProgress(start, end, progress, message);
+			if(this->thread() == QThread::currentThread())
+			{
+				return this->PathsBuilderProgress(start, end, progress, message);
+			}
+			else
+			{
+				// alternate call via meta object when coming from another thread
+				bool ok = true;
+				QMetaObject::invokeMethod(this, "PathsBuilderProgress", Qt::QueuedConnection,
+					//Q_RETURN_ARG(bool, ok),
+					Q_ARG(bool, start),
+					Q_ARG(bool, end),
+					Q_ARG(t_real, progress),
+					Q_ARG(const std::string&, message)
+				);
+				return ok;
+			}
 		});
 }
 
 
+/**
+ * disassociate a PathsBuilder and unregister the progress dialog callback
+ */
 void ConfigSpaceDlg::UnsetPathsBuilder()
 {
 	if(m_pathsbuilder)
@@ -891,26 +915,29 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 {
 	static const int max_progress = 1000;
 
+	if(!m_progress)
+		m_progress = std::make_unique<QProgressDialog>(this);
+
 	if(start)
 	{
-		m_progress = std::make_unique<QProgressDialog>(this);
 		m_progress->setWindowModality(Qt::WindowModal);
 		m_progress->setLabelText(message.c_str());
 		m_progress->setMinimum(0);
 		m_progress->setMaximum(max_progress);
+		m_progress->setValue(0);
 		m_progress->setAutoReset(false);
 		m_progress->setMinimumDuration(1000);
 	}
 
 	m_progress->setValue(int(progress*max_progress));
-	RedrawVoronoiPlot();
-
 	bool ok = !m_progress->wasCanceled();
+
+	RedrawVoronoiPlot();
 
 	if(end)
 	{
-		if(m_progress)
-			m_progress.reset();
+		m_progress->reset();
+		//m_progress.reset();
 	}
 
 	return ok;
