@@ -14,7 +14,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QProgressBar>
-#include <QtWidgets/QPushButton>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QLabel>
 
 #include <string>
@@ -57,7 +57,7 @@ private:
 
 	QStatusBar *m_statusbar{ nullptr };
 	QProgressBar *m_progress{ nullptr };
-	QPushButton *m_buttonStop{ nullptr };
+	QToolButton *m_buttonStop{ nullptr };
 	QLabel *m_labelStatus{ nullptr };
 	QLabel *m_labelCollisionStatus{ nullptr };
 
@@ -197,8 +197,8 @@ protected slots:
 	void ObjectDragged(bool drag_start, const std::string& obj,
 		t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
 
-	// set temporary status message
-	void SetTmpStatus(const std::string& msg);
+	// set temporary status message, by default for 2 seconds
+	void SetTmpStatus(const std::string& msg, int msg_duration=2000);
 
 	// update permanent status message
 	void UpdateStatusLabel();

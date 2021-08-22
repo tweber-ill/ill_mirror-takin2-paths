@@ -43,6 +43,9 @@ t_real g_eps_gui = 1e-4;
 
 t_real g_a3_offs = tl2::pi<t_real>*0.5;
 
+t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
+t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
+
 unsigned int g_maxnum_threads = 4;
 
 QString g_theme = "";
@@ -93,6 +96,10 @@ enum class SettingsKeys : int
 	GUI_PREC,
 
 	MAX_THREADS,
+
+	A3_OFFS,
+	A2_DELTA,
+	A4_DELTA,
 
 	NUM_KEYS
 };
@@ -146,26 +153,46 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_table->setHorizontalHeaderItem(1, new QTableWidgetItem{"Type"});
 	m_table->setHorizontalHeaderItem(2, new QTableWidgetItem{"Value"});
 
+
 	// table contents
 	m_table->setRowCount((int)SettingsKeys::NUM_KEYS);
+
 	m_table->setItem((int)SettingsKeys::EPS, 0, new QTableWidgetItem{"Calculation epsilon"});
 	m_table->setItem((int)SettingsKeys::EPS, 1, new QTableWidgetItem{"Real"});
 	m_table->setItem((int)SettingsKeys::EPS, 2, new NumericTableWidgetItem<t_real>(g_eps, 10));
+
 	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 0, new QTableWidgetItem{"Angular epsilon"});
 	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 1, new QTableWidgetItem{"Real"});
 	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2, new NumericTableWidgetItem<t_real>(g_eps_angular, 10));
+
 	m_table->setItem((int)SettingsKeys::GUI_EPS, 0, new QTableWidgetItem{"Drawing epsilon"});
 	m_table->setItem((int)SettingsKeys::GUI_EPS, 1, new QTableWidgetItem{"Real"});
 	m_table->setItem((int)SettingsKeys::GUI_EPS, 2, new NumericTableWidgetItem<t_real>(g_eps_gui, 10));
+
 	m_table->setItem((int)SettingsKeys::PREC, 0, new QTableWidgetItem{"Number precision"});
 	m_table->setItem((int)SettingsKeys::PREC, 1, new QTableWidgetItem{"Integer"});
 	m_table->setItem((int)SettingsKeys::PREC, 2, new NumericTableWidgetItem<int>(g_prec, 10));
+
 	m_table->setItem((int)SettingsKeys::GUI_PREC, 0, new QTableWidgetItem{"GUI number precision"});
 	m_table->setItem((int)SettingsKeys::GUI_PREC, 1, new QTableWidgetItem{"Integer"});
 	m_table->setItem((int)SettingsKeys::GUI_PREC, 2, new NumericTableWidgetItem<int>(g_prec_gui, 10));
+
 	m_table->setItem((int)SettingsKeys::MAX_THREADS, 0, new QTableWidgetItem{"Maximum number of threads"});
 	m_table->setItem((int)SettingsKeys::MAX_THREADS, 1, new QTableWidgetItem{"Integer"});
 	m_table->setItem((int)SettingsKeys::MAX_THREADS, 2, new NumericTableWidgetItem<unsigned int>(g_maxnum_threads, 10));
+
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 0, new QTableWidgetItem{"Sample rotation offset"});
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 1, new QTableWidgetItem{"Real"});
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 2, new NumericTableWidgetItem<t_real>(g_a3_offs / tl2::pi<t_real>*180., 10));
+
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 0, new QTableWidgetItem{"Monochromator scattering angle delta"});
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 1, new QTableWidgetItem{"Real"});
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 2, new NumericTableWidgetItem<t_real>(g_a2_delta / tl2::pi<t_real>*180., 10));
+
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 0, new QTableWidgetItem{"Sample scattering angle delta"});
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 1, new QTableWidgetItem{"Real"});
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 2, new NumericTableWidgetItem<t_real>(g_a4_delta / tl2::pi<t_real>*180., 10));
+
 
 	// set value field editable
 	for(int row=0; row<m_table->rowCount(); ++row)
@@ -296,6 +323,10 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<QString>(sett, "settings/theme", &g_theme);
 	get_setting<QString>(sett, "settings/font", &g_font);
 
+	get_setting<t_real>(sett, "settings/a3_offs", &g_a3_offs);
+	get_setting<t_real>(sett, "settings/a2_delta", &g_a2_delta);
+	get_setting<t_real>(sett, "settings/a4_delta", &g_a4_delta);
+
 	ApplyGuiSettings();
 }
 
@@ -321,6 +352,18 @@ void SettingsDlg::ApplySettings()
 	g_maxnum_threads = dynamic_cast<NumericTableWidgetItem<unsigned int>*>(
 		m_table->item((int)SettingsKeys::MAX_THREADS, 2))->GetValue();
 
+	g_a3_offs = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_table->item((int)SettingsKeys::A3_OFFS, 2))->GetValue()
+			/ 180.*tl2::pi<t_real>;
+
+	g_a2_delta = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_table->item((int)SettingsKeys::A2_DELTA, 2))->GetValue()
+			/ 180.*tl2::pi<t_real>;
+
+	g_a4_delta = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+		m_table->item((int)SettingsKeys::A4_DELTA, 2))->GetValue()
+			/ 180.*tl2::pi<t_real>;
+
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
 
@@ -336,6 +379,10 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/prec_gui", g_prec_gui);
 
 		m_sett->setValue("settings/maxnum_threads", g_maxnum_threads);
+
+		m_sett->setValue("settings/a3_offs", g_a3_offs);
+		m_sett->setValue("settings/a2_delta", g_a2_delta);
+		m_sett->setValue("settings/a4_delta", g_a4_delta);
 
 		m_sett->setValue("settings/theme", g_theme);
 		m_sett->setValue("settings/font", g_font);

@@ -597,15 +597,13 @@ void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
 
 
 /**
- * set temporary status message
+ * set temporary status message, by default for 2 seconds
  */
-void PathsTool::SetTmpStatus(const std::string& msg)
+void PathsTool::SetTmpStatus(const std::string& msg, int msg_duration)
 {
 	if(!m_statusbar)
 		return;
 
-	// show message for 2 seconds
-	int msg_duration = 2000;
 	if(thread() == QThread::currentThread())
 	{
 		m_statusbar->showMessage(msg.c_str(), msg_duration);
@@ -1222,8 +1220,14 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_progress->setMinimum(0);
 	m_progress->setMaximum(1000);
 
-	m_buttonStop = new QPushButton(QIcon::fromTheme("process-stop"), "", this);
-	m_buttonStop->setToolTip("Stop Calculation");
+	QIcon stopIcon = QIcon::fromTheme("media-playback-stop");
+	m_buttonStop = new QToolButton(this);
+	m_buttonStop->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	if(stopIcon.isNull())
+		m_buttonStop->setText("X");
+	else
+		m_buttonStop->setIcon(stopIcon);
+	m_buttonStop->setToolTip("Stop Calculation.");
 
 	m_labelStatus = new QLabel(this);
 	m_labelStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -1236,13 +1240,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_labelCollisionStatus->setLineWidth(1);
 
 	m_statusbar = new QStatusBar(this);
+	m_statusbar->setSizeGripEnabled(true);
+	m_statusbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 	m_statusbar->addPermanentWidget(m_progress);
 	m_statusbar->addPermanentWidget(m_buttonStop);
 	m_statusbar->addPermanentWidget(m_labelCollisionStatus);
 	m_statusbar->addPermanentWidget(m_labelStatus);
 	setStatusBar(m_statusbar);
 
-	connect(m_buttonStop, &QPushButton::clicked, [this]() { this->m_stop_requested = true; });
+	connect(m_buttonStop, &QToolButton::clicked,
+		[this]() { this->m_stop_requested = true; });
 	// --------------------------------------------------------------------
 
 
@@ -1261,7 +1268,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	if(m_sett.contains("recent_files"))
 		SetRecentFiles(m_sett.value("recent_files").toStringList());
 
-	// TODO: font
 	//QFont font = this->font();
 	//font.setPointSizeF(14.);
 	//this->setFont(font);
@@ -1271,7 +1277,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// initialisations
 	// --------------------------------------------------------------------
-	// TODO: add to settings
 	m_tascalc.SetSampleAngleOffset(g_a3_offs);
 
 	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
@@ -1552,11 +1557,14 @@ void PathsTool::CalculatePathMesh()
 	// start calculation in a background thread
 	m_futCalc = std::async(std::launch::async, [this]()
 	{
-		const auto& instr = m_instrspace.GetInstrument();
+		#define CHECK_STOP \
+		if(m_stop_requested) \
+		{ \
+			SetTmpStatus("Calculation aborted."); \
+			return; \
+		}
 
-		// TODO: angular steps
-		t_real da2 = 0.5 / 180. * tl2::pi<t_real>;
-		t_real da4 = 1. / 180. * tl2::pi<t_real>;
+		const auto& instr = m_instrspace.GetInstrument();
 
 		// get the angular limits from the instrument model
 		t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
@@ -1566,59 +1574,55 @@ void PathsTool::CalculatePathMesh()
 
 		// angular padding
 		t_real padding = 4;
-		starta2 -= padding * da2;
-		enda2 += padding * da2;
-		starta4 -= padding * da4;
-		enda4 += padding * da4;
+		starta2 -= padding * g_a2_delta;
+		enda2 += padding * g_a2_delta;
+		starta4 -= padding * g_a4_delta;
+		enda4 += padding * g_a4_delta;
 
-		SetTmpStatus("Clearing old paths.");
+		SetTmpStatus("Clearing old paths.", 0);
 		m_pathsbuilder.Clear();
 
-		if(m_stop_requested)
-			return;
+		CHECK_STOP
 
-		SetTmpStatus("Calculating configuration space.");
-		if(!m_pathsbuilder.CalculateConfigSpace(da2, da4,
+		SetTmpStatus("Calculating configuration space.", 0);
+		if(!m_pathsbuilder.CalculateConfigSpace(
+			g_a2_delta, g_a4_delta,
 			starta2, enda2, starta4, enda4))
 		{
 			SetTmpStatus("Error: Configuration space calculation failed.");
 			return;
 		}
 
-		if(m_stop_requested)
-			return;
+		CHECK_STOP
 
-		SetTmpStatus("Calculating obstacle contour lines.");
+		SetTmpStatus("Calculating obstacle contour lines.", 0);
 		if(!m_pathsbuilder.CalculateWallContours(true, false))
 		{
 			SetTmpStatus("Error: Obstacle contour lines calculation failed.");
 			return;
 		}
 
-		if(m_stop_requested)
-			return;
+		CHECK_STOP
 
-		SetTmpStatus("Calculating line segments.");
+		SetTmpStatus("Calculating line segments.", 0);
 		if(!m_pathsbuilder.CalculateLineSegments())
 		{
 			SetTmpStatus("Error: Line segment calculation failed.");
 			return;
 		}
 
-		if(m_stop_requested)
-			return;
+		CHECK_STOP
 
-		SetTmpStatus("Calculating Voronoi regions.");
+		SetTmpStatus("Calculating Voronoi regions.", 0);
 		if(!m_pathsbuilder.CalculateVoronoi(false))
 		{
 			SetTmpStatus("Error: Voronoi regions calculation failed.");
 			return;
 		}
 
-		if(m_stop_requested)
-			return;
+		CHECK_STOP
 
-		SetTmpStatus("Calculation finished.");
+		SetTmpStatus("Path mesh calculated.");
 	});
 
 	//m_futCalc.get();
@@ -1647,6 +1651,7 @@ void PathsTool::CalculatePath()
 	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * sensesCCW[1];
 
 	// find path from current to target position
+	SetTmpStatus("Calculating path.");
 	InstrumentPath path = m_pathsbuilder.FindPath(
 		curMonoScatteringAngle, curSampleScatteringAngle,
 		targetMonoScatteringAngle, targetSampleScatteringAngle);
@@ -1654,12 +1659,16 @@ void PathsTool::CalculatePath()
 	if(!path.ok)
 	{
 		QMessageBox::critical(this, "Error", "No path could be found.");
+		SetTmpStatus("Error: No path could be found.");
 		return;
 	}
 
 	// get the vertices on the path
+	SetTmpStatus("Retrieving path vertices.");
 	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
 	emit PathAvailable(m_pathvertices.size());
+
+	SetTmpStatus("Path calculated.");
 }
 
 

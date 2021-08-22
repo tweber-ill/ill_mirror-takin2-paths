@@ -44,6 +44,10 @@ extern t_real g_eps, g_eps_angular, g_eps_gui;
 // crystal angle offset
 extern t_real g_a3_offs;
 
+// angular deltas for calculation step width
+extern t_real g_a2_delta;
+extern t_real g_a4_delta;
+
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;
 

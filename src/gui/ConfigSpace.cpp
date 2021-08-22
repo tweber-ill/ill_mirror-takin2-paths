@@ -107,14 +107,14 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	m_spinDelta2ThS->setPrefix("Δθ_S = ");
 	m_spinDelta2ThS->setSuffix(" deg");
-	m_spinDelta2ThS->setValue(1.0);
+	m_spinDelta2ThS->setValue(g_a4_delta / tl2::pi<t_real>*180.);
 	m_spinDelta2ThS->setMinimum(0.001);
 	m_spinDelta2ThS->setMaximum(180.);
 	m_spinDelta2ThS->setSingleStep(0.1);
 
 	m_spinDelta2ThM->setPrefix("Δθ_M = ");
 	m_spinDelta2ThM->setSuffix(" deg");
-	m_spinDelta2ThM->setValue(0.5);
+	m_spinDelta2ThM->setValue(g_a2_delta / tl2::pi<t_real>*180.);
 	m_spinDelta2ThM->setMinimum(0.001);
 	m_spinDelta2ThM->setMaximum(180.);
 	m_spinDelta2ThM->setSingleStep(0.1);
