@@ -1257,8 +1257,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_statusbar->addPermanentWidget(m_labelStatus);
 	setStatusBar(m_statusbar);
 
-	connect(m_buttonStop, &QToolButton::clicked,
-		[this]() { this->m_stop_requested = true; });
+	connect(m_buttonStop, &QToolButton::clicked, [this]()
+	{
+		this->m_stop_requested = true;
+		SetTmpStatus("Stop requested...");
+	});
 	// --------------------------------------------------------------------
 
 
@@ -1300,7 +1303,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(!m_progress)
 				return true;
 
-			if(m_stop_requested)
+			if(this->m_stop_requested)
 				return false;
 
 			if(this->thread() == QThread::currentThread())
@@ -1568,7 +1571,7 @@ void PathsTool::CalculatePathMesh()
 	{
 		// check if a stop has been requested
 		#define CHECK_STOP \
-			if(m_stop_requested) \
+			if(this->m_stop_requested) \
 			{ \
 				SetTmpStatus("Calculation aborted."); \
 				return; \
