@@ -784,7 +784,7 @@ t_vec2_gl PathsRenderer::GetCamRotation() const
 
 void PathsRenderer::SetPerspectiveProjection(bool b)
 {
-	m_perspectiveProjection = b; 
+	m_perspectiveProjection = b;
 	m_perspectiveNeedsUpdate = true;
 	update();
 }
@@ -803,12 +803,12 @@ void PathsRenderer::UpdatePerspective()
 	if(m_perspectiveProjection)
 	{
 		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, m_camViewingAngle, 
+			nearPlane, farPlane, m_camViewingAngle,
 			t_real_gl(m_screenDims[1])/t_real_gl(m_screenDims[0]));
 	}
 	else
 	{
-		m_matPerspective = tl2::hom_ortho<t_mat_gl, t_real_gl>(nearPlane, farPlane, -10., 10., -10., 10.);
+		m_matPerspective = tl2::hom_ortho_sym<t_mat_gl, t_real_gl>(nearPlane, farPlane, 20., 20.);
 	}
 
 	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
