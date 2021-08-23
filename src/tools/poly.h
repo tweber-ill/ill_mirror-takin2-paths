@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "about.h"
+#include "settings.h"
 #include "vertex.h"
 
 #include "src/libs/lines.h"
@@ -106,7 +107,9 @@ private:
 
 private:
 	QSettings m_sett{"geo_tools", "polygon"};
+
 	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<SettingsDlg> m_dlgSettings;
 
 	std::shared_ptr<QGraphicsScene> m_scene;
 	std::shared_ptr<PolyView> m_view;

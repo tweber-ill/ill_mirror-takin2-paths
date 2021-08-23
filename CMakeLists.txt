@@ -232,6 +232,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
+		src/tools/settings.cpp src/tools/settings.h
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi.h
 	)
@@ -240,6 +241,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
+		src/tools/settings.cpp src/tools/settings.h
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)
@@ -248,6 +250,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/poly.cpp src/tools/poly.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
+		src/tools/settings.cpp src/tools/settings.h
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)

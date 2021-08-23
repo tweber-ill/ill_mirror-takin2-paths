@@ -385,6 +385,8 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 {
 	// ------------------------------------------------------------------------
 	// restore settings
+	SettingsDlg::ReadSettings(&m_sett);
+
 	if(m_sett.contains("wnd_geo"))
 	{
 		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
@@ -514,6 +516,18 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
+	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", this);
+	actionSettings->setMenuRole(QAction::PreferencesRole);
+	connect(actionSettings, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgSettings)
+			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+
+		m_dlgSettings->show();
+		m_dlgSettings->raise();
+		m_dlgSettings->activateWindow();
+	});
+
 	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
 	actionQuit->setMenuRole(QAction::QuitRole);
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
@@ -608,6 +622,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionLoad->setShortcut(QKeySequence::Open);
 	//actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
 	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
 	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
@@ -625,6 +640,8 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
+	menuFile->addSeparator();
+	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
 

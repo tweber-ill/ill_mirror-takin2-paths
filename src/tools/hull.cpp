@@ -602,6 +602,8 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 {
 	// ------------------------------------------------------------------------
 	// restore settings
+	SettingsDlg::ReadSettings(&m_sett);
+
 	if(m_sett.contains("wnd_geo"))
 	{
 		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
@@ -745,6 +747,18 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 			QPainter paint(&svggen);
 			m_scene->render(&paint);
 		}
+	});
+
+	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", this);
+	actionSettings->setMenuRole(QAction::PreferencesRole);
+	connect(actionSettings, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgSettings)
+			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+
+		m_dlgSettings->show();
+		m_dlgSettings->raise();
+		m_dlgSettings->activateWindow();
 	});
 
 	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
@@ -942,6 +956,8 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
 	menuFile->addSeparator();
+	menuFile->addAction(actionSettings);
+	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
 
 	menuView->addAction(actionZoomIn);
@@ -990,6 +1006,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionLoad->setShortcut(QKeySequence::Open);
 	//actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
 	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
 	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
@@ -1058,6 +1075,8 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 	// ------------------------------------------------------------------------
 	// restore settings
+	SettingsDlg::ReadSettings(&m_sett);
+
 	if(m_sett.contains("hullwnd_geo"))
 	{
 		QByteArray arr{m_sett.value("hullwnd_geo").toByteArray()};

@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "about.h"
+#include "settings.h"
 #include "vertex.h"
 
 
@@ -219,6 +220,7 @@ private:
 	QSettings m_sett{"geo_tools", "hull"};
 
 	std::shared_ptr<AboutDlg> m_dlgAbout;
+	std::shared_ptr<SettingsDlg> m_dlgSettings;
 	std::shared_ptr<HullDlg> m_hulldlg;
 	std::shared_ptr<HullScene> m_scene;
 	std::shared_ptr<HullView> m_view;
