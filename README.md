@@ -1,5 +1,6 @@
 # TAS-Paths
 Triple-axis path-finding tool.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4625649.svg)](https://doi.org/10.5281/zenodo.4625649)
 
 
 ## Building
