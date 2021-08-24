@@ -599,7 +599,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 
 
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", this);
-	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About Program...", this);
+	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About this Program...", this);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
 	actionAbout->setMenuRole(QAction::AboutRole);
