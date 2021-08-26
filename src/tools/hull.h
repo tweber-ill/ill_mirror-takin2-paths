@@ -159,7 +159,7 @@ class HullDlg : public QDialog
 public:
 	using t_vec = ::t_vec;
 	using t_mat = ::t_mat;
-	
+
 	static const constexpr t_real g_eps = HullScene::g_eps;
 	static const constexpr std::streamsize g_prec = HullScene::g_prec;
 
