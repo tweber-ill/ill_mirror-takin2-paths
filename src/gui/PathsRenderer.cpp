@@ -330,7 +330,7 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, 
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(
-		tl2::create_triangles<t_vec3_gl>(plane), 3);
+		tl2::create_triangles<t_vec3_gl>(plane), 1);
 
 	AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
 	m_objs[obj_name].m_cull = false;
