@@ -23,13 +23,16 @@ public:
 	CoordPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~CoordPropertiesWidget();
 
+
 public slots:
 	void SetCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+
 
 signals:
 	void CoordinatesChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 	void GotoCoordinates(t_real h, t_real k, t_real l, 
 		t_real ki, t_real kf, bool only_set_target);
+
 
 private:
 	// number of coordinate elements
@@ -42,6 +45,7 @@ private:
 };
 
 
+
 class CoordPropertiesDockWidget : public QDockWidget
 {
 public:
@@ -50,6 +54,7 @@ public:
 
 	std::shared_ptr<CoordPropertiesWidget> GetWidget() 
 	{ return m_widget; }
+
 
 private:
     std::shared_ptr<CoordPropertiesWidget> m_widget;

@@ -12,7 +12,7 @@
  *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
  */
 
-#define BOOST_TEST_MODULE test_intersections
+#define BOOST_TEST_MODULE test_intersections_circle
 
 #include <iostream>
 #include <fstream>
@@ -34,10 +34,10 @@ template<class T> using t_poly = bgeo::model::polygon<t_vertex<T>, true /*cw*/, 
 template<class T> using t_polys = bgeo::model::multi_polygon<t_poly<T>, std::vector>;
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real, 
+BOOST_AUTO_TEST_CASE_TEMPLATE(inters_circle, t_real,
 	decltype(std::tuple</*float,*/ double, long double>{}))
 {
-	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name() 
+	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name()
 		<< " type." << std::endl;
 
 	constexpr const std::size_t NUM_TESTS = 1000;
@@ -160,13 +160,13 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections, t_real,
 			}};
 
 
-			/*std::sort(pos1.begin(), pos1.end(), 
+			/*std::sort(pos1.begin(), pos1.end(),
 				[](const auto& tup1, const auto& tup2) -> bool
 				{
 					return std::get<0>(tup1) < std::get<0>(tup2);
 				});*/
 
-			std::sort(pos2.begin(), pos2.end(), 
+			std::sort(pos2.begin(), pos2.end(),
 				[](const auto& tup1, const auto& tup2) -> bool
 				{
 					return std::get<0>(tup1) < std::get<0>(tup2);

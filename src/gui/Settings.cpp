@@ -50,6 +50,8 @@ unsigned int g_maxnum_threads = 4;
 
 QString g_theme = "";
 QString g_font = "";
+
+int g_poly_intersection_method = 1;
 // ----------------------------------------------------------------------------
 
 
@@ -100,6 +102,8 @@ enum class SettingsKeys : int
 	A3_OFFS,
 	A2_DELTA,
 	A4_DELTA,
+
+	POLY_INTERS_METHOD,
 
 	NUM_KEYS
 };
@@ -192,6 +196,10 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_table->setItem((int)SettingsKeys::A4_DELTA, 0, new QTableWidgetItem{"Sample scattering angle delta"});
 	m_table->setItem((int)SettingsKeys::A4_DELTA, 1, new QTableWidgetItem{"Real"});
 	m_table->setItem((int)SettingsKeys::A4_DELTA, 2, new NumericTableWidgetItem<t_real>(g_a4_delta / tl2::pi<t_real>*180., 10));
+
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 0, new QTableWidgetItem{"Polygon intersection method"});
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 1, new QTableWidgetItem{"Integer"});
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 2, new NumericTableWidgetItem<int>(g_poly_intersection_method, 10));
 
 
 	// set value field editable
@@ -327,6 +335,8 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<t_real>(sett, "settings/a2_delta", &g_a2_delta);
 	get_setting<t_real>(sett, "settings/a4_delta", &g_a4_delta);
 
+	get_setting<int>(sett, "settings/poly_inters_method", &g_poly_intersection_method);
+
 	ApplyGuiSettings();
 }
 
@@ -367,6 +377,9 @@ void SettingsDlg::ApplySettings()
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
 
+	g_poly_intersection_method = dynamic_cast<NumericTableWidgetItem<int>*>(
+		m_table->item((int)SettingsKeys::POLY_INTERS_METHOD, 2))->GetValue();
+
 
 	// write out the settings
 	if(m_sett)
@@ -386,9 +399,12 @@ void SettingsDlg::ApplySettings()
 
 		m_sett->setValue("settings/theme", g_theme);
 		m_sett->setValue("settings/font", g_font);
+
+		m_sett->setValue("settings/poly_inters_method", g_poly_intersection_method);
 	}
 
 	ApplyGuiSettings();
+	emit SettingsHaveChanged();
 }
 
 

@@ -242,13 +242,13 @@ bool PathsBuilder::CalculateConfigSpace(
 
 	// get results
 	std::size_t num_tasks = tasks.size();
-	// send no more than one-percent update signals
-	std::size_t signal_skip = num_tasks / 100;
+	// send no more than four-percent update signals
+	std::size_t signal_skip = num_tasks / 25;
 
 	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
 	{
 		// prevent sending too many progress signals
-		if(signal_skip && taskidx % signal_skip == 0)
+		if(signal_skip && (taskidx % signal_skip == 0))
 		{
 			if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
 			{
@@ -716,7 +716,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 	// find closest point on a path segment
-	auto closest_point = [&path, &voro_vertices]
+	auto closest_point = [&voro_vertices]
 	(std::size_t idx1, std::size_t idx2, const t_vec& vec)
 		-> std::tuple<t_real, t_real>
 	{

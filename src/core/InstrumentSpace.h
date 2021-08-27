@@ -69,6 +69,11 @@ public:
 	std::tuple<bool, std::shared_ptr<Geometry>> SetGeoProperties(
 		const std::string& obj, const std::vector<GeometryProperty>& props);
 
+	t_real GetEpsilon() const { return m_eps; }
+	void SetEpsilon(t_real eps) { m_eps = eps; }
+
+	void SetPolyIntersectionMethod(int method) { m_poly_intersection_method = method; }
+
 
 public:
 	static std::pair<bool, std::string> load(
@@ -89,6 +94,12 @@ private:
 	// update signal
 	using t_sig_update = boost::signals2::signal<void(const InstrumentSpace&)>;
 	std::shared_ptr<t_sig_update> m_sigUpdate;
+
+	t_real m_eps = 1e-6;
+
+	// which polygon intersection method should be used?
+	// 0: sweep, 1: half-plane test
+	int m_poly_intersection_method = 1;
 };
 // ----------------------------------------------------------------------------
 

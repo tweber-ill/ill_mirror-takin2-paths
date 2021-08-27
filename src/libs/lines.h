@@ -114,6 +114,22 @@ std::ostream& print_line(std::ostream& ostr, const t_line& line)
 
 
 /**
+ * returns > 0 if point is on the left-hand side of line
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
+t_real side_of_line(const t_vec& vec1a, const t_vec& vec1b, const t_vec& pt)
+requires tl2::is_vec<t_vec>
+{
+	using namespace tl2_ops;
+
+	t_vec dir1 = vec1b - vec1a;
+	t_vec dir2 = pt - vec1a;
+
+	return dir1[0]*dir2[1] - dir1[1]*dir2[0];
+}
+
+
+/**
  * checks if two line segments intersect and calculates the intersection point
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
@@ -160,6 +176,45 @@ std::pair<bool, t_vec> intersect_lines(
 	}
 
 	return std::make_pair(true, pt1);
+}
+
+
+/**
+ * only check if two 2d lines intersect without calculating the point of intersection
+ */
+template<class t_vec, class t_real = typename t_vec::value_type>
+bool intersect_lines_check(const t_vec& line1a, const t_vec& line1b,
+	const t_vec& line2a, const t_vec& line2b, t_real eps_range = 0.)
+requires tl2::is_vec<t_vec>
+{
+	bool on_lhs_1 = (side_of_line<t_vec, t_real>(line1a, line1b, line2a) >= eps_range);
+	bool on_lhs_2 = (side_of_line<t_vec, t_real>(line1a, line1b, line2b) >= eps_range);
+
+	// both points of line2 on the same side of line1?
+	if(on_lhs_1 == on_lhs_2)
+		return false;
+
+	on_lhs_1 = (side_of_line<t_vec, t_real>(line2a, line2b, line1a) >= eps_range);
+	on_lhs_2 = (side_of_line<t_vec, t_real>(line2a, line2b, line1b) >= eps_range);
+
+	// both points of line1 on the same side of line2?
+	if(on_lhs_1 == on_lhs_2)
+		return false;
+
+	return true;
+}
+
+
+/**
+ * only check if two 2d lines intersect without calculating the point of intersection
+ */
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>, class t_real = typename t_vec::value_type>
+bool intersect_lines_check(const t_line& line1, const t_line& line2, t_real eps_range = 0.)
+requires tl2::is_vec<t_vec>
+{
+	return intersect_lines_check<t_vec, t_real>(
+		std::get<0>(line1), std::get<1>(line1),
+		std::get<0>(line2), std::get<1>(line2), eps_range);
 }
 
 
@@ -293,22 +348,6 @@ requires tl2::is_vec<t_vec>
 		std::get<0>(line1), std::get<1>(line1),
 		std::get<0>(line2), std::get<1>(line2),
 		true, eps, eps_ranges, check);
-}
-
-
-/**
- * returns > 0 if point is on the left-hand side of line
- */
-template<class t_vec, class t_real = typename t_vec::value_type>
-t_real side_of_line(const t_vec& vec1a, const t_vec& vec1b, const t_vec& pt)
-requires tl2::is_vec<t_vec>
-{
-	using namespace tl2_ops;
-
-	t_vec dir1 = vec1b - vec1a;
-	t_vec dir2 = pt - vec1a;
-
-	return dir1[0]*dir2[1] - dir1[1]*dir2[0];
 }
 
 
@@ -1247,11 +1286,12 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * check for a collision of two polygons
+ * check for a collision of two polygons using a line sweep
  */
 template<class t_vec, template<class...> class t_cont = std::vector>
 bool collide_poly_poly(
-	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2)
+	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2,
+	typename t_vec::value_type eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
 	using t_real = typename t_vec::value_type;
@@ -1265,7 +1305,6 @@ requires tl2::is_vec<t_vec>
 	for(const t_vec& vec : poly2)
 		std::cout << vec << std::endl;*/
 
-	t_real eps = 1e-6;
 	std::vector<t_line> lines;
 	lines.reserve(poly1.size() + poly2.size());
 
@@ -1290,6 +1329,36 @@ requires tl2::is_vec<t_vec>
 	if(inters.size())
 		return true;
 
+
+	// TODO: check cases when one object is completely contained in the other
+	return false;
+}
+
+
+/**
+ * check for a collision of two polygons using a simpler, but O(n^2) check
+ */
+template<class t_vec, template<class...> class t_cont = std::vector>
+bool collide_poly_poly_simplified(
+	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2)
+requires tl2::is_vec<t_vec>
+{
+	for(std::size_t idx1=0; idx1<poly1.size(); ++idx1)
+	{
+		std::size_t idx1b = (idx1+1) % poly1.size();
+		const t_vec& vec1a = poly1[idx1];
+		const t_vec& vec1b = poly1[idx1b];
+
+		for(std::size_t idx2=0; idx2<poly2.size(); ++idx2)
+		{
+			std::size_t idx2b = (idx2+1) % poly2.size();
+			const t_vec& vec2a = poly2[idx2];
+			const t_vec& vec2b = poly2[idx2b];
+
+			if(intersect_lines_check<t_vec>(vec1a, vec1b, vec2a, vec2b))
+				return true;
+		}
+	}
 
 	// TODO: check cases when one object is completely contained in the other
 	return false;

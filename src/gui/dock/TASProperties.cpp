@@ -32,6 +32,8 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_spinMonoD = new QDoubleSpinBox(this);
 	m_spinAnaD = new QDoubleSpinBox(this);
 
+	QPushButton *btnTarget = new QPushButton("Set Current Angles as Target", this);
+
 	m_checkScatteringSense[0] = new QCheckBox(this);
 	m_checkScatteringSense[1] = new QCheckBox(this);
 	m_checkScatteringSense[2] = new QCheckBox(this);
@@ -133,6 +135,17 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		layoutScatter->addWidget(m_checkScatteringSense[2], y++, 0, 1, 2);
 	}
 
+	/*auto *groupOptions = new QGroupBox("Options", this);
+	{
+		auto *layoutScatter = new QGridLayout(groupOptions);
+		layoutScatter->setHorizontalSpacing(2);
+		layoutScatter->setVerticalSpacing(2);
+		layoutScatter->setContentsMargins(4,4,4,4);
+
+		int y = 0;
+		layoutScatter->addWidget(btnTarget, y++, 0, 1, 1);
+	}*/
+
 	auto *grid = new QGridLayout(this);
 	grid->setHorizontalSpacing(2);
 	grid->setVerticalSpacing(2);
@@ -143,6 +156,8 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupXtalAngles, y++, 0, 1, 1);
 	grid->addWidget(groupD, y++, 0, 1, 1);
 	grid->addWidget(groupSenses, y++, 0, 1, 1);
+	//grid->addWidget(groupOptions, y++, 0, 1, 1);
+	grid->addWidget(btnTarget, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
 	connect(m_spinMonoScAngle, 
@@ -198,6 +213,20 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 				emit ScatteringSensesChanged(senses[0], senses[1], senses[2]);
 			});
 	}
+
+	// set current angles as target angles
+	connect(btnTarget, &QPushButton::clicked,
+		[this]() -> void
+		{
+			t_real a1 = m_spinMonoXtalAngle->value();
+			t_real a2 = m_spinMonoScAngle->value();
+			t_real a3 = m_spinSampleXtalAngle->value();
+			t_real a4 = m_spinSampleScAngle->value();
+			t_real a5 = m_spinAnaXtalAngle->value();
+			t_real a6 = m_spinAnaScAngle->value();
+
+			emit GotoAngles(a1, a2, a3, a4, a5, a6, true);
+		});
 }
 
 

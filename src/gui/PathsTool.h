@@ -224,6 +224,7 @@ protected slots:
 	void RenameObject(const std::string& oldid, const std::string& newid);
 	void ChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
 
+	void InitSettings();
 
 signals:
 	// signal, when a new path has been calculated

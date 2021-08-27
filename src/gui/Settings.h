@@ -56,6 +56,10 @@ extern QString g_theme;
 
 // gui font
 extern QString g_font;
+
+// which polygon intersection method should be used?
+// 0: sweep, 1: half-plane test
+extern int g_poly_intersection_method;
 // ----------------------------------------------------------------------------
 
 
@@ -75,17 +79,19 @@ extern std::string find_resource(const std::string& resfile);
 // settings dialog
 // ----------------------------------------------------------------------------
 class SettingsDlg : public QDialog
-{
+{ Q_OBJECT
 public:
 	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~SettingsDlg();
 
 	static void ReadSettings(QSettings* sett);
 
+
 protected:
 	virtual void accept() override;
 	void ApplySettings();
 	static void ApplyGuiSettings();
+
 
 private:
 	QSettings *m_sett{nullptr};
@@ -93,6 +99,11 @@ private:
 
 	QComboBox *m_comboTheme{nullptr};
 	QLineEdit *m_editFont{nullptr};
+
+
+signals:
+	// signal emitted when settings are applied
+	void SettingsHaveChanged();
 };
 
 #endif

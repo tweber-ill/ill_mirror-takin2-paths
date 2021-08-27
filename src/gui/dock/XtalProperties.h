@@ -23,13 +23,16 @@ public:
 	XtalPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~XtalPropertiesWidget();
 
+
 public slots:
 	void SetLattice(t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma);
 	void SetPlane(t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z);
 
+
 signals:
 	void LatticeChanged(t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma);
 	void PlaneChanged(t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z);
+
 
 private:
 	// number of lattice constant elements
@@ -52,6 +55,7 @@ private:
 };
 
 
+
 class XtalPropertiesDockWidget : public QDockWidget
 {
 public:
@@ -60,12 +64,15 @@ public:
 
 	std::shared_ptr<XtalPropertiesWidget> GetWidget() { return m_widget; }
 
+
 private:
     std::shared_ptr<XtalPropertiesWidget> m_widget;
 };
 
 
+
 // ----------------------------------------------------------------------------
+
 
 
 class XtalInfoWidget : public QWidget
@@ -77,9 +84,11 @@ public:
 public slots:
 	void SetUB(const t_mat& matB, const t_mat& matUB);
 
+
 private:
 	QPlainTextEdit *m_txt{nullptr};
 };
+
 
 
 class XtalInfoDockWidget : public QDockWidget
@@ -89,6 +98,7 @@ public:
 	virtual ~XtalInfoDockWidget();
 
 	std::shared_ptr<XtalInfoWidget> GetWidget() { return m_widget; }
+
 
 private:
     std::shared_ptr<XtalInfoWidget> m_widget;

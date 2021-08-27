@@ -811,6 +811,26 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			m_tascalc.SetScatteringSenses(monoccw, sampleccw, anaccw);
 		});
 
+	// set current to target angles
+	connect(taswidget, &TASPropertiesWidget::GotoAngles,
+		[this](
+			t_real a1, t_real a2, 
+			t_real a3, t_real a4, 
+			t_real a5, t_real a6, 
+			bool only_set_target) -> void
+		{
+			const t_real *sensesCCW = this->m_tascalc.GetScatteringSenses();
+
+			a1 = a1 / 180. * tl2::pi<t_real> * sensesCCW[0];
+			a2 = a2 / 180. * tl2::pi<t_real> * sensesCCW[0];
+			a3 = a3 / 180. * tl2::pi<t_real> * sensesCCW[1];
+			a4 = a4 / 180. * tl2::pi<t_real> * sensesCCW[1];
+			a5 = a5 / 180. * tl2::pi<t_real> * sensesCCW[2];
+			a6 = a6 / 180. * tl2::pi<t_real> * sensesCCW[2];
+
+			this->GotoAngles(a1, a3, a4, a5, only_set_target);
+		});
+
 	// camera viewing angle
 	connect(camwidget, &CamPropertiesWidget::ViewingAngleChanged,
 		[this](t_real angle) -> void
@@ -977,7 +997,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
+		{
 			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+			connect(&*this->m_dlgSettings, &SettingsDlg::SettingsHaveChanged,
+				this, &PathsTool::InitSettings);
+		}
 
 		m_dlgSettings->show();
 		m_dlgSettings->raise();
@@ -1289,13 +1313,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// initialisations
 	// --------------------------------------------------------------------
-	m_tascalc.SetSampleAngleOffset(g_a3_offs);
+	InitSettings();
 
-	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
-	m_pathsbuilder.SetEpsilon(g_eps);
-	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetInstrumentSpace(&this->m_instrspace);
 	m_pathsbuilder.SetTasCalculator(&this->m_tascalc);
+
 	m_pathsbuilder.AddProgressSlot(
 		[this](bool start, bool end, t_real progress, const std::string& message)
 		{
@@ -1324,6 +1346,22 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	UpdateUB();
 	// --------------------------------------------------------------------
+}
+
+
+/**
+ * propagate (changed) global settings to each object
+ */
+void PathsTool::InitSettings()
+{
+	m_tascalc.SetSampleAngleOffset(g_a3_offs);
+
+	m_instrspace.SetEpsilon(g_eps);
+	m_instrspace.SetPolyIntersectionMethod(g_poly_intersection_method);
+
+	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
+	m_pathsbuilder.SetEpsilon(g_eps);
+	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 }
 
 

@@ -12,7 +12,7 @@
  *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
  */
 
-#define BOOST_TEST_MODULE test_intersections_circle_polys
+#define BOOST_TEST_MODULE test_intersections_circle_poly
 
 #include <iostream>
 #include <fstream>
@@ -35,10 +35,10 @@ template<class T> using t_polys = bgeo::model::multi_polygon<t_poly<T>, std::vec
 template<class T> using t_box = bgeo::model::box<t_vertex<T>>;
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(test_intersections_circle_polys, t_real, 
+BOOST_AUTO_TEST_CASE_TEMPLATE(inters_circle_poly, t_real,
 	decltype(std::tuple</*float,*/ double, long double>{}))
 {
-	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name() 
+	std::cout << "Testing with " << ty::type_id_with_cvr<t_real>().pretty_name()
 		<< " type." << std::endl;
 
 	constexpr const std::size_t NUM_TESTS = 1000;

@@ -22,12 +22,23 @@ public:
 	using allocator_type = void;
 
 public:
-	t_arr() = default;
+	constexpr t_arr() = default;
+	constexpr ~t_arr() = default;
 
 	// dummy constructor to fulfill interface requirements
-	t_arr(std::size_t) {};
+	constexpr t_arr(std::size_t) {};
 
-	~t_arr() = default;
+	// copy constructor
+	constexpr t_arr(const t_arr& other) : std::array<T, N>(other) {}
+
+	constexpr t_arr& operator=(const t_arr& other)
+	{
+		std::array<T, N>::operator=(other);
+		return *this;
+	}
+
+	// move constructor
+	//t_arr(t_arr&& other) : std::array<T, N>(std::forward<t_arr&&>(other)) {}
 };
 
 

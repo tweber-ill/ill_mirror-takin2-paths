@@ -23,6 +23,7 @@ public:
 	TASPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~TASPropertiesWidget();
 
+
 public slots:
 	void SetMonoScatteringAngle(t_real angle);
 	void SetSampleScatteringAngle(t_real angle);
@@ -35,6 +36,7 @@ public slots:
 	void SetDSpacings(t_real dmono, t_real dana);
 	void SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw);
 
+
 signals:
 	void MonoScatteringAngleChanged(t_real angle);
 	void SampleScatteringAngleChanged(t_real angle);
@@ -46,6 +48,9 @@ signals:
 
 	void DSpacingsChanged(t_real dmono, t_real dana);
 	void ScatteringSensesChanged(bool monoccw, bool sampleccw, bool anaccw);
+
+	void GotoAngles(t_real a1, t_real a2, t_real a3, t_real a4, t_real a5, t_real a6, bool only_set_target);
+
 
 private:
 	// scattering angles
@@ -67,6 +72,7 @@ private:
 };
 
 
+
 class TASPropertiesDockWidget : public QDockWidget
 {
 public:
@@ -74,6 +80,7 @@ public:
 	virtual ~TASPropertiesDockWidget();
 
 	std::shared_ptr<TASPropertiesWidget> GetWidget() { return m_widget; }
+
 
 private:
     std::shared_ptr<TASPropertiesWidget> m_widget;

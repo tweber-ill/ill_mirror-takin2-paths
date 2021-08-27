@@ -24,6 +24,7 @@ public:
 	PathPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~PathPropertiesWidget();
 
+
 private:
 	// number of coordinate elements
 	static constexpr std::size_t m_num_coord_elems = 2;
@@ -32,9 +33,11 @@ private:
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 	QSlider *m_sliderPath = nullptr;
 
+
 public slots:
 	void SetTarget(t_real a2, t_real a4);
 	void PathAvailable(std::size_t numVertices);
+
 
 signals:
 	void TargetChanged(t_real a2, t_real a4);
@@ -45,6 +48,7 @@ signals:
 };
 
 
+
 class PathPropertiesDockWidget : public QDockWidget
 {
 public:
@@ -52,6 +56,7 @@ public:
 	virtual ~PathPropertiesDockWidget();
 
 	std::shared_ptr<PathPropertiesWidget> GetWidget() { return m_widget; }
+
 
 private:
     std::shared_ptr<PathPropertiesWidget> m_widget;
