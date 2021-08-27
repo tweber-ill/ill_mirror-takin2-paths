@@ -229,6 +229,7 @@ add_executable(taspaths
 
 if(BUILD_TEST_TOOLS)
 	add_executable(hull
+		src/tools/hull_main.cpp
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
@@ -238,6 +239,7 @@ if(BUILD_TEST_TOOLS)
 	)
 
 	add_executable(lines
+		src/tools/lines_main.cpp
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
@@ -247,6 +249,7 @@ if(BUILD_TEST_TOOLS)
 	)
 
 	add_executable(poly
+		src/tools/poly_main.cpp
 		src/tools/poly.cpp src/tools/poly.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h

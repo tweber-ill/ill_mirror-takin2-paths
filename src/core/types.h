@@ -22,23 +22,46 @@ public:
 	using allocator_type = void;
 
 public:
-	constexpr t_arr() = default;
-	constexpr ~t_arr() = default;
-
-	// dummy constructor to fulfill interface requirements
-	constexpr t_arr(std::size_t) {};
-
-	// copy constructor
-	constexpr t_arr(const t_arr& other) : std::array<T, N>(other) {}
-
-	constexpr t_arr& operator=(const t_arr& other)
+	constexpr t_arr() noexcept
 	{
-		std::array<T, N>::operator=(other);
+		for(std::size_t i=0; i<this->size(); ++i)
+			this->operator[](i) = T{};
+	}
+
+
+	/*constexpr*/ ~t_arr() noexcept = default;
+
+
+	/**
+	 * dummy constructor to fulfill interface requirements
+	 */
+	constexpr t_arr(std::size_t) noexcept : t_arr{}
+	{};
+
+
+	/**
+	 * copy constructor
+	 */
+	constexpr t_arr(const t_arr& other) noexcept
+	{
+		this->operator=(other);
+	}
+
+
+	/**
+	 * assignment
+	 */
+	constexpr t_arr& operator=(const t_arr& other) noexcept
+	{
+		static_cast<std::array<T, N>*>(this)->operator=(other);
 		return *this;
 	}
 
-	// move constructor
-	//t_arr(t_arr&& other) : std::array<T, N>(std::forward<t_arr&&>(other)) {}
+
+	/**
+	 * move constructor
+	 */
+	//t_arr(t_arr&& other) noexcept : std::array<T, N>(std::forward<t_arr&&>(other)) {}
 };
 
 

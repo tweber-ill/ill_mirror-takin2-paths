@@ -185,8 +185,8 @@ requires tl2::is_vec<t_vec>
  */
 template<class t_vec> requires tl2::is_vec<t_vec>
 std::tuple<bool, std::size_t, std::size_t> is_vert_in_hull(
-	const std::vector<t_vec>& hull, 
-	const t_vec& newvert, 
+	const std::vector<t_vec>& hull,
+	const t_vec& newvert,
 	const t_vec *vert_in_hull = nullptr)
 {
 	using t_real = typename t_vec::value_type;
@@ -323,7 +323,7 @@ requires tl2::is_vec<t_vec>
 		}
 	};
 
-	using t_tree = intr::bstree<t_node, 
+	using t_tree = intr::bstree<t_node,
 		intr::member_hook<t_node, decltype(t_node::_h), &t_node::_h>>;
 	t_tree hull;
 	std::vector<t_node*> node_mem {{
@@ -346,8 +346,8 @@ requires tl2::is_vec<t_vec>
 		if(iter2 == hull.end())
 			iter2 = hull.begin();
 
-		auto iter1 = (iter2==hull.begin() 
-			? std::next(hull.rbegin(),1).base() 
+		auto iter1 = (iter2==hull.begin()
+			? std::next(hull.rbegin(),1).base()
 			: std::prev(iter2,1));
 
 		const t_vec& vert1 = iter1->vert;
@@ -564,19 +564,19 @@ requires tl2::is_vec<t_vec>
 		{
 			std::size_t vert2idx = (vert1idx+1) % contour.size();
 
-			const t_vec_real cont_vert1 = tl2::create<t_vec_real>({ 
+			const t_vec_real cont_vert1 = tl2::create<t_vec_real>({
 				t_real(contour[vert1idx][0]), t_real(contour[vert1idx][1]) });
-			const t_vec_real cont_vert2 = tl2::create<t_vec_real>({ 
+			const t_vec_real cont_vert2 = tl2::create<t_vec_real>({
 				t_real(contour[vert2idx][0]), t_real(contour[vert2idx][1]) });
 
 			// don't check self-intersections of the new line segment
-			if(tl2::equals<t_vec_real>(cont_vert1, vert1, eps) || 
-				tl2::equals<t_vec_real>(cont_vert1, vert2, eps) || 
-				tl2::equals<t_vec_real>(cont_vert2, vert2, eps) || 
+			if(tl2::equals<t_vec_real>(cont_vert1, vert1, eps) ||
+				tl2::equals<t_vec_real>(cont_vert1, vert2, eps) ||
+				tl2::equals<t_vec_real>(cont_vert2, vert2, eps) ||
 				tl2::equals<t_vec_real>(cont_vert2, vert3, eps))
 				continue;
 
-			auto [intersects, intersection] = 
+			auto [intersects, intersection] =
 				intersect_lines<t_vec_real, t_real>(vert1, vert3, cont_vert1, cont_vert2, true, eps, false);
 			if(intersects)
 			{

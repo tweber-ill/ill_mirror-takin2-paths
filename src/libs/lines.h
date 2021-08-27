@@ -737,14 +737,14 @@ t_cont<t_vec> intersect_circle_circle(
 	t_vec pos1a = tl2::create<t_vec>({x1, y1a}) + org1;
 	t_vec pos1b = tl2::create<t_vec>({x1, y1b}) + org1;
 
-	if(is_on_circle<t_vec>(org1, r1, pos1a, eps) 
+	if(is_on_circle<t_vec>(org1, r1, pos1a, eps)
 		&& is_on_circle<t_vec>(org2, r2, pos1a, eps))
 	{
 		inters.emplace_back(std::move(pos1a));
 	}
 
-	if(!tl2::equals<t_vec>(pos1a, pos1b, eps) 
-		&& is_on_circle<t_vec>(org1, r1, pos1b, eps) 
+	if(!tl2::equals<t_vec>(pos1a, pos1b, eps)
+		&& is_on_circle<t_vec>(org1, r1, pos1b, eps)
 		&& is_on_circle<t_vec>(org2, r2, pos1b, eps))
 	{
 		inters.emplace_back(std::move(pos1b));
@@ -760,14 +760,14 @@ t_cont<t_vec> intersect_circle_circle(
 		t_vec pos2a = tl2::create<t_vec>({x2, y2a}) + org1;
 		t_vec pos2b = tl2::create<t_vec>({x2, y2b}) + org1;
 
-		if(is_on_circle<t_vec>(org1, r1, pos2a, eps) 
+		if(is_on_circle<t_vec>(org1, r1, pos2a, eps)
 			&& is_on_circle<t_vec>(org2, r2, pos2a, eps))
 		{
 			inters.emplace_back(std::move(pos2a));
 		}
 
-		if(!tl2::equals<t_vec>(pos2a, pos2b, eps) 
-			&& is_on_circle<t_vec>(org1, r1, pos2b, eps) 
+		if(!tl2::equals<t_vec>(pos2a, pos2b, eps)
+			&& is_on_circle<t_vec>(org1, r1, pos2b, eps)
 			&& is_on_circle<t_vec>(org2, r2, pos2b, eps))
 		{
 			inters.emplace_back(std::move(pos2b));
@@ -775,7 +775,7 @@ t_cont<t_vec> intersect_circle_circle(
 	}
 
 	// sort intersections by x
-	std::sort(inters.begin(), inters.end(), 
+	std::sort(inters.begin(), inters.end(),
 		[](const t_vec& vec1, const t_vec& vec2) -> bool
 		{ return vec1[0] < vec2[0]; });
 
@@ -984,7 +984,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 		return evt1.x > evt2.x;
 	};
 
-	std::priority_queue<SweepEvent, std::vector<SweepEvent>, decltype(events_comp)> 
+	std::priority_queue<SweepEvent, std::vector<SweepEvent>, decltype(events_comp)>
 		events(events_comp);
 
 	for(std::size_t line_idx=0; line_idx<lines.size(); ++line_idx)
@@ -993,15 +993,15 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 		SweepEvent evtLeft
 		{
-			.x = std::get<0>(line)[0], 
-			.ty = SweepEventType::LEFT_VERTEX, 
+			.x = std::get<0>(line)[0],
+			.ty = SweepEventType::LEFT_VERTEX,
 			.line_idx = line_idx
 		};
 
 		SweepEvent evtRight
 		{
-			.x = std::get<1>(line)[0], 
-			.ty = SweepEventType::RIGHT_VERTEX, 
+			.x = std::get<1>(line)[0],
+			.ty = SweepEventType::RIGHT_VERTEX,
 			.line_idx = line_idx
 		};
 
@@ -1076,7 +1076,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 				leaf->line_idx = evt.line_idx;
 				leaf->eps = eps;
 
-				t_node* iter = t_treealgos::insert_equal(&status, 
+				t_node* iter = t_treealgos::insert_equal(&status,
 					t_treealgos::root_node(&status), leaf,
 					[](const t_node* node1, const t_node* node2) -> bool
 					{
@@ -1192,16 +1192,16 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 				if(iterUpper == status_end || iterLower == status_end)
 					continue;
 
-				if(!cmp_line<t_vec, t_line>(lines[iterLower->line_idx], 
+				if(!cmp_line<t_vec, t_line>(lines[iterLower->line_idx],
 					lines[iterUpper->line_idx], curX, eps))
 				{
 					std::swap(iterUpper->line_idx, iterLower->line_idx);
 					std::swap(iterUpper, iterLower);
 				}
 
-				t_node* iterPrev = (iterUpper == status_begin 
+				t_node* iterPrev = (iterUpper == status_begin
 					? status_end : t_treealgos::prev_node(iterUpper));
-				t_node* iterNext = (iterLower == status_end 
+				t_node* iterNext = (iterLower == status_end
 					? status_end : t_treealgos::next_node(iterLower));
 
 				// add possible intersection events
@@ -1294,7 +1294,6 @@ bool collide_poly_poly(
 	typename t_vec::value_type eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
-	using t_real = typename t_vec::value_type;
 	using t_line = std::tuple<t_vec, t_vec, int>;
 
 	/*using namespace tl2_ops;

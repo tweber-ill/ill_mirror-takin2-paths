@@ -709,32 +709,3 @@ PolyWnd::~PolyWnd()
 }
 
 // ----------------------------------------------------------------------------
-
-
-
-
-// ----------------------------------------------------------------------------
-
-int main(int argc, char** argv)
-{
-	try
-	{
-		auto app = std::make_unique<QApplication>(argc, argv);
-		app->setOrganizationName("tw");
-		app->setApplicationName("poly");
-		tl2::set_locales();
-
-		auto vis = std::make_unique<PolyWnd>();
-		vis->show();
-
-		return app->exec();
-	}
-	catch(const std::exception& ex)
-	{
-		std::cerr << "Error: " << ex.what() << std::endl;
-	}
-
-	return -1;
-}
-
-// ----------------------------------------------------------------------------

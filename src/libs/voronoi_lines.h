@@ -184,7 +184,7 @@ public:
 	// ------------------------------------------------------------------------
 
 
-	using t_edgemap_lin = 
+	using t_edgemap_lin =
 		std::unordered_map<
 			t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>;
 
@@ -223,7 +223,7 @@ public:
 	/**
 	 * get the index of the closest n voronoi vertices
 	 */
-	std::vector<std::size_t> 
+	std::vector<std::size_t>
 	GetClosestVoronoiVertices(const t_vec& vec, std::size_t n = 1) const
 	{
 		std::vector<std::size_t> indices;
@@ -240,7 +240,7 @@ public:
 	}
 	// ------------------------------------------------------------------------
 
-	
+
 	void Clear()
 	{
 		vertices.clear();
@@ -299,12 +299,12 @@ private:
  * @see https://github.com/boostorg/polygon/blob/develop/example/voronoi_visualizer.cpp
  * @see https://www.boost.org/doc/libs/1_75_0/libs/polygon/doc/voronoi_diagram.htm
  */
-template<class t_vec, 
+template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro(const std::vector<t_line>& lines, 
+calc_voro(const std::vector<t_line>& lines,
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
 	typename t_vec::value_type edge_eps = 1e-2,
@@ -421,8 +421,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 
-	auto get_vertex_idx = 
-		[&vorovertices](const typename t_vorotraits::vertex_type* vert) 
+	auto get_vertex_idx =
+		[&vorovertices](const typename t_vorotraits::vertex_type* vert)
 			-> std::optional<std::size_t>
 	{
 		// infinite edge?
@@ -592,7 +592,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 		// get line segment endpoint
-		auto get_segment_point = [&edge, &get_segment](bool twin) 
+		auto get_segment_point = [&edge, &get_segment](bool twin)
 			-> const t_vec*
 		{
 			const auto* cell = twin ? edge.twin()->cell() : edge.cell();
@@ -626,7 +626,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			return poly::point_data<t_real>{vec[0], vec[1]};
 		};
 
-		auto vertex_to_point_data = [&scale](const typename t_vorotraits::vertex_type& vec) 
+		auto vertex_to_point_data = [&scale](const typename t_vorotraits::vertex_type& vec)
 			-> poly::point_data<t_real>
 		{
 			return poly::point_data<t_real>{vec.x()/scale, vec.y()/scale};
@@ -637,13 +637,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			return tl2::create<t_vec>({ pt.x(), pt.y() });
 		};
 
-		auto vertex_to_vec = [](const typename t_vorotraits::vertex_type& vec) 
+		auto vertex_to_vec = [](const typename t_vorotraits::vertex_type& vec)
 			-> t_vec
 		{
 			return tl2::create<t_vec>({ vec.x(), vec.y() });
 		};
 
-		auto to_segment_data = [&to_point_data](const t_line& line) 
+		auto to_segment_data = [&to_point_data](const t_line& line)
 			-> poly::segment_data<t_real>
 		{
 			auto pt1 = to_point_data(std::get<0>(line));
@@ -661,7 +661,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			if(!seg || !pt)
 				continue;
 
-			std::vector<poly::point_data<t_real>> parabola{{ 
+			std::vector<poly::point_data<t_real>> parabola{{
 				vertex_to_point_data(*vert0),
 				vertex_to_point_data(*vert1)
 			}};
@@ -680,11 +680,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				all_parabolic_edges_vec.emplace_back(
 					std::make_tuple(
-						std::move(parabolic_edges), 
+						std::move(parabolic_edges),
 						*vert0idx, *vert1idx));
 				/*all_parabolic_edges.emplace(
 					std::make_pair(
-						std::make_pair(*vert0idx, *vert1idx), 
+						std::make_pair(*vert0idx, *vert1idx),
 						std::move(parabolic_edges)));*/
 			}
 		}
@@ -748,7 +748,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					std::make_tuple(line, vert0idx, vert1idx));
 				/*linear_edges.emplace(
 					std::make_pair(
-						std::make_pair(vert0idx, vert1idx), 
+						std::make_pair(vert0idx, vert1idx),
 						line));*/
 			}
 		}
@@ -868,7 +868,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 		linear_edges.emplace(
 			std::make_pair(
-				std::make_pair(idx1, idx2),	// key 
+				std::make_pair(idx1, idx2),	// key
 				std::move(std::get<0>(edge))));
 	}
 
@@ -884,12 +884,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
  * @see https://github.com/aewallin/openvoronoi/blob/master/cpp_examples/random_line_segments/main.cpp
  * @see https://github.com/aewallin/openvoronoi/blob/master/src/utility/vd2svg.hpp
  */
-template<class t_vec, 
+template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro_ovd(const std::vector<t_line>& lines, 
+calc_voro_ovd(const std::vector<t_line>& lines,
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
 	typename t_vec::value_type edge_eps = 1e-2,
@@ -990,7 +990,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		std::size_t vert2idx = 0;
 
 		// bisector handled?
-		if(ty == ovd::LINE || ty == ovd::LINELINE || 
+		if(ty == ovd::LINE || ty == ovd::LINELINE ||
 			ty == ovd::PARA_LINELINE || ty == ovd::PARABOLA)
 		{
 			// add graph vertex
@@ -1027,11 +1027,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				const auto& pos2 = vdgraph[vert2].position;
 
 				t_real len = tl2::norm(
-					tl2::create<t_vec>({ pos1.x, pos1.y }) - 
+					tl2::create<t_vec>({ pos1.x, pos1.y }) -
 					tl2::create<t_vec>({ pos2.x, pos2.y }));
 
 				graph.AddEdge(
-					std::to_string(vert1idx), 
+					std::to_string(vert1idx),
 					std::to_string(vert2idx),
 					len);
 			}
@@ -1046,7 +1046,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 			linear_edges.emplace(
 				std::make_pair(
-					std::make_pair(vert1idx, vert2idx), 
+					std::make_pair(vert1idx, vert2idx),
 					std::move(line)));
 		}
 		else if(ty == ovd::PARABOLA)
@@ -1057,7 +1057,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			// TODO: check parameter range because of gaps in the bisector
 			for(t_real param = 0.; param <= 1.; param += edge_eps)
 			{
-				t_real para_pos = 
+				t_real para_pos =
 					std::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);
 				auto pt = vdgraph[edge].point(para_pos);
 
@@ -1068,7 +1068,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 			all_parabolic_edges.emplace(
 				std::make_pair(
-					std::make_pair(vert1idx, vert2idx), 
+					std::make_pair(vert1idx, vert2idx),
 					std::move(para_edge)));
 		}
 	}

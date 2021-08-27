@@ -381,7 +381,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		// show pixel coordinates
 		if(m_pathsbuilder)
 		{
-			t_vec pix = m_pathsbuilder->AngleToPixel(_a4, _a2);
+			t_vec2 pix = m_pathsbuilder->AngleToPixel(_a4, _a2);
 			ostr <<" Pixel: (" << (int)pix[0] << ", " << (int)pix[1] << ").";
 		}
 
@@ -828,14 +828,14 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 
 		for(t_real param = 0.; param <= 1.; param += edge_eps)
 		{
-			t_vec point = std::get<0>(line) + param * (std::get<1>(line) - std::get<0>(line));
+			t_vec2 point = std::get<0>(line) + param * (std::get<1>(line) - std::get<0>(line));
 			int x = int(point[0]);
 			int y = int(point[1]);
 
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
-				t_vec angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
+				t_vec2 angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
 
 				vecx << angles[0];
 				vecy << angles[1];
@@ -863,7 +863,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
-				t_vec angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
+				t_vec2 angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
 
 				vecx << angles[0];
 				vecy << angles[1];
@@ -893,7 +893,7 @@ void ConfigSpaceDlg::RedrawPathPlot()
 	pathx.reserve(m_pathvertices.size());
 	pathy.reserve(m_pathvertices.size());
 
-	for(const t_vec& pathvert : m_pathvertices)
+	for(const t_vec2& pathvert : m_pathvertices)
 	{
 		pathx << pathvert[0];
 		pathy << pathvert[1];

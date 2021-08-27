@@ -150,7 +150,7 @@ private:
  * get a pixel from an image
  */
 template<class t_image> requires is_image<t_image>
-typename t_image::value_type 
+typename t_image::value_type
 get_pixel(const t_image& img, int x, int y)
 {
 	using t_pixel = typename t_image::value_type;
@@ -166,7 +166,7 @@ get_pixel(const t_image& img, int x, int y)
  * set a pixel in an image
  */
 template<class t_image> requires is_image<t_image>
-void set_pixel(t_image& img, int x, int y, 
+void set_pixel(t_image& img, int x, int y,
 	typename t_image::value_type pixel)
 {
 	if(x >= (int)img.GetWidth() || y >= (int)img.GetHeight() || x<0 || y<0)
@@ -190,7 +190,7 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_image& img)
  * get a pixel from an image view
  */
 template<class t_imageview> requires is_imageview<t_imageview>
-typename boost::gil::channel_type<t_imageview>::type 
+typename boost::gil::channel_type<t_imageview>::type
 get_pixel(const t_imageview& img, int x, int y)
 {
 	using t_pixel = typename boost::gil::channel_type<t_imageview>::type;
@@ -206,7 +206,7 @@ get_pixel(const t_imageview& img, int x, int y)
  * set a pixel in an image view
  */
 template<class t_imageview> requires is_imageview<t_imageview>
-void set_pixel(t_imageview& img, int x, int y, 
+void set_pixel(t_imageview& img, int x, int y,
 	typename boost::gil::channel_type<t_imageview>::type pixel)
 {
 	if(x >= img.width() || y >= img.height() || x<0 || y<0)

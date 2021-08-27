@@ -15,7 +15,10 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/process.hpp>
 namespace pt = boost::property_tree;
+namespace proc = boost::process;
+namespace this_proc = boost::this_process;
 
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
@@ -1132,7 +1135,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acHullTool, &QAction::triggered, this, [hullpath]()
 		{
-			std::system((hullpath.string() + "&").c_str());
+			proc::spawn(hullpath.string().c_str(), this_proc::environment());
+			//std::system((hullpath.string() + "&").c_str());
 		});
 	}
 
@@ -1144,7 +1148,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acLinesTool, &QAction::triggered, this, [linespath]()
 		{
-			std::system((linespath.string() + "&").c_str());
+			proc::spawn(linespath.string().c_str(), this_proc::environment());
+			//std::system((linespath.string() + "&").c_str());
 		});
 	}
 
@@ -1156,7 +1161,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acPolyTool, &QAction::triggered, this, [polypath]()
 		{
-			std::system((polypath.string() + "&").c_str());
+			proc::spawn(polypath.string().c_str(), this_proc::environment());
+			//std::system((polypath.string() + "&").c_str());
 		});
 	}
 
@@ -1732,6 +1738,6 @@ void PathsTool::TrackPath(std::size_t idx)
 	if(idx >= m_pathvertices.size())
 		return;
 
-	const t_vec& vert = m_pathvertices[idx];
+	const t_vec2& vert = m_pathvertices[idx];
 	GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
 }

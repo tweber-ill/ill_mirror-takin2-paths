@@ -1492,31 +1492,3 @@ void HullDlg::ShowTableContextMenu(const QPoint& pt)
 	m_contextMenuTab->popup(ptGlob);
 }
 // ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-int main(int argc, char** argv)
-{
-	try
-	{
-		auto app = std::make_unique<QApplication>(argc, argv);
-		app->setOrganizationName("tw");
-		app->setApplicationName("hull");
-		tl2::set_locales();
-
-		auto hullwnd = std::make_unique<HullWnd>();
-		hullwnd->show();
-		hullwnd->raise();
-		hullwnd->activateWindow();
-
-		return app->exec();
-	}
-	catch(const std::exception& ex)
-	{
-		std::cerr << "Error: " << ex.what() << std::endl;
-	}
-
-	return -1;
-}
-// ----------------------------------------------------------------------------

@@ -62,7 +62,7 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 			for(int i=0; i<dim; ++i)
 				_verts.push_back(t_real_qhull{vert[i]});
 
-		qh::Qhull qh{"triag", dim, int(_verts.size()/dim), _verts.data(), 
+		qh::Qhull qh{"triag", dim, int(_verts.size()/dim), _verts.data(),
 			only_hull ? "Qt" : "v Qu QJ" };
 		if(qh.hasQhullMessage())
 			std::cout << qh.qhullMessage() << std::endl;
@@ -186,7 +186,7 @@ template<class t_vec, class t_real = typename t_vec::value_type>
 std::optional<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>>
 get_triag_sharing_edge(
 	std::vector<std::vector<t_vec>>& triags,
-	const t_vec& vert1, const t_vec& vert2, 
+	const t_vec& vert1, const t_vec& vert2,
 	std::size_t curtriagidx, t_real eps = 1e-5)
 requires tl2::is_vec<t_vec>
 {
@@ -543,8 +543,8 @@ template<class t_vec,
 	class t_edge = std::pair<std::size_t, std::size_t>,
 	class t_real = typename t_vec::value_type>
 std::vector<t_edge> get_edges(
-	const std::vector<t_vec>& verts, 
-	const std::vector<std::vector<t_vec>>& triags, 
+	const std::vector<t_vec>& verts,
+	const std::vector<std::vector<t_vec>>& triags,
 	t_real eps)
 {
 	auto get_vert_idx = [&verts, eps](const t_vec& vert) -> std::optional<std::size_t>

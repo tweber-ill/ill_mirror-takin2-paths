@@ -67,6 +67,7 @@ int main(int argc, char** argv)
 		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
 
 		auto app = std::make_unique<QApplication>(argc, argv);
+		app->setOrganizationName("tw");
 		app->setApplicationName("TASPaths");
 
 		g_apppath = app->applicationDirPath().toStdString();

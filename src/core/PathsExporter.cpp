@@ -15,7 +15,7 @@
  * export the path as raw data
  */
 bool PathsExporterRaw::Export(const PathsBuilder* builder, 
-	const std::vector<t_vec>& path, bool path_in_rad) const
+	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -43,7 +43,7 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder,
 		<< std::right << std::setw(m_prec*2-2) << "a4 (deg)" << " "
 		<< std::right << std::setw(m_prec*2) << "a2 (deg)" << "\n";
 
-	for(const t_vec& vec : path)
+	for(const auto& vec : path)
 	{
 		t_real a4 = vec[0];
 		t_real a2 = vec[1];
@@ -68,7 +68,7 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder,
  * export the path into Nomad commands
  */
 bool PathsExporterNomad::Export(const PathsBuilder* builder, 
-	const std::vector<t_vec>& path, bool path_in_rad) const
+	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -94,7 +94,7 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder,
 	}
 
 	// output motor drive commands
-	for(const t_vec& vec : path)
+	for(const auto& vec : path)
 	{
 		t_real a4 = vec[0];
 		t_real a2 = vec[1];
@@ -119,7 +119,7 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder,
  * export the path into Nicos commands
  */
 bool PathsExporterNicos::Export(const PathsBuilder* builder, 
-	const std::vector<t_vec>& path, bool path_in_rad) const
+	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)
 		return false;
@@ -145,7 +145,7 @@ bool PathsExporterNicos::Export(const PathsBuilder* builder,
 	}
 
 	// output motor drive commands
-	for(const t_vec& vec : path)
+	for(const auto& vec : path)
 	{
 		t_real a4 = vec[0];
 		t_real a2 = vec[1];

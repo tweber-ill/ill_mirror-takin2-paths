@@ -32,7 +32,7 @@ struct InstrumentPath
 	bool ok = false;
 
 	// initial and final vertices on path
-	t_vec vec_i, vec_f;
+	t_vec2 vec_i, vec_f;
 
 	// indices of the voronoi vertices on the path mesh
 	std::vector<std::size_t> voronoi_indices;
@@ -50,7 +50,7 @@ public:
 	using t_contourvec = tl2::vec<int, std::vector>;
 
 	// line segment
-	using t_line = std::pair<t_vec, t_vec>;
+	using t_line = std::pair<t_vec2, t_vec2>;
 
 	// voronoi edges
 	using t_voronoiedge_linear =
@@ -58,11 +58,12 @@ public:
 		std::optional<std::size_t>,
 		std::optional<std::size_t>>;
 	using t_voronoiedge_parabolic =
-		std::tuple<std::vector<t_vec>,
+		std::tuple<std::vector<t_vec2>,
 		std::size_t, std::size_t>;
 
 	// voronoi graph
 	using t_graph = geo::AdjacencyList<t_real>;
+	//using t_graph = geo::AdjacencyMatrix<t_real>;
 
 
 public:
@@ -80,8 +81,8 @@ public:
 	// ------------------------------------------------------------------------
 
 	// conversion functions
-	t_vec PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
-	t_vec AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
+	t_vec2 PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
+	t_vec2 AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
 
 	// clear all data
 	void Clear();
@@ -91,7 +92,7 @@ public:
 	const std::vector<std::vector<t_contourvec>>& GetWallContours(bool full=false) const;
 
 	// get voronoi vertices, edges and graph
-	const geo::VoronoiLinesResults<t_vec, t_line, t_graph>& GetVoronoiResults() const
+	const geo::VoronoiLinesResults<t_vec2, t_line, t_graph>& GetVoronoiResults() const
 	{ return m_voro_results; }
 
 	// ------------------------------------------------------------------------
@@ -121,7 +122,7 @@ public:
 	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
 
 	// get individual vertices on an instrument path
-	std::vector<t_vec> GetPathVertices(const InstrumentPath& path,
+	std::vector<t_vec2> GetPathVertices(const InstrumentPath& path,
 		bool subdivide_lines = false, bool deg = false) const;
 
 	// get individual vertices on an instrument path -- for scripting interface
@@ -169,7 +170,8 @@ public:
 	bool SaveToLinesTool(const std::string& filename);
 
 	// export the path to various formats using a visitor
-	bool AcceptExporter(const PathsExporterBase *exporter, const std::vector<t_vec>& path, bool path_in_rad = false)
+	bool AcceptExporter(const PathsExporterBase *exporter, 
+		const std::vector<t_vec2>& path, bool path_in_rad = false)
 	{ return exporter->Export(this, path, path_in_rad); }
 	// ------------------------------------------------------------------------
 
@@ -216,11 +218,11 @@ private:
 	std::vector<std::pair<std::size_t, std::size_t>> m_linegroups{};
 
 	// arbitrary points outside the regions
-	std::vector<t_vec> m_points_outside_regions{};
+	std::vector<t_vec2> m_points_outside_regions{};
 	std::vector<bool> m_inverted_regions{};
 
 	// voronoi vertices, edges and graph from the line segments
-	geo::VoronoiLinesResults<t_vec, t_line, t_graph> m_voro_results{};
+	geo::VoronoiLinesResults<t_vec2, t_line, t_graph> m_voro_results{};
 
 	// general, angular and voronoi edge calculation epsilon
 	t_real m_eps = 1e-3;

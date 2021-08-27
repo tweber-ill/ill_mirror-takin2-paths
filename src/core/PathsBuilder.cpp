@@ -51,11 +51,11 @@ void PathsBuilder::Clear()
 void PathsBuilder::AddConsoleProgressHandler()
 {
 	auto handler = []
-		(bool start, bool end, t_real progress, 
+		(bool start, bool end, t_real progress,
 		const std::string& msg) -> bool
 	{
-		std::cout << std::fixed << "[" 
-			<< std::setw(3) << (int)(progress * 100.) 
+		std::cout << std::fixed << "["
+			<< std::setw(3) << (int)(progress * 100.)
 			<< "%] " << msg << std::endl;
 		return true;
 	};
@@ -67,7 +67,7 @@ void PathsBuilder::AddConsoleProgressHandler()
 /**
  * convert a pixel of the plot image into the angular range of the plot
  */
-t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
+t_vec2 PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
 {
 	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1],
 		img_x / t_real(m_img.GetWidth()));
@@ -90,14 +90,14 @@ t_vec PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_
 		y *= sensesCCW[0];
 	}
 
-	return tl2::create<t_vec>({x, y});
+	return tl2::create<t_vec2>({x, y});
 }
 
 
 /**
  * convert angular coordinates to a pixel in the plot image
  */
-t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool inc_sense) const
+t_vec2 PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool inc_sense) const
 {
 	if(deg)
 	{
@@ -121,7 +121,7 @@ t_vec PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool 
 	t_real y = std::lerp(t_real(0.), t_real(m_img.GetHeight()),
 		(angle_y - m_monoScatteringRange[0]) / (m_monoScatteringRange[1] - m_monoScatteringRange[0]));
 
-	return tl2::create<t_vec>({x, y});
+	return tl2::create<t_vec2>({x, y});
 }
 
 
@@ -200,7 +200,7 @@ bool PathsBuilder::CalculateConfigSpace(
 
 			for(std::size_t img_col=0; img_col<img_w; ++img_col)
 			{
-				t_vec angle = PixelToAngle(img_col, img_row, false, true);
+				t_vec2 angle = PixelToAngle(img_col, img_row, false, true);
 				t_real a4 = angle[0];
 				t_real a2 = angle[1];
 				t_real a3 = a4 * 0.5;
@@ -288,10 +288,10 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 		for(auto& contour : m_wallcontours)
 		{
 			// replace contour with its convex hull
-			//std::vector<t_vec> contour_real = tl2::convert<t_vec, t_contourvec, std::vector>(contour);
+			//std::vector<t_vec2> contour_real = tl2::convert<t_vec2, t_contourvec, std::vector>(contour);
 			//auto [hull_verts, hull_lines, hull_indices]
-			//	= geo::calc_delaunay<t_vec>(2, contour_real, true);
-			//contour = tl2::convert<t_contourvec, t_vec, std::vector>(hull_verts);
+			//	= geo::calc_delaunay<t_vec2>(2, contour_real, true);
+			//contour = tl2::convert<t_contourvec, t_vec2, std::vector>(hull_verts);
 
 			// simplify hull contour
 			geo::simplify_contour<t_contourvec, t_real>(contour, m_simplify_mindist, m_eps_angular, m_eps);
@@ -349,9 +349,9 @@ bool PathsBuilder::CalculateLineSegments()
 	// find an arbitrary point outside all obstacles
 	auto find_point_outside_regions = [this]
 	(std::size_t x_start = 0, std::size_t y_start = 0,
-		bool skip_search = false) -> t_vec
+		bool skip_search = false) -> t_vec2
 	{
-		t_vec point_outside_regions = tl2::create<t_vec>({-50, -40});
+		t_vec2 point_outside_regions = tl2::create<t_vec2>({-50, -40});
 		bool found_point = false;
 
 		if(!skip_search)
@@ -362,9 +362,9 @@ bool PathsBuilder::CalculateLineSegments()
 				{
 					if(m_img.GetPixel(x, y) == 0)
 					{
-						point_outside_regions = 
-							tl2::create<t_vec>({
-								static_cast<double>(x), 
+						point_outside_regions =
+							tl2::create<t_vec2>({
+								static_cast<double>(x),
 								static_cast<double>(y)
 							});
 						found_point = true;
@@ -394,7 +394,7 @@ bool PathsBuilder::CalculateLineSegments()
 	{
 		const auto& contour = m_wallcontours[contouridx];
 		std::size_t groupstart = linectr;
-		t_contourvec contour_mean = tl2::zero<t_vec>(2);
+		t_contourvec contour_mean = tl2::zero<t_vec2>(2);
 
 		for(std::size_t vert1 = 0; vert1 < contour.size(); ++vert1)
 		{
@@ -404,8 +404,8 @@ bool PathsBuilder::CalculateLineSegments()
 			const t_contourvec& vec2 = contour[vert2];
 			contour_mean += vec1;
 
-			t_vec linevec1 = vec1;
-			t_vec linevec2 = vec2;
+			t_vec2 linevec1 = vec1;
+			t_vec2 linevec2 = vec2;
 
 			m_lines.emplace_back(std::make_pair(std::move(linevec1), std::move(linevec2)));
 
@@ -433,7 +433,7 @@ bool PathsBuilder::CalculateLineSegments()
 		{
 			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 
-			t_vec point_outside_regions = 
+			t_vec2 point_outside_regions =
 				find_point_outside_regions(contour[0][0], contour[0][1], true);
 			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
 
@@ -441,7 +441,7 @@ bool PathsBuilder::CalculateLineSegments()
 			auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
 
 #ifdef DEBUG
-			std::cout << "contour " << std::dec << contouridx 
+			std::cout << "contour " << std::dec << contouridx
 				<< ", pixel inside " << inside_contour[0] << ", " << inside_contour[1]
 				<< ": " << std::hex << int(pix_incontour) << std::dec
 				<< "; pixel outside " << outside_contour[0] << ", " << outside_contour[1]
@@ -469,7 +469,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines)
 	(*m_sigProgress)(true, false, 0, message);
 
 	m_voro_results
-		= geo::calc_voro<t_vec, t_line, t_graph>(
+		= geo::calc_voro<t_vec2, t_line, t_graph>(
 			m_lines, m_linegroups, group_lines, true,
 			m_voroedge_eps, &m_points_outside_regions,
 			&m_inverted_regions);
@@ -579,7 +579,7 @@ bool PathsBuilder::SaveToLinesTool(const std::string& filename)
  * find a path from an initial (a2, a4) to a final (a2, a4)
  */
 InstrumentPath PathsBuilder::FindPath(
-	t_real a2_i, t_real a4_i, 
+	t_real a2_i, t_real a4_i,
 	t_real a2_f, t_real a4_f)
 {
 	a2_i *= 180. / tl2::pi<t_real>;
@@ -589,7 +589,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 #ifdef DEBUG
 	std::cout << "a4_i = " << a4_i << ", a2_i = " << a2_i
-		<< "; a4_f = " << a4_f << ", a2_f = " << a2_f 
+		<< "; a4_f = " << a4_f << ", a2_f = " << a2_f
 		<< "." << std::endl;
 #endif
 
@@ -602,7 +602,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 #ifdef DEBUG
 	std::cout << "start pixel: (" << path.vec_i[0] << ", " << path.vec_i[1] << std::endl;
-	std::cout << "target pixel: (" << path.vec_f[0] << ", " << path.vec_f[1] << std::endl; 
+	std::cout << "target pixel: (" << path.vec_f[0] << ", " << path.vec_f[1] << std::endl;
 #endif
 
 	// find closest voronoi vertices
@@ -619,12 +619,12 @@ InstrumentPath PathsBuilder::FindPath(
 	// calculation of closest voronoi vertices using the index tree
 	if(m_voro_results.GetIndexTreeSize())
 	{
-		std::vector<std::size_t> indices_i = 
+		std::vector<std::size_t> indices_i =
 			m_voro_results.GetClosestVoronoiVertices(path.vec_i, 1);
 		if(indices_i.size())
 			idx_i = indices_i[0];
 
-		std::vector<std::size_t> indices_f = 
+		std::vector<std::size_t> indices_f =
 			m_voro_results.GetClosestVoronoiVertices(path.vec_f, 1);
 		if(indices_f.size())
 			idx_f = indices_f[0];
@@ -638,14 +638,14 @@ InstrumentPath PathsBuilder::FindPath(
 
 		for(std::size_t idx_vert = 0; idx_vert < voro_vertices.size(); ++idx_vert)
 		{
-			const t_vec& cur_vert = voro_vertices[idx_vert];
+			const t_vec2& cur_vert = voro_vertices[idx_vert];
 			//std::cout << "cur_vert: " << cur_vert[0] << " " << cur_vert[1] << std::endl;
 
-			t_vec diff_i = path.vec_i - cur_vert;
-			t_vec diff_f = path.vec_f - cur_vert;
+			t_vec2 diff_i = path.vec_i - cur_vert;
+			t_vec2 diff_f = path.vec_f - cur_vert;
 
-			t_real dist_i_sq = tl2::inner<t_vec>(diff_i, diff_i);
-			t_real dist_f_sq = tl2::inner<t_vec>(diff_f, diff_f);
+			t_real dist_i_sq = tl2::inner<t_vec2>(diff_i, diff_i);
+			t_real dist_f_sq = tl2::inner<t_vec2>(diff_f, diff_f);
 
 			if(dist_i_sq < mindist_i)
 			{
@@ -704,12 +704,12 @@ InstrumentPath PathsBuilder::FindPath(
 	for(std::size_t idx=0; idx<path.voronoi_indices.size(); ++idx)
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
-		const t_vec& voro_vertex = voro_vertices[voro_idx];
-		const t_vec voro_angle = PixelToAngle(voro_vertex[0], voro_vertex[1], true);
+		const t_vec2& voro_vertex = voro_vertices[voro_idx];
+		const t_vec2 voro_angle = PixelToAngle(voro_vertex[0], voro_vertex[1], true);
 
-		std::cout << "\tvertex index " << voro_idx << ": pixel (" 
-			<< voro_vertex[0] << ", " << voro_vertex[1] << "), angle (" 
-			<< voro_angle[0] << ", " << voro_angle[1] << ")" 
+		std::cout << "\tvertex index " << voro_idx << ": pixel ("
+			<< voro_vertex[0] << ", " << voro_vertex[1] << "), angle ("
+			<< voro_angle[0] << ", " << voro_angle[1] << ")"
 			<< std::endl;
 	}
 #endif
@@ -717,18 +717,18 @@ InstrumentPath PathsBuilder::FindPath(
 
 	// find closest point on a path segment
 	auto closest_point = [&voro_vertices]
-	(std::size_t idx1, std::size_t idx2, const t_vec& vec)
+	(std::size_t idx1, std::size_t idx2, const t_vec2& vec)
 		-> std::tuple<t_real, t_real>
 	{
-		const t_vec& vert1 = voro_vertices[idx1];
-		const t_vec& vert2 = voro_vertices[idx2];
+		const t_vec2& vert1 = voro_vertices[idx1];
+		const t_vec2& vert2 = voro_vertices[idx2];
 
-		t_vec dir = vert2 - vert1;
-		t_real dir_len = tl2::norm<t_vec>(dir);
+		t_vec2 dir = vert2 - vert1;
+		t_real dir_len = tl2::norm<t_vec2>(dir);
 		dir /= dir_len;
 
-		auto [ptProj, dist, paramProj] = 
-			tl2::project_line<t_vec, t_real>(
+		auto [ptProj, dist, paramProj] =
+			tl2::project_line<t_vec2, t_real>(
 				vec, vert1, dir, true);
 
 		paramProj /= dir_len;
@@ -743,7 +743,7 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx2_begin = path.voronoi_indices[1];
 
 		std::size_t min_dist_idx_begin = vert_idx2_begin;
-		auto [min_param_begin, min_dist_begin] = 
+		auto [min_param_begin, min_dist_begin] =
 			closest_point(vert_idx1_begin, vert_idx2_begin, path.vec_i);
 
 		// check if any neighbour path before first vertex is even closer
@@ -753,14 +753,14 @@ InstrumentPath PathsBuilder::FindPath(
 			if(neighbour_idx == vert_idx2_begin)
 				continue;
 
-			auto [neighbour_param, neighbour_dist] = 
+			auto [neighbour_param, neighbour_dist] =
 				closest_point(neighbour_idx, vert_idx1_begin, path.vec_i);
 
 			// choose a new position on the adjacent edge if it's either
 			// closer or if the former parameters had been out of bounds
 			// and are now within [0, 1]
 			if((neighbour_param >= 0. && neighbour_param <= 1.)
-				&& (neighbour_dist < min_dist_begin 
+				&& (neighbour_dist < min_dist_begin
 				|| (min_param_begin < 0. || min_param_begin > 1.)))
 			{
 				min_dist_begin = neighbour_dist;
@@ -785,7 +785,7 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
 		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
 		std::size_t min_dist_idx_end = vert_idx1_end;
-		auto [min_param_end, min_dist_end] = 
+		auto [min_param_end, min_dist_end] =
 			closest_point(vert_idx1_end, vert_idx2_end, path.vec_f);
 
 		// check if any neighbour path before first vertex is even closer
@@ -794,14 +794,14 @@ InstrumentPath PathsBuilder::FindPath(
 			if(neighbour_idx == vert_idx1_end)
 				continue;
 
-			auto [neighbour_param, neighbour_dist] = 
+			auto [neighbour_param, neighbour_dist] =
 				closest_point(vert_idx2_end, neighbour_idx, path.vec_f);
 
 			// choose a new position on the adjacent edge if it's either
 			// closer or if the former parameters had been out of bounds
 			// and are now within [0, 1]
 			if((neighbour_param >= 0. && neighbour_param <= 1.)
-				&& (neighbour_dist < min_dist_end 
+				&& (neighbour_dist < min_dist_end
 				|| (min_param_end < 0. || min_param_end > 1.)))
 			{
 				min_dist_end = neighbour_dist;
@@ -829,10 +829,10 @@ InstrumentPath PathsBuilder::FindPath(
 /**
  * get individual vertices on an instrument path
  */
-std::vector<t_vec> PathsBuilder::GetPathVertices(
+std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	const InstrumentPath& path, bool subdivide_lines, bool deg) const
 {
-	std::vector<t_vec> path_vertices;
+	std::vector<t_vec2> path_vertices;
 
 	if(!path.ok)
 		return path_vertices;
@@ -842,9 +842,9 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 
 
 	// convert pixel to angular coordinates and add vertex to path
-	auto add_curve_vertex = [&path_vertices, deg, this](const t_vec& vertex)
+	auto add_curve_vertex = [&path_vertices, deg, this](const t_vec2& vertex)
 	{
-		const t_vec angle = PixelToAngle(vertex[0], vertex[1], deg);
+		const t_vec2 angle = PixelToAngle(vertex[0], vertex[1], deg);
 		path_vertices.emplace_back(std::move(angle));
 	};
 
@@ -856,7 +856,7 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 	for(std::size_t idx=1; idx<path.voronoi_indices.size(); ++idx)
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
-		const t_vec& voro_vertex = voro_vertices[voro_idx];
+		const t_vec2& voro_vertex = voro_vertices[voro_idx];
 		bool is_linear_bisector = true;
 
 		// check if the current one is a quadratic bisector
@@ -872,8 +872,8 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 			// get correct iteration order of bisector,
 			// which is stored in an unordered fashion
 			bool inverted_iter_order = false;
-			const std::vector<t_vec>& vertices = iter_quadr->second;
-			if(vertices.size() && tl2::equals<t_vec>(vertices[0], voro_vertex, m_eps))
+			const std::vector<t_vec2>& vertices = iter_quadr->second;
+			if(vertices.size() && tl2::equals<t_vec2>(vertices[0], voro_vertex, m_eps))
 				inverted_iter_order = true;
 
 			std::ptrdiff_t begin_idx = 0;
@@ -916,13 +916,13 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 			// use the closest position on the path for the initial vertex
 			if(idx == 1 && path.voronoi_indices.size() > 1)
 			{
-				const t_vec& voro_vertex1 = voro_vertices[path.voronoi_indices[0]];
+				const t_vec2& voro_vertex1 = voro_vertices[path.voronoi_indices[0]];
 				add_curve_vertex(voro_vertex1 + path.param_begin*(voro_vertex-voro_vertex1));
 			}
 			// use the closest position on the path for the final vertex
 			else if(idx == path.voronoi_indices.size()-1 && idx > 1)
 			{
-				const t_vec& voro_vertex1 = voro_vertices[path.voronoi_indices[idx-1]];
+				const t_vec2& voro_vertex1 = voro_vertices[path.voronoi_indices[idx-1]];
 				add_curve_vertex(voro_vertex1 + path.param_end*(voro_vertex-voro_vertex1));
 			}
 			else
@@ -939,7 +939,7 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 	// interpolate points on path line segments
 	if(subdivide_lines)
 	{
-		path_vertices = geo::subdivide_lines<t_vec>(path_vertices, m_subdiv_len);
+		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
 	}
 
 	return path_vertices;
@@ -953,12 +953,12 @@ std::vector<t_vec> PathsBuilder::GetPathVertices(
 std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
 	const InstrumentPath& path, bool subdivide_lines, bool deg) const
 {
-	std::vector<t_vec> vertices = GetPathVertices(path, subdivide_lines, deg);
+	std::vector<t_vec2> vertices = GetPathVertices(path, subdivide_lines, deg);
 
 	std::vector<std::pair<t_real, t_real>> pairs;
 	pairs.reserve(vertices.size());
 
-	for(const t_vec& vec : vertices)
+	for(const t_vec2& vec : vertices)
 		pairs.emplace_back(std::make_pair(vec[0], vec[1]));
 
 	return pairs;
@@ -984,8 +984,8 @@ PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
 	{
 		const t_line& line = m_lines[lineidx];
 
-		t_vec pt1 = PixelToAngle(std::get<0>(line)[0], std::get<0>(line)[1], true, false);
-		t_vec pt2 = PixelToAngle(std::get<1>(line)[0], std::get<1>(line)[1], true, false);
+		t_vec2 pt1 = PixelToAngle(std::get<0>(line)[0], std::get<0>(line)[1], true, false);
+		t_vec2 pt2 = PixelToAngle(std::get<1>(line)[0], std::get<1>(line)[1], true, false);
 
 		std::array<t_real, 4> arr{{ pt1[0], pt1[1], pt2[0], pt2[1] }};
 		lines.emplace_back(std::move(arr));

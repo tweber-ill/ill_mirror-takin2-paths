@@ -95,7 +95,7 @@ private:
 	PathsBuilder m_pathsbuilder;
 
 	// calculated path vertices
-	std::vector<t_vec> m_pathvertices;
+	std::vector<t_vec2> m_pathvertices;
 
 	t_real m_targetMonoScatteringAngle = 0;
 	t_real m_targetSampleScatteringAngle = 0;
