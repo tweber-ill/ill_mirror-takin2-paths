@@ -57,9 +57,12 @@ extern QString g_theme;
 // gui font
 extern QString g_font;
 
+
 // which polygon intersection method should be used?
 // 0: sweep, 1: half-plane test
 extern int g_poly_intersection_method;
+
+extern int g_light_follows_cursor;
 // ----------------------------------------------------------------------------
 
 

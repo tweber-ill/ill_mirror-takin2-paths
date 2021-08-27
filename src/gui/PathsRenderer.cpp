@@ -534,7 +534,9 @@ void PathsRenderer::UpdatePicker()
 					m_curActive = true;
 
 					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
-					SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
+
+					if(m_light_follows_cursor)
+						SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
 				}
 
 				// intersection with other objects
@@ -712,6 +714,8 @@ void PathsRenderer::initializeGL()
 	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
 	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
 	LOGGLERR(pGl);
+
+	SetLight(0, tl2::create<t_vec3_gl>({0, 0, 10}));
 
 	m_initialised = true;
 	emit AfterGLInitialisation();

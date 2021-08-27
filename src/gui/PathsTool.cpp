@@ -15,11 +15,9 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/process.hpp>
 namespace pt = boost::property_tree;
-namespace proc = boost::process;
-namespace this_proc = boost::this_process;
 
+#include "src/libs/proc.h"
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
 #include "tlibs2/libs/file.h"
@@ -1135,8 +1133,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acHullTool, &QAction::triggered, this, [hullpath]()
 		{
-			proc::spawn(hullpath.string().c_str(), this_proc::environment());
-			//std::system((hullpath.string() + "&").c_str());
+			create_process(hullpath.string());
 		});
 	}
 
@@ -1148,8 +1145,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acLinesTool, &QAction::triggered, this, [linespath]()
 		{
-			proc::spawn(linespath.string().c_str(), this_proc::environment());
-			//std::system((linespath.string() + "&").c_str());
+			create_process(linespath.string());
 		});
 	}
 
@@ -1161,8 +1157,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		connect(acPolyTool, &QAction::triggered, this, [polypath]()
 		{
-			proc::spawn(polypath.string().c_str(), this_proc::environment());
-			//std::system((polypath.string() + "&").c_str());
+			create_process(polypath.string());
 		});
 	}
 
@@ -1368,6 +1363,9 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
 	m_pathsbuilder.SetEpsilon(g_eps);
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
+
+	if(m_renderer)
+		m_renderer->SetLightFollowsCursor(g_light_follows_cursor);
 }
 
 

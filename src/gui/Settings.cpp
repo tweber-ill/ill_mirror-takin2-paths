@@ -38,7 +38,7 @@ int g_prec = 6;
 int g_prec_gui = 4;
 
 t_real g_eps = 1e-6;
-t_real g_eps_angular = 0.01/180.*tl2::pi<t_real>;
+t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;
 
 t_real g_a3_offs = tl2::pi<t_real>*0.5;
@@ -51,7 +51,11 @@ unsigned int g_maxnum_threads = 4;
 QString g_theme = "";
 QString g_font = "";
 
+// which polygon intersection method should be used?
+// 0: sweep, 1: half-plane test
 int g_poly_intersection_method = 1;
+
+int g_light_follows_cursor = 0;
 // ----------------------------------------------------------------------------
 
 
@@ -104,6 +108,8 @@ enum class SettingsKeys : int
 	A4_DELTA,
 
 	POLY_INTERS_METHOD,
+
+	LIGHT_FOLLOWS_CURSOR,
 
 	NUM_KEYS
 };
@@ -167,7 +173,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 
 	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 0, new QTableWidgetItem{"Angular epsilon"});
 	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2, new NumericTableWidgetItem<t_real>(g_eps_angular, 10));
+	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2, new NumericTableWidgetItem<t_real>(g_eps_angular / tl2::pi<t_real>*180., 10));
 
 	m_table->setItem((int)SettingsKeys::GUI_EPS, 0, new QTableWidgetItem{"Drawing epsilon"});
 	m_table->setItem((int)SettingsKeys::GUI_EPS, 1, new QTableWidgetItem{"Real"});
@@ -200,6 +206,10 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 0, new QTableWidgetItem{"Polygon intersection method"});
 	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 1, new QTableWidgetItem{"Integer"});
 	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 2, new NumericTableWidgetItem<int>(g_poly_intersection_method, 10));
+
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 0, new QTableWidgetItem{"Light follows cursor"});
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 1, new QTableWidgetItem{"Integer"});
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2, new NumericTableWidgetItem<int>(g_light_follows_cursor, 10));
 
 
 	// set value field editable
@@ -337,6 +347,8 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 
 	get_setting<int>(sett, "settings/poly_inters_method", &g_poly_intersection_method);
 
+	get_setting<int>(sett, "settings/light_follows_cursor", &g_light_follows_cursor);
+
 	ApplyGuiSettings();
 }
 
@@ -350,7 +362,8 @@ void SettingsDlg::ApplySettings()
 	g_eps = dynamic_cast<NumericTableWidgetItem<t_real>*>(
 		m_table->item((int)SettingsKeys::EPS, 2))->GetValue();
 	g_eps_angular = dynamic_cast<NumericTableWidgetItem<t_real>*>(
-		m_table->item((int)SettingsKeys::ANGULAR_EPS, 2))->GetValue();
+		m_table->item((int)SettingsKeys::ANGULAR_EPS, 2))->GetValue()
+			/ 180.*tl2::pi<t_real>;
 	g_eps_gui = dynamic_cast<NumericTableWidgetItem<t_real>*>(
 		m_table->item((int)SettingsKeys::GUI_EPS, 2))->GetValue();
 
@@ -380,6 +393,9 @@ void SettingsDlg::ApplySettings()
 	g_poly_intersection_method = dynamic_cast<NumericTableWidgetItem<int>*>(
 		m_table->item((int)SettingsKeys::POLY_INTERS_METHOD, 2))->GetValue();
 
+	g_light_follows_cursor = dynamic_cast<NumericTableWidgetItem<int>*>(
+		m_table->item((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2))->GetValue();
+
 
 	// write out the settings
 	if(m_sett)
@@ -401,6 +417,8 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/font", g_font);
 
 		m_sett->setValue("settings/poly_inters_method", g_poly_intersection_method);
+
+		m_sett->setValue("settings/light_follows_cursor", g_light_follows_cursor);
 	}
 
 	ApplyGuiSettings();

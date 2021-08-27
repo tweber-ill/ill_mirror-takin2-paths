@@ -220,6 +220,7 @@ add_executable(taspaths
 	src/libs/voronoi.h src/libs/voronoi_lines.h
 	src/libs/hull.h src/libs/img.h
 	src/libs/ptree.h
+	src/libs/proc.cpp src/libs/proc.h
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 

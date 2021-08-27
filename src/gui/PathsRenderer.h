@@ -162,6 +162,7 @@ protected:
 	GLfloat m_dragstartcursor[2] = {0., 0.};
 	std::string m_curObj, m_draggedObj;
 	bool m_curActive = false;
+	bool m_light_follows_cursor = false;
 
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
@@ -232,6 +233,8 @@ public:
 	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
+	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
+
 	void CentreCam(const std::string& obj);
 
 	QPoint GetMousePosition(bool global_pos = false) const;
