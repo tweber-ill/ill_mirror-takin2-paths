@@ -67,6 +67,32 @@ public:
 	void UpdateInstrument(const Instrument& instr);
 
 
+	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
+	bool IsInitialised() const { return m_initialised; }
+
+	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
+	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
+
+	void DeleteObject(PathsObj& obj);
+	void DeleteObject(const std::string& obj_name);
+	void RenameObject(const std::string& oldname, const std::string& newname);
+
+	void AddTriangleObject(const std::string& obj_name,
+		const std::vector<t_vec3_gl>& triag_verts,
+		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
+		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
+
+	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
+
+	void SetLight(std::size_t idx, const t_vec3_gl& pos);
+	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
+
+	void CentreCam(const std::string& obj);
+	QPoint GetMousePosition(bool global_pos = false) const;
+
+	void SaveShadowFramebuffer(const std::string& filename) const;
+
+
 protected:
 	virtual void paintEvent(QPaintEvent*) override;
 	virtual void initializeGL() override;
@@ -79,6 +105,21 @@ protected:
 	virtual void wheelEvent(QWheelEvent *pEvt) override;
 	virtual void keyPressEvent(QKeyEvent *pEvt) override;
 	virtual void keyReleaseEvent(QKeyEvent *pEvt) override;
+
+
+	qgl_funcs* GetGlFunctions();
+
+	void UpdateCam();
+	void UpdatePicker();
+	void UpdateLights();
+	void UpdatePerspective();
+	void UpdateViewport();
+	void UpdateFramebuffers();
+
+	void DoPaintGL(qgl_funcs *pGL);
+	void DoPaintQt(QPainter &painter);
+
+	void tick(const std::chrono::milliseconds& ms);
 
 
 private:
@@ -95,41 +136,12 @@ private:
 	bool m_pageDown[2] = { 0, 0 };
 
 
-protected slots:
-	void tick();
-
-
-public slots:
-	void EnablePicker(bool b);
-	void SetPerspectiveProjection(bool b);
-	void SetCamViewingAngle(t_real_gl angle);
-	void SetCamPosition(const t_vec3_gl& pos);
-	void SetCamRotation(const t_vec2_gl& rot);
-
-	t_real_gl GetCamViewingAngle() const { return m_camViewingAngle; }
-	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
-	t_vec3_gl GetCamPosition() const;
-	t_vec2_gl GetCamRotation() const;
-
-	void EnableTimer(bool enable=true);
-
-
-signals:
-	void AfterGLInitialisation();
-
-	void ObjectClicked(const std::string& obj, bool left, bool mid, bool right);
-	void ObjectDragged(bool drag_start, const std::string& obj, t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
-	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
-	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
-	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
-	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
-
-
 protected:
 	// ------------------------------------------------------------------------
 	// shader interface
 	// ------------------------------------------------------------------------
 	std::shared_ptr<QOpenGLShaderProgram> m_pShaders{};
+	std::shared_ptr<QOpenGLFramebufferObject> m_pfboshadow;
 
 	// vertex attributes
 	GLint m_attrVertex = -1;
@@ -186,6 +198,8 @@ protected:
 	std::atomic<bool> m_lightsNeedUpdate = false;
 	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
+	std::atomic<bool> m_frameBuffersNeedUpdate = false;
+
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
 	t_real_gl m_pickerSphereRadius = 1;
 
@@ -199,45 +213,34 @@ protected:
 	QTimer m_timer{};
 
 
-protected:
-	qgl_funcs* GetGlFunctions();
-
-	void UpdateCam();
-	void UpdatePicker();
-	void UpdateLights();
-	void UpdatePerspective();
-	void UpdateViewport();
-
-	void DoPaintGL(qgl_funcs *pGL);
-	void DoPaintQt(QPainter &painter);
-
-	void tick(const std::chrono::milliseconds& ms);
+protected slots:
+	void tick();
 
 
-public:
-	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
-	bool IsInitialised() const { return m_initialised; }
+public slots:
+	void EnablePicker(bool b);
+	void SetPerspectiveProjection(bool b);
+	void SetCamViewingAngle(t_real_gl angle);
+	void SetCamPosition(const t_vec3_gl& pos);
+	void SetCamRotation(const t_vec2_gl& rot);
 
-	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
-	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
+	t_real_gl GetCamViewingAngle() const { return m_camViewingAngle; }
+	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
+	t_vec3_gl GetCamPosition() const;
+	t_vec2_gl GetCamRotation() const;
 
-	void DeleteObject(PathsObj& obj);
-	void DeleteObject(const std::string& obj_name);
-	void RenameObject(const std::string& oldname, const std::string& newname);
+	void EnableTimer(bool enable=true);
 
-	void AddTriangleObject(const std::string& obj_name,
-		const std::vector<t_vec3_gl>& triag_verts,
-		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
-		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
+signals:
+	void AfterGLInitialisation();
 
-	void SetLight(std::size_t idx, const t_vec3_gl& pos);
-	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
-
-	void CentreCam(const std::string& obj);
-
-	QPoint GetMousePosition(bool global_pos = false) const;
+	void ObjectClicked(const std::string& obj, bool left, bool mid, bool right);
+	void ObjectDragged(bool drag_start, const std::string& obj, t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
+	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
+	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
+	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
+	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
 };
 
 

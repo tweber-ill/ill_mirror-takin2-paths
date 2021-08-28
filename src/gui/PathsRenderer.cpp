@@ -248,16 +248,7 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) co
  */
 void PathsRenderer::DeleteObject(PathsObj& obj)
 {
-	obj.m_pvertexbuf.reset();
-	obj.m_pnormalsbuf.reset();
-	obj.m_pcolourbuf.reset();
-	obj.m_puvbuf.reset();
-
-	if(qgl_funcs* pGl = tl2::get_gl_functions(this); pGl)
-	{
-		pGl->glDeleteVertexArrays(1, &obj.m_vertexarr);
-		LOGGLERR(pGl)
-	}
+	tl2::delete_render_object(obj);
 }
 
 
@@ -729,6 +720,7 @@ void PathsRenderer::resizeGL(int w, int h)
 
 	m_perspectiveNeedsUpdate = true;
 	m_viewportNeedsUpdate = true;
+	m_frameBuffersNeedUpdate = true;
 	update();
 }
 
@@ -848,6 +840,34 @@ void PathsRenderer::UpdateViewport()
 }
 
 
+void PathsRenderer::UpdateFramebuffers()
+{
+	auto *pGl = GetGlFunctions();
+	if(!pGl)
+		return;
+
+	// shadow frame buffer
+	QOpenGLFramebufferObjectFormat fbformat;
+	fbformat.setAttachment(QOpenGLFramebufferObject::Depth/*NoAttachment*/);
+	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(1024, 1024, fbformat);
+	//m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(1024, 1024,
+	//	QOpenGLFramebufferObject::Depth, GL_TEXTURE_2D);
+
+	BOOST_SCOPE_EXIT(pGl, m_pfboshadow)
+	{
+		pGl->glBindTexture(GL_TEXTURE_2D, 0);
+		m_pfboshadow->release();
+	} BOOST_SCOPE_EXIT_END
+
+	m_pfboshadow->bind();
+	pGl->glBindTexture(GL_TEXTURE_2D, m_pfboshadow->texture());
+
+	// TODO: texture settings
+
+	m_frameBuffersNeedUpdate = false;
+}
+
+
 void PathsRenderer::paintGL()
 {
 	if(!m_initialised || thread() != QThread::currentThread())
@@ -856,7 +876,9 @@ void PathsRenderer::paintGL()
 	QMutexLocker _locker{&m_mutexObj};
 
 	if(auto *pContext = context(); !pContext) return;
-	QPainter painter(this);
+
+	QOpenGLPaintDevice paintdev{size()};
+	QPainter painter{&paintdev};
 	painter.setRenderHint(QPainter::Antialiasing);
 
 	// gl painting
@@ -865,8 +887,9 @@ void PathsRenderer::paintGL()
 			UpdatePicker();
 
 		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
-		auto *pGl = tl2::get_gl_functions(this);
 		painter.beginNativePainting();
+
+		auto *pGl = tl2::get_gl_functions(this);
 		DoPaintGL(pGl);
 	}
 
@@ -882,6 +905,12 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
+	if(m_frameBuffersNeedUpdate)
+		UpdateFramebuffers();
+
+	//BOOST_SCOPE_EXIT(m_pfboshadow) { m_pfboshadow->release(); } BOOST_SCOPE_EXIT_END
+	//m_pfboshadow->bind();
+
 	// default options
 	pGl->glCullFace(GL_BACK);
 	pGl->glFrontFace(GL_CCW);
@@ -943,7 +972,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
-		pGl->glBindVertexArray(obj.m_vertexarr);
+		obj.m_pvertexarr->bind();
 
 
 		pGl->glEnableVertexAttribArray(m_attrVertex);
@@ -988,7 +1017,6 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	QPen penOrig = painter.pen();
 	QBrush brushOrig = painter.brush();
 
-
 	// draw tooltip
 	if(auto curObj = m_objs.find(m_curObj); curObj != m_objs.end())
 	{
@@ -1023,11 +1051,17 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 		}
 	}
 
-
 	// restore original styles
 	painter.setFont(fontOrig);
 	painter.setPen(penOrig);
 	painter.setBrush(brushOrig);
+}
+
+
+void PathsRenderer::SaveShadowFramebuffer(const std::string& filename) const
+{
+	auto img = m_pfboshadow->toImage();
+	img.save(filename.c_str());
 }
 
 
@@ -1061,6 +1095,9 @@ void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
 			m_pageDown[1] = 1;
 			pEvt->accept();
 			break;
+		/*case Qt::Key_S:
+			SaveShadowFramebuffer("shadow.png");
+			break;*/
 		default:
 			QOpenGLWidget::keyPressEvent(pEvt);
 			break;
