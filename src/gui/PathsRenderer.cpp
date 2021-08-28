@@ -384,6 +384,16 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 
 	m_lights[idx] = pos;
 	m_lightsNeedUpdate = true;
+
+	m_matLight = tl2::create<t_mat_gl>({
+		1.,  0.,  0.,  0.,
+		0.,  1.,  0.,  0.,
+		0.,  0.,  1.,  0.,
+		0.,  0.,  0.,  1.});
+	m_matLight = tl2::hom_translation<t_mat_gl>(-pos[0], -pos[1], -pos[2])
+		* m_matLight;
+
+	std::tie(m_matLight_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matLight);
 }
 
 
@@ -720,7 +730,7 @@ void PathsRenderer::resizeGL(int w, int h)
 
 	m_perspectiveNeedsUpdate = true;
 	m_viewportNeedsUpdate = true;
-	m_frameBuffersNeedUpdate = true;
+	m_shadowFramebuffersNeedUpdate = true;
 	update();
 }
 
@@ -804,7 +814,8 @@ void PathsRenderer::UpdatePerspective()
 	}
 	else
 	{
-		m_matPerspective = tl2::hom_ortho_sym<t_mat_gl, t_real_gl>(nearPlane, farPlane, 20., 20.);
+		m_matPerspective = tl2::hom_ortho_sym<t_mat_gl, t_real_gl>(
+			nearPlane, farPlane, 20., 20.);
 	}
 
 	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
@@ -829,29 +840,35 @@ void PathsRenderer::UpdateViewport()
 		return;
 
 	// viewport
-	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(m_screenDims[0], m_screenDims[1], 0., 1.);
-	std::tie(m_matViewport_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matViewport);
+	const t_real z_near{0}, z_far{1};
 
-	pGl->glViewport(0, 0, m_screenDims[0], m_screenDims[1]);
-	pGl->glDepthRange(0, 1);
+	int w = m_shadowRenderPass ? m_shadowDims[0] : m_screenDims[0];
+	int h = m_shadowRenderPass ? m_shadowDims[1] : m_screenDims[1];
+
+	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(
+		w, h, z_near, z_far);
+	std::tie(m_matViewport_inv, std::ignore) =
+		tl2::inv<t_mat_gl>(m_matViewport);
+
+	pGl->glViewport(0, 0, w, h);
+	pGl->glDepthRange(z_near, z_far);
 	LOGGLERR(pGl);
 
 	m_viewportNeedsUpdate = false;
 }
 
 
-void PathsRenderer::UpdateFramebuffers()
+void PathsRenderer::UpdateShadowFramebuffer()
 {
 	auto *pGl = GetGlFunctions();
 	if(!pGl)
 		return;
 
-	// shadow frame buffer
 	QOpenGLFramebufferObjectFormat fbformat;
-	fbformat.setAttachment(QOpenGLFramebufferObject::Depth/*NoAttachment*/);
-	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(1024, 1024, fbformat);
-	//m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(1024, 1024,
-	//	QOpenGLFramebufferObject::Depth, GL_TEXTURE_2D);
+	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
+	fbformat.setInternalTextureFormat(GL_RGBA32F);
+	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(
+		m_shadowDims[0], m_shadowDims[1], fbformat);
 
 	BOOST_SCOPE_EXIT(pGl, m_pfboshadow)
 	{
@@ -862,9 +879,12 @@ void PathsRenderer::UpdateFramebuffers()
 	m_pfboshadow->bind();
 	pGl->glBindTexture(GL_TEXTURE_2D, m_pfboshadow->texture());
 
-	// TODO: texture settings
+	// shadow texture parameters
+	// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
+	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	m_frameBuffersNeedUpdate = false;
+	m_shadowFramebuffersNeedUpdate = false;
 }
 
 
@@ -877,8 +897,9 @@ void PathsRenderer::paintGL()
 
 	if(auto *pContext = context(); !pContext) return;
 
-	QOpenGLPaintDevice paintdev{size()};
-	QPainter painter{&paintdev};
+	//QOpenGLPaintDevice paintdev{size()};
+	//paintdev.setDevicePixelRatio(devicePixelRatio());
+	QPainter painter{/*&paintdev*/ this};
 	painter.setRenderHint(QPainter::Antialiasing);
 
 	// gl painting
@@ -890,6 +911,13 @@ void PathsRenderer::paintGL()
 		painter.beginNativePainting();
 
 		auto *pGl = tl2::get_gl_functions(this);
+
+		// shadow framebuffer render pass
+		//m_shadowRenderPass = true;
+		//DoPaintGL(pGl);
+
+		// main render pass
+		m_shadowRenderPass = false;
 		DoPaintGL(pGl);
 	}
 
@@ -905,11 +933,19 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
-	if(m_frameBuffersNeedUpdate)
-		UpdateFramebuffers();
+	BOOST_SCOPE_EXIT(&m_shadowRenderPass, m_pfboshadow)
+	{
+		if(m_shadowRenderPass && m_pfboshadow)
+			m_pfboshadow->release();
+	} BOOST_SCOPE_EXIT_END
 
-	//BOOST_SCOPE_EXIT(m_pfboshadow) { m_pfboshadow->release(); } BOOST_SCOPE_EXIT_END
-	//m_pfboshadow->bind();
+	if(m_shadowRenderPass)
+	{
+		if(m_shadowFramebuffersNeedUpdate)
+			UpdateShadowFramebuffer();
+
+		m_pfboshadow->bind();
+	}
 
 	// default options
 	pGl->glCullFace(GL_BACK);
@@ -942,9 +978,17 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	// set cam and projection matrices
-	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+	// set cam or light matrix matrix
+	if(m_shadowRenderPass)
+	{
+		m_pShaders->setUniformValue(m_uniMatrixCam, m_matLight);
+		m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matLight_inv);
+	}
+	else
+	{
+		m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
+		m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+	}
 
 	// cursor
 	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);
@@ -1016,6 +1060,9 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	QFont fontOrig = painter.font();
 	QPen penOrig = painter.pen();
 	QBrush brushOrig = painter.brush();
+
+	// debug: show framebuffer
+	//painter.drawImage(0, 0, m_pfboshadow->toImage());
 
 	// draw tooltip
 	if(auto curObj = m_objs.find(m_curObj); curObj != m_objs.end())

@@ -114,7 +114,7 @@ protected:
 	void UpdateLights();
 	void UpdatePerspective();
 	void UpdateViewport();
-	void UpdateFramebuffers();
+	void UpdateShadowFramebuffer();
 
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);
@@ -186,6 +186,8 @@ protected:
 	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCamTrans = tl2::create<t_mat_gl>
 		({ 1,0,0,0, 0,1,0,0, 0,0,1,-15, 0,0,0,1 });
+	t_mat_gl m_matLight = tl2::unit<t_mat_gl>();
+	t_mat_gl m_matLight_inv = tl2::unit<t_mat_gl>();
 
 	t_real_gl m_camViewingAngle = tl2::pi<t_real_gl>*t_real_gl(0.5);
 	t_real_gl m_phi = 0, m_theta = 0;
@@ -198,9 +200,12 @@ protected:
 	std::atomic<bool> m_lightsNeedUpdate = false;
 	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
-	std::atomic<bool> m_frameBuffersNeedUpdate = false;
+	std::atomic<bool> m_shadowFramebuffersNeedUpdate = false;
+	std::atomic<bool> m_shadowRenderPass = false;
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
+	std::atomic<int> m_shadowDims[2] = { 1024, 1024 };
+
 	t_real_gl m_pickerSphereRadius = 1;
 
 	std::vector<t_vec3_gl> m_lights;
