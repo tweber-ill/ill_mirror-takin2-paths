@@ -70,9 +70,12 @@ void PathsRenderer::EnableTimer(bool enabled)
 /**
  * renderer versions and driver descriptions
  */
-std::tuple<std::string, std::string, std::string, std::string> PathsRenderer::GetGlDescr() const
+std::tuple<std::string, std::string, std::string, std::string>
+PathsRenderer::GetGlDescr() const
 {
-	return std::make_tuple(m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer);
+	return std::make_tuple(
+		m_strGlVer, m_strGlShaderVer,
+		m_strGlVendor, m_strGlRenderer);
 }
 
 

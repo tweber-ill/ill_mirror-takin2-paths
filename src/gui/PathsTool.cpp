@@ -1182,6 +1182,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		ostrInfo << "GL Renderer: " << m_gl_renderer << "\n";
 		ostrInfo << "GL Version: " << m_gl_ver << "\n";
 		ostrInfo << "GL Shader Version: " << m_gl_shader_ver << "\n";
+		ostrInfo << "Device pixel ratio: " << devicePixelRatio() << "\n"; 
 		QMessageBox::information(this, "About Renderer", ostrInfo.str().c_str());
 	});
 
