@@ -8,6 +8,7 @@
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
  *   - http://doc.qt.io/qt-5/qopengltexture.html
+ *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  */
 
 #include "PathsRenderer.h"
@@ -705,12 +706,17 @@ void PathsRenderer::initializeGL()
 	// get uniform handles from shaders
 	m_uniMatrixCam = m_pShaders->uniformLocation("trafos_cam");
 	m_uniMatrixCamInv = m_pShaders->uniformLocation("trafos_cam_inv");
+	m_uniMatrixLight = m_pShaders->uniformLocation("trafos_light");
+	m_uniMatrixLightInv = m_pShaders->uniformLocation("trafos_light_inv");
 	m_uniMatrixProj = m_pShaders->uniformLocation("trafos_proj");
 	m_uniMatrixObj = m_pShaders->uniformLocation("trafos_obj");
 
 	m_uniConstCol = m_pShaders->uniformLocation("lights_const_col");
 	m_uniLightPos = m_pShaders->uniformLocation("lights_pos");
 	m_uniNumActiveLights = m_pShaders->uniformLocation("lights_numactive");
+
+	m_uniShadowActive = m_pShaders->uniformLocation("shadow_active");
+	m_uniShadowMap = m_pShaders->uniformLocation("shadow_map");
 
 	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
 	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
@@ -858,6 +864,10 @@ void PathsRenderer::UpdateViewport()
 }
 
 
+/**
+ * frambuffer for shadow rendering
+ * @see (Sellers 2014) pp. 534-540
+ */
 void PathsRenderer::UpdateShadowFramebuffer()
 {
 	auto *pGl = GetGlFunctions();
@@ -865,8 +875,9 @@ void PathsRenderer::UpdateShadowFramebuffer()
 		return;
 
 	QOpenGLFramebufferObjectFormat fbformat;
-	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
+	fbformat.setTextureTarget(GL_TEXTURE_2D);
 	fbformat.setInternalTextureFormat(GL_RGBA32F);
+	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
 	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(
 		m_shadowDims[0], m_shadowDims[1], fbformat);
 
@@ -884,6 +895,9 @@ void PathsRenderer::UpdateShadowFramebuffer()
 	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
 	m_shadowFramebuffersNeedUpdate = false;
 }
 
@@ -897,9 +911,7 @@ void PathsRenderer::paintGL()
 
 	if(auto *pContext = context(); !pContext) return;
 
-	//QOpenGLPaintDevice paintdev{size()};
-	//paintdev.setDevicePixelRatio(devicePixelRatio());
-	QPainter painter{/*&paintdev*/ this};
+	QPainter painter{this};
 	painter.setRenderHint(QPainter::Antialiasing);
 
 	// gl painting
@@ -912,9 +924,12 @@ void PathsRenderer::paintGL()
 
 		auto *pGl = tl2::get_gl_functions(this);
 
-		// shadow framebuffer render pass
-		//m_shadowRenderPass = true;
-		//DoPaintGL(pGl);
+		if(m_shadowRenderingActive)
+		{
+			// shadow framebuffer render pass
+			m_shadowRenderPass = true;
+			DoPaintGL(pGl);
+		}
 
 		// main render pass
 		m_shadowRenderPass = false;
@@ -933,18 +948,28 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
-	BOOST_SCOPE_EXIT(&m_shadowRenderPass, m_pfboshadow)
+	BOOST_SCOPE_EXIT(&m_shadowRenderPass, m_pfboshadow, pGl)
 	{
+		pGl->glBindTexture(GL_TEXTURE_2D, 0);
 		if(m_shadowRenderPass && m_pfboshadow)
 			m_pfboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
-	if(m_shadowRenderPass)
+	if(m_shadowRenderingActive)
 	{
-		if(m_shadowFramebuffersNeedUpdate)
-			UpdateShadowFramebuffer();
+		if(m_shadowRenderPass)
+		{
+			if(m_shadowFramebuffersNeedUpdate)
+				UpdateShadowFramebuffer();
 
-		m_pfboshadow->bind();
+			if(m_pfboshadow)
+				m_pfboshadow->bind();
+		}
+		else
+		{
+			if(m_pfboshadow)
+				pGl->glBindTexture(GL_TEXTURE_2D, m_pfboshadow->texture());
+		}
 	}
 
 	// default options
@@ -968,7 +993,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	if(m_perspectiveNeedsUpdate)
 		UpdatePerspective();
-	if(m_viewportNeedsUpdate)
+	if(m_viewportNeedsUpdate || m_shadowRenderingActive)
 		UpdateViewport();
 	if(m_lightsNeedUpdate)
 		UpdateLights();
@@ -978,17 +1003,16 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	// set cam or light matrix matrix
-	if(m_shadowRenderPass)
-	{
-		m_pShaders->setUniformValue(m_uniMatrixCam, m_matLight);
-		m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matLight_inv);
-	}
-	else
-	{
-		m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-		m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
-	}
+	m_pShaders->setUniformValue(m_uniShadowActive, m_shadowRenderingActive);
+
+	// set cam and light matrices
+	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
+	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+
+	m_pShaders->setUniformValue(m_uniMatrixLight, m_matLight);
+	m_pShaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
+
+	m_pShaders->setUniformValue(m_uniShadowMap, 0);
 
 	// cursor
 	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);
@@ -1061,9 +1085,6 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	QPen penOrig = painter.pen();
 	QBrush brushOrig = painter.brush();
 
-	// debug: show framebuffer
-	//painter.drawImage(0, 0, m_pfboshadow->toImage());
-
 	// draw tooltip
 	if(auto curObj = m_objs.find(m_curObj); curObj != m_objs.end())
 	{
@@ -1107,7 +1128,7 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 
 void PathsRenderer::SaveShadowFramebuffer(const std::string& filename) const
 {
-	auto img = m_pfboshadow->toImage();
+	auto img = m_pfboshadow->toImage(true, 0);
 	img.save(filename.c_str());
 }
 

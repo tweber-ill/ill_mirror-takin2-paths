@@ -7,6 +7,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
+ *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  */
 
 #ifndef __PATHS_WIDGET_H__
@@ -153,11 +154,15 @@ protected:
 	GLint m_uniConstCol = -1;
 	GLint m_uniLightPos = -1;
 	GLint m_uniNumActiveLights = -1;
+	GLint m_uniShadowMap = -1;
+	GLint m_uniShadowActive = -1;
 
 	// matrices
 	GLint m_uniMatrixProj = -1;
 	GLint m_uniMatrixCam = -1;
 	GLint m_uniMatrixCamInv = -1;
+	GLint m_uniMatrixLight = -1;
+	GLint m_uniMatrixLightInv = -1;
 	GLint m_uniMatrixObj = -1;
 
 	// cursor
@@ -202,6 +207,7 @@ protected:
 	std::atomic<bool> m_viewportNeedsUpdate = false;
 	std::atomic<bool> m_shadowFramebuffersNeedUpdate = false;
 	std::atomic<bool> m_shadowRenderPass = false;
+	std::atomic<bool> m_shadowRenderingActive = false;
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
 	std::atomic<int> m_shadowDims[2] = { 1024, 1024 };

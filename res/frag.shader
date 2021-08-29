@@ -7,6 +7,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
+ *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  */
 
 #version ${GLSL_VERSION}
@@ -27,6 +28,8 @@ in VertexOut
 
 	vec4 pos;
 	vec4 norm;
+
+	vec4 pos_shadow;
 } frag_in;
 // ----------------------------------------------------------------------------
 
@@ -52,6 +55,8 @@ uniform vec2 cursor_coords = vec2(0.5, 0.5);
 uniform mat4 trafos_proj = mat4(1.);
 uniform mat4 trafos_cam = mat4(1.);
 uniform mat4 trafos_cam_inv = mat4(1.);
+uniform mat4 trafos_light = mat4(1.);
+uniform mat4 trafos_light_inv = mat4(1.);
 uniform mat4 trafos_obj = mat4(1.);
 // ----------------------------------------------------------------------------
 
@@ -62,6 +67,9 @@ uniform mat4 trafos_obj = mat4(1.);
 uniform vec4 lights_const_col = vec4(1, 1, 1, 1);
 uniform vec3 lights_pos[MAX_LIGHTS];
 uniform int lights_numactive = 1;	// how many lights to use?
+
+uniform sampler2DShadow shadow_map;
+uniform bool shadow_active = false;
 
 t_real g_diffuse = 1.;
 t_real g_specular = 0.25;
@@ -170,11 +178,16 @@ t_real lighting(vec4 objVert, vec4 objNorm)
 
 void main()
 {
+	frag_out_col = vec4(1, 1, 1, 1);
+
+	if(shadow_active)
+		frag_out_col *= textureProj(shadow_map, frag_in.pos_shadow);
+
 	t_real I = lighting(frag_in.pos, frag_in.norm);
 
-	frag_out_col.rgb = frag_in.col.rgb * I;
+	frag_out_col.rgb *= frag_in.col.rgb * I;
 	frag_out_col *= lights_const_col;
 
-	if(cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
+	if(!shadow_active && cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
 		frag_out_col = vec4(1, 0, 0, 1);
 }
