@@ -63,6 +63,7 @@ extern QString g_font;
 extern int g_poly_intersection_method;
 
 extern int g_light_follows_cursor;
+extern int g_enable_shadow_rendering;
 // ----------------------------------------------------------------------------
 
 

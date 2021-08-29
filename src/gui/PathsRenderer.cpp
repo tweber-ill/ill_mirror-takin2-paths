@@ -422,6 +422,7 @@ void PathsRenderer::UpdateLights()
 	m_pShaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
 	m_pShaders->setUniformValue(m_uniNumActiveLights, num_lights);
 
+	UpdateLightPerspective();
 	m_lightsNeedUpdate = false;
 }
 
@@ -709,13 +710,14 @@ void PathsRenderer::initializeGL()
 	m_uniMatrixLight = m_pShaders->uniformLocation("trafos_light");
 	m_uniMatrixLightInv = m_pShaders->uniformLocation("trafos_light_inv");
 	m_uniMatrixProj = m_pShaders->uniformLocation("trafos_proj");
+	m_uniMatrixLightProj = m_pShaders->uniformLocation("trafos_light_proj");
 	m_uniMatrixObj = m_pShaders->uniformLocation("trafos_obj");
 
 	m_uniConstCol = m_pShaders->uniformLocation("lights_const_col");
 	m_uniLightPos = m_pShaders->uniformLocation("lights_pos");
 	m_uniNumActiveLights = m_pShaders->uniformLocation("lights_numactive");
 
-	m_uniShadowActive = m_pShaders->uniformLocation("shadow_active");
+	m_uniShadowRenderingEnabled = m_pShaders->uniformLocation("shadow_enabled");
 	m_uniShadowRenderPass = m_pShaders->uniformLocation("shadow_renderpass");
 	m_uniShadowMap = m_pShaders->uniformLocation("shadow_map");
 
@@ -735,9 +737,13 @@ void PathsRenderer::resizeGL(int w, int h)
 	m_screenDims[0] = w;
 	m_screenDims[1] = h;
 
+	m_shadowDims[0] = w*2;
+	m_shadowDims[1] = h*2;
+
 	m_perspectiveNeedsUpdate = true;
 	m_viewportNeedsUpdate = true;
-	m_shadowFramebuffersNeedUpdate = true;
+	m_shadowFramebufferNeedsUpdate = true;
+	m_lightsNeedUpdate = true;
 	update();
 }
 
@@ -825,7 +831,8 @@ void PathsRenderer::UpdatePerspective()
 			nearPlane, farPlane, 20., 20.);
 	}
 
-	std::tie(m_matPerspective_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matPerspective);
+	std::tie(m_matPerspective_inv, std::ignore) =
+		tl2::inv<t_mat_gl>(m_matPerspective);
 
 	// bind shaders
 	m_pShaders->bind();
@@ -837,6 +844,45 @@ void PathsRenderer::UpdatePerspective()
 	LOGGLERR(pGl);
 
 	m_perspectiveNeedsUpdate = false;
+}
+
+
+void PathsRenderer::UpdateLightPerspective()
+{
+	auto *pGl = GetGlFunctions();
+	if(!pGl)
+		return;
+
+	// projection
+	const t_real_gl nearPlane = 0.1;
+	const t_real_gl farPlane = 1000.;
+
+	if(m_perspectiveProjection)
+	{
+		// viewing angle has to be large enough so that the
+		// shadow map covers the entire scene
+		t_real_gl viewingangle = tl2::pi<t_real_gl> * 0.75;
+		m_matLightPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
+			nearPlane, farPlane, viewingangle,
+			t_real_gl(m_shadowDims[1])/t_real_gl(m_shadowDims[0]));
+	}
+	else
+	{
+		m_matLightPerspective = tl2::hom_ortho_sym<t_mat_gl, t_real_gl>(
+			nearPlane, farPlane, 20., 20.);
+	}
+
+	std::tie(m_matLightPerspective_inv, std::ignore) =
+		tl2::inv<t_mat_gl>(m_matLightPerspective);
+
+	// bind shaders
+	m_pShaders->bind();
+	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	LOGGLERR(pGl);
+
+	// set matrices
+	m_pShaders->setUniformValue(m_uniMatrixLightProj, m_matLightPerspective);
+	LOGGLERR(pGl);
 }
 
 
@@ -899,7 +945,7 @@ void PathsRenderer::UpdateShadowFramebuffer()
 	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
-	m_shadowFramebuffersNeedUpdate = false;
+	m_shadowFramebufferNeedsUpdate = false;
 }
 
 
@@ -913,13 +959,17 @@ void PathsRenderer::paintGL()
 	if(auto *pContext = context(); !pContext) return;
 	auto *pGl = tl2::get_gl_functions(this);
 
+	static bool firstrun = true;
+
 	// shadow framebuffer render pass
-	if(m_shadowRenderingActive)
+	if(m_shadowRenderingEnabled && !firstrun)
 	{
 		m_shadowRenderPass = true;
 		DoPaintGL(pGl);
 		m_shadowRenderPass = false;
 	}
+
+	firstrun = false;
 
 	QPainter painter(this);
 	painter.setRenderHint(QPainter::Antialiasing);
@@ -954,11 +1004,11 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			m_pfboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
-	if(m_shadowRenderingActive)
+	if(m_shadowRenderingEnabled)
 	{
 		if(m_shadowRenderPass)
 		{
-			if(m_shadowFramebuffersNeedUpdate)
+			if(m_shadowFramebufferNeedsUpdate)
 				UpdateShadowFramebuffer();
 
 			if(m_pfboshadow)
@@ -995,7 +1045,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	if(m_perspectiveNeedsUpdate)
 		UpdatePerspective();
-	if(m_viewportNeedsUpdate || m_shadowRenderingActive)
+	if(m_viewportNeedsUpdate /*|| m_shadowRenderingEnabled*/)
 		UpdateViewport();
 	if(m_lightsNeedUpdate)
 		UpdateLights();
@@ -1005,7 +1055,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	m_pShaders->setUniformValue(m_uniShadowActive, m_shadowRenderingActive);
+	m_pShaders->setUniformValue(m_uniShadowRenderingEnabled, m_shadowRenderingEnabled);
 	m_pShaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
 
 	// set cam and light matrices
@@ -1166,9 +1216,9 @@ void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
 			m_pageDown[1] = 1;
 			pEvt->accept();
 			break;
-		case Qt::Key_S:
+		/*case Qt::Key_S:
 			SaveShadowFramebuffer("shadow.png");
-			break;
+			break;*/
 		default:
 			QOpenGLWidget::keyPressEvent(pEvt);
 			break;

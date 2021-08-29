@@ -1365,7 +1365,10 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 
 	if(m_renderer)
+	{
 		m_renderer->SetLightFollowsCursor(g_light_follows_cursor);
+		m_renderer->EnableShadowRendering(g_enable_shadow_rendering);
+	}
 }
 
 

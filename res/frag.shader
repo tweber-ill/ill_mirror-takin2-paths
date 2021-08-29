@@ -55,8 +55,11 @@ uniform vec2 cursor_coords = vec2(0.5, 0.5);
 uniform mat4 trafos_proj = mat4(1.);
 uniform mat4 trafos_cam = mat4(1.);
 uniform mat4 trafos_cam_inv = mat4(1.);
+
+uniform mat4 trafos_light_proj = mat4(1.);
 uniform mat4 trafos_light = mat4(1.);
 uniform mat4 trafos_light_inv = mat4(1.);
+
 uniform mat4 trafos_obj = mat4(1.);
 // ----------------------------------------------------------------------------
 
@@ -69,14 +72,15 @@ uniform vec3 lights_pos[MAX_LIGHTS];
 uniform int lights_numactive = 1;	// how many lights to use?
 
 uniform sampler2DShadow shadow_map;
-uniform bool shadow_active = false;
+uniform bool shadow_enabled = false;
 uniform bool shadow_renderpass = false;
 
-t_real g_diffuse = 1.;
-t_real g_specular = 0.25;
-t_real g_shininess = 1.;
-t_real g_ambient = 0.2;
-t_real g_atten = 0.005;
+const t_real g_diffuse = 1.;
+const t_real g_specular = 0.25;
+const t_real g_shininess = 1.;
+const t_real g_ambient = 0.2;
+const t_real g_atten = 0.005;
+const t_real g_shadow_atten = 0.75;
 // ----------------------------------------------------------------------------
 
 
@@ -181,22 +185,31 @@ void main()
 {
 	frag_out_col = vec4(1, 1, 1, 1);
 
+	// shadow rendering pass
 	if(shadow_renderpass)
 	{
-		frag_out_col.rgb = vec3(1-frag_in.pos.z/frag_in.pos.w);
+		// use colours for z value
+		frag_out_col = vec4(frag_in.pos.z/frag_in.pos.w);
 	}
+
+	// normal rendering pass
 	else
 	{
-		if(shadow_active)
-		{
-			frag_out_col *=
-				textureProj(shadow_map, frag_in.pos_shadow);
-		}
-
+		const t_real z_eps = 0.05;
 		t_real I = lighting(frag_in.pos, frag_in.norm);
 
 		frag_out_col.rgb *= frag_in.col.rgb * I;
 		frag_out_col *= lights_const_col;
+
+		if(shadow_enabled)
+		{
+			// get the shadow z value
+			t_real shadow_val = textureProj(shadow_map, frag_in.pos_shadow);
+
+			// is the shadow z value larger than the current object z value?
+			if(shadow_val > frag_in.pos.z + z_eps)
+				frag_out_col.rgb *= g_shadow_atten;
+		}
 
 		if(cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
 		{

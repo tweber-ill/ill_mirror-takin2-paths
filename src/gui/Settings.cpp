@@ -56,6 +56,7 @@ QString g_font = "";
 int g_poly_intersection_method = 1;
 
 int g_light_follows_cursor = 0;
+int g_enable_shadow_rendering = 0;
 // ----------------------------------------------------------------------------
 
 
@@ -110,6 +111,7 @@ enum class SettingsKeys : int
 	POLY_INTERS_METHOD,
 
 	LIGHT_FOLLOWS_CURSOR,
+	ENABLE_SHADOWS,
 
 	NUM_KEYS
 };
@@ -210,6 +212,10 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 0, new QTableWidgetItem{"Light follows cursor"});
 	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 1, new QTableWidgetItem{"Integer"});
 	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2, new NumericTableWidgetItem<int>(g_light_follows_cursor, 10));
+
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 0, new QTableWidgetItem{"Enable shadow rendering"});
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 1, new QTableWidgetItem{"Integer"});
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 2, new NumericTableWidgetItem<int>(g_enable_shadow_rendering, 10));
 
 
 	// set value field editable
@@ -348,6 +354,7 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<int>(sett, "settings/poly_inters_method", &g_poly_intersection_method);
 
 	get_setting<int>(sett, "settings/light_follows_cursor", &g_light_follows_cursor);
+	get_setting<int>(sett, "settings/enable_shadow_rendering", &g_enable_shadow_rendering);
 
 	ApplyGuiSettings();
 }
@@ -382,7 +389,6 @@ void SettingsDlg::ApplySettings()
 	g_a2_delta = dynamic_cast<NumericTableWidgetItem<t_real>*>(
 		m_table->item((int)SettingsKeys::A2_DELTA, 2))->GetValue()
 			/ 180.*tl2::pi<t_real>;
-
 	g_a4_delta = dynamic_cast<NumericTableWidgetItem<t_real>*>(
 		m_table->item((int)SettingsKeys::A4_DELTA, 2))->GetValue()
 			/ 180.*tl2::pi<t_real>;
@@ -395,6 +401,8 @@ void SettingsDlg::ApplySettings()
 
 	g_light_follows_cursor = dynamic_cast<NumericTableWidgetItem<int>*>(
 		m_table->item((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2))->GetValue();
+	g_enable_shadow_rendering = dynamic_cast<NumericTableWidgetItem<int>*>(
+		m_table->item((int)SettingsKeys::ENABLE_SHADOWS, 2))->GetValue();
 
 
 	// write out the settings
@@ -419,6 +427,7 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/poly_inters_method", g_poly_intersection_method);
 
 		m_sett->setValue("settings/light_follows_cursor", g_light_follows_cursor);
+		m_sett->setValue("settings/enable_shadow_rendering", g_enable_shadow_rendering);
 	}
 
 	ApplyGuiSettings();

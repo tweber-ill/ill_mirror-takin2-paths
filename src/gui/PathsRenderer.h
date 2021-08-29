@@ -87,6 +87,7 @@ public:
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
+	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
 
 	void CentreCam(const std::string& obj);
 	QPoint GetMousePosition(bool global_pos = false) const;
@@ -114,6 +115,7 @@ protected:
 	void UpdatePicker();
 	void UpdateLights();
 	void UpdatePerspective();
+	void UpdateLightPerspective();
 	void UpdateViewport();
 	void UpdateShadowFramebuffer();
 
@@ -155,11 +157,12 @@ protected:
 	GLint m_uniLightPos = -1;
 	GLint m_uniNumActiveLights = -1;
 	GLint m_uniShadowMap = -1;
-	GLint m_uniShadowActive = -1;
+	GLint m_uniShadowRenderingEnabled = -1;
 	GLint m_uniShadowRenderPass = -1;
 
 	// matrices
 	GLint m_uniMatrixProj = -1;
+	GLint m_uniMatrixLightProj = -1;
 	GLint m_uniMatrixCam = -1;
 	GLint m_uniMatrixCamInv = -1;
 	GLint m_uniMatrixLight = -1;
@@ -185,6 +188,8 @@ protected:
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
+	t_mat_gl m_matLightPerspective = tl2::unit<t_mat_gl>();
+	t_mat_gl m_matLightPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
@@ -206,8 +211,8 @@ protected:
 	std::atomic<bool> m_lightsNeedUpdate = false;
 	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
-	std::atomic<bool> m_shadowFramebuffersNeedUpdate = false;
-	std::atomic<bool> m_shadowRenderingActive = false;
+	std::atomic<bool> m_shadowFramebufferNeedsUpdate = false;
+	std::atomic<bool> m_shadowRenderingEnabled = true;
 	std::atomic<bool> m_shadowRenderPass = false;
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
