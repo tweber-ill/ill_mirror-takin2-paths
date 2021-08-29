@@ -24,7 +24,6 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
 
-
 #define MAX_RECENT_FILES 16
 #define PROG_TITLE "Triple-Axis Path Calculator"
 
@@ -625,6 +624,13 @@ void PathsTool::SetTmpStatus(const std::string& msg, int msg_duration)
  */
 void PathsTool::UpdateStatusLabel()
 {
+	const t_real maxRange = 1e6;
+
+	if(!std::isfinite(m_mouseX) || !std::isfinite(m_mouseY))
+		return;
+	if(std::abs(m_mouseX) >= maxRange || std::abs(m_mouseY) >= maxRange)
+		return;
+
 	std::ostringstream ostr;
 	ostr.precision(g_prec_gui);
 	ostr << std::fixed << std::showpos
