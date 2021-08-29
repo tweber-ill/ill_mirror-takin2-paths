@@ -357,9 +357,7 @@ bool pt_inside_hull(const std::vector<t_vec>& hull, const t_vec& pt)
 	// iterate vertices
 	for(std::size_t idx1=0; idx1<hull.size(); ++idx1)
 	{
-		std::size_t idx2 = idx1+1;
-		if(idx2 >= hull.size())
-			idx2 = 0;
+		std::size_t idx2 = (idx1+1) % hull.size();
 
 		const t_vec& vert1 = hull[idx1];
 		const t_vec& vert2 = hull[idx2];
@@ -1286,6 +1284,30 @@ requires tl2::is_vec<t_vec>
 
 
 /**
+ * checks if a polygon is completely contained within another polygon
+ */
+template<class t_vec, template<class...> class t_cont = std::vector>
+bool poly_inside_poly(
+	const t_cont<t_vec>& polyOuter,
+	const t_cont<t_vec>& polyInner)
+requires tl2::is_vec<t_vec>
+{
+	if(!polyInner.size() || !polyOuter.size())
+		return false;
+
+	bool all_inside = std::all_of(
+		polyInner.begin(), polyInner.end(),
+		[&polyOuter](const t_vec& vec) -> bool
+	{
+		return pt_inside_hull<t_vec>(polyOuter, vec);
+	});
+
+	return all_inside;
+}
+
+
+
+/**
  * check for a collision of two polygons using a line sweep
  */
 template<class t_vec, template<class...> class t_cont = std::vector>
@@ -1294,6 +1316,9 @@ bool collide_poly_poly(
 	typename t_vec::value_type eps = 1e-6)
 requires tl2::is_vec<t_vec>
 {
+	if(!poly1.size() || !poly2.size())
+		return false;
+
 	using t_line = std::tuple<t_vec, t_vec, int>;
 
 	/*using namespace tl2_ops;
@@ -1328,9 +1353,9 @@ requires tl2::is_vec<t_vec>
 	if(inters.size())
 		return true;
 
-
-	// TODO: check cases when one object is completely contained in the other
-	return false;
+	// check cases when one object is completely contained in the other
+	return poly_inside_poly<t_vec, t_cont>(poly1, poly2) ||
+		poly_inside_poly<t_vec, t_cont>(poly2, poly1);
 }
 
 
@@ -1342,6 +1367,9 @@ bool collide_poly_poly_simplified(
 	const t_cont<t_vec>& poly1, const t_cont<t_vec>& poly2)
 requires tl2::is_vec<t_vec>
 {
+	if(!poly1.size() || !poly2.size())
+		return false;
+
 	for(std::size_t idx1=0; idx1<poly1.size(); ++idx1)
 	{
 		std::size_t idx1b = (idx1+1) % poly1.size();
@@ -1359,8 +1387,10 @@ requires tl2::is_vec<t_vec>
 		}
 	}
 
-	// TODO: check cases when one object is completely contained in the other
-	return false;
+
+	// check cases when one object is completely contained in the other
+	return poly_inside_poly<t_vec, t_cont>(poly1, poly2) ||
+		poly_inside_poly<t_vec, t_cont>(poly2, poly1);
 }
 // ----------------------------------------------------------------------------
 
