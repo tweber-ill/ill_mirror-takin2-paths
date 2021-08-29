@@ -216,7 +216,6 @@ protected:
 	std::atomic<bool> m_shadowRenderPass = false;
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
-	std::atomic<int> m_shadowDims[2] = { 1024, 1024 };
 
 	t_real_gl m_pickerSphereRadius = 1;
 

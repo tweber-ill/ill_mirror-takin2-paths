@@ -7,6 +7,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
+ *   - https://doc.qt.io/qt-5/qtgui-openglwindow-example.html
  *   - http://doc.qt.io/qt-5/qopengltexture.html
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  */
@@ -737,9 +738,6 @@ void PathsRenderer::resizeGL(int w, int h)
 	m_screenDims[0] = w;
 	m_screenDims[1] = h;
 
-	m_shadowDims[0] = w*2;
-	m_shadowDims[1] = h*2;
-
 	m_perspectiveNeedsUpdate = true;
 	m_viewportNeedsUpdate = true;
 	m_shadowFramebufferNeedsUpdate = true;
@@ -857,14 +855,20 @@ void PathsRenderer::UpdateLightPerspective()
 	const t_real_gl nearPlane = 0.1;
 	const t_real_gl farPlane = 1000.;
 
+	t_real ratio = 1;
+	if(m_pfboshadow)
+	{
+		ratio = t_real_gl(m_pfboshadow->height()) /
+			t_real_gl(m_pfboshadow->width());
+	}
+
 	if(m_perspectiveProjection)
 	{
 		// viewing angle has to be large enough so that the
 		// shadow map covers the entire scene
 		t_real_gl viewingangle = tl2::pi<t_real_gl> * 0.75;
 		m_matLightPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, viewingangle,
-			t_real_gl(m_shadowDims[1])/t_real_gl(m_shadowDims[0]));
+			nearPlane, farPlane, viewingangle, ratio);
 	}
 	else
 	{
@@ -895,8 +899,8 @@ void PathsRenderer::UpdateViewport()
 	// viewport
 	const t_real z_near{0}, z_far{1};
 
-	int w = m_shadowRenderPass ? m_shadowDims[0] : m_screenDims[0];
-	int h = m_shadowRenderPass ? m_shadowDims[1] : m_screenDims[1];
+	int w = m_screenDims[0];
+	int h = m_screenDims[1];
 
 	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(
 		w, h, z_near, z_far);
@@ -921,12 +925,15 @@ void PathsRenderer::UpdateShadowFramebuffer()
 	if(!pGl)
 		return;
 
+	t_real scale = devicePixelRatio();
+	int w = m_screenDims[0] * scale;
+	int h = m_screenDims[1] * scale;
 	QOpenGLFramebufferObjectFormat fbformat;
 	fbformat.setTextureTarget(GL_TEXTURE_2D);
 	fbformat.setInternalTextureFormat(GL_RGBA32F);
 	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
 	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(
-		m_shadowDims[0], m_shadowDims[1], fbformat);
+		w, h, fbformat);
 
 	BOOST_SCOPE_EXIT(pGl, m_pfboshadow)
 	{
@@ -959,17 +966,13 @@ void PathsRenderer::paintGL()
 	if(auto *pContext = context(); !pContext) return;
 	auto *pGl = tl2::get_gl_functions(this);
 
-	static bool firstrun = true;
-
 	// shadow framebuffer render pass
-	if(m_shadowRenderingEnabled && !firstrun)
+	if(m_shadowRenderingEnabled)
 	{
 		m_shadowRenderPass = true;
 		DoPaintGL(pGl);
 		m_shadowRenderPass = false;
 	}
-
-	firstrun = false;
 
 	QPainter painter(this);
 	painter.setRenderHint(QPainter::Antialiasing);
@@ -1045,7 +1048,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	if(m_perspectiveNeedsUpdate)
 		UpdatePerspective();
-	if(m_viewportNeedsUpdate /*|| m_shadowRenderingEnabled*/)
+	if(m_viewportNeedsUpdate)
 		UpdateViewport();
 	if(m_lightsNeedUpdate)
 		UpdateLights();
