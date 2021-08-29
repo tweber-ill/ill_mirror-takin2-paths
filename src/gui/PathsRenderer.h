@@ -156,6 +156,7 @@ protected:
 	GLint m_uniNumActiveLights = -1;
 	GLint m_uniShadowMap = -1;
 	GLint m_uniShadowActive = -1;
+	GLint m_uniShadowRenderPass = -1;
 
 	// matrices
 	GLint m_uniMatrixProj = -1;
@@ -206,8 +207,8 @@ protected:
 	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
 	std::atomic<bool> m_shadowFramebuffersNeedUpdate = false;
-	std::atomic<bool> m_shadowRenderPass = false;
 	std::atomic<bool> m_shadowRenderingActive = false;
+	std::atomic<bool> m_shadowRenderPass = false;
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
 	std::atomic<int> m_shadowDims[2] = { 1024, 1024 };

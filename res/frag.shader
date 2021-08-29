@@ -70,6 +70,7 @@ uniform int lights_numactive = 1;	// how many lights to use?
 
 uniform sampler2DShadow shadow_map;
 uniform bool shadow_active = false;
+uniform bool shadow_renderpass = false;
 
 t_real g_diffuse = 1.;
 t_real g_specular = 0.25;
@@ -180,14 +181,26 @@ void main()
 {
 	frag_out_col = vec4(1, 1, 1, 1);
 
-	if(shadow_active)
-		frag_out_col *= textureProj(shadow_map, frag_in.pos_shadow);
+	if(shadow_renderpass)
+	{
+		frag_out_col.rgb = vec3(1-frag_in.pos.z/frag_in.pos.w);
+	}
+	else
+	{
+		if(shadow_active)
+		{
+			frag_out_col *=
+				textureProj(shadow_map, frag_in.pos_shadow);
+		}
 
-	t_real I = lighting(frag_in.pos, frag_in.norm);
+		t_real I = lighting(frag_in.pos, frag_in.norm);
 
-	frag_out_col.rgb *= frag_in.col.rgb * I;
-	frag_out_col *= lights_const_col;
+		frag_out_col.rgb *= frag_in.col.rgb * I;
+		frag_out_col *= lights_const_col;
 
-	if(!shadow_active && cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
-		frag_out_col = vec4(1, 0, 0, 1);
+		if(cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
+		{
+			frag_out_col = vec4(1, 0, 0, 1);
+		}
+	}
 }

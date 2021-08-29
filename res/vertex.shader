@@ -60,6 +60,7 @@ uniform mat4 trafos_obj = mat4(1.);
 // lighting
 // ----------------------------------------------------------------------------
 uniform bool shadow_active = false;
+uniform bool shadow_renderpass = false;
 // ----------------------------------------------------------------------------
 
 
@@ -67,10 +68,9 @@ void main()
 {
 	vec4 objPos = trafos_obj * vertex;
 	vec4 objNorm = normalize(trafos_obj * normal);
-
 	vec4 shadowPos = trafos_proj * trafos_light * objPos;
 
-	if(shadow_active)
+	if(shadow_renderpass)
 		gl_Position = shadowPos;
 	else
 		gl_Position = trafos_proj * trafos_cam * objPos;
@@ -81,5 +81,8 @@ void main()
 	//vertex_out.col.a = 1;
 
 	vertex_out.coords = tex_coords;
+
+	shadowPos.xyz *= 0.5;
+	shadowPos.xyz += 0.5*shadowPos.w;
 	vertex_out.pos_shadow = shadowPos;
 }

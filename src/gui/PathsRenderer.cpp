@@ -716,6 +716,7 @@ void PathsRenderer::initializeGL()
 	m_uniNumActiveLights = m_pShaders->uniformLocation("lights_numactive");
 
 	m_uniShadowActive = m_pShaders->uniformLocation("shadow_active");
+	m_uniShadowRenderPass = m_pShaders->uniformLocation("shadow_renderpass");
 	m_uniShadowMap = m_pShaders->uniformLocation("shadow_map");
 
 	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
@@ -910,11 +911,20 @@ void PathsRenderer::paintGL()
 	QMutexLocker _locker{&m_mutexObj};
 
 	if(auto *pContext = context(); !pContext) return;
+	auto *pGl = tl2::get_gl_functions(this);
 
-	QPainter painter{this};
+	// shadow framebuffer render pass
+	if(m_shadowRenderingActive)
+	{
+		m_shadowRenderPass = true;
+		DoPaintGL(pGl);
+		m_shadowRenderPass = false;
+	}
+
+	QPainter painter(this);
 	painter.setRenderHint(QPainter::Antialiasing);
 
-	// gl painting
+	// gl main render pass
 	{
 		if(m_pickerNeedsUpdate)
 			UpdatePicker();
@@ -922,21 +932,10 @@ void PathsRenderer::paintGL()
 		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
 		painter.beginNativePainting();
 
-		auto *pGl = tl2::get_gl_functions(this);
-
-		if(m_shadowRenderingActive)
-		{
-			// shadow framebuffer render pass
-			m_shadowRenderPass = true;
-			DoPaintGL(pGl);
-		}
-
-		// main render pass
-		m_shadowRenderPass = false;
 		DoPaintGL(pGl);
 	}
 
-	// qt painting
+	// qt painting pass
 	{
 		DoPaintQt(painter);
 	}
@@ -948,10 +947,10 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
-	BOOST_SCOPE_EXIT(&m_shadowRenderPass, m_pfboshadow, pGl)
+	BOOST_SCOPE_EXIT(m_pfboshadow, pGl)
 	{
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
-		if(m_shadowRenderPass && m_pfboshadow)
+		if(m_pfboshadow)
 			m_pfboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
@@ -980,7 +979,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glDisable(GL_BLEND);
 	//pGl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	pGl->glEnable(GL_MULTISAMPLE);
+	if(m_shadowRenderPass)
+		pGl->glDisable(GL_MULTISAMPLE);
+	else
+		pGl->glEnable(GL_MULTISAMPLE);
 	pGl->glEnable(GL_LINE_SMOOTH);
 	pGl->glEnable(GL_POLYGON_SMOOTH);
 	pGl->glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -1004,6 +1006,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	LOGGLERR(pGl);
 
 	m_pShaders->setUniformValue(m_uniShadowActive, m_shadowRenderingActive);
+	m_pShaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
 
 	// set cam and light matrices
 	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
@@ -1163,9 +1166,9 @@ void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
 			m_pageDown[1] = 1;
 			pEvt->accept();
 			break;
-		/*case Qt::Key_S:
+		case Qt::Key_S:
 			SaveShadowFramebuffer("shadow.png");
-			break;*/
+			break;
 		default:
 			QOpenGLWidget::keyPressEvent(pEvt);
 			break;
