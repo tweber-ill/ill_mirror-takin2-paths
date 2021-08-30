@@ -742,6 +742,12 @@ dijk(const t_graph& graph, const std::string& startvert)
 
 	while(!distheap.empty())
 	{
+#ifdef DIJK_DEBUG
+		std::cout << "\nNew iteration: Vertex indices in distances heap: ";
+		for(std::size_t idx : distheap)
+			std::cout << idx << " ";
+		std::cout << "." << std::endl;
+#endif
 		std::size_t vertidx = distheap.front();
 		std::pop_heap(distheap.begin(), distheap.end(), vert_cmp);
 		distheap.pop_back();
@@ -756,6 +762,18 @@ dijk(const t_graph& graph, const std::string& startvert)
 			// is the path from startidx to neighbouridx over vertidx shorter than from startidx to neighbouridx?
 			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
+#ifdef DIJK_DEBUG
+			std::cout << "Path from " << startidx << " to " 
+				<< neighbouridx << " over " << vertidx 
+				<< " is shorter than from " << startidx 
+				<< " to " << neighbouridx << ": "
+				<< "old distance: " << dists[neighbouridx] << ", "
+				<< "new distance: " << dists[vertidx] + *w << "."
+				<< std::endl;
+			std::cout << "Vertex " << vertidx <<
+				" is new predecessor of " << neighbouridx << "."
+				<< std::endl;
+#endif
 				// update distance
 				dists[neighbouridx] = dists[vertidx] + *w;
 				predecessors[neighbouridx] = vertidx;
