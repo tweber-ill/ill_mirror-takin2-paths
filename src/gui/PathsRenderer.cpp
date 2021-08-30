@@ -390,13 +390,12 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 	m_lights[idx] = pos;
 	m_lightsNeedUpdate = true;
 
-	m_matLight = tl2::create<t_mat_gl>({
-		1.,  0.,  0.,  0.,
-		0.,  1.,  0.,  0.,
-		0.,  0.,  1.,  0.,
-		0.,  0.,  0.,  1.});
-	m_matLight = tl2::hom_translation<t_mat_gl>(-pos[0], -pos[1], -pos[2])
-		* m_matLight;
+	//t_vec_gl target = tl2::create<t_vec_gl>({0, 0, 0});
+	t_vec_gl target = pos;
+	target[2] = 0;
+
+	t_vec_gl up = tl2::create<t_vec_gl>({0, 1, 0});
+	m_matLight = tl2::hom_lookat<t_mat_gl, t_vec_gl>(pos, target, up);
 
 	std::tie(m_matLight_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matLight);
 }
