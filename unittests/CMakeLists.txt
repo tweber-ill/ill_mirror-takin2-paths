@@ -13,8 +13,8 @@ project(paths_unittests)
 enable_language(CXX)
 enable_testing()
 
-list(APPEND CMAKE_MODULE_PATH 
-	"${PROJECT_SOURCE_DIR}" 
+list(APPEND CMAKE_MODULE_PATH
+	"${PROJECT_SOURCE_DIR}"
 	"${PROJECT_SOURCE_DIR}/../tlibs2/cmake"
 )
 
@@ -80,6 +80,9 @@ target_link_libraries(intersect_circle_poly ${Lapacke_LIBRARIES})
 
 add_executable(intersect_line intersect_line.cpp)
 target_link_libraries(intersect_line ${Lapacke_LIBRARIES})
+
+add_executable(dijkstra dijkstra.cpp)
+target_link_libraries(dijkstra ${Lapacke_LIBRARIES})
 # -----------------------------------------------------------------------------
 
 
@@ -89,4 +92,5 @@ target_link_libraries(intersect_line ${Lapacke_LIBRARIES})
 add_test(intersect_circle intersect_circle)
 add_test(intersect_circle_poly intersect_circle_poly)
 add_test(intersect_line intersect_line)
+add_test(dijkstra dijkstra)
 # -----------------------------------------------------------------------------

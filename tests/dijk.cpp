@@ -4,6 +4,8 @@
  * @date aug-2021
  * @license see 'LICENSE' file
  * @note Forked on 5-jun-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
+ *
+ * g++-10 -std=c++20 -I.. -o dijk dijk.cpp
  */
 
 #define DIJK_DEBUG
@@ -34,12 +36,30 @@ void tst()
 	graph.AddEdge("v4", "v5", 2);
 
 	print_graph<t_graph>(graph, std::cout);
+
+	std::cout << "\n\ndijkstra:" << std::endl;
 	auto predecessors = dijk<t_graph>(graph, "v1");
 
-	std::cout << "\ndijkstra:" << std::endl;
 	for(std::size_t i=0; i<graph.GetNumVertices(); ++i)
 	{
 		const auto& _predidx = predecessors[i];
+		if(!_predidx)
+			continue;
+
+		std::size_t predidx = *_predidx;
+		const std::string& vert = graph.GetVertexIdent(i);
+		const std::string& pred = graph.GetVertexIdent(predidx);
+
+		std::cout << "predecessor of " << vert << ": " << pred << "." << std::endl;
+	}
+
+
+	std::cout << "\n\ndijkstra (modified):" << std::endl;
+	auto predecessors_mod = dijk_mod<t_graph>(graph, "v1");
+
+	for(std::size_t i=0; i<graph.GetNumVertices(); ++i)
+	{
+		const auto& _predidx = predecessors_mod[i];
 		if(!_predidx)
 			continue;
 

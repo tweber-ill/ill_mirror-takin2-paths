@@ -674,7 +674,14 @@ InstrumentPath PathsBuilder::FindPath(
 		return path;
 
 	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
+
+#if TASPATHS_DIJK_IMPL==1
 	const auto predecessors = geo::dijk(voro_graph, ident_i);
+#elif TASPATHS_DIJK_IMPL==2
+	const auto predecessors = geo::dijk_mod(voro_graph, ident_i);
+#else
+	#error No suitable value for TASPATHS_DIJK_IMPL has been set!
+#endif
 	std::size_t cur_vertidx = idx_f;
 
 	while(true)

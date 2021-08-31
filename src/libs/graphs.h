@@ -10,6 +10,7 @@
  *   - (FUH 2020) "Algorithmische Geometrie" (2020), Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
  *   - (FUH 2021) "Effiziente Algorithmen" (2021), Kurs 1684, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/01684).
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
+ *   - (Erickson 2019) "Algorithms" (2019), ISBN: 978-1-792-64483-2 (http://jeffe.cs.illinois.edu/teaching/algorithms/).
  */
 
 #ifndef __GRAPH_ALGOS_H__
@@ -697,6 +698,7 @@ bool print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
 /**
  * dijkstra algorithm
  * @see (FUH 2021), Kurseinheit 4, p. 17
+ * @see (Erickson 2019), p. 288
  */
 template<class t_graph> requires is_graph<t_graph>
 std::vector<std::optional<std::size_t>>
@@ -763,16 +765,14 @@ dijk(const t_graph& graph, const std::string& startvert)
 			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
 #ifdef DIJK_DEBUG
-			std::cout << "Path from " << startidx << " to " 
-				<< neighbouridx << " over " << vertidx 
-				<< " is shorter than from " << startidx 
-				<< " to " << neighbouridx << ": "
-				<< "old distance: " << dists[neighbouridx] << ", "
-				<< "new distance: " << dists[vertidx] + *w << "."
-				<< std::endl;
-			std::cout << "Vertex " << vertidx <<
-				" is new predecessor of " << neighbouridx << "."
-				<< std::endl;
+				std::cout << "Path from " << startidx << " to " 
+					<< neighbouridx << " over " << vertidx 
+					<< " is shorter than from " << startidx 
+					<< " to " << neighbouridx << ": "
+					<< "old distance: " << dists[neighbouridx] << ", "
+					<< "new distance: " << dists[vertidx] + *w << "." << std::endl;
+				std::cout << "Vertex " << vertidx <<
+					" is new predecessor of " << neighbouridx << "." << std::endl;
 #endif
 				// update distance
 				dists[neighbouridx] = dists[vertidx] + *w;
@@ -780,6 +780,99 @@ dijk(const t_graph& graph, const std::string& startvert)
 
 				// resort the heap after the distance changes
 				std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
+			}
+		}
+	}
+
+	return predecessors;
+}
+
+
+/**
+ * dijkstra algorithm (version which also works for negative weights)
+ * @see (Erickson 2019), p. 285
+ */
+template<class t_graph> requires is_graph<t_graph>
+std::vector<std::optional<std::size_t>>
+dijk_mod(const t_graph& graph, const std::string& startvert)
+{
+	// start index
+	auto _startidx = graph.GetVertexIndex(startvert);
+	if(!_startidx)
+		return {};
+	const std::size_t startidx = *_startidx;
+
+	// distances
+	const std::size_t N = graph.GetNumVertices();
+	using t_weight = typename t_graph::t_weight;
+
+	std::vector<t_weight> dists;
+	std::vector<std::optional<std::size_t>> predecessors;
+	dists.resize(N);
+	predecessors.resize(N);
+
+	// don't use the full maximum to prevent overflows when we're adding the weight afterwards
+	const t_weight infinity = std::numeric_limits<t_weight>::max() / 2;
+	for(std::size_t vertidx=0; vertidx<N; ++vertidx)
+		dists[vertidx] = (vertidx==startidx ? 0 : infinity);
+
+	// distance priority queue and comparator
+	auto vert_cmp = [&dists](std::size_t idx1, std::size_t idx2) -> bool
+	{
+		// sort by ascending value: !operator<
+		return dists[idx1] >= dists[idx2];
+	};
+
+	std::vector<std::size_t> distheap;
+	distheap.reserve(N);
+
+	// push only start index, not all indices
+	distheap.push_back(startidx);
+
+	while(distheap.size())
+	{
+#ifdef DIJK_DEBUG
+		std::cout << "\nNew iteration: Vertex indices in distances heap: ";
+		for(std::size_t idx : distheap)
+			std::cout << idx << " ";
+		std::cout << "." << std::endl;
+#endif
+
+		std::size_t vertidx = *distheap.begin();
+		std::pop_heap(distheap.begin(), distheap.end(), vert_cmp);
+		distheap.pop_back();
+
+		std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx);
+		for(std::size_t neighbouridx : neighbours)
+		{
+			auto w = graph.GetWeight(vertidx, neighbouridx);
+			if(!w)
+				continue;
+
+			// is the path from startidx to neighbouridx over vertidx shorter than from startidx to neighbouridx?
+			if(dists[vertidx] + *w < dists[neighbouridx])
+			{
+#ifdef DIJK_DEBUG
+				std::cout << "Path from " << startidx << " to " 
+					<< neighbouridx << " over " << vertidx 
+					<< " is shorter than from " << startidx 
+					<< " to " << neighbouridx << ": "
+					<< "old distance: " << dists[neighbouridx] << ", "
+					<< "new distance: " << dists[vertidx] + *w << "." << std::endl;
+				std::cout << "Vertex " << vertidx <<
+					" is new predecessor of " << neighbouridx << "." << std::endl;
+#endif
+
+				dists[neighbouridx] = dists[vertidx] + *w;
+				predecessors[neighbouridx] = vertidx;
+
+				// insert new node or change distance of node neighbouridx
+				// resort the priority queue heap after the distance changes
+				if(std::find(distheap.begin(), distheap.end(), neighbouridx) != distheap.end())
+					std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
+				// ... or insert the new node index if it's not in the queue yet
+				else
+					distheap.push_back(neighbouridx);
 			}
 		}
 	}

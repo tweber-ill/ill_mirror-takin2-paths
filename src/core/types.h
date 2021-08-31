@@ -13,6 +13,14 @@
 
 
 /**
+ * which implementation of dijkstra's algorithm to use?
+ *  1: standard one (no negative weights)
+ *  2: general one which works with negative weights
+ */
+#define TASPATHS_DIJK_IMPL 2
+
+
+/**
  * fixed-size array wrapper
  */
 template<class T, std::size_t N>
