@@ -745,10 +745,22 @@ dijk(const t_graph& graph, const std::string& startvert)
 	while(!distheap.empty())
 	{
 #ifdef DIJK_DEBUG
-		std::cout << "\nNew iteration: Vertex indices in distances heap: ";
+		std::cout << "\nNew iteration.\n";
+		std::cout << "Vertex indices in distances heap:\n";
 		for(std::size_t idx : distheap)
-			std::cout << idx << " ";
+			std::cout << idx << " (dist: " << dists[idx] << "), ";
 		std::cout << "." << std::endl;
+
+		std::cout << "Predecessor indices:\n";
+		for(const auto& pred : predecessors)
+		{
+			if(pred)
+				std::cout << *pred;
+			else
+				std::cout << "null";
+			std::cout << ", ";
+		}
+		std::cout << std::endl;
 #endif
 		std::size_t vertidx = distheap.front();
 		std::pop_heap(distheap.begin(), distheap.end(), vert_cmp);
@@ -783,6 +795,25 @@ dijk(const t_graph& graph, const std::string& startvert)
 			}
 		}
 	}
+
+#ifdef DIJK_DEBUG
+		std::cout << "\nFinal result.\n";
+		std::cout << "Predecessor indices:\n";
+		for(const auto& pred : predecessors)
+		{
+			if(pred)
+				std::cout << *pred;
+			else
+				std::cout << "null";
+			std::cout << ", ";
+		}
+		std::cout << std::endl;
+
+		std::cout << "Distances:\n";
+		for(t_weight w : dists)
+			std::cout << w << ", ";
+		std::cout << std::endl;
+#endif
 
 	return predecessors;
 }
@@ -832,10 +863,22 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
 	while(distheap.size())
 	{
 #ifdef DIJK_DEBUG
-		std::cout << "\nNew iteration: Vertex indices in distances heap: ";
+		std::cout << "\nNew iteration.\n";
+		std::cout << "Vertex indices in distances heap:\n";
 		for(std::size_t idx : distheap)
-			std::cout << idx << " ";
+			std::cout << idx << " (dist: " << dists[idx] << "), ";
 		std::cout << "." << std::endl;
+
+		std::cout << "Predecessor indices:\n";
+		for(const auto& pred : predecessors)
+		{
+			if(pred)
+				std::cout << *pred;
+			else
+				std::cout << "null";
+			std::cout << ", ";
+		}
+		std::cout << std::endl;
 #endif
 
 		std::size_t vertidx = *distheap.begin();
@@ -876,6 +919,25 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
 			}
 		}
 	}
+
+#ifdef DIJK_DEBUG
+		std::cout << "\nFinal result.\n";
+		std::cout << "Predecessor indices:\n";
+		for(const auto& pred : predecessors)
+		{
+			if(pred)
+				std::cout << *pred;
+			else
+				std::cout << "null";
+			std::cout << ", ";
+		}
+		std::cout << std::endl;
+
+		std::cout << "Distances:\n";
+		for(t_weight w : dists)
+			std::cout << w << ", ";
+		std::cout << std::endl;
+#endif
 
 	return predecessors;
 }
