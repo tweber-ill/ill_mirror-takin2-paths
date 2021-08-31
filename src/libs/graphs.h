@@ -765,9 +765,9 @@ dijk(const t_graph& graph, const std::string& startvert)
 			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
 #ifdef DIJK_DEBUG
-				std::cout << "Path from " << startidx << " to " 
-					<< neighbouridx << " over " << vertidx 
-					<< " is shorter than from " << startidx 
+				std::cout << "Path from " << startidx << " to "
+					<< neighbouridx << " over " << vertidx
+					<< " is shorter than from " << startidx
 					<< " to " << neighbouridx << ": "
 					<< "old distance: " << dists[neighbouridx] << ", "
 					<< "new distance: " << dists[vertidx] + *w << "." << std::endl;
@@ -853,9 +853,9 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
 			if(dists[vertidx] + *w < dists[neighbouridx])
 			{
 #ifdef DIJK_DEBUG
-				std::cout << "Path from " << startidx << " to " 
-					<< neighbouridx << " over " << vertidx 
-					<< " is shorter than from " << startidx 
+				std::cout << "Path from " << startidx << " to "
+					<< neighbouridx << " over " << vertidx
+					<< " is shorter than from " << startidx
 					<< " to " << neighbouridx << ": "
 					<< "old distance: " << dists[neighbouridx] << ", "
 					<< "new distance: " << dists[vertidx] + *w << "." << std::endl;
@@ -887,12 +887,13 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
  */
 template<class t_graph, class t_mat=tl2::mat<typename t_graph::t_weight, std::vector>>
 requires is_graph<t_graph> && tl2::is_mat<t_mat>
-t_mat bellman(const t_graph& graph, const std::string& startvert)
+std::tuple<t_mat, std::vector<std::optional<std::size_t>>>
+bellman(const t_graph& graph, const std::string& startvert)
 {
 	// start index
 	auto _startidx = graph.GetVertexIndex(startvert);
 	if(!_startidx)
-		return t_mat{};
+		return std::make_tuple(t_mat{}, std::vector<std::optional<std::size_t>>{});
 	const std::size_t startidx = *_startidx;
 
 
@@ -906,6 +907,11 @@ t_mat bellman(const t_graph& graph, const std::string& startvert)
 
 	for(std::size_t vertidx=0; vertidx<N; ++vertidx)
 		dists(0, vertidx) = (vertidx==startidx ? 0 : infinity);
+
+
+	// predecessor nodes
+	std::vector<std::optional<std::size_t>> predecessors;
+	predecessors.resize(N);
 
 
 	// iterate vertices
@@ -923,12 +929,15 @@ t_mat bellman(const t_graph& graph, const std::string& startvert)
 					continue;
 
 				if(dists(i-1, neighbouridx) + *w < dists(i, vertidx))
+				{
 					dists(i, vertidx) = dists(i-1, neighbouridx) + *w;
+					predecessors[vertidx] = neighbouridx;
+				}
 			}
 		}
 	}
 
-	return dists;
+	return std::make_tuple(dists, predecessors);
 }
 
 

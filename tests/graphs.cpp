@@ -4,6 +4,8 @@
  * @date may-2021
  * @license see 'LICENSE' file
  * @note Forked on 5-jun-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
+ *
+ * g++-10 -std=c++20 -I.. -o graphs graphs.cpp
  */
 
 #include "../src/libs/graphs.h"
@@ -35,8 +37,8 @@ void tst()
 
 	print_graph<t_graph>(graph, std::cout);
 	auto predecessors = dijk<t_graph>(graph, "A");
-	auto distvecs = bellman<t_graph>(graph, "A");
-	auto distvecs2 = floyd<t_graph>(graph);
+	auto [distvecs_bellman, predecessors_bellman] = bellman<t_graph>(graph, "A");
+	auto distvecs_floyd = floyd<t_graph>(graph);
 
 	std::cout << "\ndijkstra:" << std::endl;
 	for(std::size_t i=0; i<graph.GetNumVertices(); ++i)
@@ -53,10 +55,22 @@ void tst()
 	}
 
 	std::cout << "\nbellman:" << std::endl;
-	std::cout << distvecs << std::endl;
+	std::cout << distvecs_bellman << std::endl;
+	for(std::size_t i=0; i<graph.GetNumVertices(); ++i)
+	{
+		const auto& _predidx = predecessors_bellman[i];
+		if(!_predidx)
+			continue;
+
+		std::size_t predidx = *_predidx;
+		const std::string& vert = graph.GetVertexIdent(i);
+		const std::string& pred = graph.GetVertexIdent(predidx);
+
+		std::cout << "predecessor of " << vert << ": " << pred << "." << std::endl;
+	}
 
 	std::cout << "\nfloyd:" << std::endl;
-	std::cout << distvecs2 << std::endl;
+	std::cout << distvecs_floyd << std::endl;
 
 }
 

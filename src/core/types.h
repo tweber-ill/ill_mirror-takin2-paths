@@ -13,11 +13,12 @@
 
 
 /**
- * which implementation of dijkstra's algorithm to use?
- *  1: standard one (no negative weights)
- *  2: general one which works with negative weights
+ * which SSSP algorithm to use for finding the shortest path?
+ *  1: standard dijkstra (no negative weights)
+ *  2: general dijkstra (which works with negative weights)
+ *  3: bellman (very slow!)
  */
-#define TASPATHS_DIJK_IMPL 2
+#define TASPATHS_SSSP_IMPL 2
 
 
 /**

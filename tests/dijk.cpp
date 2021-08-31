@@ -69,6 +69,27 @@ void tst()
 
 		std::cout << "predecessor of " << vert << ": " << pred << "." << std::endl;
 	}
+
+
+	/*auto [distvecs_bellman, predecessors_bellman] = bellman<t_graph>(graph, "v1");
+	std::cout << "\n\nbellman:" << std::endl;
+	std::cout << distvecs_bellman << std::endl;
+	for(std::size_t i=0; i<graph.GetNumVertices(); ++i)
+	{
+		const auto& _predidx = predecessors_bellman[i];
+		if(!_predidx)
+			continue;
+
+		std::size_t predidx = *_predidx;
+		const std::string& vert = graph.GetVertexIdent(i);
+		const std::string& pred = graph.GetVertexIdent(predidx);
+
+		std::cout << "predecessor of " << vert << ": " << pred << "." << std::endl;
+	}
+
+	auto distvecs_floyd = floyd<t_graph>(graph);
+	std::cout << "\nfloyd:" << std::endl;
+	std::cout << distvecs_floyd << std::endl;*/
 }
 
 
