@@ -18,11 +18,13 @@
 #define __GEO_ALGOS_IMG_H__
 
 #include <concepts>
+#include <vector>
 #include <cstdlib>
 
 #include <boost/gil/image.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/index/rtree.hpp>
+#include <boost/function_output_iterator.hpp>
 
 #include "tlibs2/libs/maths.h"
 
@@ -409,6 +411,7 @@ template<class t_vec>
 requires tl2::is_vec<t_vec>
 struct ClosestPixelTreeResults
 {
+public:
 	using t_scalar = typename t_vec::value_type;
 
 	// vertex type used in index tree
@@ -421,8 +424,48 @@ struct ClosestPixelTreeResults
 		t_idxvertex<t_scalar>,
 		boost::geometry::index::dynamic_rstar>;
 
+
+private:
 	// spatial index tree for the pixels
 	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+
+
+public:
+	/**
+	 * get the index tree
+	 */
+	t_idxtree& GetIndexTree() { return idxtree; }
+	const t_idxtree& GetIndexTree() const { return idxtree; }
+
+
+	/**
+	 * query the postions closest to pos
+	 */
+	std::vector<t_vec> Query(const t_vec& pos, std::size_t num) const
+	{
+		std::vector<t_vec> nearest_vertices;
+		nearest_vertices.reserve(num);
+
+		idxtree.query(boost::geometry::index::nearest(
+			t_idxvertex<t_scalar>(pos[0], pos[1]), num),
+			boost::make_function_output_iterator([&nearest_vertices](const auto& point)
+			{
+				t_vec vec = tl2::create<t_vec>({
+					point.template get<0>(), point.template get<1>()});
+				nearest_vertices.emplace_back(std::move(vec));
+			}));
+		
+		return nearest_vertices;
+	}
+
+
+	/**
+	 * clear the indext tree
+	 */
+	void Clear()
+	{
+		idxtree.clear();
+	}
 };
 
 
@@ -437,8 +480,10 @@ build_closest_pixel_tree(const t_imageview& img)
 {
 	using t_results = ClosestPixelTreeResults<t_vec>;
 	using t_scalar = typename t_results::t_scalar;
-	using t_idxvertex = typename t_results::t_idxvertex<t_scalar>;
+	using t_idxvertex = typename t_results::template t_idxvertex<t_scalar>;
+
 	t_results results;
+	auto& tree = results.GetIndexTree();
 
 	auto [width, height] = get_image_dims(img);
 
@@ -450,7 +495,7 @@ build_closest_pixel_tree(const t_imageview& img)
 			if(pix_val)
 			{
 				// convert pixel coordinate to index vertex and insert it into the tree
-				results.idxtree.insert(t_idxvertex{x, y});
+				tree.insert(t_idxvertex{x, y});
 			}
 		}
 	}

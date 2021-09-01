@@ -713,9 +713,13 @@ bool print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
  * @see (FUH 2021), Kurseinheit 4, p. 17
  * @see (Erickson 2019), p. 288
  */
-template<class t_graph> requires is_graph<t_graph>
+template<class t_graph,
+	class t_weight_func = 
+		std::optional<typename t_graph::t_weight>(std::size_t, std::size_t)>
+requires is_graph<t_graph>
 std::vector<std::optional<std::size_t>>
-dijk(const t_graph& graph, const std::string& startvert)
+dijk(const t_graph& graph, const std::string& startvert,
+	t_weight_func *weight_func = nullptr)
 {
 	// start index
 	auto _startidx = graph.GetVertexIndex(startvert);
@@ -782,7 +786,15 @@ dijk(const t_graph& graph, const std::string& startvert)
 		std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx);
 		for(std::size_t neighbouridx : neighbours)
 		{
-			auto w = graph.GetWeight(vertidx, neighbouridx);
+			// edge weight
+			std::optional<typename t_graph::t_weight> w;
+
+			// directly get edge weight, or use user-supplied weight function
+			if(!weight_func)
+				w = graph.GetWeight(vertidx, neighbouridx);
+			else
+				w = (*weight_func)(vertidx, neighbouridx);
+
 			if(!w)
 				continue;
 
@@ -836,9 +848,13 @@ dijk(const t_graph& graph, const std::string& startvert)
  * dijkstra algorithm (version which also works for negative weights)
  * @see (Erickson 2019), p. 285
  */
-template<class t_graph> requires is_graph<t_graph>
+template<class t_graph,
+	class t_weight_func = 
+		std::optional<typename t_graph::t_weight>(std::size_t, std::size_t)>
+requires is_graph<t_graph>
 std::vector<std::optional<std::size_t>>
-dijk_mod(const t_graph& graph, const std::string& startvert)
+dijk_mod(const t_graph& graph, const std::string& startvert,
+	t_weight_func *weight_func = nullptr)
 {
 	// start index
 	auto _startidx = graph.GetVertexIndex(startvert);
@@ -901,7 +917,15 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
 		std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx);
 		for(std::size_t neighbouridx : neighbours)
 		{
-			auto w = graph.GetWeight(vertidx, neighbouridx);
+			// edge weight
+			std::optional<typename t_graph::t_weight> w;
+
+			// directly get edge weight, or use user-supplied weight function
+			if(!weight_func)
+				w = graph.GetWeight(vertidx, neighbouridx);
+			else
+				w = (*weight_func)(vertidx, neighbouridx);
+
 			if(!w)
 				continue;
 
@@ -959,10 +983,14 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
  * bellman-ford algorithm
  * @see (FUH 2021), Kurseinheit 4, p. 13
  */
-template<class t_graph, class t_mat=tl2::mat<typename t_graph::t_weight, std::vector>>
+template<class t_graph,
+	class t_mat=tl2::mat<typename t_graph::t_weight, std::vector>,
+	class t_weight_func =
+		std::optional<typename t_graph::t_weight>(std::size_t, std::size_t)>
 requires is_graph<t_graph> && tl2::is_mat<t_mat>
 std::tuple<t_mat, std::vector<std::optional<std::size_t>>>
-bellman(const t_graph& graph, const std::string& startvert)
+bellman(const t_graph& graph, const std::string& startvert,
+	t_weight_func *weight_func = nullptr)
 {
 	// start index
 	auto _startidx = graph.GetVertexIndex(startvert);
@@ -998,7 +1026,15 @@ bellman(const t_graph& graph, const std::string& startvert)
 			std::vector<std::size_t> neighbours = graph.GetNeighbours(vertidx, false);
 			for(std::size_t neighbouridx : neighbours)
 			{
-				auto w = graph.GetWeight(neighbouridx, vertidx);
+				// edge weight
+				std::optional<typename t_graph::t_weight> w;
+
+				// directly get edge weight, or use user-supplied weight function
+				if(!weight_func)
+					w = graph.GetWeight(vertidx, neighbouridx);
+				else
+					w = (*weight_func)(vertidx, neighbouridx);
+
 				if(!w)
 					continue;
 

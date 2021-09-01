@@ -35,6 +35,8 @@ PathsBuilder::~PathsBuilder()
 void PathsBuilder::Clear()
 {
 	//m_img.Clear();
+	m_wallsindextree.Clear();
+
 	m_wallcontours.clear();
 	m_fullwallcontours.clear();
 
@@ -684,13 +686,41 @@ InstrumentPath PathsBuilder::FindPath(
 		return path;
 
 	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
+	using t_weight = typename t_graph::t_weight;
 
+
+	// callback function with which the graph's edge weights can be modified
+	auto weight_func = [this, &voro_graph, &voro_vertices](
+		std::size_t idx1, std::size_t idx2) -> std::optional<t_weight>
+	{
+		// get original graph edge weight
+		auto _weight = voro_graph.GetWeight(idx1, idx2);
+		if(!_weight)
+			return std::nullopt;
+
+		t_weight weight = *_weight;
+
+
+		const t_vec2& vertex1 = voro_vertices[idx1];
+		const t_vec2& vertex2 = voro_vertices[idx2];
+
+		auto nearest_vertices1 = m_wallsindextree.Query(vertex1, 1);
+		auto nearest_vertices2 = m_wallsindextree.Query(vertex2, 1);
+
+		// TODO: modify weight according to proximity to walls
+
+		return weight;
+	};
+
+
+	// find shortest path given the above weight function
 #if TASPATHS_SSSP_IMPL==1
-	const auto predecessors = geo::dijk(voro_graph, ident_i);
+	const auto predecessors = geo::dijk(voro_graph, ident_i, &weight_func);
 #elif TASPATHS_SSSP_IMPL==2
-	const auto predecessors = geo::dijk_mod(voro_graph, ident_i);
+	const auto predecessors = geo::dijk_mod(voro_graph, ident_i, &weight_func);
 #elif TASPATHS_SSSP_IMPL==3
-	const auto [distvecs, predecessors] = geo::bellman(voro_graph, ident_i);
+	const auto [distvecs, predecessors] = geo::bellman(
+		voro_graph, ident_i, &weight_func);
 #else
 	#error No suitable value for TASPATHS_SSSP_IMPL has been set!
 #endif
