@@ -82,10 +82,12 @@ using t_real = double;
 
 // dynamic container types
 using t_vec = tl2::vec<t_real, std::vector>;
+using t_vec_int = tl2::vec<int, std::vector>;
 using t_mat = tl2::mat<t_real, std::vector>;
 
 // static container types
 using t_vec2 = tl2::vec<t_real, t_arr2>;
+using t_vec2_int = tl2::vec<int, t_arr2>;
 using t_mat22 = tl2::mat<t_real, t_arr4>;
 
 

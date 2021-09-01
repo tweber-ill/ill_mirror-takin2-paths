@@ -619,6 +619,13 @@ void ConfigSpaceDlg::CalculatePathMesh()
 		return;
 	}
 
+	m_status->setText("Calculating wall positions index tree.");
+	if(!m_pathsbuilder->CalculateWallsIndexTree())
+	{
+		m_status->setText("Error: Wall positions index tree calculation failed.");
+		return;
+	}
+
 	m_status->setText("Calculating obstacle contour lines.");
 	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour, m_splitcontour))
 	{

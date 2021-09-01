@@ -10,7 +10,7 @@
  *   - (FUH 2020) "Algorithmische Geometrie" (2020), Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
  *
- * References for the spatial index tree: 
+ * References for the spatial index tree:
  *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html
  *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/spatial_indexes/rtree_examples.html
  *  - https://github.com/boostorg/geometry/tree/develop/example
@@ -92,7 +92,7 @@ struct boost::polygon::segment_traits<std::pair<t_vec, t_vec>>
 
 namespace geo {
 
-template<class t_vec, 
+template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>>
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
@@ -112,7 +112,7 @@ public:
 		T, 2, boost::geometry::cs::cartesian>;
 
 	using t_idxtree = boost::geometry::index::rtree<
-		std::tuple<t_idxvertex<t_scalar>, std::size_t>, 
+		std::tuple<t_idxvertex<t_scalar>, std::size_t>,
 		boost::geometry::index::dynamic_rstar>;
 
 
@@ -373,8 +373,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// get line segment index
-	auto get_segment_idx = 
-		[](const typename t_vorotraits::edge_type& edge, bool twin) 
+	auto get_segment_idx =
+		[](const typename t_vorotraits::edge_type& edge, bool twin)
 			-> std::optional<std::size_t>
 	{
 		const auto* cell = twin ? edge.twin()->cell() : edge.cell();
@@ -559,7 +559,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// ignore this voronoi edge and skip to the next one
 				if(vert_inside_norm_region)
 					continue;
-				if(has_inv_regions && 
+				if(has_inv_regions &&
 					(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
 					continue;
 			}
@@ -579,7 +579,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 		// get line segment
-		auto get_segment = [&get_segment_idx, &edge, &lines](bool twin) 
+		auto get_segment = [&get_segment_idx, &edge, &lines](bool twin)
 			-> const t_line*
 		{
 			auto idx = get_segment_idx(edge, twin);

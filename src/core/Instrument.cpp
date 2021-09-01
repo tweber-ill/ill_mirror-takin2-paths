@@ -102,7 +102,7 @@ pt::ptree Instrument::Save() const
 /**
  * an instrument component is requested to be dragged from the gui
  */
-void Instrument::DragObject(bool drag_start, const std::string& obj, 
+void Instrument::DragObject(bool drag_start, const std::string& obj,
 	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	Axis* ax = nullptr;

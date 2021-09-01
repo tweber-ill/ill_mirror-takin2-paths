@@ -1659,6 +1659,15 @@ void PathsTool::CalculatePathMesh()
 		}
 
 		CHECK_STOP
+		
+		SetTmpStatus("Calculating wall positions index tree.", 0);
+		if(!m_pathsbuilder.CalculateWallsIndexTree())
+		{
+			SetTmpStatus("Error: Wall positions index tree calculation failed.");
+			return;
+		}
+
+		CHECK_STOP
 
 		SetTmpStatus("Calculating obstacle contour lines.", 0);
 		if(!m_pathsbuilder.CalculateWallContours(true, false))

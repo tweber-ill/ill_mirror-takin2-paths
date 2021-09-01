@@ -270,6 +270,16 @@ bool PathsBuilder::CalculateConfigSpace(
 
 
 /**
+ * save all wall position in an index tree for more efficient position lookup
+ */
+bool PathsBuilder::CalculateWallsIndexTree()
+{
+	m_wallsindextree = geo::build_closest_pixel_tree<t_contourvec, decltype(m_img)>(m_img);
+	return true;
+}
+
+
+/**
  * calculate the contour lines of the obstacle regions
  */
 bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)

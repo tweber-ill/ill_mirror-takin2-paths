@@ -5,15 +5,24 @@
  * @note Forked on 26-may-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  * @license see 'LICENSE' file
  *
- * @references:
+ * References for the GIL image library:
  *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
+ *
+ * References for the spatial index tree:
+ *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html
+ *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/spatial_indexes/rtree_examples.html
+ *  - https://github.com/boostorg/geometry/tree/develop/example
+
  */
 #ifndef __GEO_ALGOS_IMG_H__
 #define __GEO_ALGOS_IMG_H__
 
 #include <concepts>
 #include <cstdlib>
+
 #include <boost/gil/image.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/index/rtree.hpp>
 
 #include "tlibs2/libs/maths.h"
 
@@ -391,8 +400,66 @@ std::vector<std::vector<t_vec>> trace_boundary(
 
 	return contours;
 }
+
+
+/**
+ * results structure of the build_closest_pixel_tree function
+ */
+template<class t_vec>
+requires tl2::is_vec<t_vec>
+struct ClosestPixelTreeResults
+{
+	using t_scalar = typename t_vec::value_type;
+
+	// vertex type used in index tree
+	template<class T = t_scalar>
+	using t_idxvertex = boost::geometry::model::point<
+		T, 2, boost::geometry::cs::cartesian>;
+
+	// spatial index tree type
+	using t_idxtree = boost::geometry::index::rtree<
+		t_idxvertex<t_scalar>,
+		boost::geometry::index::dynamic_rstar>;
+
+	// spatial index tree for the pixels
+	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+};
+
+
+/**
+ * build an index tree to find the pixel of a certain value
+ * which is closest to a given coordinate
+ */
+template<class t_vec, class t_imageview>
+requires tl2::is_vec<t_vec>
+ClosestPixelTreeResults<t_vec>
+build_closest_pixel_tree(const t_imageview& img)
+{
+	using t_results = ClosestPixelTreeResults<t_vec>;
+	using t_scalar = typename t_results::t_scalar;
+	using t_idxvertex = typename t_results::t_idxvertex<t_scalar>;
+	t_results results;
+
+	auto [width, height] = get_image_dims(img);
+
+	for(int y=0; y<height; ++y)
+	{
+		for(int x=0; x<width; ++x)
+		{
+			auto pix_val = get_pixel(img, x-1, y);
+			if(pix_val)
+			{
+				// convert pixel coordinate to index vertex and insert it into the tree
+				results.idxtree.insert(t_idxvertex{x, y});
+			}
+		}
+	}
+
+	return results;
+}
 // ----------------------------------------------------------------------------
 
 } // geo
+
 
 #endif

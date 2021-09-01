@@ -76,7 +76,7 @@ concept is_graph = requires(t_graph& graph, std::size_t vertidx)
 	graph.GetNeighbours(vertidx);
 
 	// support insertion of vertices by identifier
-	graph.AddVertex("v123"); 
+	graph.AddVertex("v123");
 
 	// support insertion of edges by index
 	graph.AddEdge(0, 1);

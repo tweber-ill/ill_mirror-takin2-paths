@@ -47,7 +47,7 @@ class PathsBuilder
 {
 public:
 	// contour point
-	using t_contourvec = tl2::vec<int, std::vector>;
+	using t_contourvec = t_vec2_int;
 
 	// line segment
 	using t_line = std::pair<t_vec2, t_vec2>;
@@ -101,6 +101,7 @@ public:
 	bool CalculateConfigSpace(t_real da2, t_real da4,
 		t_real starta2 = 0., t_real enda2 = tl2::pi<t_real>,
 		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
+	bool CalculateWallsIndexTree();
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
 	bool CalculateLineSegments();
 	bool CalculateVoronoi(bool group_lines=true);
@@ -170,7 +171,7 @@ public:
 	bool SaveToLinesTool(const std::string& filename);
 
 	// export the path to various formats using a visitor
-	bool AcceptExporter(const PathsExporterBase *exporter, 
+	bool AcceptExporter(const PathsExporterBase *exporter,
 		const std::vector<t_vec2>& path, bool path_in_rad = false)
 	{ return exporter->Export(this, path, path_in_rad); }
 	// ------------------------------------------------------------------------
@@ -207,6 +208,9 @@ private:
 	// angular ranges
 	t_real m_monoScatteringRange[2]{0, tl2::pi<t_real>};
 	t_real m_sampleScatteringRange[2]{0, tl2::pi<t_real>};
+
+	// index tree for wall positions
+	geo::ClosestPixelTreeResults<t_contourvec> m_wallsindextree{};
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};

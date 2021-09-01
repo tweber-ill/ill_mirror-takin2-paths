@@ -44,6 +44,7 @@ unittests/build/**
 *.csv
 *.1
 *.prof
+*.swp
 
 # Temporary tex files
 *.log
