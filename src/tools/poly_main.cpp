@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 	{
 		auto app = std::make_unique<QApplication>(argc, argv);
 		app->setOrganizationName("tw");
-		app->setApplicationName("poly");
+		app->setApplicationName("polygon");
 		tl2::set_locales();
 
 		auto vis = std::make_unique<PolyWnd>();

@@ -68,7 +68,9 @@ int main(int argc, char** argv)
 
 		auto app = std::make_unique<QApplication>(argc, argv);
 		app->setOrganizationName("tw");
-		app->setApplicationName("TASPaths");
+		app->setApplicationName("taspaths");
+		app->setApplicationDisplayName("TAS-Paths");
+		app->setApplicationVersion("0.8");
 
 		g_apppath = app->applicationDirPath().toStdString();
 		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
