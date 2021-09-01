@@ -909,13 +909,12 @@ dijk_mod(const t_graph& graph, const std::string& startvert)
 				dists[neighbouridx] = dists[vertidx] + *w;
 				predecessors[neighbouridx] = vertidx;
 
-				// insert new node or change distance of node neighbouridx
-				// resort the priority queue heap after the distance changes
-				if(std::find(distheap.begin(), distheap.end(), neighbouridx) != distheap.end())
-					std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
-				// ... or insert the new node index if it's not in the queue yet
-				else
+				// insert the new node index if it's not in the queue yet
+				if(std::find(distheap.begin(), distheap.end(), neighbouridx) == distheap.end())
 					distheap.push_back(neighbouridx);
+
+				// resort the priority queue heap after neighbouridx distance changes
+				std::make_heap(distheap.begin(), distheap.end(), vert_cmp);
 			}
 		}
 	}
