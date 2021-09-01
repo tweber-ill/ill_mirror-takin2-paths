@@ -56,20 +56,33 @@ namespace geo {
 template<class t_graph>
 concept is_graph = requires(t_graph& graph, std::size_t vertidx)
 {
+	// function to get vertex count
 	{ graph.GetNumVertices() }
 		-> convertible_to<std::size_t>;
 
+	// function to get vertex index from identifier
+	{ graph.GetVertexIndex("v123") }
+		-> convertible_to<std::optional<std::size_t>>;
+
+	// function to get vertex identifier from index
 	{ graph.GetVertexIdent(vertidx) }
 		-> convertible_to<std::string>;
 
+	// function to get edge weight
 	{ graph.GetWeight(vertidx, vertidx) }
 		-> convertible_to<std::optional<typename t_graph::t_weight>>;
 
+	// get neighbours of a vertex
 	graph.GetNeighbours(vertidx);
 
-	graph.AddVertex("123");
+	// support insertion of vertices by identifier
+	graph.AddVertex("v123"); 
+
+	// support insertion of edges by index
 	graph.AddEdge(0, 1);
-	graph.AddEdge("1", "2");
+
+	// support insertion of edges by vertex identifiers
+	graph.AddEdge("v123", "v321");
 };
 // ----------------------------------------------------------------------------
 
