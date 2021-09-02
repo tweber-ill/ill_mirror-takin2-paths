@@ -741,13 +741,14 @@ InstrumentPath PathsBuilder::FindPath(
 		t_vec2 nearest_vertex1_angle = this->PixelToAngle(nearest_vertices1[0]);
 		t_vec2 nearest_vertex2_angle = this->PixelToAngle(nearest_vertices2[0]);
 
-		// get angular distances
+		// get minimum angular distances
 		t_real dist1 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
 		t_real dist2 = tl2::norm<t_vec2>(nearest_vertex2_angle - vertex2_angle);
+		t_real min_dist = std::min(dist1, dist2);
 
-		// modify edge weights using the wall distances
+		// modify edge weights using the minimum distance to the next wall
 		if(pathstragy == PathStrategy::PENALISE_WALLS)
-			return weight / (dist1 * dist2);
+			return weight / min_dist;
 
 		return weight;
 	};
