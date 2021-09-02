@@ -15,12 +15,19 @@
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QThread>
+
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QFileDialog>
+
+#if QT_VERSION >= 0x060000
+	#include <QtGui/QActionGroup>
+#else
+	#include <QtWidgets/QActionGroup>
+#endif
 
 #include "Settings.h"
 
@@ -225,7 +232,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	QActionGroup *groupPathStrategy = new QActionGroup{this};
 	groupPathStrategy->addAction(acStrategyShortest);
-    groupPathStrategy->addAction(acStrategyPenaliseWalls);
+	groupPathStrategy->addAction(acStrategyPenaliseWalls);
 
 	menuPathStrategy->addAction(acStrategyShortest);
 	menuPathStrategy->addAction(acStrategyPenaliseWalls);
@@ -376,8 +383,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_plot || !m_moveInstr)
 			return;
 
-		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->x());
-		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->y());
+		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->pos().x());
+		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->pos().y());
 
 		std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
 		std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
@@ -392,8 +399,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_plot)
 			return;
 
-		const int x = evt->x();
-		const int y = evt->y();
+		const int x = evt->pos().x();
+		const int y = evt->pos().y();
 		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
 		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
 
@@ -442,18 +449,24 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 
 	// path options
-	connect(acStrategyShortest, &QAction::toggled, [this](bool simplify)->void
+	connect(acStrategyShortest, &QAction::toggled, [this](bool checked)->void
 	{
-		m_pathstrategy = PathStrategy::SHORTEST;
-		if(m_autocalcpath)
-			CalculatePath();
+		if(checked)
+		{
+			m_pathstrategy = PathStrategy::SHORTEST;
+			if(m_autocalcpath)
+				CalculatePath();
+		}
 	});
 
-	connect(acStrategyPenaliseWalls, &QAction::toggled, [this](bool simplify)->void
+	connect(acStrategyPenaliseWalls, &QAction::toggled, [this](bool checked)->void
 	{
-		m_pathstrategy = PathStrategy::PENALISE_WALLS;
-		if(m_autocalcpath)
-			CalculatePath();
+		if(checked)
+		{
+			m_pathstrategy = PathStrategy::PENALISE_WALLS;
+			if(m_autocalcpath)
+				CalculatePath();
+		}
 	});
 
 	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void

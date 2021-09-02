@@ -743,7 +743,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 		// get angular distances
 		t_real dist1 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
-		t_real dist2 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
+		t_real dist2 = tl2::norm<t_vec2>(nearest_vertex2_angle - vertex2_angle);
 
 		// modify edge weights using the wall distances
 		if(pathstragy == PathStrategy::PENALISE_WALLS)

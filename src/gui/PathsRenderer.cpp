@@ -297,10 +297,12 @@ void PathsRenderer::RenameObject(const std::string& oldname, const std::string& 
  */
 void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	const std::vector<t_vec3_gl>& triag_verts,
-	const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
+	const std::vector<t_vec3_gl>& triag_norms,
+	const std::vector<t_vec3_gl>& triag_uvs,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
-	auto [boundingSpherePos, boundingSphereRad] = tl2::bounding_sphere<t_vec3_gl>(triag_verts);
+	auto [boundingSpherePos, boundingSphereRad] =
+		tl2::bounding_sphere<t_vec3_gl>(triag_verts);
 	auto col = tl2::create<t_vec_gl>({r,g,b,a});
 
 	QMutexLocker _locker{&m_mutexObj};
@@ -390,12 +392,12 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 	m_lights[idx] = pos;
 	m_lightsNeedUpdate = true;
 
-	//t_vec_gl target = tl2::create<t_vec_gl>({0, 0, 0});
-	t_vec_gl target = pos;
+	//t_vec3_gl target = tl2::create<t_vec3_gl>({0, 0, 0});
+	t_vec3_gl target = pos;
 	target[2] = 0;
 
-	t_vec_gl up = tl2::create<t_vec_gl>({0, 1, 0});
-	m_matLight = tl2::hom_lookat<t_mat_gl, t_vec_gl>(pos, target, up);
+	t_vec3_gl up = tl2::create<t_vec3_gl>({0, 1, 0});
+	m_matLight = tl2::hom_lookat<t_mat_gl, t_vec3_gl>(pos, target, up);
 
 	std::tie(m_matLight_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matLight);
 }
@@ -451,14 +453,15 @@ void PathsRenderer::UpdatePicker()
 
 	// intersection with unit sphere around origin
 	bool hasSphereInters = false;
-	t_vec_gl vecClosestSphereInters = tl2::create<t_vec_gl>({0,0,0,0});
+	t_vec_gl vecClosestSphereInters = tl2::create<t_vec_gl>({0, 0, 0, 0});
 
 	auto intersUnitSphere =
 		tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
 			tl2::create<t_vec3_gl>({0,0,0}), t_real_gl(m_pickerSphereRadius));
 	for(const auto& result : intersUnitSphere)
 	{
-		t_vec_gl vecInters4 = tl2::create<t_vec_gl>({result[0], result[1], result[2], 1});
+		t_vec_gl vecInters4 = 
+			tl2::create<t_vec_gl>({result[0], result[1], result[2], 1});
 
 		if(!hasSphereInters)
 		{	// first intersection
@@ -481,7 +484,7 @@ void PathsRenderer::UpdatePicker()
 	bool hasInters = false;
 	m_curObj = "";
 	m_curActive = false;
-	t_vec_gl vecClosestInters = tl2::create<t_vec_gl>({0,0,0,0});
+	t_vec_gl vecClosestInters = tl2::create<t_vec_gl>({0, 0, 0, 0});
 
 	QMutexLocker _locker{&m_mutexObj};
 

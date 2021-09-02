@@ -196,8 +196,8 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return;
 
 		// coordinates
-		const t_real x = this->m_plot->xAxis->pixelToCoord(evt->x());
-		const t_real y = this->m_plot->yAxis->pixelToCoord(evt->y());
+		const t_real x = this->m_plot->xAxis->pixelToCoord(evt->pos().x());
+		const t_real y = this->m_plot->yAxis->pixelToCoord(evt->pos().y());
 
 		auto [Q, ki, kf] = GetQkikf(x, y);
 
@@ -212,8 +212,8 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			return;
 
 		// coordinates
-		const int _x = evt->x();
-		const int _y = evt->y();
+		const int _x = evt->pos().x();
+		const int _y = evt->pos().y();
 
 		const t_real x = this->m_plot->xAxis->pixelToCoord(_x);
 		const t_real y = this->m_plot->yAxis->pixelToCoord(_y);

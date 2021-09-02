@@ -488,9 +488,9 @@ build_closest_pixel_tree(const t_imageview& img)
 	auto [width, height] = get_image_dims(img);
 
 	// iterate pixels
-	for(int y=0; y<height; ++y)
+	for(int y=0; y<(int)height; ++y)
 	{
-		for(int x=0; x<width; ++x)
+		for(int x=0; x<(int)width; ++x)
 		{
 			auto pix_val = get_pixel(img, x-1, y);
 			if(pix_val)

@@ -8,13 +8,17 @@
 
 #include "hull.h"
 
+#if QT_VERSION >= 0x060000
+	#include <QtGui/QActionGroup>
+#else
+	#include <QtWidgets/QActionGroup>
+#endif
 #include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMessageBox>
-#include <QtWidgets/QActionGroup>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QGridLayout>

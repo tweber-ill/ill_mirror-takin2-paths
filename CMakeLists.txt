@@ -169,9 +169,14 @@ endif()
 
 
 if(QT_VER EQUAL 6)
-	find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL OpenGLWidgets PrintSupport)
+	find_package(Qt6 REQUIRED
+		COMPONENTS Core Gui Svg Widgets
+			OpenGL OpenGLWidgets
+			PrintSupport)
 elseif(QT_VER EQUAL 5)
-	find_package(Qt5 REQUIRED COMPONENTS Core Gui Svg Widgets OpenGL PrintSupport)
+	find_package(Qt5 REQUIRED
+		COMPONENTS Core Gui Svg Widgets OpenGL
+			PrintSupport)
 else()
 	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
@@ -277,31 +282,32 @@ if(QT_VER EQUAL 6)
 		#"${Qhull_LIBRARIES}"
 		"${MINGW_WINSOCK}"
 		Threads::Threads
-		Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidget Qt6::PrintSupport
-	)
+		Qt6::Core Qt6::Gui Qt6::Widgets
+		Qt6::OpenGL Qt6::OpenGLWidgets
+		Qt6::PrintSupport)
 
 
 	if(BUILD_TEST_TOOLS)
 		target_link_libraries(hull
-			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
-		)
+			Qt6::Core Qt6::Gui Qt6::Widgets
+			Qt6::Svg)
 
 		target_link_libraries(lines
-			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
 			Threads::Threads
-		)
+			Qt6::Core Qt6::Gui Qt6::Widgets
+			Qt6::Svg)
 
 		target_link_libraries(poly
-			Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
-		)
+			Qt6::Core Qt6::Gui Qt6::Widgets
+			Qt6::Svg)
 	endif()
 
 elseif(QT_VER EQUAL 5)
@@ -313,31 +319,31 @@ elseif(QT_VER EQUAL 5)
 		#"${Qhull_LIBRARIES}"
 		"${MINGW_WINSOCK}"
 		Threads::Threads
-		Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL Qt5::PrintSupport
-	)
+		Qt5::Core Qt5::Gui Qt5::Widgets
+		Qt5::OpenGL Qt5::PrintSupport)
 
 
 	if(BUILD_TEST_TOOLS)
 		target_link_libraries(hull
-			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
-		)
+			Qt5::Core Qt5::Gui Qt5::Widgets
+			Qt5::Svg)
 
 		target_link_libraries(lines
-			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
 			Threads::Threads
-		)
+			Qt5::Core Qt5::Gui Qt5::Widgets
+			Qt5::Svg)
 
 		target_link_libraries(poly
-			Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
-		)
+			Qt5::Core Qt5::Gui Qt5::Widgets
+			Qt5::Svg)
 	endif()
 endif()
 
