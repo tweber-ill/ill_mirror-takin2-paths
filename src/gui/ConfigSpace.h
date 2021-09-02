@@ -95,15 +95,17 @@ private:
 	PathsBuilder *m_pathsbuilder{};
 	boost::signals2::connection m_pathsbuilderslot{};
 
-	// options
+	// path mesh options
 	bool m_grouplines = false;
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;
 	bool m_calcvoronoi = true;
-	bool m_autocalcpath = true;
 	bool m_subdivide_path = false;
-	bool m_movetarget = false;
 
+	// path options
+	PathStrategy m_pathstrategy{PathStrategy::SHORTEST};
+	bool m_autocalcpath = true;
+	bool m_movetarget = false;
 	bool m_moveInstr = true;
 
 

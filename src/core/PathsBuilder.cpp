@@ -69,6 +69,24 @@ void PathsBuilder::AddConsoleProgressHandler()
 /**
  * convert a pixel of the plot image into the angular range of the plot
  */
+t_vec2 PathsBuilder::PixelToAngle(const t_vec2& pix, bool deg, bool inc_sense) const
+{
+	return PixelToAngle(pix[0], pix[1], deg, inc_sense);
+}
+
+
+/**
+ * convert angular coordinates to a pixel in the plot image
+ */
+t_vec2 PathsBuilder::AngleToPixel(const t_vec2& angle, bool deg, bool inc_sense) const
+{
+	return AngleToPixel(angle[0], angle[1], deg, inc_sense);
+}
+
+
+/**
+ * convert a pixel of the plot image into the angular range of the plot
+ */
 t_vec2 PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc_sense) const
 {
 	t_real x = std::lerp(m_sampleScatteringRange[0], m_sampleScatteringRange[1],
@@ -592,7 +610,8 @@ bool PathsBuilder::SaveToLinesTool(const std::string& filename)
  */
 InstrumentPath PathsBuilder::FindPath(
 	t_real a2_i, t_real a4_i,
-	t_real a2_f, t_real a4_f)
+	t_real a2_f, t_real a4_f,
+	PathStrategy pathstragy)
 {
 	a2_i *= 180. / tl2::pi<t_real>;
 	a4_i *= 180. / tl2::pi<t_real>;
@@ -690,7 +709,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 	// callback function with which the graph's edge weights can be modified
-	auto weight_func = [this, &voro_graph, &voro_vertices](
+	auto weight_func = [this, &voro_graph, &voro_vertices, pathstragy](
 		std::size_t idx1, std::size_t idx2) -> std::optional<t_weight>
 	{
 		// get original graph edge weight
@@ -698,16 +717,37 @@ InstrumentPath PathsBuilder::FindPath(
 		if(!_weight)
 			return std::nullopt;
 
+		// shortest path -> just use original edge weights
+		if(pathstragy == PathStrategy::SHORTEST)
+			return _weight;
+
+
 		t_weight weight = *_weight;
 
-
+		// get voronoi vertices of the current edge
 		const t_vec2& vertex1 = voro_vertices[idx1];
 		const t_vec2& vertex2 = voro_vertices[idx2];
 
+		// get the wall vertices that are closest to the current voronoi vertices
 		auto nearest_vertices1 = m_wallsindextree.Query(vertex1, 1);
 		auto nearest_vertices2 = m_wallsindextree.Query(vertex2, 1);
 
-		// TODO: modify weight according to proximity to walls
+		if(nearest_vertices1.size()<1 || nearest_vertices2.size()<1)
+			return weight;
+
+		// get angular coordinates
+		t_vec2 vertex1_angle = this->PixelToAngle(vertex1);
+		t_vec2 vertex2_angle = this->PixelToAngle(vertex2);
+		t_vec2 nearest_vertex1_angle = this->PixelToAngle(nearest_vertices1[0]);
+		t_vec2 nearest_vertex2_angle = this->PixelToAngle(nearest_vertices2[0]);
+
+		// get angular distances
+		t_real dist1 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
+		t_real dist2 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
+
+		// modify edge weights using the wall distances
+		if(pathstragy == PathStrategy::PENALISE_WALLS)
+			return weight / (dist1 * dist2);
 
 		return weight;
 	};
@@ -893,7 +933,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	// convert pixel to angular coordinates and add vertex to path
 	auto add_curve_vertex = [&path_vertices, deg, this](const t_vec2& vertex)
 	{
-		const t_vec2 angle = PixelToAngle(vertex[0], vertex[1], deg);
+		const t_vec2 angle = PixelToAngle(vertex, deg);
 		path_vertices.emplace_back(std::move(angle));
 	};
 
@@ -1033,8 +1073,8 @@ PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
 	{
 		const t_line& line = m_lines[lineidx];
 
-		t_vec2 pt1 = PixelToAngle(std::get<0>(line)[0], std::get<0>(line)[1], true, false);
-		t_vec2 pt2 = PixelToAngle(std::get<1>(line)[0], std::get<1>(line)[1], true, false);
+		t_vec2 pt1 = PixelToAngle(std::get<0>(line), true, false);
+		t_vec2 pt2 = PixelToAngle(std::get<1>(line), true, false);
 
 		std::array<t_real, 4> arr{{ pt1[0], pt1[1], pt2[0], pt2[1] }};
 		lines.emplace_back(std::move(arr));

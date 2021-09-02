@@ -1725,11 +1725,17 @@ void PathsTool::CalculatePath()
 	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * sensesCCW[0];
 	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * sensesCCW[1];
 
+	// path options
+	PathStrategy pathstrategy{PathStrategy::SHORTEST};
+	if(g_pathstrategy == 1)
+		pathstrategy = PathStrategy::PENALISE_WALLS;
+
 	// find path from current to target position
 	SetTmpStatus("Calculating path.");
 	InstrumentPath path = m_pathsbuilder.FindPath(
 		curMonoScatteringAngle, curSampleScatteringAngle,
-		targetMonoScatteringAngle, targetSampleScatteringAngle);
+		targetMonoScatteringAngle, targetSampleScatteringAngle,
+		pathstrategy);
 
 	if(!path.ok)
 	{

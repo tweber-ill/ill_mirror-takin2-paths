@@ -120,7 +120,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_spinDelta2ThM->setSingleStep(0.1);
 
 	// buttons
-	QPushButton *btnCalc = new QPushButton("Calculate", this);
+	QPushButton *btnCalc = new QPushButton("Calculate Mesh", this);
 	QPushButton *btnSave = new QPushButton("Save Figure...", this);
 	QPushButton *btnClose = new QPushButton("OK", this);
 
@@ -142,10 +142,13 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu
 	// ------------------------------------------------------------------------
 	QMenu *menuFile = new QMenu("File", this);
-	QMenu *menuOptions = new QMenu("Options", this);
+	QMenu *menuMeshOptions = new QMenu("Mesh Options", this);
+	QMenu *menuPathOptions = new QMenu("Path Options", this);
 	QMenu *menuCalc = new QMenu("Calculate", this);
 	QMenu *menuView = new QMenu("View", this);
 
+
+	// file
 	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
 	menuFile->addAction(acSavePDF);
 
@@ -174,41 +177,66 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
 
+
+	// path mesh options
 	QAction *acSimplifyContour = new QAction("Simplify Contour", menuView);
 	acSimplifyContour->setCheckable(true);
 	acSimplifyContour->setChecked(m_simplifycontour);
-	menuOptions->addAction(acSimplifyContour);
+	menuMeshOptions->addAction(acSimplifyContour);
 
 	QAction *acGroupLines = new QAction("Group Line Segments", menuView);
 	acGroupLines->setCheckable(true);
 	acGroupLines->setChecked(m_grouplines);
-	menuOptions->addAction(acGroupLines);
+	menuMeshOptions->addAction(acGroupLines);
 
 	QAction *acSplitContour = new QAction("Split Contour into Convex Regions", menuView);
 	acSplitContour->setCheckable(true);
 	acSplitContour->setChecked(m_splitcontour);
-	menuOptions->addAction(acSplitContour);
+	menuMeshOptions->addAction(acSplitContour);
 
 	QAction *acCalcVoro = new QAction("Calculate Voronoi Diagram", menuView);
 	acCalcVoro->setCheckable(true);
 	acCalcVoro->setChecked(m_calcvoronoi);
-	menuOptions->addAction(acCalcVoro);
+	menuMeshOptions->addAction(acCalcVoro);
 
 	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
 	acSubdivPath->setCheckable(true);
 	acSubdivPath->setChecked(m_subdivide_path);
-	menuOptions->addAction(acSubdivPath);
+	menuMeshOptions->addAction(acSubdivPath);
 
+
+	// path options
 	QAction *acAutocalcPath = new QAction("Automatically Calculate Path", menuView);
 	acAutocalcPath->setCheckable(true);
 	acAutocalcPath->setChecked(m_autocalcpath);
-	menuOptions->addSeparator();
-	menuOptions->addAction(acAutocalcPath);
+	menuPathOptions->addAction(acAutocalcPath);
+
+	// ------------------------------------------------------------------------
+	// path strategies
+	QMenu *menuPathStrategy = new QMenu("Path Finding Strategy", this);
+
+	QAction *acStrategyShortest = new QAction("Shortest Path", menuPathStrategy);
+	acStrategyShortest->setCheckable(true);
+	acStrategyShortest->setChecked(m_pathstrategy == PathStrategy::SHORTEST);
+
+	QAction *acStrategyPenaliseWalls = new QAction("Avoid Walls", menuPathStrategy);
+	acStrategyPenaliseWalls->setCheckable(true);
+	acStrategyPenaliseWalls->setChecked(m_pathstrategy == PathStrategy::PENALISE_WALLS);
+
+	QActionGroup *groupPathStrategy = new QActionGroup{this};
+	groupPathStrategy->addAction(acStrategyShortest);
+    groupPathStrategy->addAction(acStrategyPenaliseWalls);
+
+	menuPathStrategy->addAction(acStrategyShortest);
+	menuPathStrategy->addAction(acStrategyPenaliseWalls);
+	menuPathOptions->addMenu(menuPathStrategy);
+	// ------------------------------------------------------------------------
 
 	QAction *acMoveTarget = new QAction("Move Target Point", menuView);
 	acMoveTarget->setCheckable(true);
 	acMoveTarget->setChecked(m_movetarget);
-	menuOptions->addAction(acMoveTarget);
+	menuPathOptions->addSeparator();
+	menuPathOptions->addAction(acMoveTarget);
 
 	QAction *acCalcMesh = new QAction("Calculate Path Mesh", menuView);
 	menuCalc->addAction(acCalcMesh);
@@ -216,6 +244,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QAction *acCalcPath = new QAction("Calculate Path", menuView);
 	menuCalc->addAction(acCalcPath);
 
+
+	// view
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);
@@ -224,9 +254,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QAction *acResetZoom = new QAction("Reset Zoom", menuView);
 	menuView->addAction(acResetZoom);
 
+
+	// menu bar
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
-	menuBar->addMenu(menuOptions);
+	menuBar->addMenu(menuMeshOptions);
+	menuBar->addMenu(menuPathOptions);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
@@ -335,6 +368,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// ------------------------------------------------------------------------
 	// connections
 	// ------------------------------------------------------------------------
+
+	// mouse
 	connect(m_plot.get(), &QCustomPlot::mousePress,
 	[this](QMouseEvent* evt)
 	{
@@ -388,6 +423,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		m_status->setText(ostr.str().c_str());
 	});
 
+
+	// path mesh options
 	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
 	{ m_simplifycontour = simplify; });
 
@@ -403,12 +440,33 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)->void
 	{ m_subdivide_path = subdiv; });
 
+
+	// path options
+	connect(acStrategyShortest, &QAction::toggled, [this](bool simplify)->void
+	{
+		m_pathstrategy = PathStrategy::SHORTEST;
+		if(m_autocalcpath)
+			CalculatePath();
+	});
+
+	connect(acStrategyPenaliseWalls, &QAction::toggled, [this](bool simplify)->void
+	{
+		m_pathstrategy = PathStrategy::PENALISE_WALLS;
+		if(m_autocalcpath)
+			CalculatePath();
+	});
+
+	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
+	{ m_simplifycontour = simplify; });
+
 	connect(acAutocalcPath, &QAction::toggled, [this](bool calc)->void
 	{ m_autocalcpath = calc; });
 
 	connect(acMoveTarget, &QAction::toggled, [this](bool b)->void
 	{ m_movetarget = b; });
 
+
+	// view
 	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
 	{ this->SetInstrumentMovable(!enableZoom); });
 
@@ -418,6 +476,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		m_plot->replot();
 	});
 
+
+	// export
 	connect(acExportRaw, &QAction::triggered, this, [exportPath]()
 	{
 		exportPath(PathsExporterFormat::RAW);
@@ -433,17 +493,36 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		exportPath(PathsExporterFormat::NICOS);
 	});
 
+
+	// file
 	connect(acSaveLines, &QAction::triggered, this, saveLines);
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
 	connect(acSaveGraph, &QAction::triggered, this, saveGraph);
-	connect(btnSave, &QPushButton::clicked, savePDF);
+	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
+
+
+	// calculate
 	connect(acCalcMesh, &QAction::triggered, this, &ConfigSpaceDlg::CalculatePathMesh);
 	connect(acCalcPath, &QAction::triggered, this, &ConfigSpaceDlg::CalculatePath);
+
+
+	// buttons
 	connect(btnCalc, &QPushButton::clicked, this, &ConfigSpaceDlg::CalculatePathMesh);
+	connect(btnSave, &QPushButton::clicked, savePDF);
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
-	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
 	// ------------------------------------------------------------------------
 
+
+	// get global path finding strategy
+	switch(g_pathstrategy)
+	{
+		case 0:
+			m_pathstrategy = PathStrategy::SHORTEST;
+			break;
+		case 1:
+			m_pathstrategy = PathStrategy::PENALISE_WALLS;
+			break;
+	}
 
 	SetInstrumentMovable(m_moveInstr);
 }
@@ -668,7 +747,8 @@ void ConfigSpaceDlg::CalculatePath()
 	// find path from current to target position
 	InstrumentPath path = m_pathsbuilder->FindPath(
 		m_curMonoScatteringAngle, m_curSampleScatteringAngle,
-		m_targetMonoScatteringAngle, m_targetSampleScatteringAngle);
+		m_targetMonoScatteringAngle, m_targetSampleScatteringAngle,
+		m_pathstrategy);
 
 	if(!path.ok)
 	{
@@ -842,7 +922,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
-				t_vec2 angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
+				t_vec2 angles = m_pathsbuilder->PixelToAngle(point, true);
 
 				vecx << angles[0];
 				vecy << angles[1];
@@ -870,7 +950,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 			if(x>=0 && y>=0 && std::size_t(x)<width && std::size_t(y)<height)
 			{
 				//m_colourMap->data()->setCell(x, y, 0.25);
-				t_vec2 angles = m_pathsbuilder->PixelToAngle(point[0], point[1], true);
+				t_vec2 angles = m_pathsbuilder->PixelToAngle(point, true);
 
 				vecx << angles[0];
 				vecy << angles[1];

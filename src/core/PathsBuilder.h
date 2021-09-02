@@ -43,6 +43,19 @@ struct InstrumentPath
 };
 
 
+/**
+ * strategy for finding the path
+ */
+enum class PathStrategy
+{
+	// find shortest path
+	SHORTEST,
+
+	// avoid paths close to walls
+	PENALISE_WALLS,
+};
+
+
 class PathsBuilder
 {
 public:
@@ -80,9 +93,14 @@ public:
 	const TasCalculator* GetTasCalculator() const { return m_tascalc; }
 	// ------------------------------------------------------------------------
 
+	// ------------------------------------------------------------------------
 	// conversion functions
+	// ------------------------------------------------------------------------
+	t_vec2 PixelToAngle(const t_vec2& pix, bool deg = true, bool inc_sense = false) const;
+	t_vec2 AngleToPixel(const t_vec2& angle, bool deg = true, bool inc_sense = false) const;
 	t_vec2 PixelToAngle(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
 	t_vec2 AngleToPixel(t_real x, t_real y, bool deg = true, bool inc_sense = false) const;
+	// ------------------------------------------------------------------------
 
 	// clear all data
 	void Clear();
@@ -120,7 +138,8 @@ public:
 	// path calculation
 	// ------------------------------------------------------------------------
 	// find a path from an initial (a2, a4) to a final (a2, a4)
-	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f);
+	InstrumentPath FindPath(t_real a2_i, t_real a4_i, t_real a2_f, t_real a4_f,
+		PathStrategy pathstrategy = PathStrategy::SHORTEST);
 
 	// get individual vertices on an instrument path
 	std::vector<t_vec2> GetPathVertices(const InstrumentPath& path,
