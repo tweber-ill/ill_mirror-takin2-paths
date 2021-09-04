@@ -37,11 +37,29 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 {
 	setWindowTitle("Angular Configuration Space");
 
+
+	// --------------------------------------------------------------------
+	// get settings
+	// --------------------------------------------------------------------
 	// restore dialog geometry
 	if(m_sett && m_sett->contains("configspace/geo"))
 		restoreGeometry(m_sett->value("configspace/geo").toByteArray());
 	else
 		resize(800, 600);
+
+
+	// get global path finding strategy
+	switch(g_pathstrategy)
+	{
+		case 0:
+			m_pathstrategy = PathStrategy::SHORTEST;
+			break;
+		case 1:
+			m_pathstrategy = PathStrategy::PENALISE_WALLS;
+			break;
+	}
+	// --------------------------------------------------------------------
+
 
 	// plotter
 	m_plot = std::make_shared<QCustomPlot>(this);
@@ -525,17 +543,6 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(btnClose, &QPushButton::clicked, this, &ConfigSpaceDlg::accept);
 	// ------------------------------------------------------------------------
 
-
-	// get global path finding strategy
-	switch(g_pathstrategy)
-	{
-		case 0:
-			m_pathstrategy = PathStrategy::SHORTEST;
-			break;
-		case 1:
-			m_pathstrategy = PathStrategy::PENALISE_WALLS;
-			break;
-	}
 
 	SetInstrumentMovable(m_moveInstr);
 }
