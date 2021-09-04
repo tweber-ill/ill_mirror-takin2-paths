@@ -7,7 +7,8 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
- *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
+ *   - (Sellers 2014), G. Sellers et al., "OpenGL SuperBible", 2014, ISBN: 978-0-321-90294-8.
+ *   - (Arens 2015), T. Arens et al., "Mathematik", 2015, ISBN: 978-3-642-44919-2, https://doi.org/10.1007/978-3-642-44919-2.
  */
 
 #version ${GLSL_VERSION}
@@ -87,6 +88,7 @@ const t_real g_shadow_atten = 0.75;
 /**
  * reflect a vector on a surface with normal n 
  *	=> subtract the projection vector twice: 1 - 2*|n><n|
+ * @see (Arens 2015), p. 710
  */
 mat3 reflect(vec3 n)
 {
