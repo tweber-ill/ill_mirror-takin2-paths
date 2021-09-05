@@ -230,6 +230,13 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 }
 
 
+void PathsRenderer::SetInstrumentStatus(bool in_angular_limits, bool colliding)
+{
+	m_in_angular_limits = in_angular_limits;
+	m_colliding = colliding;
+}
+
+
 QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) const
 {
 	auto [ vecPersp, vec ] =
@@ -1047,7 +1054,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
 	// clear
-	pGl->glClearColor(1., 1., 1., 1.);
+	if(m_colliding || !m_in_angular_limits)
+		pGl->glClearColor(1., 0., 0., 1.);
+	else
+		pGl->glClearColor(1., 1., 1., 1.);
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	pGl->glEnable(GL_DEPTH_TEST);
 

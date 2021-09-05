@@ -246,16 +246,22 @@ bool PathsTool::OpenFile(const QString &file)
 				auto [Qrlu, E] = m_tascalc.GetQE(monoXtalAngle, anaXtalAngle,
 					sampleXtalAngle, sampleScAngle);
 
+				bool in_angular_limits = m_instrspace.CheckAngularLimits();
+				bool colliding = m_instrspace.CheckCollision2D();
+
 				SetInstrumentStatus(Qrlu, E,
-					m_instrspace.CheckAngularLimits(),
-					m_instrspace.CheckCollision2D());
+					in_angular_limits, colliding);
 
 				if(this->m_dlgConfigSpace)
 					this->m_dlgConfigSpace->UpdateInstrument(
 						instr, m_tascalc.GetScatteringSenses());
 
 				if(this->m_renderer)
+				{
+					this->m_renderer->SetInstrumentStatus(
+						in_angular_limits, colliding);
 					this->m_renderer->UpdateInstrument(instr);
+				}
 			});
 
 		m_instrspace.GetInstrument().EmitUpdate();

@@ -66,7 +66,7 @@ public:
 	// receivers for instrument (space) update signals
 	void UpdateInstrumentSpace(const InstrumentSpace& instr);
 	void UpdateInstrument(const Instrument& instr);
-
+	void SetInstrumentStatus(bool in_angular_limits, bool colliding);
 
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
 	bool IsInitialised() const { return m_initialised; }
@@ -227,6 +227,10 @@ protected:
 	bool m_inRotation = false;
 
 	QTimer m_timer{};
+
+	// instrument status
+	bool m_in_angular_limits{ false };
+	bool m_colliding{ false };
 
 
 protected slots:
