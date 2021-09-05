@@ -1055,7 +1055,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	// clear
 	if(m_colliding || !m_in_angular_limits)
-		pGl->glClearColor(1., 0., 0., 1.);
+		pGl->glClearColor(0.8, 0.8, 0.8, 1.);
 	else
 		pGl->glClearColor(1., 1., 1., 1.);
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1171,7 +1171,10 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			QPen penLabel = penOrig;
 			QBrush brushLabel = brushOrig;
 
-			fontLabel.setStyleStrategy(QFont::StyleStrategy(QFont::PreferAntialias | QFont::PreferQuality));
+			fontLabel.setStyleStrategy(
+				QFont::StyleStrategy(
+					QFont::PreferAntialias |
+					QFont::PreferQuality));
 			fontLabel.setWeight(QFont::Normal);
 			penLabel.setColor(QColor(0, 0, 0, 255));
 			brushLabel.setColor(QColor(255, 255, 255, 127));
@@ -1186,8 +1189,50 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			boundingRect.translate(m_posMouse.x()+16, m_posMouse.y()+24);
 
 			painter.drawRoundedRect(boundingRect, 8., 8.);
-			painter.drawText(boundingRect, Qt::AlignCenter | Qt::AlignVCenter, label);
+			painter.drawText(boundingRect,
+				Qt::AlignCenter | Qt::AlignVCenter,
+				label);
 		}
+	}
+
+	// collision and angular limits errors
+	if(m_colliding || !m_in_angular_limits)
+	{
+		QString label;
+		if(!m_in_angular_limits && m_colliding)
+			label = "Out of angular limits and collision detected!";
+		else if(!m_in_angular_limits)
+			label = "Out of angular limits!";
+		else if(m_colliding)
+			label = "Collision detected!";
+
+		QFont fontLabel = fontOrig;
+		QPen penLabel = penOrig;
+		QBrush brushLabel = brushOrig;
+
+		fontLabel.setStyleStrategy(
+			QFont::StyleStrategy(
+				QFont::PreferAntialias |
+				QFont::PreferQuality));
+		fontLabel.setWeight(QFont::Bold);
+		fontLabel.setPointSize(fontLabel.pointSize()*1.5);
+		penLabel.setColor(QColor(0, 0, 0, 255));
+		penLabel.setWidth(penLabel.width()*2);
+		brushLabel.setColor(QColor(255, 0, 0, 200));
+		brushLabel.setStyle(Qt::SolidPattern);
+		painter.setFont(fontLabel);
+		painter.setPen(penLabel);
+		painter.setBrush(brushLabel);
+
+		QRect boundingRect = painter.fontMetrics().boundingRect(label);
+		boundingRect.setWidth(boundingRect.width() * 1.5);
+		boundingRect.setHeight(boundingRect.height() * 2);
+		boundingRect.translate(16, 32);
+
+		painter.drawRect(boundingRect);
+		painter.drawText(boundingRect,
+			Qt::AlignCenter | Qt::AlignVCenter,
+			label);
 	}
 
 	// restore original styles

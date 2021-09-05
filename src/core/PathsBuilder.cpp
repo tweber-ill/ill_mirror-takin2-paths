@@ -613,6 +613,56 @@ InstrumentPath PathsBuilder::FindPath(
 	t_real a2_f, t_real a4_f,
 	PathStrategy pathstragy)
 {
+	InstrumentPath path{};
+	path.ok = false;
+
+	// check if start or target point are within obstacles
+	{
+		if(!m_instrspace)
+			return path;
+
+		const t_real *sensesCCW = nullptr;
+		if(m_tascalc)
+			sensesCCW = m_tascalc->GetScatteringSenses();
+
+		InstrumentSpace instrspace_cpy = *this->m_instrspace;
+
+		// set instrument angles to start point
+		t_real a2 = a2_i;
+		t_real a4 = a4_i;
+		if(sensesCCW)
+		{
+			a2 *= sensesCCW[0];
+			a4 *= sensesCCW[1];
+		}
+		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+
+		bool in_angular_limits = instrspace_cpy.CheckAngularLimits();
+		bool colliding = instrspace_cpy.CheckCollision2D();
+		if(!in_angular_limits || colliding)
+			return path;
+
+		// set instrument angles to target point
+		a2 = a2_f;
+		a4 = a4_f;
+		if(sensesCCW)
+		{
+			a2 *= sensesCCW[0];
+			a4 *= sensesCCW[1];
+		}
+		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+
+		in_angular_limits = instrspace_cpy.CheckAngularLimits();
+		colliding = instrspace_cpy.CheckCollision2D();
+		if(!in_angular_limits || colliding)
+			return path;
+	}
+
+	// convert angles to degrees
 	a2_i *= 180. / tl2::pi<t_real>;
 	a4_i *= 180. / tl2::pi<t_real>;
 	a2_f *= 180. / tl2::pi<t_real>;
@@ -623,9 +673,6 @@ InstrumentPath PathsBuilder::FindPath(
 		<< "; a4_f = " << a4_f << ", a2_f = " << a2_f
 		<< "." << std::endl;
 #endif
-
-	InstrumentPath path{};
-	path.ok = false;
 
 	// vertices in configuration space
 	path.vec_i = AngleToPixel(a4_i, a2_i, true);

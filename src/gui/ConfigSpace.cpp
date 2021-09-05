@@ -772,14 +772,18 @@ void ConfigSpaceDlg::CalculatePath()
 
 	if(!path.ok)
 	{
+		m_pathvertices.clear();
+
 		m_status->setText("Error: No path could be found.");
 		if(!m_autocalcpath)
 			QMessageBox::critical(this, "Error", "No path could be found.");
-		return;
+		//return;
 	}
-
-	// get the vertices on the path
-	m_pathvertices = m_pathsbuilder->GetPathVertices(path, m_subdivide_path, true);
+	else
+	{
+		// get the vertices on the path
+		m_pathvertices = m_pathsbuilder->GetPathVertices(path, m_subdivide_path, true);
+	}
 
 	RedrawPathPlot();
 }
@@ -994,20 +998,21 @@ void ConfigSpaceDlg::RedrawPathPlot()
 {
 	ClearPathPlotCurve();
 
-
-	// draw path curve
-	QVector<t_real> pathx, pathy;
-	pathx.reserve(m_pathvertices.size());
-	pathy.reserve(m_pathvertices.size());
-
-	for(const t_vec2& pathvert : m_pathvertices)
+	if(m_pathvertices.size())
 	{
-		pathx << pathvert[0];
-		pathy << pathvert[1];
+		// draw path curve
+		QVector<t_real> pathx, pathy;
+		pathx.reserve(m_pathvertices.size());
+		pathy.reserve(m_pathvertices.size());
+
+		for(const t_vec2& pathvert : m_pathvertices)
+		{
+			pathx << pathvert[0];
+			pathy << pathvert[1];
+		}
+
+		SetPathPlotCurve(pathx, pathy, 4., QColor::fromRgbF(0.9, 0.9, 0.));
 	}
-
-	SetPathPlotCurve(pathx, pathy, 4., QColor::fromRgbF(0.9, 0.9, 0.));
-
 
 	// replot
 	m_plot->rescaleAxes();
