@@ -56,7 +56,7 @@ private:
 	QTreeWidgetItem *m_curContextItem{nullptr};
 
 	// currently selected geometry object
-	std::string m_curObject;
+	std::string m_curObject{};
 	bool m_ignoresettingschanges{false};
 
 

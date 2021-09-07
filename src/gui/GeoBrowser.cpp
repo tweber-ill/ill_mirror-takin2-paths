@@ -119,12 +119,12 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 	connect(m_geotree, &QTreeWidget::customContextMenuRequested,
 		this, &GeometriesBrowser::ShowGeoTreeContextMenu);
-	connect(m_geotree, &QTreeWidget::itemChanged, 
+	connect(m_geotree, &QTreeWidget::itemChanged,
 		this, &GeometriesBrowser::GeoTreeItemChanged);
-	connect(m_geotree, &QTreeWidget::currentItemChanged, 
+	connect(m_geotree, &QTreeWidget::currentItemChanged,
 		this, &GeometriesBrowser::GeoTreeCurrentItemChanged);
 
-	connect(m_geosettings, &QTableWidget::itemChanged, 
+	connect(m_geosettings, &QTableWidget::itemChanged,
 		this, &GeometriesBrowser::GeoSettingsItemChanged);
 }
 
@@ -201,7 +201,7 @@ void GeometriesBrowser::GeoTreeItemChanged(QTreeWidgetItem *item, int col)
 /**
  * an object has been selected
  */
-void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem *previtem)
+void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem */*previtem*/)
 {
 	if(!item || !m_instrspace)
 		return;
@@ -211,7 +211,7 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 		return;
 
 	m_curObject = itemid;
-	
+
 	// ignore programmatic settings changes
 	m_ignoresettingschanges = true;
 	GeometriesBrowser* pThis = this;
@@ -397,15 +397,15 @@ void GeometriesBrowser::UpdateGeoTree(const InstrumentSpace& instrspace)
 	instritem->setText(0, "Instrument");
 
 	for(const Axis& axis : {
-		instrspace.GetInstrument().GetMonochromator(), 
-		instrspace.GetInstrument().GetSample(), 
+		instrspace.GetInstrument().GetMonochromator(),
+		instrspace.GetInstrument().GetSample(),
 		instrspace.GetInstrument().GetAnalyser() })
 	{
 		auto* axisitem = new QTreeWidgetItem(instritem);
 		axisitem->setText(0, axis.GetId().c_str());
 
 		std::vector<std::string> axislabels{{
-			"Relative Incoming Axis", 
+			"Relative Incoming Axis",
 			"Relative Internal Axis",
 			"Relative Outgoing Axis"
 		}};

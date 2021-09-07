@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "src/core/PathsBuilder.h"
-#include "qcustomplot/qcustomplot.h"
+#include "qcp_wrapper.h"
 
 
 class ConfigSpaceDlg : public QDialog
@@ -80,7 +80,7 @@ private:
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};
 	QCPCurve* m_pathcurve = nullptr;
-	std::vector<t_vec2> m_pathvertices;
+	std::vector<t_vec2> m_pathvertices{};
 
 	// current instrument position
 	t_real m_curMonoScatteringAngle{};

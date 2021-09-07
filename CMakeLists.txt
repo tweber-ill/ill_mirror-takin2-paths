@@ -48,13 +48,26 @@ else()
 endif()
 
 
-message("Build type: ${CMAKE_BUILD_TYPE}")
+message("Build type: ${CMAKE_BUILD_TYPE}.")
+message("Compiler: " ${CMAKE_CXX_COMPILER_ID}.)
 message("Selected Qt version ${QT_VER}.")
 message("Selected GL version ${GL_MAJOR_VER}.${GL_MINOR_VER}.")
 
 
+set(WARN_OPTS -Wall -Wextra -Weffc++)
+add_compile_options(${WARN_OPTS})
+
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# generate debug symbols
 	add_compile_options(-g -ggdb)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+	add_compile_options("-Wno-#pragma-messages")
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+		# remove pragma messages
+		# see: https://gcc.gnu.org/onlinedocs/gcc/Developer-Options.html
+		add_compile_options(-fcompare-debug-second)
+	endif()
 endif()
 
 
@@ -63,7 +76,6 @@ endif()
 # -----------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-std=c++20)
-add_compile_options(-Wall -Wextra -Weffc++)
 
 add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 # -----------------------------------------------------------------------------
@@ -191,6 +203,16 @@ set(CMAKE_AUTOMOC TRUE)
 # -----------------------------------------------------------------------------
 add_compile_options(${Boost_CXX_FLAGS})
 #add_definitions(-DQCUSTOMPLOT_USE_OPENGL )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+	# disable some warnings for generated source files
+	set_source_files_properties("${PROJECT_BINARY_DIR}/taspaths_autogen/mocs_compilation.cpp"
+		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
+
+	# disable warnings for external source files
+	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot/qcustomplot.cpp"
+		PROPERTIES COMPILE_FLAGS "-Wno-effc++ -Wno-implicit-fallthrough -Wno-deprecated-enum-enum-conversion")
+endif()
 # -----------------------------------------------------------------------------
 
 

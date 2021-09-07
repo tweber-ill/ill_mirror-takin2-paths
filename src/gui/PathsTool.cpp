@@ -554,7 +554,8 @@ void PathsTool::CursorCoordsChanged(t_real_gl x, t_real_gl y)
 /**
  * mouse is over an object
  */
-void PathsTool::PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere)
+void PathsTool::PickerIntersection(const t_vec3_gl* /*pos*/,
+	std::string obj_name, const t_vec3_gl* /*posSphere*/)
 {
 	m_curObj = obj_name;
 	UpdateStatusLabel();
@@ -564,7 +565,7 @@ void PathsTool::PickerIntersection(const t_vec3_gl* pos, std::string obj_name, c
 /**
  * clicked on an object
  */
-void PathsTool::ObjectClicked(const std::string& obj, bool left, bool middle, bool right)
+void PathsTool::ObjectClicked(const std::string& obj, bool /*left*/, bool middle, bool right)
 {
 	if(!m_renderer)
 		return;
@@ -1333,7 +1334,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetTasCalculator(&this->m_tascalc);
 
 	m_pathsbuilder.AddProgressSlot(
-		[this](bool start, bool end, t_real progress, const std::string& message)
+		[this](bool /*start*/, bool /*end*/, t_real progress, const std::string& /*message*/)
 		{
 			//std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
 			if(!m_progress)

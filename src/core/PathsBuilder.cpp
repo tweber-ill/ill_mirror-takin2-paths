@@ -53,7 +53,7 @@ void PathsBuilder::Clear()
 void PathsBuilder::AddConsoleProgressHandler()
 {
 	auto handler = []
-		(bool start, bool end, t_real progress,
+		(bool /*start*/, bool /*end*/, t_real progress,
 		const std::string& msg) -> bool
 	{
 		std::cout << std::fixed << "["
@@ -446,7 +446,7 @@ bool PathsBuilder::CalculateLineSegments()
 
 		// move a point on the contour in the direction of the contour mean
 		// to get a point inside the contour
-		t_contourvec inside_contour = contour[0] + (contour_mean-contour[0]) / 8;
+		//t_contourvec inside_contour = contour[0] + (contour_mean-contour[0]) / 8;
 
 		// find a point outside the contour by moving a pixel away from the minimum vertex
 		auto [contour_min, contour_max] = tl2::minmax(contour);
@@ -467,7 +467,7 @@ bool PathsBuilder::CalculateLineSegments()
 				find_point_outside_regions(contour[0][0], contour[0][1], true);
 			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
 
-			auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
+			//auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
 			auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
 
 #ifdef DEBUG

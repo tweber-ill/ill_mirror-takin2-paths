@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "qcustomplot/qcustomplot.h"
+#include "qcp_wrapper.h"
 
 #include "src/libs/img.h"
 #include "src/core/InstrumentSpace.h"

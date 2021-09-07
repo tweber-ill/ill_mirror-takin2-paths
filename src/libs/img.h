@@ -81,7 +81,6 @@ public:
 	Image() = default;
 	~Image() = default;
 
-
 	Image(std::size_t w, std::size_t h)
 	{
 		Init(w, h);
@@ -92,6 +91,15 @@ public:
 		: Image(img.GetWidth(), img.GetHeight())
 	{
 		SetImage(img.m_img.get());
+	}
+
+
+	Image<t_pixel>& operator=(const Image<t_pixel>& img)
+	{
+		Init(img.GetWidth(), img.GetHeight());
+		SetImage(img.m_img.get());
+
+		return *this;
 	}
 
 
