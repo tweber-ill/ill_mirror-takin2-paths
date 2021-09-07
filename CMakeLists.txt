@@ -100,6 +100,12 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/externals")
+
+if(QT_VER EQUAL 6)
+	include_directories("${Qt6Core_INCLUDE_DIRS}/..")
+elseif(QT_VER EQUAL 5)
+	include_directories("${Qt5Core_INCLUDE_DIRS}/..")
+endif()
 # -----------------------------------------------------------------------------
 
 
@@ -165,13 +171,14 @@ if(USE_PY)
 
 	swig_add_library(taspaths_py LANGUAGE python SOURCES
 		scripting/taspaths.i
-		src/core/Geometry.cpp src/core/Axis.cpp
-		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
-		src/core/PathsBuilder.cpp src/core/PathsExporter.cpp
-		src/core/TasCalculator.cpp
+#		src/core/Geometry.cpp src/core/Axis.cpp
+#		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
+#		src/core/PathsBuilder.cpp src/core/PathsExporter.cpp
+#		src/core/TasCalculator.cpp
 	)
 
 	target_link_libraries(taspaths_py
+		taspaths_core
 		Python3::Python Threads::Threads
 		"${Boost_LIBRARIES}" "${Lapacke_LIBRARIES}"
 	)
@@ -206,12 +213,68 @@ add_compile_options(${Boost_CXX_FLAGS})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	# disable some warnings for generated source files
+	set_source_files_properties("${PROJECT_BINARY_DIR}/qcustomplot_autogen/mocs_compilation.cpp"
+		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
 	set_source_files_properties("${PROJECT_BINARY_DIR}/taspaths_autogen/mocs_compilation.cpp"
 		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
 
 	# disable warnings for external source files
 	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot/qcustomplot.cpp"
 		PROPERTIES COMPILE_FLAGS "-Wno-effc++ -Wno-implicit-fallthrough -Wno-deprecated-enum-enum-conversion")
+endif()
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# target library settings
+# -----------------------------------------------------------------------------
+# core library
+add_library(taspaths_core STATIC
+	src/core/Geometry.cpp src/core/Geometry.h
+	src/core/Axis.cpp src/core/Axis.h
+	src/core/Instrument.cpp src/core/Instrument.h
+	src/core/InstrumentSpace.cpp src/core/InstrumentSpace.h
+	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
+	src/core/PathsExporter.cpp src/core/PathsExporter.h
+	src/core/TasCalculator.cpp src/core/TasCalculator.h
+	src/core/types.h
+
+	src/libs/lines.h src/libs/graphs.h
+	src/libs/voronoi.h src/libs/voronoi_lines.h
+	src/libs/hull.h src/libs/img.h
+	src/libs/ptree.h
+)
+
+set_property(TARGET taspaths_core
+	PROPERTY POSITION_INDEPENDENT_CODE True)
+
+target_link_libraries(taspaths_core
+	"${Boost_LIBRARIES}"
+	"${Lapacke_LIBRARIES}"
+	#"${Qhull_LIBRARIES}"
+	Threads::Threads
+)
+
+
+# make a 3rd party qcustomplot library
+add_library(qcustomplot STATIC
+	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
+)
+
+set_property(TARGET qcustomplot
+	PROPERTY POSITION_INDEPENDENT_CODE True)
+
+if(QT_VER EQUAL 6)
+	target_link_libraries(qcustomplot
+		Qt6::Core Qt6::Gui Qt6::Widgets
+		Qt6::OpenGL Qt6::OpenGLWidgets
+		Qt6::PrintSupport
+	)
+elseif(QT_VER EQUAL 5)
+	target_link_libraries(qcustomplot
+		Qt5::Core Qt5::Gui Qt5::Widgets
+		Qt5::OpenGL Qt5::PrintSupport
+	)
 endif()
 # -----------------------------------------------------------------------------
 
@@ -234,15 +297,6 @@ add_executable(taspaths
 	src/gui/XtalConfigSpace.cpp src/gui/XtalConfigSpace.h
 	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
 
-	src/core/Geometry.cpp src/core/Geometry.h
-	src/core/Axis.cpp src/core/Axis.h
-	src/core/Instrument.cpp src/core/Instrument.h
-	src/core/InstrumentSpace.cpp src/core/InstrumentSpace.h
-	src/core/PathsBuilder.cpp src/core/PathsBuilder.h
-	src/core/PathsExporter.cpp src/core/PathsExporter.h
-	src/core/TasCalculator.cpp src/core/TasCalculator.h
-	src/core/types.h
-
 	src/libs/lines.h src/libs/graphs.h
 	src/libs/voronoi.h src/libs/voronoi_lines.h
 	src/libs/hull.h src/libs/img.h
@@ -250,8 +304,6 @@ add_executable(taspaths
 	src/libs/proc.cpp src/libs/proc.h
 
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
-
-	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
 )
 
 
@@ -262,6 +314,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/tools/settings.cpp src/tools/settings.h
+
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi.h
 	)
@@ -272,6 +325,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/tools/settings.cpp src/tools/settings.h
+
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)
@@ -282,6 +336,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
 		src/tools/settings.cpp src/tools/settings.h
+
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)
@@ -296,9 +351,8 @@ endif()
 #endif()
 
 if(QT_VER EQUAL 6)
-	include_directories("${Qt6Core_INCLUDE_DIRS}/..")
-
 	target_link_libraries(taspaths
+		taspaths_core
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
 		#"${Qhull_LIBRARIES}"
@@ -306,7 +360,9 @@ if(QT_VER EQUAL 6)
 		Threads::Threads
 		Qt6::Core Qt6::Gui Qt6::Widgets
 		Qt6::OpenGL Qt6::OpenGLWidgets
-		Qt6::PrintSupport)
+		Qt6::PrintSupport
+		qcustomplot
+	)
 
 
 	if(BUILD_TEST_TOOLS)
@@ -315,7 +371,8 @@ if(QT_VER EQUAL 6)
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
 			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg)
+			Qt6::Svg
+		)
 
 		target_link_libraries(lines
 			"${Boost_LIBRARIES}"
@@ -323,26 +380,29 @@ if(QT_VER EQUAL 6)
 			"${OVD_LIBRARIES}"
 			Threads::Threads
 			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg)
+			Qt6::Svg
+		)
 
 		target_link_libraries(poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg)
+			Qt6::Svg
+		)
 	endif()
 
 elseif(QT_VER EQUAL 5)
-	include_directories("${Qt5Core_INCLUDE_DIRS}/..")
-
 	target_link_libraries(taspaths
+		taspaths_core
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
 		#"${Qhull_LIBRARIES}"
 		"${MINGW_WINSOCK}"
 		Threads::Threads
 		Qt5::Core Qt5::Gui Qt5::Widgets
-		Qt5::OpenGL Qt5::PrintSupport)
+		Qt5::OpenGL Qt5::PrintSupport
+		qcustomplot
+	)
 
 
 	if(BUILD_TEST_TOOLS)
@@ -351,7 +411,8 @@ elseif(QT_VER EQUAL 5)
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
 			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg)
+			Qt5::Svg
+		)
 
 		target_link_libraries(lines
 			"${Boost_LIBRARIES}"
@@ -359,13 +420,15 @@ elseif(QT_VER EQUAL 5)
 			"${OVD_LIBRARIES}"
 			Threads::Threads
 			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg)
+			Qt5::Svg
+		)
 
 		target_link_libraries(poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg)
+			Qt5::Svg
+		)
 	endif()
 endif()
 

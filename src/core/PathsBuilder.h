@@ -236,8 +236,8 @@ private:
 
 	// wall contours in configuration space
 	geo::Image<std::uint8_t> m_img{};
-	std::vector<std::vector<t_contourvec>>
-		m_wallcontours{}, m_fullwallcontours{};
+	std::vector<std::vector<t_contourvec>> m_wallcontours = {};
+	std::vector<std::vector<t_contourvec>> m_fullwallcontours = {};
 
 	// line segments (in pixel coordinates) and groups from the wall contours
 	std::vector<t_line> m_lines{};

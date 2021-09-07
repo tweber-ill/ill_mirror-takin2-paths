@@ -117,7 +117,8 @@ private:
 	std::optional<t_real> m_angle_out_limits[2];
 
 	// components relative to incoming and outgoing axis
-	std::vector<std::shared_ptr<Geometry>> m_comps_in{}, m_comps_out{};
+	std::vector<std::shared_ptr<Geometry>> m_comps_in = {};
+	std::vector<std::shared_ptr<Geometry>> m_comps_out = {};
 	// components rotated internally
 	std::vector<std::shared_ptr<Geometry>> m_comps_internal{};
 };
