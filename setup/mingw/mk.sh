@@ -14,9 +14,11 @@ APPDIRNAME="${APPNAME}"
 
 # third-party libraries
 EXT_LIBS=( \
-	Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll Qt5OpenGL.dll Qt5DBus.dll Qt5PrintSupport.dll Qt5Svg.dll \
+	Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll Qt5OpenGL.dll \
+	Qt5DBus.dll Qt5PrintSupport.dll Qt5Svg.dll \
 	libboost_system-x64.dll libboost_filesystem-x64.dll \
-	libstdc++-6.dll libwinpthread-1.dll libglib-2.0-0.dll libgcc_s_sjlj-1.dll libgcc_s_seh-1.dll \
+	libstdc++-6.dll libwinpthread-1.dll libglib-2.0-0.dll \
+	libgcc_s_sjlj-1.dll libgcc_s_seh-1.dll \
 	libbz2-1.dll zlib1.dll \
 	libpng16-16.dll \
 	libfreetype-6.dll \
@@ -45,6 +47,7 @@ mkdir -p ${APPDIRNAME}/res
 
 # copy program files
 cp -v build/*.exe          ${APPDIRNAME}/
+cp -v build/*.dll          ${APPDIRNAME}/
 cp -rv res/*               ${APPDIRNAME}/res/
 cp -v AUTHORS              ${APPDIRNAME}/
 cp -v LICENSE              ${APPDIRNAME}/
@@ -60,7 +63,8 @@ done
 for THELIB in ${QT_PLUGINS[@]}; do
 	LIBDIRNAME=$(dirname ${THELIB})
 	mkdir -p ${APPDIRNAME}/qt_plugins/${LIBDIRNAME}
-	cp -v /usr/x86_64-w64-mingw32/sys-root/mingw/lib/qt5/plugins/${THELIB} ${APPDIRNAME}/qt_plugins/${LIBDIRNAME}
+	cp -v /usr/x86_64-w64-mingw32/sys-root/mingw/lib/qt5/plugins/${THELIB} \
+		${APPDIRNAME}/qt_plugins/${LIBDIRNAME}
 done
 
 # create qt config file

@@ -22,13 +22,14 @@ APPDEBNAME="${APPNAME}.deb"
 if [ $create_appdir -ne 0 ]; then
 	# directories
 	mkdir -p ${APPDIRNAME}/usr/local/bin
+	mkdir -p ${APPDIRNAME}/usr/local/lib
 	mkdir -p ${APPDIRNAME}/usr/local/share/${APPNAME}/res
 	mkdir -p ${APPDIRNAME}/usr/local/share/${APPNAME}/3rdparty_licenses
 	mkdir -p ${APPDIRNAME}/usr/share/applications
 	mkdir -p ${APPDIRNAME}/DEBIAN
 
 	# debian package control file
-	echo -e "Package: ${APPNAME}\nVersion: 0.8.0" > ${APPDIRNAME}/DEBIAN/control
+	echo -e "Package: ${APPNAME}\nVersion: 0.9.0" > ${APPDIRNAME}/DEBIAN/control
 	echo -e "Architecture: $(dpkg --print-architecture)" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Section: base\nPriority: optional" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Description: TAS path-finding tool" >> ${APPDIRNAME}/DEBIAN/control
@@ -53,6 +54,9 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v build/hull		${APPDIRNAME}/usr/local/bin
 	cp -v build/poly		${APPDIRNAME}/usr/local/bin
 
+	# libraries
+	cp -v build/*.so		${APPDIRNAME}/usr/local/lib
+
 	# resources
 	cp -rv res/*			${APPDIRNAME}/usr/local/share/${APPNAME}/res/
 	cp -v AUTHORS			${APPDIRNAME}/usr/local/share/${APPNAME}/
@@ -63,6 +67,7 @@ if [ $create_appdir -ne 0 ]; then
 	# binary permissions & stripping
 	chmod a+x ${APPDIRNAME}/usr/local/bin/*
 	strip -v ${APPDIRNAME}/usr/local/bin/*
+	strip -v ${APPDIRNAME}/usr/local/lib/*
 fi
 
 
