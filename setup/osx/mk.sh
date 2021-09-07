@@ -8,6 +8,7 @@
 
 create_appdir=1
 create_dmg=1
+strip_binaries=1
 clean_frameworks=1
 
 APPNAME="TASPaths"
@@ -52,7 +53,6 @@ change_to_rpath() {
 	fi
 
 	for old_path in $old_paths; do
-
 		case "${old_path}" in
 			*".framework"*)
 				local new_base=$(basename ${old_path})
@@ -83,6 +83,9 @@ change_to_rpath() {
 }
 
 
+#
+# create the application directory
+#
 if [ $create_appdir -ne 0 ]; then
 	echo -e "\nCleaning and (re)creating directories..."
 	rm -rfv "${APPDIRNAME}"
@@ -112,6 +115,7 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v /usr/local/lib/libqhull_r.8.0.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapacke.3.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapack.3.dylib "${APPDIRNAME}/Contents/Libraries/"
+	cp -v build/libqcustomplot_local.dylib "${APPDIRNAME}/Contents/Libraries/"
 
 	# frameworks
 	for (( libidx=0; libidx<${#QT_LIBS[@]}; ++libidx )); do
@@ -121,6 +125,7 @@ if [ $create_appdir -ne 0 ]; then
 			"${APPDIRNAME}/Contents/Frameworks/"
 	done
 
+	# remove unnecessary files from frameworks
 	if [ $clean_frameworks -ne 0 ]; then
 		echo -e "\nCleaning frameworks..."
 		find ${APPDIRNAME}/Contents/Frameworks/ -type d -name "Headers" -exec rm -rfv {} \;
@@ -146,12 +151,18 @@ if [ $create_appdir -ne 0 ]; then
 
 	# binaries
 	for binary in $(ls "${APPDIRNAME}/Contents/MacOS/"); do
+		echo -e "\nProcessing ${binary}..."
+
 		install_name_tool \
 			-add_rpath @executable_path/../Libraries \
 			-add_rpath @executable_path/../Frameworks \
 			"${APPDIRNAME}/Contents/MacOS/${binary}"
 
 		change_to_rpath "${APPDIRNAME}/Contents/MacOS/${binary}"
+
+		if [ $strip_binaries -ne 0 ]; then
+			llvm-strip "${APPDIRNAME}/Contents/MacOS/${binary}"
+		fi
 	done
 
 	# libraries and frameworks
@@ -163,22 +174,37 @@ if [ $create_appdir -ne 0 ]; then
 			continue
 		fi
 
+		echo -e "\nProcessing ${library}..."
+
+		#install_name_tool \
+		#	-add_rpath @executable_path/../Libraries \
+		#	-add_rpath @executable_path/../Frameworks \
+		#	"${library}"
+
 		change_to_rpath "${library}"
 
-		for (( libidx=0; libidx<${#QT_LIBS[@]}; ++libidx )); do
-			otherlibrary=${QT_LIBS[$libidx]}
+		#for (( libidx=0; libidx<${#QT_LIBS[@]}; ++libidx )); do
+		#	otherlibrary=${QT_LIBS[$libidx]}
+		#
+		#	install_name_tool -change \
+		#		@rpath/${otherlibrary}.framework/Versions/A/${otherlibrary} \
+		#		@executable_path/../Libraries/${otherlibrary} \
+		#		"${library}"
+		#done
 
-			install_name_tool -change \
-				@rpath/${otherlibrary}.framework/Versions/A/${otherlibrary} \
-				@executable_path/../Libraries/${otherlibrary} \
-				"${library}"
-		done
+		if [ $strip_binaries -ne 0 ]; then
+			llvm-strip "${library}"
+		fi
 	done
 
+	#install_name_tool -id "/usr/local/lib/libqcustomplot_local.dylib" "${APPDIRNAME}/Contents/Libraries/libqcustomplot_local.dylib"
 	echo -e "--------------------------------------------------------------------------------"
 fi
 
 
+#
+# create a dmg image
+#
 if [ $create_dmg -ne 0 ]; then
 	echo -e "\nCreating ${APPDMGNAME} from ${APPDIRNAME}..."
 	rm -fv "${APPDMGNAME}"
