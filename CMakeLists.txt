@@ -63,7 +63,7 @@ endif()
 # -----------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-std=c++20)
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -Weffc++)
 
 add_definitions(-D_GL_MAJ_VER=${GL_MAJOR_VER} -D_GL_MIN_VER=${GL_MINOR_VER})
 # -----------------------------------------------------------------------------

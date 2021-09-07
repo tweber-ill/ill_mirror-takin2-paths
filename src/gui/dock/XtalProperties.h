@@ -23,6 +23,9 @@ public:
 	XtalPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~XtalPropertiesWidget();
 
+	XtalPropertiesWidget(const XtalPropertiesWidget&) = delete;
+	const XtalPropertiesWidget& operator=(const XtalPropertiesWidget&) = delete;
+
 
 public slots:
 	void SetLattice(t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma);
@@ -62,6 +65,9 @@ public:
 	XtalPropertiesDockWidget(QWidget *parent=nullptr);
 	virtual ~XtalPropertiesDockWidget();
 
+	XtalPropertiesDockWidget(const XtalPropertiesDockWidget&) = delete;
+	const XtalPropertiesDockWidget& operator=(const XtalPropertiesDockWidget&) = delete;
+
 	std::shared_ptr<XtalPropertiesWidget> GetWidget() { return m_widget; }
 
 
@@ -81,6 +87,10 @@ public:
 	XtalInfoWidget(QWidget *parent=nullptr);
 	virtual ~XtalInfoWidget();
 
+	XtalInfoWidget(const XtalInfoWidget&) = delete;
+	const XtalInfoWidget& operator=(const XtalInfoWidget&) = delete;
+
+
 public slots:
 	void SetUB(const t_mat& matB, const t_mat& matUB);
 
@@ -96,6 +106,9 @@ class XtalInfoDockWidget : public QDockWidget
 public:
 	XtalInfoDockWidget(QWidget *parent=nullptr);
 	virtual ~XtalInfoDockWidget();
+
+	XtalInfoDockWidget(const XtalInfoDockWidget&) = delete;
+	const XtalInfoDockWidget& operator=(const XtalInfoDockWidget&) = delete;
 
 	std::shared_ptr<XtalInfoWidget> GetWidget() { return m_widget; }
 

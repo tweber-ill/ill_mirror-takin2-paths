@@ -148,7 +148,7 @@ public:
 
 private:
 	std::size_t m_width{}, m_height{};
-	std::unique_ptr<t_pixel[]> m_img;
+	std::unique_ptr<t_pixel[]> m_img{};
 };
 // ----------------------------------------------------------------------------
 

@@ -28,6 +28,9 @@ public:
 	XtalConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~XtalConfigSpaceDlg();
 
+	XtalConfigSpaceDlg(const XtalConfigSpaceDlg&) = delete;
+	const XtalConfigSpaceDlg& operator=(const XtalConfigSpaceDlg&) = delete;
+
 	void UpdatePlotRanges();
 	void Calculate();
 
@@ -58,7 +61,7 @@ private:
 	QSettings *m_sett{nullptr};
 
 	// plot curves
-	std::shared_ptr<QCustomPlot> m_plot;
+	std::shared_ptr<QCustomPlot> m_plot{};
 	QCPColorMap* m_colourMap{};
 
 	QLabel *m_status{};
@@ -67,7 +70,7 @@ private:
 	QDoubleSpinBox *m_spinE{};
 
 	const InstrumentSpace *m_instrspace{};
-    const TasCalculator *m_tascalc{};
+	const TasCalculator *m_tascalc{};
 
 	geo::Image<std::uint8_t> m_img{};
 	bool m_moveInstr = true;

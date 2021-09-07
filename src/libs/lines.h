@@ -943,7 +943,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 
 	struct SweepEvent
 	{
-		t_real x;
+		t_real x{};
 		SweepEventType ty{SweepEventType::LEFT_VERTEX};
 
 		std::size_t line_idx{};

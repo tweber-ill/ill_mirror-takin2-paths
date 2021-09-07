@@ -53,7 +53,8 @@ private:
 	int m_multisamples{ 8 };
 
 	// gl info strings
-	std::string m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer;
+	std::string m_gl_ver{}, m_gl_shader_ver{},
+		m_gl_vendor{}, m_gl_renderer{};
 
 	QStatusBar *m_statusbar{ nullptr };
 	QProgressBar *m_progress{ nullptr };
@@ -69,43 +70,43 @@ private:
 
 	// context menu for 3d objects
 	QMenu *m_contextMenuObj{ nullptr };
-	std::string m_curContextObj;
+	std::string m_curContextObj{};
 
 	// dialogs and docks
-	std::shared_ptr<AboutDlg> m_dlgAbout;
-	std::shared_ptr<SettingsDlg> m_dlgSettings;
-	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser;
-	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace;
-	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace;
-	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties;
-	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties;
-	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos;
-	std::shared_ptr<CoordPropertiesDockWidget> m_coordProperties;
-	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties;
-	std::shared_ptr<CamPropertiesDockWidget> m_camProperties;
+	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<SettingsDlg> m_dlgSettings{};
+	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser{};
+	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};
+	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace{};
+	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties{};
+	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties{};
+	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos{};
+	std::shared_ptr<CoordPropertiesDockWidget> m_coordProperties{};
+	std::shared_ptr<PathPropertiesDockWidget> m_pathProperties{};
+	std::shared_ptr<CamPropertiesDockWidget> m_camProperties{};
 
 	std::string m_initialInstrFile = "instrument.taspaths";
 
 	// recent file list and currently active file
-	QStringList m_recentFiles;
-	QString m_curFile;
+	QStringList m_recentFiles{};
+	QString m_curFile{};
 
 	// instrument configuration and paths builder
-	InstrumentSpace m_instrspace;
-	PathsBuilder m_pathsbuilder;
+	InstrumentSpace m_instrspace{};
+	PathsBuilder m_pathsbuilder{};
 
 	// calculated path vertices
-	std::vector<t_vec2> m_pathvertices;
+	std::vector<t_vec2> m_pathvertices{};
 
 	t_real m_targetMonoScatteringAngle = 0;
 	t_real m_targetSampleScatteringAngle = 0;
 
 	// mouse picker
-	t_real m_mouseX, m_mouseY;
-	std::string m_curObj;
+	t_real m_mouseX{}, m_mouseY{};
+	std::string m_curObj{};
 
 	// tas calculations
-	TasCalculator m_tascalc;
+	TasCalculator m_tascalc{};
 
 
 public:
@@ -114,6 +115,9 @@ public:
 	 */
 	PathsTool(QWidget* pParent=nullptr);
 	~PathsTool() = default;
+
+	PathsTool(const PathsTool&) = delete;
+	const PathsTool& operator=(const PathsTool&) = delete;
 
 	void SetInitialInstrumentFile(const std::string& file)
 	{ m_initialInstrFile = file;  }

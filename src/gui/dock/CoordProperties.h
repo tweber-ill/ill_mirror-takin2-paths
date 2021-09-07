@@ -23,6 +23,9 @@ public:
 	CoordPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~CoordPropertiesWidget();
 
+	CoordPropertiesWidget(const CoordPropertiesWidget&) = delete;
+        CoordPropertiesWidget& operator=(const CoordPropertiesWidget&) = delete;
+
 
 public slots:
 	void SetCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
@@ -52,7 +55,10 @@ public:
 	CoordPropertiesDockWidget(QWidget *parent=nullptr);
 	virtual ~CoordPropertiesDockWidget();
 
-	std::shared_ptr<CoordPropertiesWidget> GetWidget() 
+	CoordPropertiesDockWidget(const CoordPropertiesDockWidget&) = delete;
+	const CoordPropertiesDockWidget& operator=(const CoordPropertiesDockWidget&) = delete;
+
+	std::shared_ptr<CoordPropertiesWidget> GetWidget()
 	{ return m_widget; }
 
 

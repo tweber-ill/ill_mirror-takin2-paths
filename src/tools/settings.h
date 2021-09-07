@@ -40,13 +40,18 @@ public:
 	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~SettingsDlg();
 
+	SettingsDlg(const SettingsDlg&) = delete;
+	const SettingsDlg& operator=(const SettingsDlg&) = delete;
+
 	static void ReadSettings(QSettings* sett);
+
 
 protected:
 	virtual void accept() override;
 
 	void ApplySettings();
 	static void ApplyGuiSettings();
+
 
 private:
 	QSettings *m_sett{nullptr};

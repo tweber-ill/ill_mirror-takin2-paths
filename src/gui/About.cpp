@@ -16,6 +16,9 @@
 #include <boost/version.hpp>
 
 
+/**
+ * constructor
+ */
 AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
@@ -112,11 +115,36 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 }
 
 
+/**
+ * copy constructor
+ */
+AboutDlg::AboutDlg(const AboutDlg& other) : QDialog(other.parentWidget())
+{
+	operator=(other);
+}
+
+
+/**
+ * assignment operator
+ */
+const AboutDlg& AboutDlg::operator=(const AboutDlg&)
+{
+	m_sett = nullptr;
+	return *this;
+}
+
+
+/**
+ * destructor
+ */
 AboutDlg::~AboutDlg()
 {
 }
 
 
+/**
+ * 'OK' or 'Apply' button has been pressed
+ */
 void AboutDlg::accept()
 {
 	if(m_sett)

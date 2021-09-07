@@ -24,6 +24,9 @@ public:
 	PathPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~PathPropertiesWidget();
 
+	PathPropertiesWidget(const PathPropertiesWidget&) = delete;
+	const PathPropertiesWidget& operator=(const PathPropertiesWidget&) = delete;
+
 
 private:
 	// number of coordinate elements
@@ -54,6 +57,9 @@ class PathPropertiesDockWidget : public QDockWidget
 public:
 	PathPropertiesDockWidget(QWidget *parent=nullptr);
 	virtual ~PathPropertiesDockWidget();
+
+	PathPropertiesDockWidget(const PathPropertiesDockWidget&) = delete;
+	const PathPropertiesDockWidget& operator=(const PathPropertiesDockWidget&) = delete;
 
 	std::shared_ptr<PathPropertiesWidget> GetWidget() { return m_widget; }
 

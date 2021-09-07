@@ -91,7 +91,7 @@ public:
 
 private:
 	// identifier
-	std::string m_id;
+	std::string m_id{};
 	// previous and next axis
 	const Axis *m_prev = nullptr, *m_next = nullptr;
 	// parent instrument
@@ -109,7 +109,7 @@ private:
 	// angle of incoming axis and outgoing axis
 	t_real m_angle_in = 0, m_angle_out = 0;
 	// internal rotation angle
-	t_real m_angle_internal;
+	t_real m_angle_internal = 0;
 
 	// optional angular limits
 	std::optional<t_real> m_angle_in_limits[2];
@@ -117,9 +117,9 @@ private:
 	std::optional<t_real> m_angle_out_limits[2];
 
 	// components relative to incoming and outgoing axis
-	std::vector<std::shared_ptr<Geometry>> m_comps_in, m_comps_out;
+	std::vector<std::shared_ptr<Geometry>> m_comps_in{}, m_comps_out{};
 	// components rotated internally
-	std::vector<std::shared_ptr<Geometry>> m_comps_internal;
+	std::vector<std::shared_ptr<Geometry>> m_comps_internal{};
 };
 // ----------------------------------------------------------------------------
 

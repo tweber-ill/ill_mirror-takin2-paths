@@ -23,6 +23,9 @@ public:
 	TASPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~TASPropertiesWidget();
 
+	TASPropertiesWidget(const TASPropertiesWidget&) = delete;
+	const TASPropertiesWidget& operator=(const TASPropertiesWidget&) = delete;
+
 
 public slots:
 	void SetMonoScatteringAngle(t_real angle);
@@ -40,11 +43,11 @@ public slots:
 signals:
 	void MonoScatteringAngleChanged(t_real angle);
 	void SampleScatteringAngleChanged(t_real angle);
-	void AnaScatteringAngleChanged(t_real angle);	
+	void AnaScatteringAngleChanged(t_real angle);
 
 	void MonoCrystalAngleChanged(t_real angle);
 	void SampleCrystalAngleChanged(t_real angle);
-	void AnaCrystalAngleChanged(t_real angle);	
+	void AnaCrystalAngleChanged(t_real angle);
 
 	void DSpacingsChanged(t_real dmono, t_real dana);
 	void ScatteringSensesChanged(bool monoccw, bool sampleccw, bool anaccw);
@@ -78,6 +81,9 @@ class TASPropertiesDockWidget : public QDockWidget
 public:
 	TASPropertiesDockWidget(QWidget *parent=nullptr);
 	virtual ~TASPropertiesDockWidget();
+
+	TASPropertiesDockWidget(const TASPropertiesDockWidget&) = delete;
+	const TASPropertiesDockWidget& operator=(const TASPropertiesDockWidget&) = delete;
 
 	std::shared_ptr<TASPropertiesWidget> GetWidget() { return m_widget; }
 

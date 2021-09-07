@@ -50,8 +50,8 @@ enum class GeometryType
  */
 struct GeometryProperty
 {
-	std::string key;
-	std::variant<t_real, t_vec> value;
+	std::string key{};
+	std::variant<t_real, t_vec> value{};
 };
 
 
@@ -90,7 +90,7 @@ public:
 		load(const boost::property_tree::ptree& prop);
 
 protected:
-	std::string m_id;
+	std::string m_id{};
 	t_vec m_colour = tl2::create<t_vec>({1, 0, 0});
 
 	mutable bool m_trafo_needs_update = true;

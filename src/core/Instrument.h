@@ -60,11 +60,11 @@ private:
 	Axis m_ana{"analyser", &m_sample, nullptr, this};
 
 	// starting position for drag operation
-	t_vec m_drag_pos_axis_start;
+	t_vec m_drag_pos_axis_start{};
 
 	// update signal
 	using t_sig_update = boost::signals2::signal<void(const Instrument&)>;
-	std::shared_ptr<t_sig_update> m_sigUpdate;
+	std::shared_ptr<t_sig_update> m_sigUpdate{};
 };
 // ----------------------------------------------------------------------------
 

@@ -1094,7 +1094,7 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 
 	// table
-	m_tab = new QTableWidget(this);
+	m_tab = std::make_shared<QTableWidget>(this);
 	m_tab->setShowGrid(true);
 	m_tab->setSortingEnabled(true);
 	m_tab->setMouseTracking(true);
@@ -1104,30 +1104,30 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 
 	// text edit
-	m_editResults = new QPlainTextEdit(this);
+	m_editResults = std::make_shared<QPlainTextEdit>(this);
 	m_editResults->setReadOnly(true);
 
 
 	// buttons
-	QToolButton *m_tabBtnAdd = new QToolButton(this);
-	QToolButton *m_tabBtnDel = new QToolButton(this);
-	QToolButton *m_tabBtnUp = new QToolButton(this);
-	QToolButton *m_tabBtnDown = new QToolButton(this);
+	QToolButton *tabBtnAdd = new QToolButton(this);
+	QToolButton *tabBtnDel = new QToolButton(this);
+	QToolButton *tabBtnUp = new QToolButton(this);
+	QToolButton *tabBtnDown = new QToolButton(this);
 
-	m_tabBtnAdd->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_tabBtnDel->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_tabBtnUp->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
-	m_tabBtnDown->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	tabBtnAdd->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	tabBtnDel->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	tabBtnUp->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
+	tabBtnDown->setSizePolicy(QSizePolicy{QSizePolicy::Fixed, QSizePolicy::Fixed});
 
-	m_tabBtnAdd->setText("\xe2\x8a\x95");
-	m_tabBtnDel->setText("\xe2\x8a\x96");
-	m_tabBtnUp->setText("\342\206\221");
-	m_tabBtnDown->setText("\342\206\223");
+	tabBtnAdd->setText("\xe2\x8a\x95");
+	tabBtnDel->setText("\xe2\x8a\x96");
+	tabBtnUp->setText("\342\206\221");
+	tabBtnDown->setText("\342\206\223");
 
-	m_tabBtnAdd->setToolTip("Add vertex.");
-	m_tabBtnDel->setToolTip("Delete vertex.");
-	m_tabBtnUp->setToolTip("Move vertex up.");
-	m_tabBtnDown->setToolTip("Move vertex down.");
+	tabBtnAdd->setToolTip("Add vertex.");
+	tabBtnDel->setToolTip("Delete vertex.");
+	tabBtnUp->setToolTip("Move vertex up.");
+	tabBtnDown->setToolTip("Move vertex down.");
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);
@@ -1142,15 +1142,15 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 
 
 	// delaunay / hull check box
-	m_checkDelaunay = new QCheckBox(this);
+	m_checkDelaunay = std::make_shared<QCheckBox>(this);
 	m_checkDelaunay->setChecked(false);
 	m_checkDelaunay->setText("Delaunay");
 
 
 	// splitter
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
-	splitter->addWidget(m_tab);
-	splitter->addWidget(m_editResults);
+	splitter->addWidget(m_tab.get());
+	splitter->addWidget(m_editResults.get());
 
 
 	// grid
@@ -1159,45 +1159,45 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	pTabGrid->setSpacing(2);
 	pTabGrid->setContentsMargins(4,4,4,4);
 	pTabGrid->addWidget(splitter, y++,0,1,9);
-	pTabGrid->addWidget(m_tabBtnAdd, y,0,1,1);
-	pTabGrid->addWidget(m_tabBtnDel, y,1,1,1);
-	pTabGrid->addWidget(m_tabBtnUp, y,2,1,1);
-	pTabGrid->addWidget(m_tabBtnDown, y,3,1,1);
-	pTabGrid->addItem(new QSpacerItem(4, 4, 
+	pTabGrid->addWidget(tabBtnAdd, y,0,1,1);
+	pTabGrid->addWidget(tabBtnDel, y,1,1,1);
+	pTabGrid->addWidget(tabBtnUp, y,2,1,1);
+	pTabGrid->addWidget(tabBtnDown, y,3,1,1);
+	pTabGrid->addItem(new QSpacerItem(4, 4,
 		QSizePolicy::Expanding, QSizePolicy::Minimum), y,4,1,1);
 	pTabGrid->addWidget(spin, y,5,1,1);
-	pTabGrid->addWidget(m_checkDelaunay, y,6,1,1);
-	pTabGrid->addItem(new QSpacerItem(4, 4, 
+	pTabGrid->addWidget(m_checkDelaunay.get(), y,6,1,1);
+	pTabGrid->addItem(new QSpacerItem(4, 4,
 		QSizePolicy::Expanding, QSizePolicy::Minimum), y,7,1,1);
 	pTabGrid->addWidget(buttons, y++,8,1,1);
 
 
 	// table context menu
-	m_contextMenuTab = new QMenu(m_tab);
-	m_contextMenuTab->addAction("Add Item Before", this, 
+	m_contextMenuTab = std::make_shared<QMenu>(m_tab.get());
+	m_contextMenuTab->addAction("Add Item Before", this,
 		[this]() { this->AddTabItem(-2); });
-	m_contextMenuTab->addAction("Add Item After", this, 
+	m_contextMenuTab->addAction("Add Item After", this,
 		[this]() { this->AddTabItem(-3); });
-	m_contextMenuTab->addAction("Delete Item", this, 
+	m_contextMenuTab->addAction("Delete Item", this,
 		&HullDlg::DelTabItem);
 
 
 	// signals
-	connect(m_tabBtnAdd, &QToolButton::clicked, 
+	connect(tabBtnAdd, &QToolButton::clicked,
 		this, [this]() { this->AddTabItem(-1); });
-	connect(m_tabBtnDel, &QToolButton::clicked, 
+	connect(tabBtnDel, &QToolButton::clicked,
 		this, &HullDlg::DelTabItem);
-	connect(m_tabBtnUp, &QToolButton::clicked, 
+	connect(tabBtnUp, &QToolButton::clicked,
 		this, &HullDlg::MoveTabItemUp);
-	connect(m_tabBtnDown, &QToolButton::clicked, 
+	connect(tabBtnDown, &QToolButton::clicked,
 		this, &HullDlg::MoveTabItemDown);
-	connect(m_tab, &QTableWidget::currentCellChanged, 
+	connect(m_tab.get(), &QTableWidget::currentCellChanged,
 		this, &HullDlg::TableCellChanged);
-	connect(m_tab, &QTableWidget::customContextMenuRequested, 
+	connect(m_tab.get(), &QTableWidget::customContextMenuRequested,
 		this, &HullDlg::ShowTableContextMenu);
 	connect(spin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
 		this, &HullDlg::SetDim);
-	connect(m_checkDelaunay, &QCheckBox::stateChanged,
+	connect(m_checkDelaunay.get(), &QCheckBox::stateChanged,
 		[this]() { CalculateHull(); });
 	connect(buttons, &QDialogButtonBox::accepted, this, &HullDlg::accept);
 

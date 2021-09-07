@@ -127,7 +127,7 @@ protected:
 
 private:
 #if QT_VERSION >= 0x060000
-	t_qt_mutex m_mutexObj;
+	t_qt_mutex m_mutexObj{};
 #else
 	t_qt_mutex m_mutexObj{QMutex::Recursive};
 #endif
@@ -144,7 +144,7 @@ protected:
 	// shader interface
 	// ------------------------------------------------------------------------
 	std::shared_ptr<QOpenGLShaderProgram> m_pShaders{};
-	std::shared_ptr<QOpenGLFramebufferObject> m_pfboshadow;
+	std::shared_ptr<QOpenGLFramebufferObject> m_pfboshadow{};
 
 	// vertex attributes
 	GLint m_attrVertex = -1;
@@ -175,13 +175,13 @@ protected:
 	// ------------------------------------------------------------------------
 
 	// version identifiers
-	std::string m_strGlVer, m_strGlShaderVer, m_strGlVendor, m_strGlRenderer;
+	std::string m_strGlVer{}, m_strGlShaderVer{}, m_strGlVendor{}, m_strGlRenderer{};
 
 	// cursor uv coordinates and object under cursor
 	GLfloat m_cursorUV[2] = {0., 0.};
 	GLfloat m_cursor[2] = {0., 0.};
 	GLfloat m_dragstartcursor[2] = {0., 0.};
-	std::string m_curObj, m_draggedObj;
+	std::string m_curObj{}, m_draggedObj{};
 	bool m_curActive = false;
 	bool m_light_follows_cursor = false;
 
@@ -219,8 +219,8 @@ protected:
 
 	t_real_gl m_pickerSphereRadius = 1;
 
-	std::vector<t_vec3_gl> m_lights;
-	std::unordered_map<std::string, PathsObj> m_objs;
+	std::vector<t_vec3_gl> m_lights{};
+	std::unordered_map<std::string, PathsObj> m_objs{};
 
 	QPointF m_posMouse{};
 	QPointF m_posMouseRotationStart{}, m_posMouseRotationEnd{};

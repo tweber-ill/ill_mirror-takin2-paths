@@ -84,16 +84,16 @@ private:
 	t_real m_floorlen[2] = { 10., 10. };
 
 	// wall segments
-	std::vector<std::shared_ptr<Geometry>> m_walls;
+	std::vector<std::shared_ptr<Geometry>> m_walls{};
 	// instrument geometry
-	Instrument m_instr;
+	Instrument m_instr{};
 
 	// starting position for drag operation
-	t_vec m_drag_pos_axis_start;
+	t_vec m_drag_pos_axis_start{};
 
 	// update signal
 	using t_sig_update = boost::signals2::signal<void(const InstrumentSpace&)>;
-	std::shared_ptr<t_sig_update> m_sigUpdate;
+	std::shared_ptr<t_sig_update> m_sigUpdate{};
 
 	t_real m_eps = 1e-6;
 

@@ -23,6 +23,9 @@ public:
 	CamPropertiesWidget(QWidget *parent=nullptr);
 	virtual ~CamPropertiesWidget();
 
+	CamPropertiesWidget(const CamPropertiesWidget&) = delete;
+	CamPropertiesWidget& operator=(const CamPropertiesWidget&) = delete;
+
 
 public slots:
 	void SetViewingAngle(t_real angle);
@@ -53,6 +56,9 @@ class CamPropertiesDockWidget : public QDockWidget
 public:
 	CamPropertiesDockWidget(QWidget *parent=nullptr);
 	virtual ~CamPropertiesDockWidget();
+
+	CamPropertiesDockWidget(const CamPropertiesDockWidget&) = delete;
+	const CamPropertiesDockWidget& operator=(const CamPropertiesDockWidget&) = delete;
 
 	std::shared_ptr<CamPropertiesWidget> GetWidget() { return m_widget; }
 

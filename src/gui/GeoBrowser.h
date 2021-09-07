@@ -25,6 +25,9 @@ public:
 	GeometriesBrowser(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~GeometriesBrowser();
 
+	GeometriesBrowser(const GeometriesBrowser&) = delete;
+	const GeometriesBrowser& operator=(const GeometriesBrowser&) = delete;
+
 	void UpdateGeoTree(const InstrumentSpace& instrspace);
 	void SelectObject(const std::string& obj);
 

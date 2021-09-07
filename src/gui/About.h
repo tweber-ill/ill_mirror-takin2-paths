@@ -19,8 +19,13 @@ public:
 	AboutDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~AboutDlg();
 
+	AboutDlg(const AboutDlg& other);
+	const AboutDlg& operator=(const AboutDlg&);
+
+
 protected:
 	virtual void accept() override;
+
 
 private:
 	QSettings *m_sett{nullptr};

@@ -26,6 +26,9 @@ public:
 	ConfigSpaceDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
 	virtual ~ConfigSpaceDlg();
 
+	ConfigSpaceDlg(const ConfigSpaceDlg&) = delete;
+	const ConfigSpaceDlg& operator=(const ConfigSpaceDlg&) = delete;
+
 	void SetPathsBuilder(PathsBuilder* builder);
 	void UnsetPathsBuilder();
 
@@ -73,7 +76,7 @@ private:
 	t_real m_enda4 = tl2::pi<t_real>;
 
 	// plot curves
-	std::shared_ptr<QCustomPlot> m_plot;
+	std::shared_ptr<QCustomPlot> m_plot{};
 	QCPColorMap* m_colourMap{};
 	std::vector<QCPCurve*> m_vorocurves{};
 	QCPCurve* m_pathcurve = nullptr;

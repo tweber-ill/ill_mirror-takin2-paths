@@ -165,13 +165,14 @@ public:
 
 public:
 	HullDlg(QWidget* pParent = nullptr);
+	HullDlg(const HullDlg& other) = delete;
 	virtual ~HullDlg() = default;
 
 protected:
-	QTableWidget *m_tab{};
-	QPlainTextEdit *m_editResults{};
-	QCheckBox *m_checkDelaunay{};
-	QMenu *m_contextMenuTab{};
+	std::shared_ptr<QTableWidget> m_tab{};
+	std::shared_ptr<QPlainTextEdit> m_editResults{};
+	std::shared_ptr<QCheckBox> m_checkDelaunay{};
+	std::shared_ptr<QMenu> m_contextMenuTab{};
 
 protected:
 	virtual void accept() override;
@@ -219,12 +220,12 @@ protected:
 private:
 	QSettings m_sett{"geo_tools", "hull"};
 
-	std::shared_ptr<AboutDlg> m_dlgAbout;
-	std::shared_ptr<SettingsDlg> m_dlgSettings;
-	std::shared_ptr<HullDlg> m_hulldlg;
-	std::shared_ptr<HullScene> m_scene;
-	std::shared_ptr<HullView> m_view;
-	std::shared_ptr<QLabel> m_statusLabel;
+	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<SettingsDlg> m_dlgSettings{};
+	std::shared_ptr<HullDlg> m_hulldlg{};
+	std::shared_ptr<HullScene> m_scene{};
+	std::shared_ptr<HullView> m_view{};
+	std::shared_ptr<QLabel> m_statusLabel{};
 };
 
 #endif

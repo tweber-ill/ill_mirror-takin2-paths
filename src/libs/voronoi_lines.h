@@ -283,7 +283,7 @@ private:
 
 	// voronoi vertex graph
 	// graph vertex indices correspond to those of the "vertices" vector
-	t_graph graph;
+	t_graph graph{};
 
 	// voronoi vertex spatial index tree
 	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};

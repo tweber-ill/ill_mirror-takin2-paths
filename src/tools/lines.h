@@ -198,12 +198,12 @@ private:
 private:
 	QSettings m_sett{"geo_tools", "lines"};
 
-	std::shared_ptr<AboutDlg> m_dlgAbout;
-	std::shared_ptr<SettingsDlg> m_dlgSettings;
+	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 
-	std::shared_ptr<LinesScene> m_scene;
-	std::shared_ptr<LinesView> m_view;
-	std::shared_ptr<QLabel> m_statusLabel;
+	std::shared_ptr<LinesScene> m_scene{};
+	std::shared_ptr<LinesView> m_view{};
+	std::shared_ptr<QLabel> m_statusLabel{};
 };
 
 

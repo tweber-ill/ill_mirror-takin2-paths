@@ -91,8 +91,21 @@ extern std::string find_resource(const std::string& resfile);
 class SettingsDlg : public QDialog
 { Q_OBJECT
 public:
+	/**
+	 * constructor
+	 */
 	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
+
+	/**
+	 * destructor
+	 */
 	virtual ~SettingsDlg();
+
+	/**
+	 * copy constructor
+	 */
+	SettingsDlg(const SettingsDlg&) = delete;
+	const SettingsDlg& operator=(const SettingsDlg&) = delete;
 
 	static void ReadSettings(QSettings* sett);
 
