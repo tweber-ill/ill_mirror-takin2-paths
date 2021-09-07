@@ -32,6 +32,7 @@ fi
 strip -v taspaths
 strip -v lines
 strip -v hull
+strip -v libqcustomplot.*
 
 popd
 echo -e "--------------------------------------------------------------------------------"

@@ -169,13 +169,7 @@ if(USE_PY)
 	set_source_files_properties(scripting/taspaths.i PROPERTIES CPLUSPLUS TRUE)
 	set_source_files_properties(scripting/taspaths.i PROPERTIES SWIG_FLAGS "-I ${PROJECT_SOURCE_DIR}")
 
-	swig_add_library(taspaths_py LANGUAGE python SOURCES
-		scripting/taspaths.i
-#		src/core/Geometry.cpp src/core/Axis.cpp
-#		src/core/Instrument.cpp src/core/InstrumentSpace.cpp
-#		src/core/PathsBuilder.cpp src/core/PathsExporter.cpp
-#		src/core/TasCalculator.cpp
-	)
+	swig_add_library(taspaths_py LANGUAGE python SOURCES scripting/taspaths.i)
 
 	target_link_libraries(taspaths_py
 		taspaths_core
@@ -220,7 +214,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 
 	# disable warnings for external source files
 	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot/qcustomplot.cpp"
-		PROPERTIES COMPILE_FLAGS "-Wno-effc++ -Wno-implicit-fallthrough -Wno-deprecated-enum-enum-conversion")
+		PROPERTIES COMPILE_FLAGS "-Wno-effc++ \
+			-Wno-implicit-fallthrough \
+			-Wno-deprecated-enum-enum-conversion \
+			-Wno-misleading-indentation")
 endif()
 # -----------------------------------------------------------------------------
 
@@ -257,7 +254,7 @@ target_link_libraries(taspaths_core
 
 
 # make a 3rd party qcustomplot library
-add_library(qcustomplot STATIC
+add_library(qcustomplot SHARED
 	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
 )
 
