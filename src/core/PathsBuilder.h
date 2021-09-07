@@ -83,6 +83,9 @@ public:
 	PathsBuilder();
 	~PathsBuilder();
 
+	PathsBuilder(const PathsBuilder&) = default;
+	PathsBuilder& operator=(const PathsBuilder&) = default;
+
 	// ------------------------------------------------------------------------
 	// input instrument
 	// ------------------------------------------------------------------------
