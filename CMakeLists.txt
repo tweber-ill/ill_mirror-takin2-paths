@@ -61,6 +61,7 @@ add_compile_options(${WARN_OPTS})
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	# generate debug symbols
 	add_compile_options(-g -ggdb)
+
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 	add_compile_options("-Wno-#pragma-messages")
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -213,7 +214,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
 
 	# disable warnings for external source files
-	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot_local/qcustomplot.cpp"
+	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot/qcustomplot.cpp"
 		PROPERTIES COMPILE_FLAGS "-Wno-effc++ \
 			-Wno-implicit-fallthrough \
 			-Wno-deprecated-enum-enum-conversion \

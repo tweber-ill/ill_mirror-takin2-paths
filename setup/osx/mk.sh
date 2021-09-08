@@ -108,7 +108,10 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v build/lines "${APPDIRNAME}/Contents/MacOS/"
 	cp -v build/hull "${APPDIRNAME}/Contents/MacOS/"
 	cp -v build/poly "${APPDIRNAME}/Contents/MacOS/"
+
+	# resources
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
+	cp -rv 3rdparty_licenses "${APPDIRNAME}/Contents/Resources/"
 
 	# libraries
 	cp -v /usr/local/lib/libboost_filesystem-mt.dylib "${APPDIRNAME}/Contents/Libraries/"

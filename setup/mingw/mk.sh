@@ -51,7 +51,7 @@ cp -v build/*.dll          ${APPDIRNAME}/
 cp -rv res/*               ${APPDIRNAME}/res/
 cp -v AUTHORS              ${APPDIRNAME}/
 cp -v LICENSE              ${APPDIRNAME}/
-cp -rv 3rdparty_licenses/  ${APPDIRNAME}/
+cp -rv 3rdparty_licenses   ${APPDIRNAME}/
 
 
 # copy third-party libraries

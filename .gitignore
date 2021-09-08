@@ -77,3 +77,6 @@ externals
 externals/**
 qcustomplot
 qcustomplot/**
+
+# Directories
+3rdparty_licenses/**
