@@ -89,6 +89,13 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labDate2 = new QLabel("February 2021 - September 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
+	QLabel *labLic1 = new QLabel("License: ", this);
+	fontLabel1.setWeight(QFont::Bold);
+	labLic1->setFont(fontLabel1);
+	grid->addWidget(labLic1, y,0,1,1);
+	QLabel *labLic2 = new QLabel("GNU GPL Version 3.", this);
+	grid->addWidget(labLic2, y++,1,1,1);
+
 	QSpacerItem *spacer2 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
 	grid->addItem(spacer2, y++,0,1,2);
 
