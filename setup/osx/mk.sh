@@ -129,6 +129,8 @@ if [ $create_appdir -ne 0 ]; then
 
 	# resources
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
+	cp -v AUTHORS "${APPDIRNAME}/Contents/Resources/"
+	cp -v LICENSE "${APPDIRNAME}/Contents/Resources/"
 	cp -rv 3rdparty_licenses "${APPDIRNAME}/Contents/Resources/"
 
 	# libraries

@@ -54,6 +54,8 @@ extern int g_prec, g_prec_gui;
 // epsilons
 extern t_real g_eps, g_eps_angular, g_eps_gui;
 
+// subdivision length of lines for interpolation
+extern t_real g_line_subdiv_len;
 
 // crystal angle offset
 extern t_real g_a3_offs;

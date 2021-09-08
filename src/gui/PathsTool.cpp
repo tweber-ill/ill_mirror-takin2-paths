@@ -1415,6 +1415,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetMaxNumThreads(g_maxnum_threads);
 	m_pathsbuilder.SetEpsilon(g_eps);
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
+	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
 
 	if(m_renderer)
 	{

@@ -57,6 +57,8 @@ t_real g_eps = 1e-6;
 t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;
 
+t_real g_line_subdiv_len = 0.025;
+
 t_real g_a3_offs = tl2::pi<t_real>*0.5;
 
 t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
@@ -124,9 +126,10 @@ enum class SettingsKeys : int
 	EPS = 0,
 	ANGULAR_EPS,
 	GUI_EPS,
-
 	PREC,
 	GUI_PREC,
+
+	LINE_SUBDIV_LEN,
 
 	MAX_THREADS,
 
@@ -144,6 +147,12 @@ enum class SettingsKeys : int
 	NUM_KEYS
 };
 
+
+// type names
+template<class T> const char* type_str = "Unknown";
+template<> const char* type_str<t_real> = "Real";
+template<> const char* type_str<int> = "Integer";
+template<> const char* type_str<unsigned int> = "Integer, unsigned";
 
 template<class T>
 static void get_setting(QSettings* sett, const char* key, T* val)
@@ -197,70 +206,113 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	// table contents
 	m_table->setRowCount((int)SettingsKeys::NUM_KEYS);
 
-	m_table->setItem((int)SettingsKeys::EPS, 0, new QTableWidgetItem{"Calculation epsilon"});
-	m_table->setItem((int)SettingsKeys::EPS, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::EPS, 2, new NumericTableWidgetItem
-		<decltype(g_eps)>(g_eps, 10));
+	m_table->setItem((int)SettingsKeys::EPS, 0,
+		new QTableWidgetItem{"Calculation epsilon"});
+	m_table->setItem((int)SettingsKeys::EPS, 1,
+		new QTableWidgetItem{type_str<decltype(g_eps)>});
+	m_table->setItem((int)SettingsKeys::EPS, 2,
+		new NumericTableWidgetItem<decltype(g_eps)>(g_eps, 10));
 
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 0, new QTableWidgetItem{"Angular epsilon"});
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2, new NumericTableWidgetItem
-		<decltype(g_eps_angular)>(g_eps_angular / tl2::pi<t_real>*180., 10));
+	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 0,
+		new QTableWidgetItem{"Angular epsilon"});
+	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 1,
+		new QTableWidgetItem{type_str<decltype(g_eps_angular)>});
+	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2,
+		new NumericTableWidgetItem<decltype(g_eps_angular)>(
+			g_eps_angular / tl2::pi<t_real>*180., 10));
 
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 0, new QTableWidgetItem{"Drawing epsilon"});
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 2, new NumericTableWidgetItem
-		<decltype(g_eps_gui)>(g_eps_gui, 10));
+	m_table->setItem((int)SettingsKeys::GUI_EPS, 0,
+		new QTableWidgetItem{"Drawing epsilon"});
+	m_table->setItem((int)SettingsKeys::GUI_EPS, 1,
+		new QTableWidgetItem{type_str<decltype(g_eps_gui)>});
+	m_table->setItem((int)SettingsKeys::GUI_EPS, 2,
+		new NumericTableWidgetItem<decltype(g_eps_gui)>(g_eps_gui, 10));
 
-	m_table->setItem((int)SettingsKeys::PREC, 0, new QTableWidgetItem{"Number precision"});
-	m_table->setItem((int)SettingsKeys::PREC, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::PREC, 2, new NumericTableWidgetItem
-		<decltype(g_prec)>(g_prec, 10));
+	m_table->setItem((int)SettingsKeys::PREC, 0,
+		new QTableWidgetItem{"Number precision"});
+	m_table->setItem((int)SettingsKeys::PREC, 1,
+		new QTableWidgetItem{type_str<decltype(g_prec)>});
+	m_table->setItem((int)SettingsKeys::PREC, 2,
+		new NumericTableWidgetItem<decltype(g_prec)>(g_prec, 10));
 
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 0, new QTableWidgetItem{"GUI number precision"});
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 2, new NumericTableWidgetItem
-		<decltype(g_prec_gui)>(g_prec_gui, 10));
+	m_table->setItem((int)SettingsKeys::GUI_PREC, 0,
+		new QTableWidgetItem{"GUI number precision"});
+	m_table->setItem((int)SettingsKeys::GUI_PREC, 1,
+		new QTableWidgetItem{type_str<decltype(g_prec_gui)>});
+	m_table->setItem((int)SettingsKeys::GUI_PREC, 2,
+		new NumericTableWidgetItem<decltype(g_prec_gui)>(g_prec_gui, 10));
 
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 0, new QTableWidgetItem{"Maximum number of threads"});
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 2, new NumericTableWidgetItem
-		<decltype(g_maxnum_threads)>(g_maxnum_threads, 10));
+	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 0,
+		new QTableWidgetItem{"Line subdivision length"});
+	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 1,
+		new QTableWidgetItem{type_str<decltype(g_line_subdiv_len)>});
+	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 2,
+		new NumericTableWidgetItem<decltype(
+			g_line_subdiv_len)>(g_line_subdiv_len, 10));
 
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 0, new QTableWidgetItem{"Sample rotation offset"});
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 2, new NumericTableWidgetItem
-		<decltype(g_a3_offs)>(g_a3_offs / tl2::pi<t_real>*180., 10));
+	m_table->setItem((int)SettingsKeys::MAX_THREADS, 0,
+		new QTableWidgetItem{"Maximum number of threads"});
+	m_table->setItem((int)SettingsKeys::MAX_THREADS, 1,
+		new QTableWidgetItem{type_str<decltype(g_maxnum_threads)>});
+	m_table->setItem((int)SettingsKeys::MAX_THREADS, 2,
+		new NumericTableWidgetItem<decltype(g_maxnum_threads)>(
+			g_maxnum_threads, 10));
 
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 0, new QTableWidgetItem{"Monochromator scattering angle delta"});
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 2, new NumericTableWidgetItem
-		<decltype(g_a2_delta)>(g_a2_delta / tl2::pi<t_real>*180., 10));
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 0,
+		new QTableWidgetItem{"Sample rotation offset"});
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 1,
+		new QTableWidgetItem{type_str<decltype(g_a3_offs)>});
+	m_table->setItem((int)SettingsKeys::A3_OFFS, 2,
+		new NumericTableWidgetItem<decltype(
+			g_a3_offs)>(g_a3_offs / tl2::pi<t_real>*180., 10));
 
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 0, new QTableWidgetItem{"Sample scattering angle delta"});
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 1, new QTableWidgetItem{"Real"});
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 2, new NumericTableWidgetItem
-		<decltype(g_a4_delta)>(g_a4_delta / tl2::pi<t_real>*180., 10));
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 0,
+		new QTableWidgetItem{"Monochromator scattering angle delta"});
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 1,
+		new QTableWidgetItem{type_str<decltype(g_a2_delta)>});
+	m_table->setItem((int)SettingsKeys::A2_DELTA, 2,
+		new NumericTableWidgetItem<decltype(g_a2_delta)>(
+			g_a2_delta / tl2::pi<t_real>*180., 10));
 
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 0, new QTableWidgetItem{"Path finding strategy"});
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 2, new NumericTableWidgetItem
-		<decltype(g_pathstrategy)>(g_pathstrategy, 10));
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 0,
+		new QTableWidgetItem{"Sample scattering angle delta"});
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 1,
+		new QTableWidgetItem{type_str<decltype(g_a4_delta)>});
+	m_table->setItem((int)SettingsKeys::A4_DELTA, 2,
+		new NumericTableWidgetItem<decltype(
+			g_a4_delta)>(g_a4_delta / tl2::pi<t_real>*180., 10));
 
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 0, new QTableWidgetItem{"Polygon intersection method"});
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 2, new NumericTableWidgetItem
-		<decltype(g_poly_intersection_method)>(g_poly_intersection_method, 10));
+	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 0,
+		new QTableWidgetItem{"Path finding strategy"});
+	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 1,
+		new QTableWidgetItem{type_str<decltype(g_pathstrategy)>});
+	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 2,
+		new NumericTableWidgetItem<decltype(
+			g_pathstrategy)>(g_pathstrategy, 10));
 
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 0, new QTableWidgetItem{"Light follows cursor"});
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2, new NumericTableWidgetItem
-		<decltype(g_light_follows_cursor)>(g_light_follows_cursor, 10));
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 0,
+		new QTableWidgetItem{"Polygon intersection method"});
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 1,
+		new QTableWidgetItem{type_str<decltype(g_poly_intersection_method)>});
+	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 2,
+		new NumericTableWidgetItem<decltype(
+			g_poly_intersection_method)>(g_poly_intersection_method, 10));
 
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 0, new QTableWidgetItem{"Enable shadow rendering"});
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 1, new QTableWidgetItem{"Integer"});
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 2, new NumericTableWidgetItem
-		<decltype(g_enable_shadow_rendering)>(g_enable_shadow_rendering, 10));
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 0,
+		new QTableWidgetItem{"Light follows cursor"});
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 1,
+		new QTableWidgetItem{type_str<decltype(g_light_follows_cursor)>});
+	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2,
+		new NumericTableWidgetItem<decltype(
+			g_light_follows_cursor)>(g_light_follows_cursor, 10));
+
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 0,
+		new QTableWidgetItem{"Enable shadow rendering"});
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 1,
+		new QTableWidgetItem{type_str<decltype(g_enable_shadow_rendering)>});
+	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 2,
+		new NumericTableWidgetItem<decltype(
+			g_enable_shadow_rendering)>(g_enable_shadow_rendering, 10));
 
 
 	// set value field editable
@@ -311,7 +363,8 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	gridGui->addWidget(m_editFont, yGui,1,1,1);
 	gridGui->addWidget(btnFont, yGui++,2,1,1);
 
-	QSpacerItem *spacer_end = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	QSpacerItem *spacer_end = new QSpacerItem(1, 1, 
+		QSizePolicy::Minimum, QSizePolicy::Expanding);
 	gridGui->addItem(spacer_end, yGui++,0,1,3);
 
 
@@ -327,7 +380,8 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(tab, y++,0,1,1);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
-	buttons->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
+	buttons->setStandardButtons(QDialogButtonBox::Ok |
+		QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
 	grid->addWidget(buttons, y++,0,1,1);
 
 
@@ -383,9 +437,10 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<decltype(g_eps)>(sett, "settings/eps", &g_eps);
 	get_setting<decltype(g_eps_angular)>(sett, "settings/eps_angular", &g_eps_angular);
 	get_setting<decltype(g_eps_gui)>(sett, "settings/eps_gui", &g_eps_gui);
-
 	get_setting<decltype(g_prec)>(sett, "settings/prec", &g_prec);
 	get_setting<decltype(g_prec_gui)>(sett, "settings/prec_gui", &g_prec_gui);
+
+	get_setting<decltype(g_line_subdiv_len)>(sett, "settings/line_subdiv_len", &g_line_subdiv_len);
 
 	get_setting<decltype(g_maxnum_threads)>(sett, "settings/maxnum_threads", &g_maxnum_threads);
 
@@ -420,11 +475,13 @@ void SettingsDlg::ApplySettings()
 			/ 180.*tl2::pi<t_real>;
 	g_eps_gui = dynamic_cast<NumericTableWidgetItem<decltype(g_eps_gui)>*>(
 		m_table->item((int)SettingsKeys::GUI_EPS, 2))->GetValue();
-
 	g_prec = dynamic_cast<NumericTableWidgetItem<decltype(g_prec)>*>(
 		m_table->item((int)SettingsKeys::PREC, 2))->GetValue();
 	g_prec_gui = dynamic_cast<NumericTableWidgetItem<decltype(g_prec_gui)>*>(
 		m_table->item((int)SettingsKeys::GUI_PREC, 2))->GetValue();
+
+	g_line_subdiv_len = dynamic_cast<NumericTableWidgetItem<decltype(g_line_subdiv_len)>*>(
+		m_table->item((int)SettingsKeys::LINE_SUBDIV_LEN, 2))->GetValue();
 
 	g_maxnum_threads = dynamic_cast<NumericTableWidgetItem<decltype(g_maxnum_threads)>*>(
 		m_table->item((int)SettingsKeys::MAX_THREADS, 2))->GetValue();
@@ -461,9 +518,10 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/eps", g_eps);
 		m_sett->setValue("settings/eps_angular", g_eps_angular);
 		m_sett->setValue("settings/eps_gui", g_eps_gui);
-
 		m_sett->setValue("settings/prec", g_prec);
 		m_sett->setValue("settings/prec_gui", g_prec_gui);
+
+		m_sett->setValue("settings/line_subdiv_len", g_line_subdiv_len);
 
 		m_sett->setValue("settings/maxnum_threads", g_maxnum_threads);
 
