@@ -11,6 +11,24 @@
  *   - (FUH 2021) "Effiziente Algorithmen" (2021), Kurs 1684, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/01684).
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
  *   - (Erickson 2019) "Algorithms" (2019), ISBN: 978-1-792-64483-2 (http://jeffe.cs.illinois.edu/teaching/algorithms/).
+ *
+ * ----------------------------------------------------------------------------
+ * TAS-Paths (part of the Takin software suite) and private "Geo" project
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                     Grenoble, France).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * ----------------------------------------------------------------------------
  */
 
 #ifndef __GRAPH_ALGOS_H__

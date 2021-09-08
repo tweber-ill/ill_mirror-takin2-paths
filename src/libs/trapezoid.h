@@ -7,6 +7,24 @@
  *
  * Reference for the algorithms:
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
+ *
+ * ----------------------------------------------------------------------------
+ * TAS-Paths (part of the Takin software suite) and private "Geo" project
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                     Grenoble, France).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * ----------------------------------------------------------------------------
  */
 
 #ifndef __GEO_ALGOS_TRAPEZOID_H__

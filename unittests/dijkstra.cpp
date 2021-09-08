@@ -10,6 +10,24 @@
  *  * https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/reference/algorithms/buffer/buffer_7_with_strategies.html
  *  * https://github.com/boostorg/geometry/tree/develop/example
  *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
+ *
+ * ----------------------------------------------------------------------------
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                     Grenoble, France).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * ----------------------------------------------------------------------------
  */
 
 #define BOOST_TEST_MODULE test_dijkstra
