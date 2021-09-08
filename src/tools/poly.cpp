@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date 11-nov-2020
  * @note Forked on 4-aug-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  */
 
 #include "poly.h"
@@ -385,7 +385,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 {
 	// ------------------------------------------------------------------------
 	// restore settings
-	SettingsDlg::ReadSettings(&m_sett);
+	GeoSettingsDlg::ReadSettings(&m_sett);
 
 	if(m_sett.contains("wnd_geo"))
 	{
@@ -521,7 +521,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
-			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(this, &m_sett);
 
 		m_dlgSettings->show();
 		m_dlgSettings->raise();

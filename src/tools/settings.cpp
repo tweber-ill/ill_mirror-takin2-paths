@@ -38,7 +38,7 @@ static void get_setting(QSettings* sett, const char* key, T* val)
 }
 
 
-SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
+GeoSettingsDlg::GeoSettingsDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("Settings");
@@ -141,7 +141,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 }
 
 
-SettingsDlg::~SettingsDlg()
+GeoSettingsDlg::~GeoSettingsDlg()
 {
 }
 
@@ -149,7 +149,7 @@ SettingsDlg::~SettingsDlg()
 /**
  * read the settings and set the global variables
  */
-void SettingsDlg::ReadSettings(QSettings* sett)
+void GeoSettingsDlg::ReadSettings(QSettings* sett)
 {
 	if(!sett)
 		return;
@@ -164,7 +164,7 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 /**
  * 'Apply' was clicked, write the settings from the global variables
  */
-void SettingsDlg::ApplySettings()
+void GeoSettingsDlg::ApplySettings()
 {
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
@@ -180,7 +180,7 @@ void SettingsDlg::ApplySettings()
 }
 
 
-void SettingsDlg::ApplyGuiSettings()
+void GeoSettingsDlg::ApplyGuiSettings()
 {
 	// set gui theme
 	if(g_theme != "")
@@ -202,7 +202,7 @@ void SettingsDlg::ApplyGuiSettings()
 /**
  * 'OK' was clicked
  */
-void SettingsDlg::accept()
+void GeoSettingsDlg::accept()
 {
 	ApplySettings();
 

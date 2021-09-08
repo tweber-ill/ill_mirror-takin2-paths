@@ -2,7 +2,7 @@
 # py workflow demo
 # @author Tobias Weber <tweber@ill.fr>
 # @date 14-july-2021
-# @license see 'LICENSE' file
+# @license GPLv3, see 'LICENSE' file
 #
 
 import sys

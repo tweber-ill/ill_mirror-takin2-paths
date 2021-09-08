@@ -1,7 +1,7 @@
 /**
  * @author Tobias Weber <tweber@ill.fr>
  * @date jun-2021
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * g++ -std=c++20 -I.. -o lines lines.cpp
  */

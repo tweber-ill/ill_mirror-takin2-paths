@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date oct-2020
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  */
 
 #ifndef __GEO_CIRC_ITER__

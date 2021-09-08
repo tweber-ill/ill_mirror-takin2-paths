@@ -2,7 +2,7 @@
  * split a concave polygon into convex regions
  * @author Tobias Weber <tweber@ill.fr>
  * @date 26-jun-21
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  * @note Forked on 27-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  *
  * clang++ -I.. -I../externals -std=c++20 -Wall -Wextra -o convex convex.cpp

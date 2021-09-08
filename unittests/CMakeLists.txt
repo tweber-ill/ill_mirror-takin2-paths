@@ -2,7 +2,7 @@
 # unit tests
 # @author Tobias Weber <tweber@ill.fr>
 # @date 24-apr-2021
-# @license see 'LICENSE' file
+# @license GPLv3, see 'LICENSE' file
 #
 
 cmake_minimum_required(VERSION 3.0)

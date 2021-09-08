@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date 24-apr-2021
  * @note Forked on 24-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * References:
  *  * http://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html

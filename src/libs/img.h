@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
  * @note Forked on 26-may-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * References for the GIL image library:
  *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html

@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date Oct/Nov-2020
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * Reference for the algorithms:
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).

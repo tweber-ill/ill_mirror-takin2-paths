@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date 11-nov-2020
  * @note Forked on 4-aug-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  */
 
 #include "poly.h"

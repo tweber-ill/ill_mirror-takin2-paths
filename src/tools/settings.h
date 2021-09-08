@@ -34,14 +34,14 @@ extern QString g_font;
 // ----------------------------------------------------------------------------
 // settings dialog
 // ----------------------------------------------------------------------------
-class SettingsDlg : public QDialog
+class GeoSettingsDlg : public QDialog
 {
 public:
-	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
-	virtual ~SettingsDlg();
+	GeoSettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
+	virtual ~GeoSettingsDlg();
 
-	SettingsDlg(const SettingsDlg&) = delete;
-	const SettingsDlg& operator=(const SettingsDlg&) = delete;
+	GeoSettingsDlg(const GeoSettingsDlg&) = delete;
+	const GeoSettingsDlg& operator=(const GeoSettingsDlg&) = delete;
 
 	static void ReadSettings(QSettings* sett);
 

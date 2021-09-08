@@ -2,7 +2,7 @@
  * create an image of the instrument's configuration space
  * @author Tobias Weber <tweber@ill.fr>
  * @date may-2021
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * references:
  *   - https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/reference/thread_pool.html

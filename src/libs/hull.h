@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date Oct/Nov-2020
  * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * References for the algorithms:
  *   - (Klein 2005) "Algorithmische Geometrie" (2005), ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).

@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date July-2021
  * @note Forked on 14-jul-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  *
  * references:
  *	- https://www.boost.org/doc/libs/1_76_0/doc/html/hash/combine.html

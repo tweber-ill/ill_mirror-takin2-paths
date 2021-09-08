@@ -3,7 +3,7 @@
  * @author Tobias Weber <tweber@ill.fr>
  * @date 11-Nov-2020
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  */
 
 #ifndef __LINES_GUI_H__
@@ -199,7 +199,7 @@ private:
 	QSettings m_sett{"geo_tools", "lines"};
 
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
-	std::shared_ptr<SettingsDlg> m_dlgSettings{};
+	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
 
 	std::shared_ptr<LinesScene> m_scene{};
 	std::shared_ptr<LinesView> m_view{};

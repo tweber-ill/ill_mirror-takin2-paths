@@ -2,7 +2,7 @@
  * boundary tracing
  * @author Tobias Weber
  * @date may-2021
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  * 
  * g++-10 -I.. -std=c++20 -o contour contour.cpp -lpng
  */

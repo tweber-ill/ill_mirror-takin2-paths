@@ -2,7 +2,7 @@
  * dijkstra tests
  * @author Tobias Weber <tobias.weber@tum.de>
  * @date aug-2021
- * @license see 'LICENSE' file
+ * @license GPLv3, see 'LICENSE' file
  * @note Forked on 5-jun-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  *
  * g++-10 -std=c++20 -I.. -o dijk dijk.cpp
