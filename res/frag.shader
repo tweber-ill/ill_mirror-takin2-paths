@@ -9,6 +9,24 @@
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
  *   - (Sellers 2014), G. Sellers et al., "OpenGL SuperBible", 2014, ISBN: 978-0-321-90294-8.
  *   - (Arens 2015), T. Arens et al., "Mathematik", 2015, ISBN: 978-3-642-44919-2, https://doi.org/10.1007/978-3-642-44919-2.
+ *
+ * ----------------------------------------------------------------------------
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                     Grenoble, France).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * ----------------------------------------------------------------------------
  */
 
 #version ${GLSL_VERSION}
