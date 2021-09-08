@@ -13,11 +13,11 @@
 
 #include "proc.h"
 
-#include <boost/process.hpp>
-#include <boost/property_tree/ptree.hpp>
-
-namespace proc = boost::process;
-namespace this_proc = boost::this_process;
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
+	#include <boost/process.hpp>
+	namespace proc = boost::process;
+	namespace this_proc = boost::this_process;
+#endif
 
 
 /**
@@ -25,6 +25,9 @@ namespace this_proc = boost::this_process;
  */
 void create_process(const std::string& binary)
 {
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 	proc::spawn(binary.c_str(), this_proc::environment());
-	//std::system((binary + "&").c_str());
+#else
+	std::system((binary + "&").c_str());
+#endif
 }

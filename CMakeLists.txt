@@ -376,6 +376,7 @@ if(QT_VER EQUAL 6)
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
+			"${MINGW_WINSOCK}"
 			Threads::Threads
 			Qt6::Core Qt6::Gui Qt6::Widgets
 			Qt6::Svg
@@ -408,6 +409,9 @@ elseif(QT_VER EQUAL 5)
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
+			##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic.a
+			#/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic_r.a
+			##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullcpp.a
 			Qt5::Core Qt5::Gui Qt5::Widgets
 			Qt5::Svg
 		)
@@ -416,6 +420,7 @@ elseif(QT_VER EQUAL 5)
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
+			"${MINGW_WINSOCK}"
 			Threads::Threads
 			Qt5::Core Qt5::Gui Qt5::Widgets
 			Qt5::Svg

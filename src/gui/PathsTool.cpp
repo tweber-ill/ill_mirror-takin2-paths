@@ -28,6 +28,13 @@ namespace pt = boost::property_tree;
 #define PROG_TITLE "Triple-Axis Path Calculator"
 
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	#define EXEC_EXTENSION ".exe"
+#else
+	#define EXEC_EXTENSION ""
+#endif
+
+
 /**
  * event signalling that the crystal UB matrix needs an update
  */
@@ -1133,9 +1140,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// tools menu
 	QMenu *menuTools = new QMenu("Tools", m_menubar);
 
-	fs::path hullpath = fs::path(g_apppath) / fs::path("hull");
-	fs::path linespath = fs::path(g_apppath) / fs::path("lines");
-	fs::path polypath = fs::path(g_apppath) / fs::path("poly");
+	fs::path hullpath = fs::path(g_apppath) / fs::path("hull" EXEC_EXTENSION);
+	fs::path linespath = fs::path(g_apppath) / fs::path("lines" EXEC_EXTENSION);
+	fs::path polypath = fs::path(g_apppath) / fs::path("poly" EXEC_EXTENSION);
 
 	std::size_t num_tools = 0;
 	if(fs::exists(hullpath))
@@ -1666,7 +1673,7 @@ void PathsTool::CalculatePathMesh()
 		}
 
 		CHECK_STOP
-		
+
 		SetTmpStatus("Calculating wall positions index tree.", 0);
 		if(!m_pathsbuilder.CalculateWallsIndexTree())
 		{

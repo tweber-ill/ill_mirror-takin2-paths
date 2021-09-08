@@ -23,6 +23,7 @@
 
 #include "Settings.h"
 
+#include "src/core/mingw_hacks.h"
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 

@@ -32,6 +32,7 @@
 #include <future>
 #include <iostream>
 
+#include "src/core/mingw_hacks.h"
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
