@@ -64,11 +64,12 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		text->setReadOnly(true);
 		grid->addWidget(text, 0, 0, 1, 1);
 
+		// find the license file
 		std::string license_file = find_resource("LICENSE");
 		auto [license_ok, license_text] = tl2::load_file<std::string>(license_file);
 
 		if(license_file == "" || !license_ok)
-			text->setPlainText("Error: \"LICENSE\"file could not be read!");
+			text->setPlainText("Error: \"LICENSE\" file could not be read!");
 		else
 			text->setPlainText(license_text.c_str());
 
@@ -86,6 +87,43 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		text->setReadOnly(true);
 		grid->addWidget(text, 0, 0, 1, 1);
 
+		std::ostringstream ostr;
+		ostr << "<html>\n";
+		ostr << "<h1>Licenses for 3rd Party Software</h1>\n";
+
+		// find the directory with the license files
+		std::string license_dir = find_resource("3rdparty_licenses");
+		if(license_dir == "")
+		{
+			text->setPlainText("Error: 3rd party license directory could not be found!");
+		}
+		else
+		{
+			auto files = tl2::get_all_files<true>(license_dir);
+			for(const auto& license_filename : files)
+			{
+				auto [license_ok, license_text] = tl2::load_file<std::string>(license_filename);
+				if(!license_ok)
+					continue;
+
+				// get the name of the library from the license file name
+				fs::path file(license_filename);
+				file = file.filename();
+				std::string libname = file.string();
+				libname = libname.substr(0, libname.find("_"));
+
+				ostr << "<h2>License for \"" << libname << "\"</h2>\n";
+	
+				ostr << "<p><pre>\n";
+				ostr << license_text;
+				ostr << "</pre></p>\n";
+
+				ostr << "<hr>\n";
+			}
+		}
+
+		ostr << "</html>\n";
+		text->setHtml(ostr.str().c_str());
 		tabwidget->addTab(tab, "3rd Party Licenses");
 	}
 
