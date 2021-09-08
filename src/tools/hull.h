@@ -220,7 +220,7 @@ protected:
 private:
 	QSettings m_sett{"geo_tools", "hull"};
 
-	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 	std::shared_ptr<HullDlg> m_hulldlg{};
 	std::shared_ptr<HullScene> m_scene{};

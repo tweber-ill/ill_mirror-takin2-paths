@@ -23,6 +23,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("About");
+	setSizeGripEnabled(true);
 
 	// restore dialog geometry
 	if(m_sett && m_sett->contains("about/geo"))
@@ -40,6 +41,9 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	fontTitle.setWeight(QFont::Bold);
 	labTitle->setFont(fontTitle);
 	grid->addWidget(labTitle, y++,0,1,2);
+
+	QSpacerItem *spacer0 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	grid->addItem(spacer0, y++,0,1,2);
 
 	QLabel *labSubtitle1 = new QLabel("DOI: ", this);
 	QFont fontLabel1 = labSubtitle1->font();
@@ -101,11 +105,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labBoostLib = new QLabel(boostlib2, this);
 	grid->addWidget(labBoostLib, y++,1,1,1);
 
-	QSpacerItem *spacer3 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	QSpacerItem *spacer3 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
 	grid->addItem(spacer3, y++,0,1,2);
-
-	QSpacerItem *spacer4 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	grid->addItem(spacer4, y++,0,1,2);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);

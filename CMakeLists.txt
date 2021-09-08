@@ -286,6 +286,7 @@ add_executable(taspaths
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/Settings.cpp src/gui/Settings.h
 	src/gui/About.cpp src/gui/About.h
+	src/gui/Licenses.cpp src/gui/Licenses.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/dock/TASProperties.cpp src/gui/dock/TASProperties.h
 	src/gui/dock/XtalProperties.cpp src/gui/dock/XtalProperties.h

@@ -1187,6 +1187,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
 	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
+	QAction *actionLicenses = new QAction(QIcon::fromTheme("help-about"), "Licenses...", menuHelp);
 	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About TAS-Paths...", menuHelp);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
@@ -1202,8 +1203,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		ostrInfo << "GL Renderer: " << m_gl_renderer << "\n";
 		ostrInfo << "GL Version: " << m_gl_ver << "\n";
 		ostrInfo << "GL Shader Version: " << m_gl_shader_ver << "\n";
-		ostrInfo << "Device pixel ratio: " << devicePixelRatio() << "\n"; 
+		ostrInfo << "Device pixel ratio: " << devicePixelRatio() << "\n";
 		QMessageBox::information(this, "About Renderer", ostrInfo.str().c_str());
+	});
+
+	connect(actionLicenses, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgLicenses)
+			this->m_dlgLicenses = std::make_shared<LicensesDlg>(this, &m_sett);
+
+		m_dlgLicenses->show();
+		m_dlgLicenses->raise();
+		m_dlgLicenses->activateWindow();
 	});
 
 	connect(actionAbout, &QAction::triggered, this, [this]()
@@ -1218,6 +1229,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	menuHelp->addAction(actionAboutQt);
 	menuHelp->addAction(actionAboutGl);
+	menuHelp->addSeparator();
+	menuHelp->addAction(actionLicenses);
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionAbout);
 

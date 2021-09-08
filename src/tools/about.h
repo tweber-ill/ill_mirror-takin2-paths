@@ -13,14 +13,14 @@
 #include <QtCore/QSettings>
 
 
-class AboutDlg : public QDialog
+class GeoAboutDlg : public QDialog
 {
 public:
-	AboutDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
-	virtual ~AboutDlg();
+	GeoAboutDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
+	virtual ~GeoAboutDlg();
 
-	AboutDlg(const AboutDlg& other);
-	const AboutDlg& operator=(const AboutDlg&);
+	GeoAboutDlg(const GeoAboutDlg& other);
+	const GeoAboutDlg& operator=(const GeoAboutDlg&);
 
 
 protected:

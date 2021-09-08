@@ -32,6 +32,7 @@
 #include "XtalConfigSpace.h"
 #include "GeoBrowser.h"
 #include "About.h"
+#include "Licenses.h"
 #include "Settings.h"
 
 #include "dock/TASProperties.h"
@@ -74,6 +75,7 @@ private:
 
 	// dialogs and docks
 	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<LicensesDlg> m_dlgLicenses{};
 	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser{};
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};

@@ -35,6 +35,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("Crystal Configuration Space");
+	setSizeGripEnabled(true);
 
 	// restore dialog geometry
 	if(m_sett && m_sett->contains("xtalconfigspace/geo"))

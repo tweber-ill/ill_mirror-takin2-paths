@@ -34,6 +34,7 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("Object Browser");
+	setSizeGripEnabled(true);
 
 
 	// geometry object tree

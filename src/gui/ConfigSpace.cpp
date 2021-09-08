@@ -36,6 +36,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
 	setWindowTitle("Angular Configuration Space");
+	setSizeGripEnabled(true);
 
 
 	// --------------------------------------------------------------------

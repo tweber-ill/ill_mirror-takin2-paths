@@ -84,6 +84,7 @@ std::string find_resource(const std::string& resfile)
 		apppath/"res"/res, apppath/".."/"res"/res,
 		apppath/"Resources"/res, apppath/".."/"Resources"/res,
 		fs::path("/usr/local/share/TASPaths/res")/res, fs::path("/usr/share/TASPaths/res")/res,
+		apppath/res, apppath/".."/res,
 	})
 	{
 		if(fs::exists(path))

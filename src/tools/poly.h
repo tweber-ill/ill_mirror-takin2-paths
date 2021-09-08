@@ -108,7 +108,7 @@ private:
 private:
 	QSettings m_sett{"geo_tools", "polygon"};
 
-	std::shared_ptr<AboutDlg> m_dlgAbout{};
+	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 
 	std::shared_ptr<QGraphicsScene> m_scene{};

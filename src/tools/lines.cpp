@@ -1215,7 +1215,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionAbout, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgAbout)
-			this->m_dlgAbout = std::make_shared<AboutDlg>(this, &m_sett);
+			this->m_dlgAbout = std::make_shared<GeoAboutDlg>(this, &m_sett);
 
 		m_dlgAbout->show();
 		m_dlgAbout->raise();
