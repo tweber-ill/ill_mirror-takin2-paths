@@ -7,7 +7,7 @@
 #
 # -----------------------------------------------------------------------------
 # TAS-Paths (part of the Takin software suite)
-# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
 #                     Grenoble, France).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ LICDIR=3rdparty_licenses
 # -----------------------------------------------------------------------------
 function clean_dir()
 {
-	# remove old versions, but not if they're links
+	# remove old directory, but not if it's a link
 
 	if [ ! -L ${LICDIR} ]; then
 		rm -rfv ${LICDIR}
@@ -47,47 +47,47 @@ echo -e "Downloading license texts...\n"
 
 
 # boost
-if ! wget http://www.boost.org/LICENSE_1_0.txt -O ${LICDIR}/boost_license.txt; then
+if ! wget http://www.boost.org/LICENSE_1_0.txt -O ${LICDIR}/Boost_license.txt; then
 	echo -e "Error: Cannot download Boost license.";
 fi
 
 # lapack(e)
-if ! wget http://www.netlib.org/lapack/LICENSE.txt -O ${LICDIR}/lapack_license.txt; then
+if ! wget http://www.netlib.org/lapack/LICENSE.txt -O ${LICDIR}/Lapack_license.txt; then
 	echo -e "Error: Cannot download Lapack(e) license.";
 fi
 
 # qhull
-if ! wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O ${LICDIR}/qhull_license.txt; then
+if ! wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O ${LICDIR}/QHull_license.txt; then
 	echo -e "Error: Cannot download Qhull license.";
 fi
 
 # qcustomplot
-if ! wget https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt -O ${LICDIR}/qcustomplot_license.txt; then
+if ! wget https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt -O ${LICDIR}/QCustomPlot_license.txt; then
 	echo -e "Error: Cannot download QCustomPlot license.";
 fi
 
 # python
-if ! wget https://raw.githubusercontent.com/python/cpython/master/Doc/license.rst -O ${LICDIR}/python_license.txt; then
+if ! wget https://raw.githubusercontent.com/python/cpython/master/Doc/license.rst -O ${LICDIR}/Python_license.txt; then
 	echo -e "Error: Cannot download Python license.";
 fi
 
 # numpy
-if ! wget https://raw.githubusercontent.com/numpy/numpy/master/LICENSE.txt -O ${LICDIR}/numpy_license.txt; then
+if ! wget https://raw.githubusercontent.com/numpy/numpy/master/LICENSE.txt -O ${LICDIR}/Numpy_license.txt; then
 	echo -e "Error: Cannot download Numpy license.";
 fi
 
 # scipy
-if ! wget https://raw.githubusercontent.com/scipy/scipy/master/LICENSE.txt -O ${LICDIR}/scipy_license.txt; then
+if ! wget https://raw.githubusercontent.com/scipy/scipy/master/LICENSE.txt -O ${LICDIR}/Scipy_license.txt; then
 	echo -e "Error: Cannot download Scipy license.";
 fi
 
 # matplotlib
-if ! wget https://raw.githubusercontent.com/matplotlib/matplotlib/master/LICENSE/LICENSE -O ${LICDIR}/matplotlib_license.txt; then
+if ! wget https://raw.githubusercontent.com/matplotlib/matplotlib/master/LICENSE/LICENSE -O ${LICDIR}/Matplotlib_license.txt; then
 	echo -e "Error: Cannot download Matplotlib license.";
 fi
 
 # dejavu
-if ! wget https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/master/LICENSE -O ${LICDIR}/dejavu_license.txt; then
+if ! wget https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/master/LICENSE -O ${LICDIR}/DejaVu_license.txt; then
 	echo -e "Error: Cannot download DejaVu license.";
 fi
 
