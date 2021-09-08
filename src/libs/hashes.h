@@ -9,9 +9,11 @@
  *	- https://www.boost.org/doc/libs/1_76_0/doc/html/hash/combine.html
  *
  * ----------------------------------------------------------------------------
- * TAS-Paths (part of the Takin software suite) and private "Geo" project
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
- *                     Grenoble, France).
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                          Grenoble, France).
+ * "misc" project
+ * Copyright (C) 2017-2021  Tobias WEBER (privately developed).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

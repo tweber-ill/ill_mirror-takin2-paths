@@ -9,9 +9,11 @@
  *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
  *
  * ----------------------------------------------------------------------------
- * TAS-Paths (part of the Takin software suite) and private "Geo" project
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
- *                     Grenoble, France).
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                          Grenoble, France).
+ * "geo" project
+ * Copyright (C) 2020-2021  Tobias WEBER (privately developed).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

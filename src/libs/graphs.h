@@ -13,9 +13,11 @@
  *   - (Erickson 2019) "Algorithms" (2019), ISBN: 978-1-792-64483-2 (http://jeffe.cs.illinois.edu/teaching/algorithms/).
  *
  * ----------------------------------------------------------------------------
- * TAS-Paths (part of the Takin software suite) and private "Geo" project
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
- *                     Grenoble, France).
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ *                          Grenoble, France).
+ * "geo" project
+ * Copyright (C) 2020-2021  Tobias WEBER (privately developed).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
