@@ -36,6 +36,9 @@
 #include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QFontDialog>
 
+#include <array>
+#include <type_traits>
+
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
@@ -83,8 +86,41 @@ tl2::t_real_gl g_rotation_scale = 0.02;
 
 int g_light_follows_cursor = 0;
 int g_enable_shadow_rendering = 0;
-// ----------------------------------------------------------------------------
 
+
+// ----------------------------------------------------------------------------
+// variables register
+struct SettingsVariable
+{
+	const char* description{};
+	const char* key{};
+	std::variant<t_real*, int*, unsigned int*> value{};
+	bool is_angle{false};
+};
+
+static constexpr std::array<SettingsVariable, 14> g_settingsvariables
+{{
+	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
+	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
+	{.description = "Drawing epsilon", .key = "settings/eps_gui", .value = &g_eps_gui},
+	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
+	{.description = "GUI number precision", .key = "settings/prec_gui", .value = &g_prec_gui},
+
+	{.description = "Line subdivision length", .key = "settings/line_subdiv_len", .value = &g_line_subdiv_len},
+
+	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
+
+	{.description = "Sample rotation offset", .key = "settings/a3_offs", .value = &g_a3_offs, .is_angle = true},
+	{.description = "Monochromator scattering angle delta", .key = "settings/a2_delta", .value = &g_a2_delta, .is_angle = true},
+	{.description = "Sample scattering angle delta", .key = "settings/a4_delta", .value = &g_a4_delta, .is_angle = true},
+
+	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
+	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
+
+	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
+	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},
+}};
+// ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
@@ -121,32 +157,6 @@ std::string find_resource(const std::string& resfile)
 // ----------------------------------------------------------------------------
 // settings dialog
 // ----------------------------------------------------------------------------
-enum class SettingsKeys : int
-{
-	EPS = 0,
-	ANGULAR_EPS,
-	GUI_EPS,
-	PREC,
-	GUI_PREC,
-
-	LINE_SUBDIV_LEN,
-
-	MAX_THREADS,
-
-	A3_OFFS,
-	A2_DELTA,
-	A4_DELTA,
-
-	PATH_STRATEGY,
-
-	POLY_INTERS_METHOD,
-
-	LIGHT_FOLLOWS_CURSOR,
-	ENABLE_SHADOWS,
-
-	NUM_KEYS
-};
-
 
 // type names
 template<class T> const char* type_str = "Unknown";
@@ -154,6 +164,42 @@ template<> const char* type_str<t_real> = "Real";
 template<> const char* type_str<int> = "Integer";
 template<> const char* type_str<unsigned int> = "Integer, unsigned";
 
+
+/**
+ * adds a settings item from a global variable to the table
+ */
+template<std::size_t idx>
+static void add_table_item(QTableWidget *table)
+{
+	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
+	constexpr const auto* value = std::get<var.value.index()>(var.value);
+	using t_value = std::decay_t<decltype(*value)>;
+
+	t_value finalval = *value;
+	if(var.is_angle)
+		finalval = finalval / tl2::pi<t_real>*180;
+
+	table->setItem((int)idx, 0, new QTableWidgetItem{var.description});
+	table->setItem((int)idx, 1, new QTableWidgetItem{type_str<t_value>});
+	table->setItem((int)idx, 2, new NumericTableWidgetItem<t_value>(finalval, 10));
+}
+
+
+/**
+ * adds all settings items from the global variables to the table
+ */
+template<std::size_t ...seq>
+static constexpr void add_table_item_loop(
+	const std::index_sequence<seq...>&, QTableWidget *table)
+{
+	// a sequence of function calls
+	( (add_table_item<seq>(table)), ... );
+}
+
+
+/**
+ * get a value from a QSettings object
+ */
 template<class T>
 static void get_setting(QSettings* sett, const char* key, T* val)
 {
@@ -162,6 +208,72 @@ static void get_setting(QSettings* sett, const char* key, T* val)
 		*val = sett->value(key, *val).template value<T>();
 		//std::cout << key << ": " << *val << std::endl;
 	}
+}
+
+
+/**
+ * gets a settings item from the QSettings object and saves it
+ * to the corresponding global variable
+ */
+template<std::size_t idx>
+static void get_settings_item(QSettings *sett)
+{
+	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
+	constexpr auto* value = std::get<var.value.index()>(var.value);
+	using t_value = std::decay_t<decltype(*value)>;
+
+	get_setting<t_value>(sett, var.key, value);
+}
+
+
+/**
+ * gets all settings items from the QSettings object and saves them
+ * to the global variables
+ */
+template<std::size_t ...seq>
+static constexpr void get_settings_loop(
+	const std::index_sequence<seq...>&, QSettings *sett)
+{
+	// a sequence of function calls
+	( (get_settings_item<seq>(sett)), ... );
+}
+
+
+/**
+ * reads a settings item from the table and saves it to the
+ * corresponding global variable and to the QSettings object
+ */
+template<std::size_t idx>
+static void apply_settings_item(QTableWidget* table, QSettings *sett)
+{
+	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
+	constexpr auto* value = std::get<var.value.index()>(var.value);
+	using t_value = std::decay_t<decltype(*value)>;
+
+	t_value finalval = dynamic_cast<NumericTableWidgetItem<t_value>*>(
+		table->item((int)idx, 2))->GetValue();
+	if(var.is_angle)
+		finalval = finalval / 180.*tl2::pi<t_real>;
+
+	// set the global variable
+	*value = finalval;
+
+	// write out the settings
+	if(sett)
+		sett->setValue(var.key, *value);
+}
+
+
+/**
+ * reads all settings items from the table and saves them to the
+ * global variables and to the QSettings object
+ */
+template<std::size_t ...seq>
+static constexpr void apply_settings_loop(
+	const std::index_sequence<seq...>&, QTableWidget* table, QSettings *sett)
+{
+	// a sequence of function calls
+	( (apply_settings_item<seq>(table, sett)), ... );
 }
 
 
@@ -204,116 +316,10 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 
 
 	// table contents
-	m_table->setRowCount((int)SettingsKeys::NUM_KEYS);
+	m_table->setRowCount((int)g_settingsvariables.size());
 
-	m_table->setItem((int)SettingsKeys::EPS, 0,
-		new QTableWidgetItem{"Calculation epsilon"});
-	m_table->setItem((int)SettingsKeys::EPS, 1,
-		new QTableWidgetItem{type_str<decltype(g_eps)>});
-	m_table->setItem((int)SettingsKeys::EPS, 2,
-		new NumericTableWidgetItem<decltype(g_eps)>(g_eps, 10));
-
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 0,
-		new QTableWidgetItem{"Angular epsilon"});
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 1,
-		new QTableWidgetItem{type_str<decltype(g_eps_angular)>});
-	m_table->setItem((int)SettingsKeys::ANGULAR_EPS, 2,
-		new NumericTableWidgetItem<decltype(g_eps_angular)>(
-			g_eps_angular / tl2::pi<t_real>*180., 10));
-
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 0,
-		new QTableWidgetItem{"Drawing epsilon"});
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 1,
-		new QTableWidgetItem{type_str<decltype(g_eps_gui)>});
-	m_table->setItem((int)SettingsKeys::GUI_EPS, 2,
-		new NumericTableWidgetItem<decltype(g_eps_gui)>(g_eps_gui, 10));
-
-	m_table->setItem((int)SettingsKeys::PREC, 0,
-		new QTableWidgetItem{"Number precision"});
-	m_table->setItem((int)SettingsKeys::PREC, 1,
-		new QTableWidgetItem{type_str<decltype(g_prec)>});
-	m_table->setItem((int)SettingsKeys::PREC, 2,
-		new NumericTableWidgetItem<decltype(g_prec)>(g_prec, 10));
-
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 0,
-		new QTableWidgetItem{"GUI number precision"});
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 1,
-		new QTableWidgetItem{type_str<decltype(g_prec_gui)>});
-	m_table->setItem((int)SettingsKeys::GUI_PREC, 2,
-		new NumericTableWidgetItem<decltype(g_prec_gui)>(g_prec_gui, 10));
-
-	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 0,
-		new QTableWidgetItem{"Line subdivision length"});
-	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 1,
-		new QTableWidgetItem{type_str<decltype(g_line_subdiv_len)>});
-	m_table->setItem((int)SettingsKeys::LINE_SUBDIV_LEN, 2,
-		new NumericTableWidgetItem<decltype(
-			g_line_subdiv_len)>(g_line_subdiv_len, 10));
-
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 0,
-		new QTableWidgetItem{"Maximum number of threads"});
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 1,
-		new QTableWidgetItem{type_str<decltype(g_maxnum_threads)>});
-	m_table->setItem((int)SettingsKeys::MAX_THREADS, 2,
-		new NumericTableWidgetItem<decltype(g_maxnum_threads)>(
-			g_maxnum_threads, 10));
-
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 0,
-		new QTableWidgetItem{"Sample rotation offset"});
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 1,
-		new QTableWidgetItem{type_str<decltype(g_a3_offs)>});
-	m_table->setItem((int)SettingsKeys::A3_OFFS, 2,
-		new NumericTableWidgetItem<decltype(
-			g_a3_offs)>(g_a3_offs / tl2::pi<t_real>*180., 10));
-
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 0,
-		new QTableWidgetItem{"Monochromator scattering angle delta"});
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 1,
-		new QTableWidgetItem{type_str<decltype(g_a2_delta)>});
-	m_table->setItem((int)SettingsKeys::A2_DELTA, 2,
-		new NumericTableWidgetItem<decltype(g_a2_delta)>(
-			g_a2_delta / tl2::pi<t_real>*180., 10));
-
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 0,
-		new QTableWidgetItem{"Sample scattering angle delta"});
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 1,
-		new QTableWidgetItem{type_str<decltype(g_a4_delta)>});
-	m_table->setItem((int)SettingsKeys::A4_DELTA, 2,
-		new NumericTableWidgetItem<decltype(
-			g_a4_delta)>(g_a4_delta / tl2::pi<t_real>*180., 10));
-
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 0,
-		new QTableWidgetItem{"Path finding strategy"});
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 1,
-		new QTableWidgetItem{type_str<decltype(g_pathstrategy)>});
-	m_table->setItem((int)SettingsKeys::PATH_STRATEGY, 2,
-		new NumericTableWidgetItem<decltype(
-			g_pathstrategy)>(g_pathstrategy, 10));
-
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 0,
-		new QTableWidgetItem{"Polygon intersection method"});
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 1,
-		new QTableWidgetItem{type_str<decltype(g_poly_intersection_method)>});
-	m_table->setItem((int)SettingsKeys::POLY_INTERS_METHOD, 2,
-		new NumericTableWidgetItem<decltype(
-			g_poly_intersection_method)>(g_poly_intersection_method, 10));
-
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 0,
-		new QTableWidgetItem{"Light follows cursor"});
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 1,
-		new QTableWidgetItem{type_str<decltype(g_light_follows_cursor)>});
-	m_table->setItem((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2,
-		new NumericTableWidgetItem<decltype(
-			g_light_follows_cursor)>(g_light_follows_cursor, 10));
-
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 0,
-		new QTableWidgetItem{"Enable shadow rendering"});
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 1,
-		new QTableWidgetItem{type_str<decltype(g_enable_shadow_rendering)>});
-	m_table->setItem((int)SettingsKeys::ENABLE_SHADOWS, 2,
-		new NumericTableWidgetItem<decltype(
-			g_enable_shadow_rendering)>(g_enable_shadow_rendering, 10));
-
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	add_table_item_loop(seq, m_table);
 
 	// set value field editable
 	for(int row=0; row<m_table->rowCount(); ++row)
@@ -434,29 +440,11 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	if(!sett)
 		return;
 
-	get_setting<decltype(g_eps)>(sett, "settings/eps", &g_eps);
-	get_setting<decltype(g_eps_angular)>(sett, "settings/eps_angular", &g_eps_angular);
-	get_setting<decltype(g_eps_gui)>(sett, "settings/eps_gui", &g_eps_gui);
-	get_setting<decltype(g_prec)>(sett, "settings/prec", &g_prec);
-	get_setting<decltype(g_prec_gui)>(sett, "settings/prec_gui", &g_prec_gui);
-
-	get_setting<decltype(g_line_subdiv_len)>(sett, "settings/line_subdiv_len", &g_line_subdiv_len);
-
-	get_setting<decltype(g_maxnum_threads)>(sett, "settings/maxnum_threads", &g_maxnum_threads);
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	get_settings_loop(seq, sett);
 
 	get_setting<decltype(g_theme)>(sett, "settings/theme", &g_theme);
 	get_setting<decltype(g_font)>(sett, "settings/font", &g_font);
-
-	get_setting<decltype(g_a3_offs)>(sett, "settings/a3_offs", &g_a3_offs);
-	get_setting<decltype(g_a2_delta)>(sett, "settings/a2_delta", &g_a2_delta);
-	get_setting<decltype(g_a4_delta)>(sett, "settings/a4_delta", &g_a4_delta);
-
-	get_setting<decltype(g_pathstrategy)>(sett, "settings/path_finding_strategy", &g_pathstrategy);
-
-	get_setting<decltype(g_poly_intersection_method)>(sett, "settings/poly_inters_method", &g_poly_intersection_method);
-
-	get_setting<decltype(g_light_follows_cursor)>(sett, "settings/light_follows_cursor", &g_light_follows_cursor);
-	get_setting<decltype(g_enable_shadow_rendering)>(sett, "settings/enable_shadow_rendering", &g_enable_shadow_rendering);
 
 	ApplyGuiSettings();
 }
@@ -467,77 +455,18 @@ void SettingsDlg::ReadSettings(QSettings* sett)
  */
 void SettingsDlg::ApplySettings()
 {
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	apply_settings_loop(seq, m_table, m_sett);
+
 	// set the global variables
-	g_eps = dynamic_cast<NumericTableWidgetItem<decltype(g_eps)>*>(
-		m_table->item((int)SettingsKeys::EPS, 2))->GetValue();
-	g_eps_angular = dynamic_cast<NumericTableWidgetItem<decltype(g_eps_angular)>*>(
-		m_table->item((int)SettingsKeys::ANGULAR_EPS, 2))->GetValue()
-			/ 180.*tl2::pi<t_real>;
-	g_eps_gui = dynamic_cast<NumericTableWidgetItem<decltype(g_eps_gui)>*>(
-		m_table->item((int)SettingsKeys::GUI_EPS, 2))->GetValue();
-	g_prec = dynamic_cast<NumericTableWidgetItem<decltype(g_prec)>*>(
-		m_table->item((int)SettingsKeys::PREC, 2))->GetValue();
-	g_prec_gui = dynamic_cast<NumericTableWidgetItem<decltype(g_prec_gui)>*>(
-		m_table->item((int)SettingsKeys::GUI_PREC, 2))->GetValue();
-
-	g_line_subdiv_len = dynamic_cast<NumericTableWidgetItem<decltype(g_line_subdiv_len)>*>(
-		m_table->item((int)SettingsKeys::LINE_SUBDIV_LEN, 2))->GetValue();
-
-	g_maxnum_threads = dynamic_cast<NumericTableWidgetItem<decltype(g_maxnum_threads)>*>(
-		m_table->item((int)SettingsKeys::MAX_THREADS, 2))->GetValue();
-
-	g_a3_offs = dynamic_cast<NumericTableWidgetItem<decltype(g_a3_offs)>*>(
-		m_table->item((int)SettingsKeys::A3_OFFS, 2))->GetValue()
-			/ 180.*tl2::pi<t_real>;
-
-	g_a2_delta = dynamic_cast<NumericTableWidgetItem<decltype(g_a2_delta)>*>(
-		m_table->item((int)SettingsKeys::A2_DELTA, 2))->GetValue()
-			/ 180.*tl2::pi<t_real>;
-	g_a4_delta = dynamic_cast<NumericTableWidgetItem<decltype(g_a4_delta)>*>(
-		m_table->item((int)SettingsKeys::A4_DELTA, 2))->GetValue()
-			/ 180.*tl2::pi<t_real>;
-
-	g_pathstrategy = dynamic_cast<NumericTableWidgetItem<decltype(g_pathstrategy)>*>(
-		m_table->item((int)SettingsKeys::PATH_STRATEGY, 2))->GetValue();
-
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
-
-	g_poly_intersection_method = dynamic_cast<NumericTableWidgetItem<decltype(g_poly_intersection_method)>*>(
-		m_table->item((int)SettingsKeys::POLY_INTERS_METHOD, 2))->GetValue();
-
-	g_light_follows_cursor = dynamic_cast<NumericTableWidgetItem<decltype(g_light_follows_cursor)>*>(
-		m_table->item((int)SettingsKeys::LIGHT_FOLLOWS_CURSOR, 2))->GetValue();
-	g_enable_shadow_rendering = dynamic_cast<NumericTableWidgetItem<decltype(g_enable_shadow_rendering)>*>(
-		m_table->item((int)SettingsKeys::ENABLE_SHADOWS, 2))->GetValue();
-
 
 	// write out the settings
 	if(m_sett)
 	{
-		m_sett->setValue("settings/eps", g_eps);
-		m_sett->setValue("settings/eps_angular", g_eps_angular);
-		m_sett->setValue("settings/eps_gui", g_eps_gui);
-		m_sett->setValue("settings/prec", g_prec);
-		m_sett->setValue("settings/prec_gui", g_prec_gui);
-
-		m_sett->setValue("settings/line_subdiv_len", g_line_subdiv_len);
-
-		m_sett->setValue("settings/maxnum_threads", g_maxnum_threads);
-
-		m_sett->setValue("settings/a3_offs", g_a3_offs);
-		m_sett->setValue("settings/a2_delta", g_a2_delta);
-		m_sett->setValue("settings/a4_delta", g_a4_delta);
-
-		m_sett->setValue("settings/path_finding_strategy", g_pathstrategy);
-
 		m_sett->setValue("settings/theme", g_theme);
 		m_sett->setValue("settings/font", g_font);
-
-		m_sett->setValue("settings/poly_inters_method", g_poly_intersection_method);
-
-		m_sett->setValue("settings/light_follows_cursor", g_light_follows_cursor);
-		m_sett->setValue("settings/enable_shadow_rendering", g_enable_shadow_rendering);
 	}
 
 	ApplyGuiSettings();
