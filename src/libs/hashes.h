@@ -10,7 +10,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
  *                          Grenoble, France).
  * "misc" project
  * Copyright (C) 2017-2021  Tobias WEBER (privately developed).

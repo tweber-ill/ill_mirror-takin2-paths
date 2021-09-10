@@ -10,7 +10,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
  *                          Grenoble, France).
  * "geo" project
  * Copyright (C) 2020-2021  Tobias WEBER (privately developed).
@@ -776,7 +776,8 @@ void trafo_trapezoid_tree(std::shared_ptr<TrapezoidNode<t_vec>> node, const t_ma
 
 
 /**
- * save the trapezoid tree as an svg
+ * save the trapezoid tree as an svg using boost's svg mapper
+ * @see https://www.boost.org/doc/libs/1_77_0/libs/geometry/doc/html/geometry/reference/io/svg/svg_mapper.html
  */
 template<class t_vec, class t_line = std::pair<t_vec, t_vec>, class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
