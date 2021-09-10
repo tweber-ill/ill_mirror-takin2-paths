@@ -7,7 +7,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ int main()
 	using namespace tl2_ops;
 
 	std::vector<t_vec> poly
-	{{ 
+	{{
 		tl2::create<t_vec>({ -5, -5 }),
 		tl2::create<t_vec>({ 5, -5 }),
 		tl2::create<t_vec>({ 5, 5 }),
@@ -53,11 +53,11 @@ int main()
 	t_vec pt2 = tl2::create<t_vec>({ 10, 0 });
 	t_vec pt3 = tl2::create<t_vec>({ 3, -2 });
 
-	std::cout << pt1 << ": " << std::boolalpha << 
+	std::cout << pt1 << ": " << std::boolalpha <<
 		geo::pt_inside_poly(poly, pt1) << std::endl;
-	std::cout << pt2 << ": " << std::boolalpha << 
+	std::cout << pt2 << ": " << std::boolalpha <<
 		geo::pt_inside_poly(poly, pt2) << std::endl;
-	std::cout << pt3 << ": " << std::boolalpha << 
+	std::cout << pt3 << ": " << std::boolalpha <<
 		geo::pt_inside_poly(poly, pt3) << std::endl;
 
 	return 0;
