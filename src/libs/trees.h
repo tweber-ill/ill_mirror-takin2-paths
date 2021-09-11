@@ -104,7 +104,8 @@ struct CommonTreeNode
 	t_nodetype *right = nullptr;
 
 
-	CommonTreeNode() {}
+	CommonTreeNode() = default;
+	virtual ~CommonTreeNode() = default;
 
 	CommonTreeNode(const CommonTreeNode<t_nodetype>& other)
 	{
@@ -355,7 +356,8 @@ struct RangeTreeNode : public CommonTreeNode<RangeTreeNode<t_vec>>
 	std::shared_ptr<const t_vec> vec{};
 
 
-	RangeTreeNode() {}
+	RangeTreeNode() = default;
+	virtual ~RangeTreeNode() = default;
 
 	RangeTreeNode(
 		const std::shared_ptr<const t_vec>& vec,
@@ -609,12 +611,18 @@ public:
 	}
 
 
+	/**
+	 * update all ranges
+	 */
 	void update()
 	{
 		update(get_root());
 	}
 
 
+	/**
+	 * update the node's ranges
+	 */
 	static void update(t_node* node)
 	{
 		if(!node) return;
@@ -700,10 +708,17 @@ protected:
 	{
 		if(!node) return;
 
-		free_nodes(node->left);
-		free_nodes(node->right);
+		if(node->left)
+		{
+			free_nodes(node->left);
+			delete node->left;
+		}
 
-		delete node;
+		if(node->right)
+		{
+			free_nodes(node->right);
+			delete node->right;
+		}
 	}
 
 
@@ -815,16 +830,247 @@ protected:
 	{
 		if(!node) return;
 
-		free_nodes(node->left);
-		free_nodes(node->right);
+		if(node->left)
+		{
+			free_nodes(node->left);
+			delete node->left;
+		}
 
-		delete node;
+		if(node->right)
+		{
+			free_nodes(node->right);
+			delete node->right;
+		}
 	}
 
 
 private:
 	t_node m_root{};
 	std::size_t m_idx = 0;
+};
+
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// k-d tree
+// ----------------------------------------------------------------------------
+
+template<class t_vec> requires tl2::is_basic_vec<t_vec> class KdTree;
+
+/**
+ * range tree node
+ */
+template<class t_vec>
+requires tl2::is_basic_vec<t_vec>
+struct KdTreeNode : public CommonTreeNode<KdTreeNode<t_vec>>
+{
+	using t_scalar = typename t_vec::value_type;
+
+	using t_balance = std::int64_t;
+	t_balance balance = 0;
+
+	// pointer to actual data for leaf nodes
+	std::shared_ptr<const t_vec> vec{};
+
+	// coordinate component index offset of splitting plane for inner nodes
+	std::size_t split_idx{};
+	t_scalar split_value{};
+
+
+	KdTreeNode() = default;
+	virtual ~KdTreeNode() = default;
+
+	KdTreeNode(
+		const std::shared_ptr<const t_vec>& vec)
+			: CommonTreeNode<KdTreeNode<t_vec>>{},
+				vec{vec}
+	{}
+
+
+	void print(std::ostream& ostr, std::size_t indent = 0) const
+	{
+		using namespace tl2_ops;
+		const KdTreeNode<t_vec> *node = this;
+
+		ostr << "ptr: " << (void*)node << ", balance: " << node->balance;
+		if(node->vec)
+			ostr << ", vec: " << *node->vec;
+		else
+			ostr << ", split index: " << node->split_idx << ", split value: " << node->split_value;
+
+		if(node->left || node->right)
+		{
+			ostr << "\n";
+			for(std::size_t i=0; i<indent+1; ++i)
+				ostr << "  ";
+			ostr << "left: ";
+			if(node->left)
+				node->left->print(ostr, indent+1);
+			else
+				ostr << "nullptr\n";
+
+			ostr << "\n";
+			for(std::size_t i=0; i<indent+1; ++i)
+				ostr << "  ";
+			ostr << "right: ";
+			if(node->right)
+				node->right->print(ostr, indent+1);
+			else
+				ostr << "nullptr\n";
+		}
+	}
+
+
+	friend std::ostream& operator<<(std::ostream& ostr, const KdTreeNode<t_vec>& node)
+	{
+		node.print(ostr);
+		return ostr;
+	}
+};
+
+
+/**
+ * k-d tree
+ */
+template<class t_vec>
+requires tl2::is_basic_vec<t_vec>
+class KdTree
+{
+public:
+	using t_node = KdTreeNode<t_vec>;
+	using t_scalar = typename t_vec::value_type;
+
+	using t_nodetraits = BinTreeNodeTraits<t_node>;
+	using t_treealgos = boost::intrusive::bstree_algorithms<t_nodetraits>;
+
+
+public:
+	KdTree(std::size_t dim = 3) : m_dim{dim}
+	{
+		t_treealgos::init_header(&m_root);
+	}
+
+	~KdTree()
+	{
+		free_nodes(get_root());
+	}
+
+
+	const t_node* get_root() const
+	{
+		return t_treealgos::root_node(&m_root);
+	}
+
+	t_node* get_root()
+	{
+		return t_treealgos::root_node(&m_root);
+	}
+
+
+	/**
+	 * create the tree from a collection of vectors
+	 */
+	void create(const std::vector<t_vec>& _vecs)
+	{
+		std::vector<std::shared_ptr<t_vec>> vecs;
+		vecs.reserve(_vecs.size());
+
+		for(const t_vec& vec : _vecs)
+			vecs.emplace_back(std::make_shared<t_vec>(vec));
+
+		create(get_root(), vecs, m_dim);
+	}
+
+
+	friend std::ostream& operator<<(std::ostream& ostr, const KdTree<t_vec>& tree)
+	{
+		ostr << *tree.get_root();
+		return ostr;
+	}
+
+
+protected:
+	static void create(t_node* node,
+		const std::vector<std::shared_ptr<t_vec>>& vecs,
+		std::size_t dim = 3, std::size_t depth = 0)
+	{
+		if(!node) return;
+		if(vecs.size() == 0) return;
+
+		// create a leaf node
+		if(vecs.size() == 1)
+		{
+			node->vec = vecs[0];
+			return;
+		}
+
+		node->split_idx = (depth % dim);
+
+		// use the mean value for the splitting plane offset
+		t_scalar mean{};
+		for(const auto& vec : vecs)
+			mean += (*vec)[node->split_idx];
+		mean /= t_scalar(vecs.size());
+		node->split_value = mean;
+
+		std::vector<std::shared_ptr<t_vec>> left{};
+		std::vector<std::shared_ptr<t_vec>> right{};
+
+		for(const auto& vec : vecs)
+		{
+			if((*vec)[node->split_idx] <= node->split_value)
+				left.push_back(vec);
+			else
+				right.push_back(vec);
+		}
+
+		if(left.size())
+		{
+			node->left = new t_node{};
+			node->left->parent = node;
+			create(node->left, left, dim, depth+1);
+		}
+		if(right.size())
+		{
+			node->right = new t_node{};
+			node->right->parent = node;
+			create(node->right, right, dim, depth+1);
+		}
+
+		// set balance factor
+		decltype(node->balance) left_balance = 0;
+		decltype(node->balance) right_balance = 0;
+		if(node->left)
+			left_balance = node->left->balance + 1;
+		if(node->right)
+			right_balance = node->right->balance + 1;
+		node->balance = left_balance - right_balance;
+	}
+
+
+	static void free_nodes(t_node* node)
+	{
+		if(!node) return;
+
+		if(node->left)
+		{
+			free_nodes(node->left);
+			delete node->left;
+		}
+
+		if(node->right)
+		{
+			free_nodes(node->right);
+			delete node->right;
+		}
+	}
+
+
+private:
+	t_node m_root{};
+	std::size_t m_dim{3};
 };
 
 // ----------------------------------------------------------------------------
