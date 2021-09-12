@@ -708,16 +708,18 @@ protected:
 	{
 		if(!node) return;
 
-		if(node->left)
+		if(node->left && node->left != node)
 		{
 			free_nodes(node->left);
 			delete node->left;
+			node->left = nullptr;
 		}
 
-		if(node->right)
+		if(node->right && node->right != node)
 		{
 			free_nodes(node->right);
 			delete node->right;
+			node->right = nullptr;
 		}
 	}
 
@@ -830,16 +832,18 @@ protected:
 	{
 		if(!node) return;
 
-		if(node->left)
+		if(node->left && node->left != node)
 		{
 			free_nodes(node->left);
 			delete node->left;
+			node->left = nullptr;
 		}
 
-		if(node->right)
+		if(node->right && node->right != node)
 		{
 			free_nodes(node->right);
 			delete node->right;
+			node->right = nullptr;
 		}
 	}
 
@@ -860,7 +864,7 @@ private:
 template<class t_vec> requires tl2::is_basic_vec<t_vec> class KdTree;
 
 /**
- * range tree node
+ * k-d tree node
  */
 template<class t_vec>
 requires tl2::is_basic_vec<t_vec>
@@ -957,6 +961,12 @@ public:
 	}
 
 	~KdTree()
+	{
+		clear();
+	}
+
+
+	void clear()
 	{
 		free_nodes(get_root());
 	}
@@ -1075,16 +1085,18 @@ protected:
 	{
 		if(!node) return;
 
-		if(node->left)
+		if(node->left && node->left != node)
 		{
 			free_nodes(node->left);
 			delete node->left;
+			node->left = nullptr;
 		}
 
-		if(node->right)
+		if(node->right && node->right != node)
 		{
 			free_nodes(node->right);
 			delete node->right;
+			node->right = nullptr;
 		}
 	}
 

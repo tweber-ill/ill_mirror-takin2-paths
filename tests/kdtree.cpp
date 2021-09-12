@@ -1,5 +1,5 @@
 /**
- * testing kdtrees
+ * testing kd trees
  * @author Tobias Weber <tweber@ill.fr>
  * @date sep-2021
  * @license GPLv3, see 'LICENSE' file

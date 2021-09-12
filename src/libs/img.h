@@ -36,14 +36,26 @@
 #ifndef __GEO_ALGOS_IMG_H__
 #define __GEO_ALGOS_IMG_H__
 
+/**
+ * which index tree to use for finding the closest obstacles
+ * 1: r* tree
+ * 2: kd tree
+ */
+#define GEO_OBSTACLES_INDEX_TREE 1
+
+
 #include <concepts>
 #include <vector>
 #include <cstdlib>
 
 #include <boost/gil/image.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/index/rtree.hpp>
-#include <boost/function_output_iterator.hpp>
+#if GEO_OBSTACLES_INDEX_TREE == 1
+	#include <boost/geometry.hpp>
+	#include <boost/geometry/index/rtree.hpp>
+	#include <boost/function_output_iterator.hpp>
+#elif GEO_OBSTACLES_INDEX_TREE == 2
+	#include "trees.h"
+#endif
 
 #include "tlibs2/libs/maths.h"
 
@@ -441,6 +453,7 @@ struct ClosestPixelTreeResults
 public:
 	using t_scalar = typename t_vec::value_type;
 
+#if GEO_OBSTACLES_INDEX_TREE == 1
 	// vertex type used in index tree
 	template<class T = t_scalar>
 	using t_idxvertex = boost::geometry::model::point<
@@ -450,11 +463,18 @@ public:
 	using t_idxtree = boost::geometry::index::rtree<
 		t_idxvertex<t_scalar>,
 		boost::geometry::index::dynamic_rstar>;
+#elif GEO_OBSTACLES_INDEX_TREE == 2
+	using t_idxtree = KdTree<t_vec>;
+#endif
 
 
 private:
 	// spatial index tree for the pixels
+#if GEO_OBSTACLES_INDEX_TREE == 1
 	t_idxtree idxtree{typename t_idxtree::parameters_type(8)};
+#elif GEO_OBSTACLES_INDEX_TREE == 2
+	t_idxtree idxtree{2};
+#endif
 
 
 public:
@@ -473,6 +493,7 @@ public:
 		std::vector<t_vec> nearest_vertices;
 		nearest_vertices.reserve(num);
 
+#if GEO_OBSTACLES_INDEX_TREE == 1
 		idxtree.query(boost::geometry::index::nearest(
 			t_idxvertex<t_scalar>(pos[0], pos[1]), num),
 			boost::make_function_output_iterator([&nearest_vertices](const auto& point)
@@ -481,13 +502,18 @@ public:
 					point.template get<0>(), point.template get<1>()});
 				nearest_vertices.emplace_back(std::move(vec));
 			}));
+#elif GEO_OBSTACLES_INDEX_TREE == 2
+		if(const auto* node = idxtree.get_closest(pos); node)
+			nearest_vertices.emplace_back(*node->vec);
+
+#endif
 
 		return nearest_vertices;
 	}
 
 
 	/**
-	 * clear the indext tree
+	 * clear the index tree
 	 */
 	void Clear()
 	{
@@ -505,6 +531,7 @@ requires tl2::is_vec<t_vec>
 ClosestPixelTreeResults<t_vec>
 build_closest_pixel_tree(const t_imageview& img)
 {
+#if GEO_OBSTACLES_INDEX_TREE == 1
 	using t_results = ClosestPixelTreeResults<t_vec>;
 	using t_scalar = typename t_results::t_scalar;
 	using t_idxvertex = typename t_results::template t_idxvertex<t_scalar>;
@@ -529,6 +556,30 @@ build_closest_pixel_tree(const t_imageview& img)
 	}
 
 	return results;
+
+#elif GEO_OBSTACLES_INDEX_TREE == 2
+	using t_results = ClosestPixelTreeResults<t_vec>;
+
+	t_results results;
+	auto& tree = results.GetIndexTree();
+	auto [width, height] = get_image_dims(img);
+
+	std::vector<t_vec> verts_to_insert;
+
+	// iterate pixels
+	for(int y=0; y<(int)height; ++y)
+	{
+		for(int x=0; x<(int)width; ++x)
+		{
+			auto pix_val = get_pixel(img, x-1, y);
+			if(pix_val)
+				verts_to_insert.emplace_back(tl2::create<t_vec>({x, y}));
+		}
+	}
+
+	tree.create(verts_to_insert);
+	return results;
+#endif
 }
 // ----------------------------------------------------------------------------
 
