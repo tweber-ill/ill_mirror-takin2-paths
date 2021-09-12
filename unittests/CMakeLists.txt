@@ -101,6 +101,9 @@ target_link_libraries(intersect_line ${Lapacke_LIBRARIES})
 
 add_executable(dijkstra dijkstra.cpp)
 target_link_libraries(dijkstra ${Lapacke_LIBRARIES})
+
+add_executable(index_trees index_trees.cpp)
+target_link_libraries(index_trees ${Lapacke_LIBRARIES})
 # -----------------------------------------------------------------------------
 
 
@@ -111,4 +114,5 @@ add_test(intersect_circle intersect_circle)
 add_test(intersect_circle_poly intersect_circle_poly)
 add_test(intersect_line intersect_line)
 add_test(dijkstra dijkstra)
+add_test(index_trees index_trees)
 # -----------------------------------------------------------------------------

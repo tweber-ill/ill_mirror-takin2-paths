@@ -481,7 +481,7 @@ public:
 					point.template get<0>(), point.template get<1>()});
 				nearest_vertices.emplace_back(std::move(vec));
 			}));
-		
+
 		return nearest_vertices;
 	}
 

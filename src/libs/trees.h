@@ -931,8 +931,12 @@ struct KdTreeNode : public CommonTreeNode<KdTreeNode<t_vec>>
 };
 
 
+
 /**
  * k-d tree
+ * @see (Klein 2005), ch. 3.3.1, pp. 126f
+ * @see (Berg 2008), pp. 99-105
+ * @see https://en.wikipedia.org/wiki/K-d_tree
  */
 template<class t_vec>
 requires tl2::is_basic_vec<t_vec>
@@ -984,6 +988,16 @@ public:
 	}
 
 
+	const t_node* get_closest(const t_vec& vec) const
+	{
+		const t_node* closest_node = nullptr;
+		t_scalar closest_dist_sq = std::numeric_limits<t_scalar>::max();
+
+		get_closest(get_root(), vec, &closest_node, &closest_dist_sq);
+		return closest_node;
+	}
+
+
 	friend std::ostream& operator<<(std::ostream& ostr, const KdTree<t_vec>& tree)
 	{
 		ostr << *tree.get_root();
@@ -992,6 +1006,10 @@ public:
 
 
 protected:
+	/**
+	 * create the tree from a collection of points
+	 * @see (Berg 2008), pp. 100-101
+	 */
 	static void create(t_node* node,
 		const std::vector<std::shared_ptr<t_vec>>& vecs,
 		std::size_t dim = 3, std::size_t depth = 0)
@@ -1050,6 +1068,9 @@ protected:
 	}
 
 
+	/**
+	 * delete node and its child nodes
+	 */
 	static void free_nodes(t_node* node)
 	{
 		if(!node) return;
@@ -1064,6 +1085,43 @@ protected:
 		{
 			free_nodes(node->right);
 			delete node->right;
+		}
+	}
+
+
+	/**
+	 * create the tree from a collection of points
+	 * @see https://en.wikipedia.org/wiki/K-d_tree#Nearest_neighbour_search
+	 */
+	static void get_closest(const t_node* node, const t_vec& vec,
+		const t_node** closest_node, t_scalar* closest_dist_sq)
+	{
+		if(!node) return;
+
+		// at leaf node?
+		if(node->vec)
+		{
+			t_scalar dist_sq = tl2::inner<t_vec>(vec-*node->vec, vec-*node->vec);
+			if(dist_sq < *closest_dist_sq)
+			{
+				*closest_dist_sq = dist_sq;
+				*closest_node = node;
+			}
+		}
+
+		t_scalar dist = vec[node->split_idx] - node->split_value;
+		if(dist*dist < *closest_dist_sq)
+		{
+			get_closest(node->left, vec, closest_node, closest_dist_sq);
+			if(dist*dist < *closest_dist_sq)
+				get_closest(node->right, vec, closest_node, closest_dist_sq);
+		}
+		else
+		{
+			if(vec[node->split_idx] <= node->split_value)
+				get_closest(node->left, vec, closest_node, closest_dist_sq);
+			else
+				get_closest(node->right, vec, closest_node, closest_dist_sq);
 		}
 	}
 

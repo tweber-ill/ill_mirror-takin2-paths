@@ -4,7 +4,7 @@
  * @date sep-2021
  * @license GPLv3, see 'LICENSE' file
  *
- * g++ -Wall -Wextra -Weffc++ -std=c++20 -o kdtree kdtree.cpp
+ * g++ -I.. -Wall -Wextra -Weffc++ -std=c++20 -o kdtree kdtree.cpp
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
@@ -39,6 +39,7 @@ using t_vec = tl2::vec<t_real, std::vector>;
 
 int main()
 {
+	using namespace tl2_ops;
 	constexpr const std::size_t NUM_POINTS = 50;
 
 	// random points
@@ -56,12 +57,17 @@ int main()
 		points.emplace_back(std::move(vec));
 	}
 
-	geo::KdTree<t_vec> kd;
+	geo::KdTree<t_vec> kd(2);
 	kd.create(points);
 	std::cout << kd << std::endl;
 
-	std::ofstream ofstr{"kdtree.svg"};
+	std::ofstream ofstr{"kdtree.dot"};
 	geo::write_graph(ofstr, kd.get_root());
+
+	if(const auto* node = kd.get_closest(tl2::create<t_vec>({50., 50.})); node)
+	{
+		std::cout << "closest: " << *node->vec << std::endl;
+	}
 
 	return 0;
 }
