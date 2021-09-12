@@ -112,12 +112,14 @@ struct CommonTreeNode
 		*this = operator=(other);
 	}
 
-	const CommonTreeNode<t_nodetype>&
+	virtual CommonTreeNode<t_nodetype>&
 	operator=(const CommonTreeNode<t_nodetype>& other)
 	{
 		this->parent = other.parent;
 		this->left = other.left;
 		this->right = other.right;
+
+		return *this;
 	}
 };
 
@@ -965,10 +967,28 @@ public:
 		clear();
 	}
 
+	// TODO
+	KdTree(const KdTree<t_vec>& other) = delete;
+	KdTree<t_vec>& operator=(const KdTree<t_vec>& other) = delete;
+
+	KdTree(KdTree<t_vec>&& other)
+	{
+		this->operator=(std::forward<KdTree<t_vec>&&>(other));
+	}
+
+	KdTree<t_vec>& operator=(KdTree<t_vec>&& other)
+	{
+		other.m_ownsroot = false;
+		this->m_root = std::move(other.m_root);
+		this->m_dim = other.m_dim;
+		return *this;
+	}
+
 
 	void clear()
 	{
-		free_nodes(get_root());
+		if(m_ownsroot)
+			free_nodes(get_root());
 	}
 
 
@@ -1139,6 +1159,7 @@ protected:
 
 
 private:
+	bool m_ownsroot{true};
 	t_node m_root{};
 	std::size_t m_dim{3};
 };

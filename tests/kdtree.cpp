@@ -69,5 +69,9 @@ int main()
 		std::cout << "closest: " << *node->vec << std::endl;
 	}
 
+
+	// testing move operator
+	//geo::KdTree<t_vec> kd2 = std::move(kd);
+
 	return 0;
 }
