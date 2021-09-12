@@ -121,6 +121,11 @@ struct CommonTreeNode
 
 		return *this;
 	}
+
+	virtual std::string description() const
+	{
+		return "";
+	}
 };
 
 
@@ -249,8 +254,14 @@ requires is_tree_node<t_node>
 	using namespace tl2_ops;
 	if(!node) return;
 
+	std::string descr = node->description();
 	std::size_t num = nodeMap.find(node)->second;
-	ostrStates << "\t" << num << " [label=\"" << num << "\"];\n";
+	ostrStates << "\t" << num << " [label=\"";
+	if(descr == "")
+		ostrStates << num;
+	else
+		ostrStates << descr;
+	ostrStates << "\"];\n";
 
 	if(node->left)
 	{
@@ -307,7 +318,12 @@ requires is_tree_node<t_node>
 
 	write_graph<t_node>(ostrStates, ostrTransitions, nodeNumbers, node);
 
-	ostr << "// directed graph\ndigraph tree\n{\n\t// states\n";
+	ostr << "// directed graph\ndigraph tree\n{\n";
+	ostr << "\tgraph [fontname = \"DejaVuSans\"]\n"
+		<< "\tnode [fontname = \"DejaVuSans\"]\n"
+		<< "\tedge [fontname = \"DejaVuSans\"]\n";
+
+	ostr << "\n\t// states\n";
 	ostr << ostrStates.str();
 	ostr << "\n\t// transitions\n";
 	ostr << ostrTransitions.str();
@@ -926,6 +942,23 @@ struct KdTreeNode : public CommonTreeNode<KdTreeNode<t_vec>>
 			else
 				ostr << "nullptr\n";
 		}
+	}
+
+
+	virtual std::string description() const override
+	{
+		using namespace tl2_ops;
+
+		std::ostringstream ostr;
+
+		// left node or inner node?
+		if(vec)
+			ostr << "vertex: " << *vec;
+		else
+			ostr << "split index: " << split_idx
+				<< "\nsplit value: " << split_value;
+
+		return ostr.str();
 	}
 
 

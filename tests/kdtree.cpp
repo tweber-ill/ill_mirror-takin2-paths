@@ -37,41 +37,67 @@ using t_real = double;
 using t_vec = tl2::vec<t_real, std::vector>;
 
 
-int main()
+void test_kd(const std::vector<t_vec>& points, const t_vec& query,
+	const char* outfile)
 {
-	using namespace tl2_ops;
-	constexpr const std::size_t NUM_POINTS = 50;
-
-	// random points
-	std::mt19937 rng{std::random_device{}()};
-
-	std::vector<t_vec> points;
-	points.reserve(NUM_POINTS);
-	for(std::size_t i=0; i<NUM_POINTS; ++i)
-	{
-		t_vec vec = tl2::create<t_vec>({
-			std::uniform_real_distribution<t_real>{0., 100.}(rng),
-			std::uniform_real_distribution<t_real>{0., 100.}(rng)
-		});
-
-		points.emplace_back(std::move(vec));
-	}
-
 	geo::KdTree<t_vec> kd(2);
 	kd.create(points);
 	std::cout << kd << std::endl;
 
-	std::ofstream ofstr{"kdtree.dot"};
+	std::ofstream ofstr{outfile};
 	geo::write_graph(ofstr, kd.get_root());
 
-	if(const auto* node = kd.get_closest(tl2::create<t_vec>({50., 50.})); node)
+	if(const auto* node = kd.get_closest(query); node)
 	{
+		using namespace tl2_ops;
 		std::cout << "closest: " << *node->vec << std::endl;
 	}
 
 
 	// testing move operator
 	//geo::KdTree<t_vec> kd2 = std::move(kd);
+}
+
+
+int main()
+{
+	const t_vec query = tl2::create<t_vec>({50., 50.});
+
+	// fixed points
+	{
+		std::vector<t_vec> points{{
+			tl2::create<t_vec>({ 14., 11. }),
+			tl2::create<t_vec>({ 10., 5. }),
+			tl2::create<t_vec>({ 12., 19. }),
+			tl2::create<t_vec>({ 8., 15. }),
+			tl2::create<t_vec>({ 15., 18. }),
+			tl2::create<t_vec>({ 7., 10. }),
+		}};
+
+		test_kd(points, query, "kdtree.dot");
+	}
+
+	std::cout << "\n\n--------------------------------------------------------------------------------" << std::endl;
+
+	// random points
+	{
+		constexpr const std::size_t NUM_POINTS = 50;
+		std::mt19937 rng{std::random_device{}()};
+
+		std::vector<t_vec> points;
+		points.reserve(NUM_POINTS);
+		for(std::size_t i=0; i<NUM_POINTS; ++i)
+		{
+			t_vec vec = tl2::create<t_vec>({
+				std::uniform_real_distribution<t_real>{0., 100.}(rng),
+				std::uniform_real_distribution<t_real>{0., 100.}(rng)
+			});
+
+			points.emplace_back(std::move(vec));
+		}
+
+		test_kd(points, query, "kdtree_rnd.dot");
+	}
 
 	return 0;
 }
