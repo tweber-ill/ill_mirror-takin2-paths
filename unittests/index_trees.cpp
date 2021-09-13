@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar,
 	geo::KdTree<t_vec> kd(2);
 	kd.create(points);
 
-	// get point closest to query point
+	// get point closest to the query point
 	t_vec closest_kd;
 	if(const auto* node = kd.get_closest(query); node)
 		closest_kd = *node->vec;
@@ -115,6 +115,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar,
 			closest_rt.emplace_back(std::move(vec));
 		}));
 
+
+	// test if the dimensions are correct
+	BOOST_TEST((closest_kd.size()==2 &&
+		closest_rt.size()==1 && closest_rt[0].size()==2));
 
 	// test if the two results are equal
 	if(closest_kd.size() && closest_rt.size())
