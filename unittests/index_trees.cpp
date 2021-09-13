@@ -28,13 +28,15 @@
 #define BOOST_TEST_MODULE test_indextrees
 
 #include <boost/test/included/unit_test.hpp>
-#include <boost/function_output_iterator.hpp>
+namespace test = boost::unit_test;
+
+#include <boost/iterator/function_output_iterator.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/index/rtree.hpp>
-#include <boost/type_index.hpp>
-namespace test = boost::unit_test;
 namespace bgeo = boost::geometry;
 namespace geoidx = bgeo::index;
+
+#include <boost/type_index.hpp>
 namespace ty = boost::typeindex;
 
 #include <tuple>
@@ -45,20 +47,23 @@ namespace ty = boost::typeindex;
 #include "src/libs/trees.h"
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar, decltype(std::tuple<double, float>{}))
+BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar,
+	decltype(std::tuple<float, double, long double>{}))
 {
+	// show the scalar type
 	std::cout << "\nTesting for "
 		<< ty::type_id_with_cvr<t_scalar>().pretty_name()
 		<< " type." << std::endl;
 
 
+	// vector and r tree types
 	using t_vec = tl2::vec<t_scalar, std::vector>;
 	using t_vertex = bgeo::model::point<t_scalar, 2, bgeo::cs::cartesian>;
 	using t_rtree = geoidx::rtree<t_vertex, geoidx::dynamic_rstar>;
 
-
+	// number of points and epsilon value
 	constexpr const std::size_t NUM_POINTS = 5000;
-	const t_scalar eps = 1e-4;
+	constexpr const t_scalar eps = std::numeric_limits<t_scalar>::epsilon();
 
 
 	// create random points
@@ -84,7 +89,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar, decltype(std::tuple<double, float
 	});
 
 
-	// create a k-d tree
+	// create a two-dimensional k-d tree
 	geo::KdTree<t_vec> kd(2);
 	kd.create(points);
 
@@ -94,7 +99,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(trees, t_scalar, decltype(std::tuple<double, float
 		closest_kd = *node->vec;
 
 
-	// create an R* tree
+	// create a two-dimensional R* tree
 	t_rtree rt(typename t_rtree::parameters_type{8});
 	for(const t_vec& pt : points)
 		rt.insert(t_vertex{pt[0], pt[1]});
