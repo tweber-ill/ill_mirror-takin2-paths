@@ -26,6 +26,9 @@
  * ----------------------------------------------------------------------------
  */
 
+#include "tlibs2/libs/helper.h"
+#include "src/libs/voronoi_lines.h"
+
 #include "lines.h"
 
 #if QT_VERSION >= 0x060000
@@ -59,9 +62,6 @@ namespace asio = boost::asio;
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 namespace ptree = boost::property_tree;
-
-#include "tlibs2/libs/helper.h"
-#include "src/libs/voronoi_lines.h"
 
 
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
@@ -547,6 +547,13 @@ void LinesScene::UpdateVoro()
 				m_lines, m_linegroups, m_grouplines, 
 				m_removeverticesinregions);
 			break;
+#ifdef USE_CGAL
+		case VoronoiCalculationMethod::CGAL:
+			results = geo::calc_voro_cgal<t_vec, t_line, t_graph>(
+				m_lines, m_linegroups, m_grouplines, 
+				m_removeverticesinregions);
+			break;
+#endif
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			results = geo::calc_voro_ovd<t_vec, t_line, t_graph>(
@@ -1192,6 +1199,15 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionVoroBoost, &QAction::toggled, [this]()
 	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::BOOSTPOLY); });
 
+	QAction *actionVoroCGAL = new QAction{"CGAL/Segment Delaunay Graph", this};
+	actionVoroCGAL->setCheckable(true);
+	actionVoroCGAL->setChecked(false);
+	connect(actionVoroCGAL, &QAction::toggled, [this]()
+	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::CGAL); });
+#if !defined(USE_CGAL)
+	actionVoroCGAL->setEnabled(false);
+#endif
+
 	QAction *actionVoroOVD = new QAction{"OpenVoronoi", this};
 	actionVoroOVD->setCheckable(true);
 	actionVoroOVD->setChecked(false);
@@ -1203,6 +1219,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	QActionGroup *groupVoro = new QActionGroup{this};
 	groupVoro->addAction(actionVoroBoost);
+	groupVoro->addAction(actionVoroCGAL);
 	groupVoro->addAction(actionVoroOVD);
 
 
@@ -1293,6 +1310,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuInters->addAction(actionIntersDirect);
 	menuInters->addAction(actionIntersSweep);
 	menuVoro->addAction(actionVoroBoost);
+	menuVoro->addAction(actionVoroCGAL);
 	menuVoro->addAction(actionVoroOVD);
 
 	menuOptions->addAction(actionStopOnInters);

@@ -51,6 +51,18 @@
 	#include <openvoronoi/voronoidiagram.hpp>
 #endif
 
+#ifdef USE_CGAL
+	#include <CGAL/Simple_cartesian.h>
+	#include <CGAL/Filtered_kernel.h>
+
+	#include <CGAL/Segment_Delaunay_graph_2.h>
+	#include <CGAL/Segment_Delaunay_graph_traits_2.h>
+
+	#include <CGAL/Voronoi_diagram_2.h>
+	#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
+	#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
+#endif
+
 #include "tlibs2/libs/maths.h"
 #include "hull.h"
 #include "lines.h"
@@ -126,7 +138,7 @@ public:
 	using t_vert_index_opt = std::optional<t_vert_index>;
 	using t_vert_indices_opt = std::pair<t_vert_index_opt, t_vert_index_opt>;
 
-	template<class T = t_real>
+	template<class T = t_scalar>
 	using t_idxvertex = boost::geometry::model::point<
 		T, 2, boost::geometry::cs::cartesian>;
 
@@ -1089,6 +1101,178 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				std::make_pair(
 					std::make_pair(vert1idx, vert2idx),
 					std::move(para_edge)));
+		}
+	}
+
+	results.CreateIndexTree();
+	return results;
+}
+#endif
+
+
+#ifdef USE_CGAL
+/**
+ * voronoi diagram for line segments
+ * @see https://github.com/CGAL/cgal/blob/master/Segment_Delaunay_graph_2/examples/Segment_Delaunay_graph_2/sdg-voronoi-edges.cpp
+ * @see https://github.com/CGAL/cgal/blob/master/Segment_Delaunay_graph_2/include/CGAL/Segment_Delaunay_graph_2/Segment_Delaunay_graph_2_impl.h
+ * @see https://github.com/CGAL/cgal/blob/master/Voronoi_diagram_2/examples/Voronoi_diagram_2/vd_2_point_location_sdg_linf.cpp
+ * @see https://doc.cgal.org/latest/Segment_Delaunay_graph_2/index.html
+ * @see https://doc.cgal.org/latest/Voronoi_diagram_2/index.html
+ */
+template<class t_vec,
+	class t_line = std::pair<t_vec, t_vec>,
+	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
+	class t_int = int>
+VoronoiLinesResults<t_vec, t_line, t_graph>
+calc_voro_cgal(const std::vector<t_line>& lines,
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
+	typename t_vec::value_type edge_eps = 1e-2,
+	const std::vector<t_vec>* points_outside_regions = nullptr,
+	const std::vector<bool>* inverted_region = nullptr)
+requires tl2::is_vec<t_vec> && is_graph<t_graph>
+{
+	using t_real = typename t_vec::value_type;
+
+	VoronoiLinesResults<t_vec, t_line, t_graph> results;
+	// voronoi vertices
+	auto& vertices = results.GetVoronoiVertices();
+	// voronoi edges
+	auto& linear_edges = results.GetLinearEdges();
+	auto& all_parabolic_edges = results.GetParabolicEdges();
+	// graph of voronoi vertices
+	t_graph& graph = results.GetVoronoiGraph();
+
+	// length of infinite edges
+	t_real infline_len = 1.;
+	for(const t_line& line : lines)
+	{
+		t_vec dir = std::get<1>(line) - std::get<0>(line);
+		t_real len = tl2::norm(dir);
+		infline_len = std::max(infline_len, len);
+	}
+	infline_len *= 10.;
+
+	// kernel type
+	using t_kernel = CGAL::Filtered_kernel<CGAL::Simple_cartesian<t_real>>;
+
+	// delaunay and voronoi types
+	using t_delgraph = CGAL::Segment_Delaunay_graph_2<
+		CGAL::Segment_Delaunay_graph_traits_2<t_kernel>>;
+	using t_voronoi = CGAL::Voronoi_diagram_2<
+		t_delgraph,
+		CGAL::Segment_Delaunay_graph_adaptation_traits_2<t_delgraph>,
+		CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<t_delgraph>>;
+
+	// site and vertex types
+	using t_geotraits = typename t_delgraph::Geom_traits;
+	using t_site = typename t_delgraph::Site_2;
+	using t_point = typename t_delgraph::Point_2;
+
+	// voronoi edge types
+	using t_paraseg = CGAL::Parabola_segment_2<t_geotraits>;
+	using t_seg = typename t_geotraits::Segment_2;
+	using t_ray = typename t_geotraits::Ray_2;
+
+
+	// delaunay triangulation object
+	t_delgraph delgraph;
+
+	// insert sites
+	for(const t_line& line : lines)
+	{
+		const t_vec& pt0 = std::get<0>(line);
+		const t_vec& pt1 = std::get<1>(line);
+
+		t_point point0(pt0[0], pt0[1]);
+		t_point point1(pt1[0], pt1[1]);
+		t_site site = t_site::construct_site_2(point0, point1);
+
+		delgraph.insert(site);
+	}
+
+
+	if(delgraph.is_valid(false /*verbose*/))
+	{
+		const auto& triag = delgraph.tds();
+
+		// voronoi diagram from delaunay triangulation
+		t_voronoi voronoi(delgraph);
+		vertices.reserve(voronoi.number_of_vertices());
+
+		// iterate voronoi vertices
+		for(auto iter = voronoi.vertices_begin(); iter != voronoi.vertices_end(); ++iter)
+		{
+			vertices.emplace_back(tl2::create<t_vec>({ iter->point()[0], iter->point()[1] }));
+		}
+
+		// TODO: remove
+		std::size_t dummy_idx = 0;
+
+		// iterate voronoi edges
+		for(auto iter = delgraph.finite_edges_begin(); iter != delgraph.finite_edges_end(); ++iter)
+		{
+			if(delgraph.is_infinite(*iter))
+				continue;
+
+			// TODO: identifier helper edges and voronoi vertex index
+			bool is_helper_edge = false;
+			std::size_t vert1idx = dummy_idx++;
+			std::size_t vert2idx = dummy_idx++;
+
+			// get voronoi edge
+			auto dual = delgraph.primal(*iter);
+
+			// linear, finite edge
+			if(t_seg seg; CGAL::assign(seg, dual))
+			{
+				t_vec vert0 = tl2::create<t_vec>({ seg.source()[0], seg.source()[1] });
+				t_vec vert1 = tl2::create<t_vec>({ seg.target()[0], seg.target()[1] });
+				t_line line = std::make_pair(vert0, vert1);
+
+				if(!is_helper_edge)
+					linear_edges.emplace(
+						std::make_pair(
+							std::make_pair(vert1idx, vert2idx),
+							std::move(line)));
+			}
+
+			// linear, infinite edge
+			if(t_ray ray; CGAL::assign(ray, dual))
+			{
+				t_vec vert0 = tl2::create<t_vec>({ ray.source()[0], ray.source()[1] });
+				t_vec vert1 = tl2::create<t_vec>({ ray.second_point()[0], ray.second_point()[1] });
+
+				t_vec dir = vert1 - vert0;
+				dir /= tl2::norm(dir);
+				dir *= infline_len;
+
+				t_line line = std::make_pair(vert0, vert0 + dir);
+
+				if(!is_helper_edge)
+					linear_edges.emplace(
+						std::make_pair(
+							std::make_pair(vert1idx, vert2idx),
+							std::move(line)));
+			}
+
+			// parabolic, finite edge
+			if(t_paraseg paraseg; CGAL::assign(paraseg, dual))
+			{
+				std::vector<t_point> points;
+				t_real step = 2;
+				paraseg.generate_points(points, step);
+
+				std::vector<t_vec> parabolic_edge;
+				parabolic_edge.reserve(points.size());
+				for(const t_point& point : points)
+					parabolic_edge.emplace_back(tl2::create<t_vec>({ point[0], point[1] }));
+
+				all_parabolic_edges.emplace(
+					std::make_pair(
+						std::make_pair(vert1idx, vert2idx),
+						std::move(parabolic_edge)));
+			}
 		}
 	}
 

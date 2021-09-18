@@ -60,6 +60,7 @@ enum class IntersectionCalculationMethod
 enum class VoronoiCalculationMethod
 {
 	BOOSTPOLY,
+	CGAL,
 	OVD,
 };
 

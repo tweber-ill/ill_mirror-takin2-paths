@@ -23,8 +23,8 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "PathsExporter.h"
 #include "PathsBuilder.h"
+#include "PathsExporter.h"
 
 #include <fstream>
 

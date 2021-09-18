@@ -27,9 +27,8 @@
 #include <QtCore/QLoggingCategory>
 #include <QtWidgets/QApplication>
 
-#include "tlibs2/libs/helper.h"
-
 #include "PathsTool.h"
+#include "tlibs2/libs/helper.h"
 
 
 /**

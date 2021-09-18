@@ -31,17 +31,17 @@
 
 #include <boost/signals2/signal.hpp>
 
+#include "src/libs/voronoi_lines.h"
+#include "src/libs/voronoi.h"
+#include "src/libs/img.h"
+#include "src/libs/graphs.h"
+#include "src/libs/hull.h"
+#include "tlibs2/libs/maths.h"
+
 #include "types.h"
 #include "InstrumentSpace.h"
 #include "TasCalculator.h"
 #include "PathsExporter.h"
-
-#include "tlibs2/libs/maths.h"
-#include "src/libs/img.h"
-#include "src/libs/graphs.h"
-#include "src/libs/voronoi.h"
-#include "src/libs/voronoi_lines.h"
-#include "src/libs/hull.h"
 
 
 struct InstrumentPath

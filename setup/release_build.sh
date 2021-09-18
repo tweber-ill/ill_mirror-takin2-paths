@@ -34,7 +34,8 @@ rm -rfv build
 mkdir build
 pushd build
 
-if ! cmake -DUSE_LAPACK=False -DUSE_QT6=False -DUSE_OVD=False -DBUILD_TEST_TOOLS=True \
+if ! cmake -DUSE_LAPACK=False -DUSE_QT6=False -DUSE_OVD=False -DUSE_CGAL=True \
+	-DBUILD_TEST_TOOLS=True \
 	-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" \
 	-DCMAKE_VERBOSE_MAKEFILE=False ..
 then

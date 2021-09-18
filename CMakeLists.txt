@@ -46,6 +46,7 @@ list(APPEND CMAKE_MODULE_PATH
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
 option(USE_OVD "use openvoronoi" TRUE)
+option(USE_CGAL "use cgal" TRUE)
 option(USE_PY "use python scripting" FALSE)
 option(BUILD_TEST_TOOLS "build test tools" TRUE)
 option(UNIT_TESTS "build unit tests" FALSE)
@@ -162,6 +163,13 @@ if(USE_OVD)
 endif()
 
 
+if(USE_CGAL)
+	message("CGAL enabled.")
+	add_definitions(-DUSE_CGAL)
+	set(CGAL_LIBRARIES "-lgmp")
+endif()
+
+
 if(USE_LAPACK)
 	find_package(Lapacke)
 	if(Lapacke_FOUND)
@@ -268,6 +276,7 @@ target_link_libraries(taspaths_core
 	"${Boost_LIBRARIES}"
 	"${Lapacke_LIBRARIES}"
 	#"${Qhull_LIBRARIES}"
+	"${CGAL_LIBRARIES}"
 	Threads::Threads
 )
 
@@ -396,6 +405,7 @@ if(QT_VER EQUAL 6)
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
+			"${CGAL_LIBRARIES}"
 			"${MINGW_WINSOCK}"
 			Threads::Threads
 			Qt6::Core Qt6::Gui Qt6::Widgets
@@ -440,6 +450,7 @@ elseif(QT_VER EQUAL 5)
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
+			"${CGAL_LIBRARIES}"
 			"${MINGW_WINSOCK}"
 			Threads::Threads
 			Qt5::Core Qt5::Gui Qt5::Widgets

@@ -29,6 +29,8 @@
 #ifndef __POLY_GUI_H__
 #define __POLY_GUI_H__
 
+#include "src/libs/voronoi_lines.h"
+#include "src/libs/lines.h"
 
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QLabel>
@@ -43,9 +45,6 @@
 #include "about.h"
 #include "settings.h"
 #include "vertex.h"
-
-#include "src/libs/lines.h"
-#include "src/libs/voronoi_lines.h"
 
 
 class PolyView : public QGraphicsView
