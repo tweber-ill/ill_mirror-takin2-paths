@@ -1536,5 +1536,74 @@ requires tl2::is_vec<t_vec>
 	return ker_from_edges<t_vec, t_edge>(edges, eps);
 }
 
+
+/**
+ * generate potentially intersecting random line segments 
+ */
+template<class t_line, class t_vec, class t_mat,
+	class t_real = typename t_vec::value_type>
+std::vector<t_line> random_lines(std::size_t num_lines,
+	t_real max_range = 1e4, t_real min_seg_len = 1., t_real max_seg_len = 100.,
+	bool round_vec = false)
+requires tl2::is_vec<t_vec> && tl2::is_mat<t_mat>
+{
+	std::vector<t_line> lines;
+	lines.reserve(num_lines);
+
+	for(std::size_t i=0; i<num_lines; ++i)
+	{
+		// create first point of the line segment
+		t_real x = tl2::get_rand<t_real>(-max_range, max_range);
+		t_real y = tl2::get_rand<t_real>(-max_range, max_range);
+		t_vec pt1 = tl2::create<t_vec>({ x, y });
+		if(round_vec)
+		{
+			pt1[0] = std::round(pt1[0]);
+			pt1[1] = std::round(pt1[1]);
+		}
+
+		// create second point of the line segment
+		t_real len = tl2::get_rand<t_real>(min_seg_len, max_seg_len);
+		t_real angle = tl2::get_rand<t_real>(0., 2.*tl2::pi<t_real>);
+		t_mat rot = tl2::rotation_2d<t_mat>(angle);
+		t_vec pt2 = pt1 + rot * tl2::create<t_vec>({ len, 0. });
+		if(round_vec)
+		{
+			pt2[0] = std::round(pt2[0]);
+			pt2[1] = std::round(pt2[1]);
+		}
+
+		lines.emplace_back(std::make_pair(std::move(pt1), std::move(pt2)));
+	}
+
+	return lines;
+}
+
+
+/**
+ * generate non-intersecting random line segments 
+ */
+template<class t_line, class t_vec, class t_mat,
+	class t_real = typename t_vec::value_type>
+std::vector<t_line> random_nonintersecting_lines(std::size_t num_lines,
+	t_real max_range = 1e4, t_real min_seg_len = 1., t_real max_seg_len = 100.,
+	bool round_vec = false)
+requires tl2::is_vec<t_vec> && tl2::is_mat<t_mat>
+{
+	std::vector<t_line> lines;
+
+	do
+	{
+		lines = random_lines<t_line, t_vec, t_mat, t_real>
+			(num_lines, max_range, 
+			min_seg_len, max_seg_len, 
+			round_vec);
+	}
+	while(intersect_sweep<t_vec, t_line, t_real>(lines).size());
+
+	return lines;
+}
+
+
 }
 #endif

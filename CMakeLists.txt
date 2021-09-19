@@ -82,6 +82,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_compile_options(-g -ggdb)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+	add_compile_options("-DNDEBUG")
 	add_compile_options("-Wno-#pragma-messages")
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		# remove pragma messages

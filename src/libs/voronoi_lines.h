@@ -336,7 +336,7 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
 	typename t_vec::value_type edge_eps = 1e-2,
 	const std::vector<t_vec> *points_outside_regions = nullptr,
@@ -921,7 +921,7 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_ovd(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
 	typename t_vec::value_type edge_eps = 1e-2,
 	const std::vector<t_vec>* points_outside_regions = nullptr,
@@ -1125,7 +1125,7 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_cgal(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
 	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
 	typename t_vec::value_type edge_eps = 1e-2,
 	const std::vector<t_vec>* points_outside_regions = nullptr,

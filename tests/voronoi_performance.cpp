@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ----------------------------------------------------------------------------
  *
- * g++-11 -std=c++20 -O2 -march=native -I../externals -I.. -DUSE_CGAL -o voronoi_performance voronoi_performance.cpp
+ * g++-11 -std=c++20 -O2 -march=native -I../externals -I.. -DUSE_CGAL -DNDEBUG -o voronoi_performance voronoi_performance.cpp -lgmp
  */
 
 
@@ -30,53 +30,60 @@
 #include <iomanip>
 #include <vector>
 
-#include "../src/libs/voronoi_lines.h"
+#include "src/libs/voronoi_lines.h"
+#include "src/core/types.h"
+#include "tlibs2/libs/log.h"
 
 
 using t_real = double;
-using t_vec = tl2::vec<t_real, std::vector>;
-using t_mat = tl2::mat<t_real, std::vector>;
-using t_line = std::pair<t_vec, t_vec>;
-
-
-std::vector<t_line> random_lines(std::size_t num_lines)
-{
-	const int MAX_RANGE = 5000;
-	const t_real MAX_SEG_LEN = 10.;
-
-	std::vector<t_line> lines;
-	lines.reserve(num_lines);
-
-	for(std::size_t i=0; i<num_lines; ++i)
-	{
-		t_real x = tl2::get_rand<t_real>(-MAX_RANGE, MAX_RANGE);
-		t_real y = tl2::get_rand<t_real>(-MAX_RANGE, MAX_RANGE);
-		t_vec pt1 = tl2::create<t_vec>({ x, y });
-
-		t_real len = tl2::get_rand<t_real>(0., MAX_SEG_LEN);
-		t_real angle = tl2::get_rand<t_real>(0., 2.*tl2::pi<t_real>);
-		t_mat rot = tl2::rotation_2d<t_mat>(angle);
-		t_vec pt2 = pt1 + rot * tl2::create<t_vec>({ len, 0. });
-
-		lines.emplace_back(std::make_pair(std::move(pt1), std::move(pt2)));
-	}
-
-	return lines;
-}
+//using t_vector = tl2::vec<t_real, std::vector>;
+//using t_matrix = tl2::mat<t_real, std::vector>;
+using t_vector = t_vec2;
+using t_matrix = t_mat22;
+using t_line = std::pair<t_vector, t_vector>;
 
 
 int main()
 {
-	// create non-intersecting line segments
-	std::vector<t_line> lines;
-	do
+	std::cout.precision(8);
+
+	std::cout 
+		<< std::left << std::setw(20) << "# number of lines " 
+		<< std::left << std::setw(20) << "time (boost)"
+		<< std::left << std::setw(20) << "time (cgal)"
+		<< std::left << std::setw(20) << "vertices (boost)"
+		<< std::left << std::setw(20) << "vertices (cgal)"
+		<< std::endl;
+
+
+	for(std::size_t num_lines = 10; num_lines <= 500; num_lines += 10)
 	{
-		lines = random_lines(50);
+		// create non-intersecting line segments
+		std::vector<t_line> lines = 
+			geo::random_nonintersecting_lines<t_line, t_vec, t_matrix, t_real>
+				(num_lines, 1e4, 1., 100., true);;
+
+		std::vector<std::pair<std::size_t, std::size_t>> line_groups{};
+
+
+		// calculate the voronoi diagrams
+		tl2::Stopwatch<t_real> timer_boost;
+		timer_boost.start();
+		auto res_boost = geo::calc_voro<t_vector, t_line>(lines, line_groups, false, false);
+		timer_boost.stop();
+
+		tl2::Stopwatch<t_real> timer_cgal;
+		timer_cgal.start();
+		auto res_cgal = geo::calc_voro_cgal<t_vector, t_line>(lines, line_groups, false, false);
+		timer_cgal.stop();
+
+		std::cout << std::left << std::setw(20) << num_lines 
+			<< std::left << std::setw(20) << timer_boost.GetDur() 
+			<< std::left << std::setw(20) << timer_cgal.GetDur() 
+			<< std::left << std::setw(20) << res_boost.GetVoronoiVertices().size() 
+			<< std::left << std::setw(20) << res_cgal.GetVoronoiVertices().size()
+			<< std::endl;
 	}
-	while(geo::intersect_sweep<t_vec, t_line>(lines).size());
-
-
-	// TODO
 
 	return 0;
 }
