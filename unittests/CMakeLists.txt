@@ -83,6 +83,7 @@ endif()
 
 include_directories(
 	"${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/.."
+	"${PROJECT_SOURCE_DIR}/externals" "${PROJECT_SOURCE_DIR}/../externals"
 	"${Lapacke_INCLUDE_DIRS}"
 )
 
@@ -104,6 +105,9 @@ target_link_libraries(dijkstra ${Lapacke_LIBRARIES})
 
 add_executable(index_trees index_trees.cpp)
 target_link_libraries(index_trees ${Lapacke_LIBRARIES})
+
+add_executable(voronoi voronoi.cpp)
+target_link_libraries(voronoi ${Lapacke_LIBRARIES} -lgmp)
 # -----------------------------------------------------------------------------
 
 
@@ -115,4 +119,5 @@ add_test(intersect_circle_poly intersect_circle_poly)
 add_test(intersect_line intersect_line)
 add_test(dijkstra dijkstra)
 add_test(index_trees index_trees)
+add_test(voronoi voronoi)
 # -----------------------------------------------------------------------------
