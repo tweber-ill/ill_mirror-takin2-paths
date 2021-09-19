@@ -507,7 +507,7 @@ std::size_t LinesScene::GetClosestLineIdx(const t_vec& pt) const
 	{
 		const auto& line = m_lines[idx];
 
-		t_real dist = dist_pt_line(pt, line.first, line.second, true);
+		t_real dist = dist_pt_line(pt, line.first, line.second, false);
 		if(dist < mindist)
 		{
 			mindist = dist;
