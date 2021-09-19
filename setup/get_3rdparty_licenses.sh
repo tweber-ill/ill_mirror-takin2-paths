@@ -51,6 +51,11 @@ if ! wget http://www.boost.org/LICENSE_1_0.txt -O ${LICDIR}/Boost_license.txt; t
 	echo -e "Error: Cannot download Boost license.";
 fi
 
+# cgal
+if ! wget https://raw.githubusercontent.com/CGAL/cgal/master/Installation/LICENSE.GPL -O ${LICDIR}/CGAL_license.txt; then
+	echo -e "Error: Cannot download CGAL license.";
+fi
+
 # lapack(e)
 if ! wget http://www.netlib.org/lapack/LICENSE.txt -O ${LICDIR}/Lapack_license.txt; then
 	echo -e "Error: Cannot download Lapack(e) license.";
