@@ -215,13 +215,23 @@ public:
 	// ------------------------------------------------------------------------
 
 
+	// ------------------------------------------------------------------------
+	// edge types
+	// ------------------------------------------------------------------------
 	using t_edgemap_lin =
 		std::unordered_map<
 			t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>;
-
 	using t_edgemap_quadr =
 		std::unordered_map<
 			t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>;
+
+	using t_edgevec_lin =
+		std::vector<std::tuple<t_line,
+			t_vert_index_opt, t_vert_index_opt>>;
+	using t_edgevec_quadr =
+		std::vector<std::tuple<std::vector<t_vec>,
+			t_vert_index, t_vert_index>>;
+	// ------------------------------------------------------------------------
 
 
 	// ------------------------------------------------------------------------
@@ -231,6 +241,217 @@ public:
 	typename t_idxtree::size_type GetIndexTreeSize() const
 	{
 		return idxtree.size();
+	}
+
+
+	/*
+	 * remove the voronoi vertex if it's inside a region defined by a line group
+	 * TODO: could alternatively directly query path builder's m_img pixels
+	 */
+	bool IsVertexInRegion(
+		const std::vector<t_line>& lines,
+		const std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
+		const std::vector<t_vec>* points_outside_regions,
+		const std::vector<bool>* inverted_regions,
+		const t_vert_index_opt& vert0idx, const t_vert_index_opt& vert1idx,
+		t_scalar eps = std::numeric_limits<t_scalar>::eps()) const
+	{
+		bool vert_inside_norm_region = false;
+		bool has_inv_regions = false;
+		bool vert0_outside_all_inv_regions = true;
+		bool vert1_outside_all_inv_regions = true;
+
+		for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
+		{
+			bool vert_inside_region = false;
+			auto [grp_beg, grp_end] = line_groups[grpidx];
+			const t_vec* pt_outside = nullptr;
+			bool inv_region = false;
+
+			if(points_outside_regions && points_outside_regions->size())
+				pt_outside = &(*points_outside_regions)[grpidx];
+			if(inverted_regions && inverted_regions->size())
+				inv_region = (*inverted_regions)[grpidx];
+
+			// check edge vertex 0
+			if(vert0idx)
+			{
+				const auto& vorovert = vertices[*vert0idx];
+				vert_inside_region = pt_inside_poly<t_vec>(
+					lines, vorovert, grp_beg, grp_end, pt_outside, eps);
+				if(inv_region)
+				{
+					has_inv_regions = true;
+					if(vert_inside_region)
+						vert0_outside_all_inv_regions = false;
+				}
+				else
+				{
+					if(vert_inside_region)
+					{
+						vert_inside_norm_region = true;
+						break;
+					}
+				}
+			}
+
+			// check edge vertex 1
+			if(vert1idx)
+			{
+				const auto& vorovert = vertices[*vert1idx];
+				vert_inside_region = pt_inside_poly<t_vec>(
+					lines, vorovert, grp_beg, grp_end, pt_outside, eps);
+				if(inv_region)
+				{
+					has_inv_regions = true;
+					if(vert_inside_region)
+						vert1_outside_all_inv_regions = false;
+				}
+				else
+				{
+					if(vert_inside_region)
+					{
+						vert_inside_norm_region = true;
+						break;
+					}
+				}
+			}
+		}
+
+		// ignore this voronoi edge and skip to the next one
+		if(vert_inside_norm_region)
+			return true;
+		if(has_inv_regions &&
+			(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
+			return true;
+
+		return false;
+	}
+
+
+	/**
+	 * remove vertices with no connection
+	 */
+	void RemoveUnconnectedVertices()
+	{
+		std::vector<std::string> verts;
+		verts.reserve(graph.GetNumVertices());
+
+		// get vertex identifiers
+		for(std::size_t vert=0; vert<graph.GetNumVertices(); ++vert)
+		{
+			const std::string& id = graph.GetVertexIdent(vert);
+			verts.push_back(id);
+		}
+
+		// remove vertices with no connections from graph
+		std::vector<std::size_t> removed_indices;
+		removed_indices.reserve(verts.size());
+
+		for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
+		{
+			const std::string& id = verts[vertidx];
+			auto neighbours_outgoing = graph.GetNeighbours(id, 1);
+
+			if(neighbours_outgoing.size() == 0)
+			{
+				graph.RemoveVertex(id);
+				removed_indices.push_back(vertidx);
+			}
+		}
+
+		// remove the vertex coordinates
+		//std::sort(removed_indices.begin(), removed_indices.end(),
+		//	[](std::size_t idx1, std::size_t idx2) -> bool { return idx1 > idx2; });
+		std::reverse(removed_indices.begin(), removed_indices.end());
+
+		for(std::size_t idx : removed_indices)
+		{
+			if(idx < vertices.size())
+			{
+				vertices.erase(vertices.begin() + idx);
+			}
+			else
+			{
+				std::ostringstream ostrErr;
+				ostrErr << "Vertex index out of range: " << idx << ". ";
+				ostrErr << "Vector size: " << vertices.size() << ".";
+				throw std::out_of_range(ostrErr.str());
+				break;
+			}
+
+			// remove linear bisectors containing the removed vertex (and correct other indices)
+			for(auto iter = linear_edges_vec.begin(); iter != linear_edges_vec.end();)
+			{
+				// remove bisector
+				if((std::get<1>(*iter) && *std::get<1>(*iter)==idx) ||
+					(std::get<2>(*iter) && *std::get<2>(*iter)==idx))
+				{
+					iter = linear_edges_vec.erase(iter);
+					continue;
+				}
+
+				// correct indices
+				if(std::get<1>(*iter) && *std::get<1>(*iter) >= idx)
+					--*std::get<1>(*iter);
+				if(std::get<2>(*iter) && *std::get<2>(*iter) >= idx)
+					--*std::get<2>(*iter);
+
+				++iter;
+			}
+
+			// remove quadratic bisectors containing the removed vertex (and correct other indices)
+			for(auto iter = parabolic_edges_vec.begin(); iter != parabolic_edges_vec.end();)
+			{
+				// remove bisector
+				if(std::get<1>(*iter)==idx || std::get<2>(*iter)==idx)
+				{
+					iter = parabolic_edges_vec.erase(iter);
+					continue;
+				}
+
+				// correct indices
+				if(std::get<1>(*iter) >= idx)
+					--std::get<1>(*iter);
+				if(std::get<2>(*iter) >= idx)
+					--std::get<2>(*iter);
+
+				++iter;
+			}
+		}
+	}
+
+
+	/*
+	 * convert edge vectors to edge map
+	 * TODO: generate them directly and remove the vector types
+	 */
+	void CreateEdgeMaps()
+	{
+		for(const auto& edge : parabolic_edges_vec)
+		{
+			std::size_t idx1 = std::get<1>(edge);
+			std::size_t idx2 = std::get<2>(edge);
+
+			parabolic_edges.emplace(
+				std::make_pair(
+					std::make_pair(idx1, idx2),	// key
+					std::move(std::get<0>(edge))));
+		}
+
+		for(const auto& edge : linear_edges_vec)
+		{
+			const auto& _idx1 = std::get<1>(edge);
+			const auto& _idx2 = std::get<2>(edge);
+
+			std::size_t idx1 = _idx1 ? *_idx1 : std::numeric_limits<std::size_t>::max();
+			std::size_t idx2 = _idx2 ? *_idx2 : std::numeric_limits<std::size_t>::max();
+
+			linear_edges.emplace(
+				std::make_pair(
+					std::make_pair(idx1, idx2),	// key
+					std::move(std::get<0>(edge))));
+		}
 	}
 
 
@@ -287,12 +508,16 @@ public:
 	// ------------------------------------------------------------------------
 	const t_edgemap_lin& GetLinearEdges() const { return linear_edges; }
 	const t_edgemap_quadr& GetParabolicEdges() const { return parabolic_edges; }
+	const t_edgevec_lin& GetLinearEdgesVec() const { return linear_edges_vec; }
+	const t_edgevec_quadr& GetParabolicEdgesVec() const { return parabolic_edges_vec; }
 	const std::vector<t_vec>& GetVoronoiVertices() const { return vertices; }
 	const t_graph& GetVoronoiGraph() const { return graph; }
 	const t_idxtree& GetVoronoiIndexTree() const { return idxtree; }
 
 	t_edgemap_lin& GetLinearEdges() { return linear_edges; }
 	t_edgemap_quadr& GetParabolicEdges() { return parabolic_edges; }
+	t_edgevec_lin& GetLinearEdgesVec() { return linear_edges_vec; }
+	t_edgevec_quadr& GetParabolicEdgesVec() { return parabolic_edges_vec; }
 	std::vector<t_vec>& GetVoronoiVertices() { return vertices; }
 	t_graph& GetVoronoiGraph() { return graph; }
 // ------------------------------------------------------------------------
@@ -305,6 +530,10 @@ private:
 
 	// quadratic bisectors
 	t_edgemap_quadr parabolic_edges{};
+
+	// TODO: get rid of these and use the above maps directly
+	t_edgevec_lin linear_edges_vec;
+	t_edgevec_quadr parabolic_edges_vec;
 	// ------------------------------------------------------------------------
 
 
@@ -473,16 +702,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// edges
-	auto& all_parabolic_edges = results.GetParabolicEdges();
-	auto& linear_edges = results.GetLinearEdges();
-
-	// TODO: get rid of these and use the above maps directly
-	std::vector<std::tuple<t_line,
-		std::optional<std::size_t>,
-		std::optional<std::size_t>>> linear_edges_vec;
-
-	std::vector<std::tuple<std::vector<t_vec>,
-		std::size_t, std::size_t>> all_parabolic_edges_vec;
+	//auto& all_parabolic_edges = results.GetParabolicEdges();
+	//auto& linear_edges = results.GetLinearEdges();
+	auto& all_parabolic_edges_vec = results.GetParabolicEdgesVec();
+	auto& linear_edges_vec = results.GetLinearEdgesVec();
 
 	linear_edges_vec.reserve(voro.edges().size());
 
@@ -520,78 +743,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				}
 			}
 
-
-			// remove the voronoi vertex if it's inside a region defined by a line group
-			// TODO: could alternatively directly query path builder's m_img pixels
 			if(remove_voronoi_vertices_in_regions)
 			{
-				bool vert_inside_norm_region = false;
-				bool has_inv_regions = false;
-				bool vert0_outside_all_inv_regions = true;
-				bool vert1_outside_all_inv_regions = true;
-
-				for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
-				{
-					bool vert_inside_region = false;
-					auto [grp_beg, grp_end] = line_groups[grpidx];
-					const t_vec* pt_outside = nullptr;
-					bool inv_region = false;
-
-					if(points_outside_regions && points_outside_regions->size())
-						pt_outside = &(*points_outside_regions)[grpidx];
-					if(inverted_regions && inverted_regions->size())
-						inv_region = (*inverted_regions)[grpidx];
-
-					// check edge vertex 0
-					if(vert0idx)
-					{
-						const auto& vorovert = vertices[*vert0idx];
-						vert_inside_region = pt_inside_poly<t_vec>(
-							lines, vorovert, grp_beg, grp_end, pt_outside, eps);
-						if(inv_region)
-						{
-							has_inv_regions = true;
-							if(vert_inside_region)
-								vert0_outside_all_inv_regions = false;
-						}
-						else
-						{
-							if(vert_inside_region)
-							{
-								vert_inside_norm_region = true;
-								break;
-							}
-						}
-					}
-
-					// check edge vertex 1
-					if(vert1idx)
-					{
-						const auto& vorovert = vertices[*vert1idx];
-						vert_inside_region = pt_inside_poly<t_vec>(
-							lines, vorovert, grp_beg, grp_end, pt_outside, eps);
-						if(inv_region)
-						{
-							has_inv_regions = true;
-							if(vert_inside_region)
-								vert1_outside_all_inv_regions = false;
-						}
-						else
-						{
-							if(vert_inside_region)
-							{
-								vert_inside_norm_region = true;
-								break;
-							}
-						}
-					}
-				}
-
-				// ignore this voronoi edge and skip to the next one
-				if(vert_inside_norm_region)
-					continue;
-				if(has_inv_regions &&
-					(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
+				if(results.IsVertexInRegion(lines, line_groups,
+					points_outside_regions, inverted_regions,
+					vert0idx, vert1idx, eps))
 					continue;
 			}
 		}
@@ -785,126 +941,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 	}
 
-	// remove vertices with no connection
+
 	if(line_groups.size())
-	{
-		std::vector<std::string> verts;
-		verts.reserve(graph.GetNumVertices());
-
-		// get vertex identifiers
-		for(std::size_t vert=0; vert<graph.GetNumVertices(); ++vert)
-		{
-			const std::string& id = graph.GetVertexIdent(vert);
-			verts.push_back(id);
-		}
-
-		// remove vertices with no connections from graph
-		std::vector<std::size_t> removed_indices;
-		removed_indices.reserve(verts.size());
-
-		for(std::size_t vertidx=0; vertidx<verts.size(); ++vertidx)
-		{
-			const std::string& id = verts[vertidx];
-			auto neighbours_outgoing = graph.GetNeighbours(id, 1);
-
-			if(neighbours_outgoing.size() == 0)
-			{
-				graph.RemoveVertex(id);
-				removed_indices.push_back(vertidx);
-			}
-		}
-
-		// remove the vertex coordinates
-		//std::sort(removed_indices.begin(), removed_indices.end(),
-		//	[](std::size_t idx1, std::size_t idx2) -> bool { return idx1 > idx2; });
-		std::reverse(removed_indices.begin(), removed_indices.end());
-
-		for(std::size_t idx : removed_indices)
-		{
-			if(idx < vertices.size())
-			{
-				vertices.erase(vertices.begin() + idx);
-			}
-			else
-			{
-				std::ostringstream ostrErr;
-				ostrErr << "Vertex index out of range: " << idx << ". ";
-				ostrErr << "Vector size: " << vertices.size() << ".";
-				throw std::out_of_range(ostrErr.str());
-				break;
-			}
-
-			// remove linear bisectors containing the removed vertex (and correct other indices)
-			for(auto iter = linear_edges_vec.begin(); iter != linear_edges_vec.end();)
-			{
-				// remove bisector
-				if((std::get<1>(*iter) && *std::get<1>(*iter)==idx) ||
-					(std::get<2>(*iter) && *std::get<2>(*iter)==idx))
-				{
-					iter = linear_edges_vec.erase(iter);
-					continue;
-				}
-
-				// correct indices
-				if(std::get<1>(*iter) && *std::get<1>(*iter) >= idx)
-					--*std::get<1>(*iter);
-				if(std::get<2>(*iter) && *std::get<2>(*iter) >= idx)
-					--*std::get<2>(*iter);
-
-				++iter;
-			}
-
-			// remove quadratic bisectors containing the removed vertex (and correct other indices)
-			for(auto iter = all_parabolic_edges_vec.begin(); iter != all_parabolic_edges_vec.end();)
-			{
-				// remove bisector
-				if(std::get<1>(*iter)==idx || std::get<2>(*iter)==idx)
-				{
-					iter = all_parabolic_edges_vec.erase(iter);
-					continue;
-				}
-
-				// correct indices
-				if(std::get<1>(*iter) >= idx)
-					--std::get<1>(*iter);
-				if(std::get<2>(*iter) >= idx)
-					--std::get<2>(*iter);
-
-				++iter;
-			}
-		}
-	}
-
-
-	// convert edge vectors to edge map
-	// TODO: generate them directly and remove the vector types
-	for(const auto& edge : all_parabolic_edges_vec)
-	{
-		std::size_t idx1 = std::get<1>(edge);
-		std::size_t idx2 = std::get<2>(edge);
-
-		all_parabolic_edges.emplace(
-			std::make_pair(
-				std::make_pair(idx1, idx2),	// key
-				std::move(std::get<0>(edge))));
-	}
-
-	for(const auto& edge : linear_edges_vec)
-	{
-		const auto& _idx1 = std::get<1>(edge);
-		const auto& _idx2 = std::get<2>(edge);
-
-		std::size_t idx1 = _idx1 ? *_idx1 : std::numeric_limits<std::size_t>::max();
-		std::size_t idx2 = _idx2 ? *_idx2 : std::numeric_limits<std::size_t>::max();
-
-		linear_edges.emplace(
-			std::make_pair(
-				std::make_pair(idx1, idx2),	// key
-				std::move(std::get<0>(edge))));
-	}
-
-
+		results.RemoveUnconnectedVertices();
+	results.CreateEdgeMaps();
 	results.CreateIndexTree();
+
 	return results;
 }
 
@@ -1140,8 +1182,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	// voronoi vertices
 	auto& vertices = results.GetVoronoiVertices();
 	// voronoi edges
-	auto& linear_edges = results.GetLinearEdges();
-	auto& all_parabolic_edges = results.GetParabolicEdges();
+	//auto& linear_edges = results.GetLinearEdges();
+	//auto& all_parabolic_edges = results.GetParabolicEdges();
+	auto& linear_edges_vec = results.GetLinearEdgesVec();
+	auto& all_parabolic_edges_vec = results.GetParabolicEdgesVec();
 	// graph of voronoi vertices
 	t_graph& graph = results.GetVoronoiGraph();
 
@@ -1279,10 +1323,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					graph.AddEdge(*vert1idx, *vert0idx, len);
 				}
 
-				linear_edges.emplace(
+				linear_edges_vec.emplace_back(
+					std::make_tuple(
+						std::move(line), vert0idx, vert1idx));
+
+				/*linear_edges.emplace(
 					std::make_pair(
 						std::make_pair(*vert0idx, *vert1idx),
-						std::move(line)));
+						std::move(line)));*/
 			}
 		}
 
@@ -1315,10 +1363,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				auto vert0idx = get_vertex_idx(vert0);
 				auto vert1idx = get_vertex_idx(vert1);
 
-				linear_edges.emplace(
+				linear_edges_vec.emplace_back(
+					std::make_tuple(
+						std::move(line), vert0idx, vert1idx));
+
+				/*linear_edges.emplace(
 					std::make_pair(
 						std::make_pair(*vert0idx, *vert1idx),
-						std::move(line)));
+						std::move(line)));*/
 			}
 		}
 
@@ -1348,15 +1400,25 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					graph.AddEdge(*vert1idx, *vert0idx, len);
 				}
 
-				all_parabolic_edges.emplace(
+				all_parabolic_edges_vec.emplace_back(
+					std::make_tuple(
+						std::move(parabolic_edge),
+						*vert0idx, *vert1idx));
+
+				/*all_parabolic_edges.emplace(
 					std::make_pair(
 						std::make_pair(*vert0idx, *vert1idx),
-						std::move(parabolic_edge)));
+						std::move(parabolic_edge)));*/
 			}
 		}
 	}
 
+
+	if(line_groups.size())
+		results.RemoveUnconnectedVertices();
+	results.CreateEdgeMaps();
 	results.CreateIndexTree();
+
 	return results;
 }
 #endif
