@@ -74,6 +74,19 @@ enum class PathStrategy
 };
 
 
+/**
+ * backend to use for voronoi diagram calculation
+ */
+enum class VoronoiBackend
+{
+	// boost.polygon
+	BOOST,
+
+	// cgal
+	CGAL,
+};
+
+
 class PathsBuilder
 {
 public:
@@ -143,7 +156,7 @@ public:
 	bool CalculateWallsIndexTree();
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
 	bool CalculateLineSegments();
-	bool CalculateVoronoi(bool group_lines=true);
+	bool CalculateVoronoi(bool group_lines=true, VoronoiBackend backend=VoronoiBackend::BOOST);
 
 	// number of line segment groups -- for scripting interface
 	std::size_t GetNumberOfLineSegmentRegions() const { return m_linegroups.size(); }

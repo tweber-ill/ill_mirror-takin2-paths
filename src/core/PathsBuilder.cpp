@@ -511,16 +511,27 @@ bool PathsBuilder::CalculateLineSegments()
 /**
  * calculate the voronoi diagram
  */
-bool PathsBuilder::CalculateVoronoi(bool group_lines)
+bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend)
 {
 	std::string message{"Calculating Voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
 
-	m_voro_results
-		= geo::calc_voro<t_vec2, t_line, t_graph>(
-			m_lines, m_linegroups, group_lines, true,
-			m_voroedge_eps, &m_points_outside_regions,
-			&m_inverted_regions);
+	if(backend == VoronoiBackend::BOOST)
+	{
+		m_voro_results
+			= geo::calc_voro<t_vec2, t_line, t_graph>(
+				m_lines, m_linegroups, group_lines, true,
+				m_voroedge_eps, &m_points_outside_regions,
+				&m_inverted_regions);
+	}
+	else if(backend == VoronoiBackend::CGAL)
+	{
+		m_voro_results
+			= geo::calc_voro_cgal<t_vec2, t_line, t_graph>(
+				m_lines, m_linegroups, group_lines, true,
+				m_voroedge_eps, &m_points_outside_regions,
+				&m_inverted_regions);
+	}
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;

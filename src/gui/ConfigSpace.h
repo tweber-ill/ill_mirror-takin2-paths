@@ -117,6 +117,7 @@ private:
 	boost::signals2::connection m_pathsbuilderslot{};
 
 	// path mesh options
+	VoronoiBackend m_voronoibackend{VoronoiBackend::BOOST};
 	bool m_grouplines = false;
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;

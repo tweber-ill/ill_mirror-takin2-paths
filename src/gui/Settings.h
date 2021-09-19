@@ -64,6 +64,10 @@ extern t_real g_a3_offs;
 extern t_real g_a2_delta;
 extern t_real g_a4_delta;
 
+// which backend to use for voronoi diagram calculation?
+// 0: boost.polygon, 1: cgal
+extern int g_voronoi_backend;
+
 // which path finding strategy to use?
 // 0: shortest path, 1: avoid walls
 extern int g_pathstrategy;

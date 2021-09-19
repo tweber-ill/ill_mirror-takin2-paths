@@ -1222,9 +1222,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		graph.AddVertex(std::to_string(vertices.size()));
 	}
 
-	// TODO: remove
-	std::size_t dummy_idx = 0;
-
 	// iterate voronoi edges
 	for(auto iter = delgraph.finite_edges_begin(); iter != delgraph.finite_edges_end(); ++iter)
 	{
@@ -1248,10 +1245,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			sites.emplace_back(tl2::create<t_vec>({ vert_cw->site().point()[0], vert_cw->site().point()[1] }));
 		if(!delgraph.is_infinite(vert_ccw) && vert_ccw->site().is_point())
 			sites.emplace_back(tl2::create<t_vec>({ vert_ccw->site().point()[0], vert_ccw->site().point()[1] }));
-
-		// TODO: identify voronoi vertex index
-		std::size_t vert1idx = dummy_idx++;
-		std::size_t vert2idx = dummy_idx++;
 
 		// get voronoi edge
 		auto dual = delgraph.primal(*iter);
@@ -1288,7 +1281,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				linear_edges.emplace(
 					std::make_pair(
-						std::make_pair(vert1idx, vert2idx),
+						std::make_pair(*vert0idx, *vert1idx),
 						std::move(line)));
 			}
 		}
@@ -1317,10 +1310,16 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			}
 
 			if(!is_helper_edge)
+			{
+				// add graph edges
+				auto vert0idx = get_vertex_idx(vert0);
+				auto vert1idx = get_vertex_idx(vert1);
+
 				linear_edges.emplace(
 					std::make_pair(
-						std::make_pair(vert1idx, vert2idx),
+						std::make_pair(*vert0idx, *vert1idx),
 						std::move(line)));
+			}
 		}
 
 		// parabolic, finite edge
@@ -1335,12 +1334,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			for(const t_point& point : points)
 				parabolic_edge.emplace_back(tl2::create<t_vec>({ point[0], point[1] }));
 
-			// add graph edges
 			if(parabolic_edge.size() >= 2)
 			{
 				auto vert0idx = get_vertex_idx(*parabolic_edge.begin());
 				auto vert1idx = get_vertex_idx(*parabolic_edge.rbegin());
 
+				// add graph edges
 				if(vert0idx && vert1idx)
 				{
 					// TODO: arc length of parabolic edges
@@ -1348,12 +1347,12 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					graph.AddEdge(*vert0idx, *vert1idx, len);
 					graph.AddEdge(*vert1idx, *vert0idx, len);
 				}
-			}
 
-			all_parabolic_edges.emplace(
-				std::make_pair(
-					std::make_pair(vert1idx, vert2idx),
-					std::move(parabolic_edge)));
+				all_parabolic_edges.emplace(
+					std::make_pair(
+						std::make_pair(*vert0idx, *vert1idx),
+						std::move(parabolic_edge)));
+			}
 		}
 	}
 

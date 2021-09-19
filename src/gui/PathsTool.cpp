@@ -1734,7 +1734,13 @@ void PathsTool::CalculatePathMesh()
 		CHECK_STOP
 
 		SetTmpStatus("Calculating Voronoi regions.", 0);
-		if(!m_pathsbuilder.CalculateVoronoi(false))
+
+		// voronoi backend
+		VoronoiBackend backend{VoronoiBackend::BOOST};
+		if(g_voronoi_backend == 1)
+		backend = VoronoiBackend::CGAL;
+
+		if(!m_pathsbuilder.CalculateVoronoi(false, backend))
 		{
 			SetTmpStatus("Error: Voronoi regions calculation failed.");
 			return;

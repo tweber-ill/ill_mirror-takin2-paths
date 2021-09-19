@@ -67,6 +67,17 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		resize(800, 600);
 
 
+	// set voronoi calculation backend
+	switch(g_voronoi_backend)
+	{
+		case 0:
+			m_voronoibackend = VoronoiBackend::BOOST;
+			break;
+		case 1:
+			m_voronoibackend = VoronoiBackend::CGAL;
+			break;
+	}
+
 	// get global path finding strategy
 	switch(g_pathstrategy)
 	{
@@ -243,6 +254,27 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuMeshOptions->addAction(acCalcVoro);
 
+	// ------------------------------------------------------------------------
+	// voronoi diagram calculation backends
+	QMenu *menuVoroBackend = new QMenu("Voronoi Backend", this);
+
+	QAction *acBackendBoost = new QAction("Boost.Polygon", menuVoroBackend);
+	acBackendBoost->setCheckable(true);
+	acBackendBoost->setChecked(m_voronoibackend == VoronoiBackend::BOOST);
+
+	QAction *acBackendCgal = new QAction("CGAL/Segment Delaunay Graph", menuVoroBackend);
+	acBackendCgal->setCheckable(true);
+	acBackendCgal->setChecked(m_voronoibackend == VoronoiBackend::CGAL);
+
+	QActionGroup *groupVoroBackend = new QActionGroup{this};
+	groupVoroBackend->addAction(acBackendBoost);
+	groupVoroBackend->addAction(acBackendCgal);
+
+	menuVoroBackend->addAction(acBackendBoost);
+	menuVoroBackend->addAction(acBackendCgal);
+	menuMeshOptions->addMenu(menuVoroBackend);
+	// ------------------------------------------------------------------------
+
 	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
 	acSubdivPath->setCheckable(true);
 	acSubdivPath->setChecked(m_subdivide_path);
@@ -256,7 +288,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	menuPathOptions->addAction(acAutocalcPath);
 
 	// ------------------------------------------------------------------------
-	// path strategies
+	// path-finding strategies
 	QMenu *menuPathStrategy = new QMenu("Path Finding Strategy", this);
 
 	QAction *acStrategyShortest = new QAction("Shortest Path", menuPathStrategy);
@@ -483,6 +515,19 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)->void
 	{ m_subdivide_path = subdiv; });
+
+	connect(acBackendBoost, &QAction::toggled, [this](bool checked)->void
+	{
+		if(checked)
+			m_voronoibackend = VoronoiBackend::BOOST;
+	});
+
+	connect(acBackendCgal, &QAction::toggled, [this](bool checked)->void
+	{
+		if(checked)
+			m_voronoibackend = VoronoiBackend::CGAL;
+	});
+
 
 
 	// path options
@@ -761,7 +806,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(m_calcvoronoi)
 	{
 		m_status->setText("Calculating Voronoi regions.");
-		if(!m_pathsbuilder->CalculateVoronoi(m_grouplines))
+		if(!m_pathsbuilder->CalculateVoronoi(m_grouplines, m_voronoibackend))
 		{
 			m_status->setText("Error: Voronoi regions calculation failed.");
 			return;

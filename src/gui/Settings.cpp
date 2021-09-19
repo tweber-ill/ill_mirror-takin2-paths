@@ -74,6 +74,11 @@ QString g_theme = "";
 QString g_font = "";
 
 
+// which backend to use for voronoi diagram calculation?
+// 0: boost.polygon, 1: cgal
+int g_voronoi_backend = 0;
+
+
 // which polygon intersection method should be used?
 // 0: sweep, 1: half-plane test
 int g_poly_intersection_method = 1;
@@ -98,7 +103,7 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 14> g_settingsvariables
+static constexpr std::array<SettingsVariable, 15> g_settingsvariables
 {{
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
@@ -114,6 +119,7 @@ static constexpr std::array<SettingsVariable, 14> g_settingsvariables
 	{.description = "Monochromator scattering angle delta", .key = "settings/a2_delta", .value = &g_a2_delta, .is_angle = true},
 	{.description = "Sample scattering angle delta", .key = "settings/a4_delta", .value = &g_a4_delta, .is_angle = true},
 
+	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
 	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
 	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
 
