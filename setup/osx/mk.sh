@@ -136,6 +136,7 @@ if [ $create_appdir -ne 0 ]; then
 	# libraries
 	cp -v /usr/local/lib/libboost_filesystem-mt.dylib "${APPDIRNAME}/Contents/Libraries/"
 	cp -v /usr/local/lib/libqhull_r.8.0.dylib "${APPDIRNAME}/Contents/Libraries/"
+	cp -v /usr/local/lib/libgmp.10.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapacke.3.dylib "${APPDIRNAME}/Contents/Libraries/"
 	#cp -v /usr/local/opt/lapack/lib/liblapack.3.dylib "${APPDIRNAME}/Contents/Libraries/"
 	cp -v build/libqcustomplot_local.dylib "${APPDIRNAME}/Contents/Libraries/"

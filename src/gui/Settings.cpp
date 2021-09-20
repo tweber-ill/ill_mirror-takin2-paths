@@ -93,7 +93,7 @@ tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
 tl2::t_real_gl g_rotation_scale = 0.02;
 
 int g_light_follows_cursor = 0;
-int g_enable_shadow_rendering = 0;
+int g_enable_shadow_rendering = 1;
 
 
 // ----------------------------------------------------------------------------

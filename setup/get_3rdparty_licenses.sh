@@ -110,3 +110,8 @@ fi
 if ! wget http://www.libpng.org/pub/png/src/libpng-LICENSE.txt -O ${LICDIR}/libpng_license.txt; then
 	echo -e "Error: Cannot download libpng license.";
 fi
+
+# libgmp
+if ! wget https://raw.githubusercontent.com/sethtroisi/libgmp/master/COPYINGv3 -O ${LICDIR}/libgmp_license.txt; then
+	echo -e "Error: Cannot download libgmp license.";
+fi
