@@ -63,7 +63,8 @@ private:
 
 
 protected:
-	void trackerTick();
+	void SetGoButtonText(bool start=true);
+	void TrackerTick();
 
 
 public slots:

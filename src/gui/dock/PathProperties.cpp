@@ -65,14 +65,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
 	m_btnGo = new QToolButton(this);
-	
-	QIcon iconStart = QIcon::fromTheme("media-playback-start");
-	m_btnGo->setIcon(iconStart);
-	if(iconStart.isNull())
-		m_btnGo->setText("Go");
-	else
-		m_btnGo->setText("");
-
+	SetGoButtonText(true);
 	m_btnGo->setToolTip("Track Path");
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -171,7 +164,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	// path tracking timer
 	connect(&m_pathTrackTimer, &QTimer::timeout,
 		this, static_cast<void (PathPropertiesWidget::*)()>(
-			&PathPropertiesWidget::trackerTick));
+			&PathPropertiesWidget::TrackerTick));
 
 	// start path tracking
 	connect(m_btnGo, &QPushButton::clicked,
@@ -182,43 +175,25 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			{
 				m_pathTrackTimer.start(
 					std::chrono::milliseconds(1000 / g_pathtracker_fps));
-
-				// set stop icon
-				QIcon iconStop = QIcon::fromTheme("media-playback-stop");
-				m_btnGo->setIcon(iconStop);
-				if(iconStop.isNull())
-					m_btnGo->setText("Stop");
-				else
-					m_btnGo->setText("");
+				SetGoButtonText(false);
 			}
 			// otherwise stop it
 			else
 			{
 				m_pathTrackTimer.stop();
-
-				// set start icon
-				QIcon iconStart = QIcon::fromTheme("media-playback-start");
-				m_btnGo->setIcon(iconStart);
-				if(iconStart.isNull())
-					m_btnGo->setText("Go");
-				else
-					m_btnGo->setText("");
+				SetGoButtonText(true);
 			}
 		});
 }
 
 
 /**
- * timer tick to track along current path
+ * set text and icon of the "go" button
  */
-void PathPropertiesWidget::trackerTick()
+void PathPropertiesWidget::SetGoButtonText(bool start)
 {
-	int val = m_sliderPath->value();
-	int max = m_sliderPath->maximum();
-	if(val >= max)
+	if(start)
 	{
-		m_pathTrackTimer.stop();
-
 		// set start icon
 		QIcon iconStart = QIcon::fromTheme("media-playback-start");
 		m_btnGo->setIcon(iconStart);
@@ -226,6 +201,31 @@ void PathPropertiesWidget::trackerTick()
 			m_btnGo->setText("Go");
 		else
 			m_btnGo->setText("");
+	}
+	else
+	{
+		// set stop icon
+		QIcon iconStop = QIcon::fromTheme("media-playback-stop");
+		m_btnGo->setIcon(iconStop);
+		if(iconStop.isNull())
+			m_btnGo->setText("Stop");
+		else
+			m_btnGo->setText("");
+	}
+}
+
+
+/**
+ * timer tick to track along current path
+ */
+void PathPropertiesWidget::TrackerTick()
+{
+	int val = m_sliderPath->value();
+	int max = m_sliderPath->maximum();
+	if(val >= max)
+	{
+		m_pathTrackTimer.stop();
+		SetGoButtonText(true);
 	}
 	else
 	{
