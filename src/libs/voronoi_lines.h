@@ -532,8 +532,8 @@ private:
 	t_edgemap_quadr parabolic_edges{};
 
 	// TODO: get rid of these and use the above maps directly
-	t_edgevec_lin linear_edges_vec;
-	t_edgevec_quadr parabolic_edges_vec;
+	t_edgevec_lin linear_edges_vec{};
+	t_edgevec_quadr parabolic_edges_vec{};
 	// ------------------------------------------------------------------------
 
 
@@ -1168,10 +1168,10 @@ template<class t_vec,
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_cgal(const std::vector<t_line>& lines,
 	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
-	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
+	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
 	typename t_vec::value_type edge_eps = 1e-2,
 	const std::vector<t_vec>* points_outside_regions = nullptr,
-	const std::vector<bool>* inverted_region = nullptr)
+	const std::vector<bool>* inverted_regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1315,8 +1315,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// add graph edges
 				auto vert0idx = get_vertex_idx(vert0);
 				auto vert1idx = get_vertex_idx(vert1);
+				bool valid_vertices = vert0idx && vert1idx;
 
-				if(vert0idx && vert1idx)
+				// line groups defined?
+				if(line_groups.size())
+				{
+					if(group_lines)
+					{
+						// TODO: grouped lines
+					}
+
+					if(remove_voronoi_vertices_in_regions)
+					{
+						if(results.IsVertexInRegion(lines, line_groups,
+							points_outside_regions, inverted_regions,
+							vert0idx, vert1idx, eps))
+							continue;
+					}
+				}
+
+
+				if(valid_vertices)
 				{
 					t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
 					graph.AddEdge(*vert0idx, *vert1idx, len);
@@ -1362,6 +1381,24 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// add graph edges
 				auto vert0idx = get_vertex_idx(vert0);
 				auto vert1idx = get_vertex_idx(vert1);
+				//bool valid_vertices = vert0idx && vert1idx;
+
+				// line groups defined?
+				if(line_groups.size())
+				{
+					if(group_lines)
+					{
+						// TODO: grouped lines
+					}
+
+					if(remove_voronoi_vertices_in_regions)
+					{
+						if(results.IsVertexInRegion(lines, line_groups,
+							points_outside_regions, inverted_regions,
+							vert0idx, vert1idx, eps))
+							continue;
+					}
+				}
 
 				linear_edges_vec.emplace_back(
 					std::make_tuple(
@@ -1390,9 +1427,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			{
 				auto vert0idx = get_vertex_idx(*parabolic_edge.begin());
 				auto vert1idx = get_vertex_idx(*parabolic_edge.rbegin());
+				bool valid_vertices = vert0idx && vert1idx;
+
+				// line groups defined?
+				if(line_groups.size())
+				{
+					if(group_lines)
+					{
+						// TODO: grouped lines
+					}
+
+					if(remove_voronoi_vertices_in_regions)
+					{
+						if(results.IsVertexInRegion(lines, line_groups,
+							points_outside_regions, inverted_regions,
+							vert0idx, vert1idx, eps))
+							continue;
+					}
+				}
 
 				// add graph edges
-				if(vert0idx && vert1idx)
+				if(valid_vertices)
 				{
 					// TODO: arc length of parabolic edges
 					t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
