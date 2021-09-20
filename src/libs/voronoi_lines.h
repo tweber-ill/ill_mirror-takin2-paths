@@ -726,11 +726,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		// line groups defined?
 		if(line_groups.size())
 		{
+			// get index of the segment
 			auto seg1idx = get_segment_idx(edge, false);
 			auto seg2idx = get_segment_idx(edge, true);
 
 			if(seg1idx && seg2idx)
 			{
+				// get the group index of the segments
 				auto region1 = get_group_idx(*seg1idx);
 				auto region2 = get_group_idx(*seg2idx);
 
@@ -1260,35 +1262,51 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	vertices.reserve(voronoi.number_of_vertices());
 
 	// iterate voronoi vertices
-	for(auto iter = voronoi.vertices_begin(); iter != voronoi.vertices_end(); ++iter)
+	for(auto iter = voronoi.vertices_begin();
+		iter.operator!=(voronoi.vertices_end());
+		++iter)
 	{
 		vertices.emplace_back(tl2::create<t_vec>({ iter->point()[0], iter->point()[1] }));
 		graph.AddVertex(std::to_string(vertices.size()));
 	}
 
 	// iterate voronoi edges
-	for(auto iter = delgraph.finite_edges_begin(); iter != delgraph.finite_edges_end(); ++iter)
+	for(auto iter = delgraph.finite_edges_begin();
+		iter != delgraph.finite_edges_end();
+		++iter)
 	{
 		if(delgraph.is_infinite(*iter))
 			continue;
 
 		const auto& face = std::get<0>(*iter);
 
+		// get a site vector from a face index
+		auto get_site = [&delgraph, &face](int idx)
+			-> std::optional<t_vec>
+		{
+			auto vertex = face->vertex(idx);
+
+			if(!delgraph.is_infinite(vertex) && vertex->site().is_point())
+			{
+				return tl2::create<t_vec>({
+					vertex->site().point()[0],
+					vertex->site().point()[1] });
+			}
+
+			return std::nullopt;
+		};
+
 		// get face vertex indices
 		int idx = std::get<1>(*iter);
 		int idx_cw = delgraph.cw(idx);
 		int idx_ccw = delgraph.ccw(idx);
 
-		// get sites
-		auto vert_cw = face->vertex(idx_cw);
-		auto vert_ccw = face->vertex(idx_ccw);
-
 		// add sites to check if an edge runs through them
 		std::vector<t_vec> sites{};
-		if(!delgraph.is_infinite(vert_cw) && vert_cw->site().is_point())
-			sites.emplace_back(tl2::create<t_vec>({ vert_cw->site().point()[0], vert_cw->site().point()[1] }));
-		if(!delgraph.is_infinite(vert_ccw) && vert_ccw->site().is_point())
-			sites.emplace_back(tl2::create<t_vec>({ vert_ccw->site().point()[0], vert_ccw->site().point()[1] }));
+		if(auto site = get_site(idx_cw); site)
+			sites.emplace_back(std::move(*site));
+		if(auto site = get_site(idx_ccw); site)
+			sites.emplace_back(std::move(*site));
 
 		// get voronoi edge
 		auto dual = delgraph.primal(*iter);
@@ -1310,6 +1328,19 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					break;
 			}
 
+			/*if(line_groups.size() && group_lines)
+			{
+				// TODO
+				// get the group indices of the segments
+				auto region1 = get_group_idx(...);
+				auto region2 = get_group_idx(...);
+
+				// are the generating line segments part of the same group?
+				// if so, ignore this voronoi edge and skip to next one
+				if(region1 && region2 && *region1 == *region2)
+					continue;
+			}*/
+
 			if(!is_helper_edge)
 			{
 				// add graph edges
@@ -1320,11 +1351,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// line groups defined?
 				if(line_groups.size())
 				{
-					if(group_lines)
-					{
-						// TODO: grouped lines
-					}
-
 					if(remove_voronoi_vertices_in_regions)
 					{
 						if(results.IsVertexInRegion(lines, line_groups,
@@ -1333,7 +1359,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 							continue;
 					}
 				}
-
 
 				if(valid_vertices)
 				{
@@ -1356,8 +1381,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		// linear, infinite edge
 		else if(t_ray ray; CGAL::assign(ray, dual))
 		{
-			t_vec vert0 = tl2::create<t_vec>({ ray.source()[0], ray.source()[1] });
-			t_vec vert1 = tl2::create<t_vec>({ ray.second_point()[0], ray.second_point()[1] });
+			t_vec vert0 = tl2::create<t_vec>({
+				ray.source()[0], ray.source()[1] });
+			t_vec vert1 = tl2::create<t_vec>({
+				ray.second_point()[0], ray.second_point()[1] });
 
 			t_vec dir = vert1 - vert0;
 			dir /= tl2::norm(dir);
@@ -1386,11 +1413,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// line groups defined?
 				if(line_groups.size())
 				{
-					if(group_lines)
-					{
-						// TODO: grouped lines
-					}
-
 					if(remove_voronoi_vertices_in_regions)
 					{
 						if(results.IsVertexInRegion(lines, line_groups,
@@ -1432,11 +1454,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// line groups defined?
 				if(line_groups.size())
 				{
-					if(group_lines)
-					{
-						// TODO: grouped lines
-					}
-
 					if(remove_voronoi_vertices_in_regions)
 					{
 						if(results.IsVertexInRegion(lines, line_groups,
