@@ -64,7 +64,16 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
 	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
-	m_btnGo = new QPushButton("Go", this);
+	m_btnGo = new QToolButton(this);
+	
+	QIcon iconStart = QIcon::fromTheme("media-playback-start");
+	m_btnGo->setIcon(iconStart);
+	if(iconStart.isNull())
+		m_btnGo->setText("Go");
+	else
+		m_btnGo->setText("");
+
+	m_btnGo->setToolTip("Track Path");
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
 	const char* labels[] = {"Monochromator:", "Sample:"};
@@ -173,13 +182,27 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			{
 				m_pathTrackTimer.start(
 					std::chrono::milliseconds(1000 / g_pathtracker_fps));
-				m_btnGo->setText("Stop");
+
+				// set stop icon
+				QIcon iconStop = QIcon::fromTheme("media-playback-stop");
+				m_btnGo->setIcon(iconStop);
+				if(iconStop.isNull())
+					m_btnGo->setText("Stop");
+				else
+					m_btnGo->setText("");
 			}
 			// otherwise stop it
 			else
 			{
 				m_pathTrackTimer.stop();
-				m_btnGo->setText("Go");
+
+				// set start icon
+				QIcon iconStart = QIcon::fromTheme("media-playback-start");
+				m_btnGo->setIcon(iconStart);
+				if(iconStart.isNull())
+					m_btnGo->setText("Go");
+				else
+					m_btnGo->setText("");
 			}
 		});
 }
@@ -195,7 +218,14 @@ void PathPropertiesWidget::trackerTick()
 	if(val >= max)
 	{
 		m_pathTrackTimer.stop();
-		m_btnGo->setText("Go");
+
+		// set start icon
+		QIcon iconStart = QIcon::fromTheme("media-playback-start");
+		m_btnGo->setIcon(iconStart);
+		if(iconStart.isNull())
+			m_btnGo->setText("Go");
+		else
+			m_btnGo->setText("");
 	}
 	else
 	{

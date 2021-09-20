@@ -30,6 +30,7 @@
 
 #include <QtCore/QTimer>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
@@ -56,7 +57,7 @@ private:
 	// path target (a2, a4) coordinates
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 	QSlider *m_sliderPath = nullptr;
-	QPushButton *m_btnGo = nullptr;
+	QToolButton *m_btnGo = nullptr;
 
 	QTimer m_pathTrackTimer{};
 
