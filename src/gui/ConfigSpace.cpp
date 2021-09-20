@@ -254,6 +254,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuMeshOptions->addAction(acCalcVoro);
 
+	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
+	acSubdivPath->setCheckable(true);
+	acSubdivPath->setChecked(m_subdivide_path);
+	menuMeshOptions->addAction(acSubdivPath);
+
 	// ------------------------------------------------------------------------
 	// voronoi diagram calculation backends
 	QMenu *menuVoroBackend = new QMenu("Voronoi Backend", this);
@@ -272,13 +277,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	menuVoroBackend->addAction(acBackendBoost);
 	menuVoroBackend->addAction(acBackendCgal);
+	menuMeshOptions->addSeparator();
 	menuMeshOptions->addMenu(menuVoroBackend);
 	// ------------------------------------------------------------------------
-
-	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
-	acSubdivPath->setCheckable(true);
-	acSubdivPath->setChecked(m_subdivide_path);
-	menuMeshOptions->addAction(acSubdivPath);
 
 
 	// path options

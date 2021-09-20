@@ -1163,18 +1163,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	fs::path polypath = fs::path(g_apppath) / fs::path("poly" EXEC_EXTENSION);
 
 	std::size_t num_tools = 0;
-	if(fs::exists(hullpath))
-	{
-		QAction *acHullTool = new QAction("Convex Hull...", menuTools);
-		menuTools->addAction(acHullTool);
-		++num_tools;
-
-		connect(acHullTool, &QAction::triggered, this, [hullpath]()
-		{
-			create_process(hullpath.string());
-		});
-	}
-
 	if(fs::exists(linespath))
 	{
 		QAction *acLinesTool = new QAction("Line Segments...", menuTools);
@@ -1184,6 +1172,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		connect(acLinesTool, &QAction::triggered, this, [linespath]()
 		{
 			create_process(linespath.string());
+		});
+	}
+
+	if(fs::exists(hullpath))
+	{
+		QAction *acHullTool = new QAction("Convex Hull...", menuTools);
+		menuTools->addAction(acHullTool);
+		++num_tools;
+
+		connect(acHullTool, &QAction::triggered, this, [hullpath]()
+		{
+			create_process(hullpath.string());
 		});
 	}
 
