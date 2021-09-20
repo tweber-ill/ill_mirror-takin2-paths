@@ -27,7 +27,6 @@
 #include "../Settings.h"
 
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QGroupBox>
@@ -65,6 +64,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
 	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
+	m_btnGo = new QPushButton("Go", this);
+	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
 	const char* labels[] = {"Monochromator:", "Sample:"};
 
@@ -93,9 +94,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutPath->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 2);
-		layoutPath->addWidget(btnCalcPath, y++, 0, 1, 2);
-		layoutPath->addWidget(m_sliderPath, y++, 0, 1, 2);
+		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 3);
+		layoutPath->addWidget(btnCalcPath, y++, 0, 1, 3);
+		layoutPath->addWidget(m_sliderPath, y, 0, 1, 2);
+		layoutPath->addWidget(m_btnGo, y++, 2, 1, 1);
 	}
 
 	auto *grid = new QGridLayout(this);
@@ -156,6 +158,49 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		{
 			emit TrackPath((std::size_t)value);
 		});
+
+	// path tracking timer
+	connect(&m_pathTrackTimer, &QTimer::timeout,
+		this, static_cast<void (PathPropertiesWidget::*)()>(
+			&PathPropertiesWidget::trackerTick));
+
+	// start path tracking
+	connect(m_btnGo, &QPushButton::clicked,
+		[this]() -> void
+		{
+			// start the timer if it's not already running
+			if(!m_pathTrackTimer.isActive())
+			{
+				m_pathTrackTimer.start(
+					std::chrono::milliseconds(1000 / g_pathtracker_fps));
+				m_btnGo->setText("Stop");
+			}
+			// otherwise stop it
+			else
+			{
+				m_pathTrackTimer.stop();
+				m_btnGo->setText("Go");
+			}
+		});
+}
+
+
+/**
+ * timer tick to track along current path
+ */
+void PathPropertiesWidget::trackerTick()
+{
+	int val = m_sliderPath->value();
+	int max = m_sliderPath->maximum();
+	if(val >= max)
+	{
+		m_pathTrackTimer.stop();
+		m_btnGo->setText("Go");
+	}
+	else
+	{
+		m_sliderPath->setValue(val+1);
+	}
 }
 
 

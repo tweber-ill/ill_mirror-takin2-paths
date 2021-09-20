@@ -84,7 +84,10 @@ int g_voronoi_backend = 0;
 int g_poly_intersection_method = 1;
 
 
+// path-tracker and renderer FPS
+unsigned int g_pathtracker_fps = 10;
 unsigned int g_timer_fps = 30;
+
 
 tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
 tl2::t_real_gl g_rotation_scale = 0.02;
@@ -103,7 +106,7 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 15> g_settingsvariables
+static constexpr std::array<SettingsVariable, 17> g_settingsvariables
 {{
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
@@ -122,6 +125,9 @@ static constexpr std::array<SettingsVariable, 15> g_settingsvariables
 	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
 	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
 	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
+
+	{.description = "Path tracker FPS", .key = "settings/pathtracker_fps", .value = &g_pathtracker_fps},
+	{.description = "Renderer FPS", .key = "settings/renderer_fps", .value = &g_timer_fps},
 
 	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
 	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},

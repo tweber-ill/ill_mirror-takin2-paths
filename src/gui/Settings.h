@@ -83,6 +83,9 @@ extern QString g_theme;
 // gui font
 extern QString g_font;
 
+// path tracker fps
+extern unsigned int g_pathtracker_fps;
+
 // renderer fps
 extern unsigned int g_timer_fps;
 
