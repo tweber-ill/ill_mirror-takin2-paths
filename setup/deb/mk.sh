@@ -57,6 +57,7 @@ if [ $create_appdir -ne 0 ]; then
 		"libboost-system1.71.0 (>=1.71.0),"\
 		"libboost-filesystem1.71.0 (>=1.71.0),"\
 		"libqhull-r7 (>=2015.2),"\
+		"libgmp10 (>=2:6.2),"\
 		"libqt5core5a (>=5.12.0),"\
 		"libqt5gui5 (>=5.12.0),"\
 		"libqt5widgets5 (>=5.12.0),"\
