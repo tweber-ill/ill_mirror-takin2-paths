@@ -110,6 +110,7 @@ void PathsTool::NewFile()
 {
 	SetCurrentFile("");
 	m_instrspace.Clear();
+	ValidatePathMesh(false);
 
 	if(m_dlgGeoBrowser)
 		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
@@ -414,9 +415,7 @@ void PathsTool::RebuildRecentFiles()
  */
 void PathsTool::ValidatePathMesh(bool valid)
 {
-	// TODO
-	if (!valid)
-		std::cout << "invalidated path mesh." << std::endl;
+	emit PathMeshValid(valid);
 }
 
 
@@ -1003,6 +1002,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// a new path has been calculated
 	connect(this, &PathsTool::PathAvailable,
 		pathwidget, &PathPropertiesWidget::PathAvailable);
+
+	// a path mesh has been (in)validated
+	connect(this, &PathsTool::PathMeshValid,
+		pathwidget, &PathPropertiesWidget::PathMeshValid);
 
 	// a new path vertex has been chosen on the path slider
 	connect(pathwidget, &PathPropertiesWidget::TrackPath,
@@ -1792,6 +1795,7 @@ void PathsTool::CalculatePathMesh()
 		CHECK_STOP
 
 		SetTmpStatus("Path mesh calculated.");
+		ValidatePathMesh(true);
 	});
 
 	// block till the calculations are finished

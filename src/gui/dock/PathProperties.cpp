@@ -62,11 +62,11 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 
 	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
 	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
-	QPushButton *btnCalcPath = new QPushButton("Calculate Path", this);
+	m_btnCalcPath = new QPushButton("Calculate Path", this);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
+	m_sliderPath->setToolTip("Path tracking.");
 	m_btnGo = new QToolButton(this);
 	SetGoButtonText(true);
-	m_btnGo->setToolTip("Track Path");
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
 	const char* labels[] = {"Monochromator:", "Sample:"};
@@ -97,7 +97,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 
 		int y = 0;
 		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 3);
-		layoutPath->addWidget(btnCalcPath, y++, 0, 1, 3);
+		layoutPath->addWidget(m_btnCalcPath, y++, 0, 1, 3);
 		layoutPath->addWidget(m_sliderPath, y, 0, 1, 2);
 		layoutPath->addWidget(m_btnGo, y++, 2, 1, 1);
 	}
@@ -148,7 +148,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		});
 
 	// calculate path
-	connect(btnCalcPath, &QPushButton::clicked,
+	connect(m_btnCalcPath, &QPushButton::clicked,
 		[this]() -> void
 		{
 			emit CalculatePath();
@@ -201,6 +201,8 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
 			m_btnGo->setText("Go");
 		else
 			m_btnGo->setText("");
+
+		m_btnGo->setToolTip("Start path tracking.");
 	}
 	else
 	{
@@ -211,6 +213,8 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
 			m_btnGo->setText("Stop");
 		else
 			m_btnGo->setText("");
+
+		m_btnGo->setToolTip("Stop path tracking.");
 	}
 }
 
@@ -259,12 +263,34 @@ void PathPropertiesWidget::SetTarget(t_real a2, t_real a4)
  */
 void PathPropertiesWidget::PathAvailable(std::size_t numVertices)
 {
-	if(!m_sliderPath || numVertices == 0)
+	if(!m_sliderPath)
 		return;
 
+	// no path available
+	if(numVertices == 0)
+	{
+		m_btnGo->setEnabled(false);
+		m_sliderPath->setEnabled(false);
+		return;
+	}
+
+	m_btnGo->setEnabled(true);
+	m_sliderPath->setEnabled(true);
 	m_sliderPath->setMinimum(0);
 	m_sliderPath->setMaximum(numVertices-1);
 	m_sliderPath->setValue(0);
+}
+
+
+/**
+ * a path mesh has been (in)validated
+ */
+void PathPropertiesWidget::PathMeshValid(bool valid)
+{
+	m_btnCalcPath->setEnabled(valid);
+
+	if(!valid)
+		PathAvailable(0);
 }
 // --------------------------------------------------------------------------------
 

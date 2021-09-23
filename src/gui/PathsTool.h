@@ -256,6 +256,8 @@ protected slots:
 signals:
 	// signal, when a new path has been calculated
 	void PathAvailable(std::size_t numVertices);
+	// signal if a path mesh is valid or invalid
+	void PathMeshValid(bool valid);
 };
 // ----------------------------------------------------------------------------
 
