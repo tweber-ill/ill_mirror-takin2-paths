@@ -1026,6 +1026,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
 	QAction *actionSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
 	QAction *actionSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
+	QAction *actionGarbage = new QAction(QIcon::fromTheme("user-trash-full"), "Collect Garbage", menuFile);
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", menuFile);
 	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
 
@@ -1061,6 +1062,30 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
 	connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
 
+	// collect garbage
+	connect(actionGarbage, &QAction::triggered, this, [this]()
+	{
+		// remove any open dialogs
+		if(this->m_dlgSettings)
+			this->m_dlgSettings.reset();
+
+		if(this->m_dlgGeoBrowser)
+			this->m_dlgGeoBrowser.reset();
+
+		if(this->m_dlgConfigSpace)
+			this->m_dlgConfigSpace.reset();
+
+		if(this->m_dlgXtalConfigSpace)
+			this->m_dlgXtalConfigSpace.reset();
+
+		if(this->m_dlgAbout)
+			this->m_dlgAbout.reset();
+
+		if(this->m_dlgLicenses)
+			this->m_dlgLicenses.reset();
+	});
+
+	// show settings dialog
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
@@ -1100,6 +1125,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuFile->addAction(actionSaveAs);
 	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
+	menuFile->addAction(actionGarbage);
 	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);

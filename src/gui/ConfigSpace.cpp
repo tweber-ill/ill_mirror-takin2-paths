@@ -883,6 +883,9 @@ void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 				return ok;
 			}
 		});
+
+	// if the paths builder already has a path mesh, display it
+	RedrawVoronoiPlot();
 }
 
 
@@ -976,7 +979,7 @@ void ConfigSpaceDlg::RedrawVoronoiPlot()
 			t_pixel pixel_val = img.GetPixel(x, y);
 
 			// val > 0 => colliding
-			t_real val = std::lerp(t_real(0), t_real(1), 
+			t_real val = std::lerp(t_real(0), t_real(1),
 				t_real(pixel_val)/t_real(std::numeric_limits<t_pixel>::max()));
 			m_colourMap->data()->setCell(x, y, val);
 		}
