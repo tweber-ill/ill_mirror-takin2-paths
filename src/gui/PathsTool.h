@@ -172,6 +172,9 @@ protected:
 
 	void UpdateUB();
 
+	// (in)validates the path mesh if the obstacle configuration has changed
+	void ValidatePathMesh(bool valid = true);
+
 
 protected slots:
 	// File -> New

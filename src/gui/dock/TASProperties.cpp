@@ -285,6 +285,37 @@ void TASPropertiesWidget::SetAnaCrystalAngle(t_real angle)
 }
 
 
+t_real TASPropertiesWidget::GetMonoScatteringAngle() const
+{
+	return m_spinMonoScAngle->value();
+}
+
+t_real TASPropertiesWidget::GetSampleScatteringAngle() const
+{
+	return m_spinSampleScAngle->value();
+}
+
+t_real TASPropertiesWidget::GetAnaScatteringAngle() const
+{
+	return m_spinAnaScAngle->value();
+}
+
+t_real TASPropertiesWidget::GetMonoCrystalAngle() const
+{
+	return m_spinMonoXtalAngle->value();
+}
+
+t_real TASPropertiesWidget::GetSampleCrystalAngle() const
+{
+	return m_spinSampleXtalAngle->value();
+}
+
+t_real TASPropertiesWidget::GetAnaCrystalAngle() const
+{
+	return m_spinAnaXtalAngle->value();
+}
+
+
 void TASPropertiesWidget::SetDSpacings(t_real dmono, t_real dana)
 {
 	m_spinMonoD->setValue(dmono);

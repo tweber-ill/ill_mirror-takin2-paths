@@ -54,6 +54,14 @@ public slots:
 	void SetSampleCrystalAngle(t_real angle);
 	void SetAnaCrystalAngle(t_real angle);
 
+	t_real GetMonoScatteringAngle() const;
+	t_real GetSampleScatteringAngle() const;
+	t_real GetAnaScatteringAngle() const;
+
+	t_real GetMonoCrystalAngle() const;
+	t_real GetSampleCrystalAngle() const;
+	t_real GetAnaCrystalAngle() const;
+
 	void SetDSpacings(t_real dmono, t_real dana);
 	void SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw);
 

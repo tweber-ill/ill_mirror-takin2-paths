@@ -244,6 +244,9 @@ bool PathsTool::OpenFile(const QString &file)
 		m_instrspace.AddUpdateSlot(
 			[this](const InstrumentSpace& instrspace)
 			{
+				// invalidate the mesh
+				ValidatePathMesh(false);
+
 				if(m_renderer)
 					m_renderer->UpdateInstrumentSpace(instrspace);
 			});
@@ -252,18 +255,25 @@ bool PathsTool::OpenFile(const QString &file)
 		m_instrspace.GetInstrument().AddUpdateSlot(
 			[this](const Instrument& instr)
 			{
+				// old angles
+				t_real oldA6 = m_tasProperties->GetWidget()->GetAnaScatteringAngle()/t_real{180}*tl2::pi<t_real>;
+
 				// get scattering angles
 				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
 				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut();
 				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut();
+
+				// set scattering angles
 				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
 
-				// get crystal angles
+				// get crystal rocking angles
 				t_real monoXtalAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleInternal();
 				t_real sampleXtalAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleInternal();
 				t_real anaXtalAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleInternal();
+
+				// set crystal rocking angles
 				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
 				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
@@ -276,6 +286,10 @@ bool PathsTool::OpenFile(const QString &file)
 
 				SetInstrumentStatus(Qrlu, E,
 					in_angular_limits, colliding);
+
+				// if the analyser angle changes, the mesh also needs to be updated
+				if(!tl2::equals<t_real>(oldA6, anaScAngle, g_eps))
+					ValidatePathMesh(false);
 
 				if(this->m_dlgConfigSpace)
 					this->m_dlgConfigSpace->UpdateInstrument(
@@ -392,6 +406,17 @@ void PathsTool::RebuildRecentFiles()
 		if(++num_recent_files >= MAX_RECENT_FILES)
 			break;
 	}
+}
+
+
+/**
+ * (in)validates the path mesh if the obstacle configuration has changed
+ */
+void PathsTool::ValidatePathMesh(bool valid)
+{
+	// TODO
+	if (!valid)
+		std::cout << "invalidated path mesh." << std::endl;
 }
 
 
@@ -1441,6 +1466,9 @@ void PathsTool::AddWall()
 	std::ostringstream ostrId;
 	ostrId << "new wall " << wallcnt++;
 
+	// invalidate the path mesh
+	ValidatePathMesh(false);
+
 	// add wall to instrument space
 	m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
 
@@ -1468,6 +1496,9 @@ void PathsTool::AddPillar()
 	static std::size_t wallcnt = 1;
 	std::ostringstream ostrId;
 	ostrId << "new pillar " << wallcnt++;
+
+	// invalidate the path mesh
+	ValidatePathMesh(false);
 
 	// add pillar to instrument space
 	m_instrspace.AddWall(std::vector<std::shared_ptr<Geometry>>{{wall}}, ostrId.str());
@@ -1502,6 +1533,9 @@ void PathsTool::DeleteObject(const std::string& obj)
 	// remove object from instrument space
 	if(m_instrspace.DeleteObject(obj))
 	{
+		// invalidate the path mesh
+		ValidatePathMesh(false);
+
 		// update object browser tree
 		if(m_dlgGeoBrowser)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
@@ -1541,6 +1575,9 @@ void PathsTool::RotateObject(const std::string& obj, t_real angle)
 	// remove object from instrument space
 	if(auto [ok, objgeo] = m_instrspace.RotateObject(obj, angle); ok)
 	{
+		// invalidate the path mesh
+		ValidatePathMesh(false);
+
 		// update object browser tree
 		if(m_dlgGeoBrowser)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
@@ -1611,6 +1648,9 @@ void PathsTool::RenameObject(const std::string& oldid, const std::string& newid)
 
 	if(m_instrspace.RenameObject(oldid, newid))
 	{
+		// invalidate the path mesh
+		ValidatePathMesh(false);
+
 		// update object browser tree
 		if(m_dlgGeoBrowser)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
@@ -1636,6 +1676,9 @@ void PathsTool::ChangeObjectProperty(const std::string& obj, const GeometryPrope
 	// remove object from instrument space
 	if(auto [ok, objgeo] = m_instrspace.SetGeoProperties(obj, { prop} ); ok)
 	{
+		// invalidate the path mesh
+		ValidatePathMesh(false);
+
 		// update object browser tree
 		if(m_dlgGeoBrowser)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);

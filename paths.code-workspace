@@ -86,7 +86,8 @@
 			"qgridlayout": "cpp",
 			"valarray": "cpp",
 			"__split_buffer": "cpp",
-			"qgraphicsview": "cpp"
+			"qgraphicsview": "cpp",
+			"unordered_set": "cpp"
 		}
 	}
 }
