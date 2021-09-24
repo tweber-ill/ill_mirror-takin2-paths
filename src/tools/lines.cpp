@@ -7,7 +7,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
  *                          Grenoble, France).
  * "geo" project
  * Copyright (C) 2020-2021  Tobias WEBER (privately developed).
@@ -544,32 +544,32 @@ void LinesScene::UpdateVoro()
 	{
 		case VoronoiCalculationMethod::BOOSTPOLY:
 			results = geo::calc_voro<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines, 
+				m_lines, m_linegroups, m_grouplines,
 				m_removeverticesinregions);
 			break;
 #ifdef USE_CGAL
 		case VoronoiCalculationMethod::CGAL:
 			results = geo::calc_voro_cgal<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines, 
+				m_lines, m_linegroups, m_grouplines,
 				m_removeverticesinregions);
 			break;
 #endif
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			results = geo::calc_voro_ovd<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines, 
+				m_lines, m_linegroups, m_grouplines,
 				m_removeverticesinregions);
 			break;
 #endif
 		default:
-			QMessageBox::critical(m_parent, "Error", 
+			QMessageBox::critical(m_parent, "Error",
 				"Unknown voronoi diagram calculation method.");
 			break;
 	};
 
 
-	m_elems_voro.reserve(results.GetLinearEdges().size() + 
-		results.GetParabolicEdges().size() + 
+	m_elems_voro.reserve(results.GetLinearEdges().size() +
+		results.GetParabolicEdges().size() +
 		results.GetVoronoiVertices().size());
 
 	// voronoi edges

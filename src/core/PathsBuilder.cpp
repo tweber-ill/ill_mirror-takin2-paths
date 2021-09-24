@@ -524,6 +524,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend)
 				m_voroedge_eps, &m_points_outside_regions,
 				&m_inverted_regions);
 	}
+#ifdef USE_CGAL
 	else if(backend == VoronoiBackend::CGAL)
 	{
 		m_voro_results
@@ -532,6 +533,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend)
 				m_voroedge_eps, &m_points_outside_regions,
 				&m_inverted_regions);
 	}
+#endif
 
 	(*m_sigProgress)(false, true, 1, message);
 	return true;

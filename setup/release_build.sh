@@ -6,7 +6,7 @@
 #
 # -----------------------------------------------------------------------------
 # TAS-Paths (part of the Takin software suite)
-# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
 #                     Grenoble, France).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,17 @@
 # -----------------------------------------------------------------------------
 #
 
+cmake_tool=cmake
+make_tool=make
+#cmake_tool=mingw64-cmake
+#make_tool=mingw64-make
+
+USE_LAPACK=False
+USE_QT6=False
+USE_CGAL=True
+USE_OVD=False
+
+
 echo -e "--------------------------------------------------------------------------------"
 echo -e "Building..."
 echo -e "--------------------------------------------------------------------------------"
@@ -34,7 +45,8 @@ rm -rfv build
 mkdir build
 pushd build
 
-if ! cmake -DUSE_LAPACK=False -DUSE_QT6=False -DUSE_OVD=False -DUSE_CGAL=True \
+if ! ${cmake_tool} -DUSE_LAPACK=${USE_LAPACK} -DUSE_QT6=${USE_QT6} \
+	-DUSE_OVD=${USE_OVD} -DUSE_CGAL=${USE_CGAL} \
 	-DBUILD_TEST_TOOLS=True \
 	-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" \
 	-DCMAKE_VERBOSE_MAKEFILE=False ..
@@ -43,7 +55,7 @@ then
 	exit -1
 fi
 
-if ! make -j4; then
+if ! ${make_tool} -j4; then
 	echo -e "make failed."
 	exit -1
 fi
