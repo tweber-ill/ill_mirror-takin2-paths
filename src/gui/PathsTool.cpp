@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -127,7 +127,7 @@ void PathsTool::OpenFile()
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
 	QString filename = QFileDialog::getOpenFileName(
-		this, "Open File", dirLast, "Paths Files (*.taspaths)");
+		this, "Open File", dirLast, "TAS-Paths Files (*.taspaths)");
 	if(filename=="" || !QFile::exists(filename))
 		return;
 
@@ -156,7 +156,7 @@ void PathsTool::SaveFileAs()
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
 	QString filename = QFileDialog::getSaveFileName(
-		this, "Save File", dirLast, "Paths Files (*.taspaths)");
+		this, "Save File", dirLast, "TAS-Paths Files (*.taspaths)");
 	if(filename=="")
 		return;
 
@@ -877,9 +877,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// set current to target angles
 	connect(taswidget, &TASPropertiesWidget::GotoAngles,
 		[this](
-			t_real a1, t_real a2, 
-			t_real a3, t_real a4, 
-			t_real a5, t_real a6, 
+			t_real a1, t_real a2,
+			t_real a3, t_real a4,
+			t_real a5, t_real a6,
 			bool only_set_target) -> void
 		{
 			const t_real *sensesCCW = this->m_tascalc.GetScatteringSenses();
@@ -940,7 +940,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma) -> void
 		{
 			m_tascalc.SetSampleLatticeConstants(a, b, c);
-			m_tascalc.SetSampleLatticeAngles(alpha, beta, gamma, true);
+			m_tascalc.SetSampleLatticeAngles(alpha, beta, gamma, false);
 
 			m_tascalc.UpdateB();
 			UpdateUB();
@@ -957,7 +957,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		});
 
 	// goto coordinates
-	using t_gotocoords = 
+	using t_gotocoords =
 		void (PathsTool::*)(t_real, t_real, t_real, t_real, t_real, bool);
 
 	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates,
