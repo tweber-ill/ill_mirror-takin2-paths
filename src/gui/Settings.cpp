@@ -68,7 +68,7 @@ t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
 t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
 
 int g_pathstrategy = 0;
-
+int g_verifypath = 1;
 
 QString g_theme = "";
 QString g_font = "";
@@ -106,7 +106,7 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 17> g_settingsvariables
+static constexpr std::array<SettingsVariable, 18> g_settingsvariables
 {{
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
@@ -124,6 +124,7 @@ static constexpr std::array<SettingsVariable, 17> g_settingsvariables
 
 	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
 	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
+	{.description = "Verify generated path", .key = "settings/verify_path", .value = &g_verifypath},
 	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
 
 	{.description = "Path tracker FPS", .key = "settings/pathtracker_fps", .value = &g_pathtracker_fps},

@@ -1008,12 +1008,42 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	const auto& voro_results = GetVoronoiResults();
 	const auto& voro_vertices = voro_results.GetVoronoiVertices();
 
+	InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
 	// convert pixel to angular coordinates and add vertex to path
-	auto add_curve_vertex = [&path_vertices, deg, this](const t_vec2& vertex)
+	auto add_curve_vertex =
+		[&path_vertices, &instrspace_cpy, deg, this]
+			(const t_vec2& vertex)
 	{
 		const t_vec2 angle = PixelToAngle(vertex, deg);
-		path_vertices.emplace_back(std::move(angle));
+		bool insert_vertex = true;
+
+		// check the generated vertex for collisions
+		if(this->m_verifypath)
+		{
+				const t_vec2 _angle = PixelToAngle(vertex, false, true);
+				t_real a4 = _angle[0];
+				t_real a2 = _angle[1];
+
+				// set scattering angles
+				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+				//instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a6);
+
+				// set crystal angles
+				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+				//instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
+				//instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
+
+				bool angle_ok = instrspace_cpy.CheckAngularLimits();
+				bool colliding = instrspace_cpy.CheckCollision2D();
+
+				if(!angle_ok || colliding)
+					insert_vertex = false;
+		}
+
+		if(insert_vertex)
+			path_vertices.emplace_back(std::move(angle));
 	};
 
 

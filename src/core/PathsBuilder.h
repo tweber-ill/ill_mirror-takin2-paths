@@ -202,6 +202,9 @@ public:
 
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
+
+	bool GetVerifyPath() const { return m_verifypath; }
+	void SetVerifyPath(bool verify) { m_verifypath = verify; }
 	// ------------------------------------------------------------------------
 
 	// ------------------------------------------------------------------------
@@ -292,6 +295,10 @@ private:
 	// line segment length for subdivisions
 	t_real m_subdiv_len = 0.1;
 
+	// check the generated path for collisions
+	bool m_verifypath = true;
+
+	// maximum number of threads to use in calculations
 	unsigned int m_maxnum_threads = 4;
 };
 

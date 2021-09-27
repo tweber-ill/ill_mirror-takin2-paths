@@ -72,6 +72,9 @@ extern int g_voronoi_backend;
 // 0: shortest path, 1: avoid walls
 extern int g_pathstrategy;
 
+// verify the generated path?
+extern int g_verifypath;
+
 // which polygon intersection method should be used?
 // 0: sweep, 1: half-plane test
 extern int g_poly_intersection_method;
