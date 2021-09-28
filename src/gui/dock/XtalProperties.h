@@ -54,13 +54,18 @@ public:
 
 
 public slots:
-	void SetLattice(t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma);
-	void SetPlane(t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z);
+	void SetLattice(t_real a, t_real b, t_real c,
+		t_real alpha, t_real beta, t_real gamma);
+	void SetPlane(t_real vec1_x, t_real vec1_y, t_real vec1_z,
+		t_real vec2_x, t_real vec2_y, t_real vec2_z);
 
 
 signals:
-	void LatticeChanged(t_real a, t_real b, t_real c, t_real alpha, t_real beta, t_real gamma);
-	void PlaneChanged(t_real vec1_x, t_real vec1_y, t_real vec1_z, t_real vec2_x, t_real vec2_y, t_real vec2_z);
+	// angles are in rad
+	void LatticeChanged(t_real a, t_real b, t_real c,
+		t_real alpha, t_real beta, t_real gamma);
+	void PlaneChanged(t_real vec1_x, t_real vec1_y, t_real vec1_z,
+		t_real vec2_x, t_real vec2_y, t_real vec2_z);
 
 
 private:

@@ -77,6 +77,7 @@ public slots:
 
 
 signals:
+	// angles are in deg
 	void MonoScatteringAngleChanged(t_real angle);
 	void SampleScatteringAngleChanged(t_real angle);
 	void AnaScatteringAngleChanged(t_real angle);

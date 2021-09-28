@@ -178,35 +178,35 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	grid->addWidget(btnTarget, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
-	connect(m_spinMonoScAngle, 
+	connect(m_spinMonoScAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::MonoScatteringAngleChanged);
-	connect(m_spinSampleScAngle, 
+	connect(m_spinSampleScAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::SampleScatteringAngleChanged);
-	connect(m_spinAnaScAngle, 
+	connect(m_spinAnaScAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::AnaScatteringAngleChanged);
 
-	connect(m_spinMonoXtalAngle, 
+	connect(m_spinMonoXtalAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::MonoCrystalAngleChanged);
-	connect(m_spinSampleXtalAngle, 
+	connect(m_spinSampleXtalAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::SampleCrystalAngleChanged);
-	connect(m_spinAnaXtalAngle, 
+	connect(m_spinAnaXtalAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &TASPropertiesWidget::AnaCrystalAngleChanged);
 
 	// d spacings
-	connect(m_spinMonoD, 
+	connect(m_spinMonoD,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		[this](t_real dmono) -> void
 		{
 			t_real dana = m_spinAnaD->value();
 			emit DSpacingsChanged(dmono, dana);
 		});
-	connect(m_spinAnaD, 
+	connect(m_spinAnaD,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		[this](t_real dana) -> void
 		{
@@ -456,7 +456,7 @@ bool TASPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 // properties dock widget
 // --------------------------------------------------------------------------------
 TASPropertiesDockWidget::TASPropertiesDockWidget(QWidget *parent)
-	: QDockWidget{parent}, 
+	: QDockWidget{parent},
 		m_widget{std::make_shared<TASPropertiesWidget>(this)}
 {
 	setObjectName("TASPropertiesDockWidget");

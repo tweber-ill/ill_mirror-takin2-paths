@@ -222,7 +222,7 @@ bool PathsTool::OpenFile(const QString &file)
 		// get property tree
 		if(filename == "" || !fs::exists(fs::path(filename)))
 		{
-			QMessageBox::critical(this, "Error", 
+			QMessageBox::critical(this, "Error",
 				("Instrument file \"" + filename + "\" does not exist.").c_str());
 			return false;
 		}
@@ -231,7 +231,7 @@ bool PathsTool::OpenFile(const QString &file)
 		std::ifstream ifstr{filename};
 		if(!ifstr)
 		{
-			QMessageBox::critical(this, "Error", 
+			QMessageBox::critical(this, "Error",
 				("Could not read instrument file \"" + filename + "\".").c_str());
 			return false;
 		}
@@ -243,8 +243,8 @@ bool PathsTool::OpenFile(const QString &file)
 		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
 			!opt || *opt != PROG_IDENT)
 		{
-			QMessageBox::critical(this, "Error", 
-				("Instrument file \"" + filename + 
+			QMessageBox::critical(this, "Error",
+				("Instrument file \"" + filename +
 				"\" has invalid identifier.").c_str());
 			return false;
 		}

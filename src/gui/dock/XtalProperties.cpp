@@ -338,7 +338,10 @@ bool XtalPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 	SetPlane(a0, a1, a2, b0, b1, b2);
 
 	// emit the changes
-	emit LatticeChanged(a, b, c, alpha, beta, gamma);
+	emit LatticeChanged(a, b, c,
+		alpha / t_real(180)*tl2::pi<t_real>,
+		beta / t_real(180)*tl2::pi<t_real>,
+		gamma / t_real(180)*tl2::pi<t_real>);
 	emit PlaneChanged(a0, a1, a2, b0, b1, b2);
 
 	return true;
@@ -351,7 +354,7 @@ bool XtalPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 // properties dock widget
 // --------------------------------------------------------------------------------
 XtalPropertiesDockWidget::XtalPropertiesDockWidget(QWidget *parent)
-	: QDockWidget{parent}, 
+	: QDockWidget{parent},
 		m_widget{std::make_shared<XtalPropertiesWidget>(this)}
 {
 	setObjectName("XtalPropertiesDockWidget");
@@ -433,7 +436,7 @@ void XtalInfoWidget::SetUB(const t_mat& matB, const t_mat& matUB)
 // xtal info dock widget
 // --------------------------------------------------------------------------------
 XtalInfoDockWidget::XtalInfoDockWidget(QWidget *parent)
-	: QDockWidget{parent}, 
+	: QDockWidget{parent},
 		m_widget{std::make_shared<XtalInfoWidget>(this)}
 {
 	setObjectName("XtalInfoDockWidget");

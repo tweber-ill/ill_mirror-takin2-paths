@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<taspaths>
+	<instrument_space>
+		<floor>
+			<len_x>20</len_x>
+			<len_y>20</len_y>
+		</floor>
+		<walls>
+			<wall id="wall 1">
+				<geometry>
+					<box id="wall 1">
+						<colour>1 0 0 </colour>
+						<pos1>10 -10 0 </pos1>
+						<pos2>10 10 0 </pos2>
+						<height>3</height>
+						<depth>0.5</depth>
+					</box>
+				</geometry>
+			</wall>
+			<wall id="wall 2">
+				<geometry>
+					<box id="wall 2">
+						<colour>1 0 0 </colour>
+						<pos1>-10 10 0 </pos1>
+						<pos2>10 10 0 </pos2>
+						<height>3</height>
+						<depth>0.5</depth>
+					</box>
+				</geometry>
+			</wall>
+			<wall id="wall 3">
+				<geometry>
+					<box id="wall 3">
+						<colour>1 0 0 </colour>
+						<pos1>-10 10 0 </pos1>
+						<pos2>-10 -10 0 </pos2>
+						<height>3</height>
+						<depth>0.5</depth>
+					</box>
+				</geometry>
+			</wall>
+			<wall id="wall 4">
+				<geometry>
+					<box id="wall 4">
+						<colour>1 0 0 </colour>
+						<pos1>-10 -10 0 </pos1>
+						<pos2>10 -10 0 </pos2>
+						<height>3</height>
+						<depth>0.5</depth>
+					</box>
+				</geometry>
+			</wall>
+			<wall id="wall 5">
+				<geometry>
+					<box id="obstacle 1">
+						<colour>1 0 0 </colour>
+						<pos1>-2.81673 -10.0084 0 </pos1>
+						<pos2>3.76551 -3.4262 0 </pos2>
+						<height>3</height>
+						<depth>0.6</depth>
+					</box>
+				</geometry>
+			</wall>
+			<wall id="wall 6">
+				<geometry>
+					<box id="new wall 1">
+						<colour>1 0 0 </colour>
+						<pos1>3.55924 -3.493 0 </pos1>
+						<pos2>10.1531 -3.493 0 </pos2>
+						<height>3</height>
+						<depth>0.6</depth>
+					</box>
+				</geometry>
+			</wall>
+		</walls>
+		<instrument>
+			<monochromator>
+				<pos>-5 -8 0 </pos>
+				<angle_in>0</angle_in>
+				<angle_internal>21.067</angle_internal>
+				<angle_out>42.134</angle_out>
+				<angle_out_lower_limit>0</angle_out_lower_limit>
+				<angle_out_upper_limit>180</angle_out_upper_limit>
+				<geometry_in>
+					<box id="reactor-monochromator guide">
+						<colour>0 1 1 </colour>
+						<pos1>-5 0 0 </pos1>
+						<pos2>0 0 0 </pos2>
+						<height>1.75</height>
+						<depth>0.35</depth>
+					</box>
+				</geometry_in>
+				<geometry_internal>
+					<cylinder id="monochromator">
+						<colour>0 0 1 </colour>
+						<pos>0 0 0 </pos>
+						<height>2</height>
+						<radius>1.5</radius>
+					</cylinder>
+					<box id="monochromator crystal angle">
+						<colour>1 0.5 0.5 </colour>
+						<pos1>-1 0 0 </pos1>
+						<pos2>1 0 0 </pos2>
+						<height>2.25</height>
+						<depth>0.1</depth>
+					</box>
+				</geometry_internal>
+				<geometry_out>
+					<box id="monochromator-sample guide">
+						<colour>0 1 1 </colour>
+						<pos1>0 0 0 </pos1>
+						<pos2>3.5 0 0 </pos2>
+						<height>1.75</height>
+						<depth>0.35</depth>
+					</box>
+				</geometry_out>
+			</monochromator>
+			<sample>
+				<pos>3.5 0 0 </pos>
+				<angle_in>0</angle_in>
+				<angle_internal>102.9254</angle_internal>
+				<angle_out>-29.0139</angle_out>
+				<angle_out_lower_limit>-180</angle_out_lower_limit>
+				<angle_out_upper_limit>180</angle_out_upper_limit>
+				<geometry_in/>
+				<geometry_internal>
+					<cylinder id="sample">
+						<colour>0 0 1 </colour>
+						<pos>0 0 0 </pos>
+						<height>2</height>
+						<radius>1</radius>
+					</cylinder>
+					<box id="sample crystal angle">
+						<colour>1 0.5 0.5 </colour>
+						<pos1>-0.75 0 0 </pos1>
+						<pos2>0.75 0 0 </pos2>
+						<height>2.25</height>
+						<depth>0.1</depth>
+					</box>
+				</geometry_internal>
+				<geometry_out>
+					<box id="sample-analyser guide">
+						<colour>0 1 1 </colour>
+						<pos1>0 0 0 </pos1>
+						<pos2>2.5 0 0 </pos2>
+						<height>1.75</height>
+						<depth>0.35</depth>
+					</box>
+				</geometry_out>
+			</sample>
+			<analyser>
+				<pos>2.5 0 0 </pos>
+				<angle_in>0</angle_in>
+				<angle_internal>41.9784</angle_internal>
+				<angle_out>83.9569</angle_out>
+				<angle_out_lower_limit>0</angle_out_lower_limit>
+				<angle_out_upper_limit>180</angle_out_upper_limit>
+				<geometry_in/>
+				<geometry_internal>
+					<cylinder id="analyser">
+						<colour>0 0 1 </colour>
+						<pos>0 0 0 </pos>
+						<height>2</height>
+						<radius>1</radius>
+					</cylinder>
+					<box id="analyser crystal angle">
+						<colour>1 0.5 0.5 </colour>
+						<pos1>-0.75 0 0 </pos1>
+						<pos2>0.75 0 0 </pos2>
+						<height>2.25</height>
+						<depth>0.1</depth>
+					</box>
+				</geometry_internal>
+				<geometry_out>
+					<box id="detector">
+						<colour>1 1 0 </colour>
+						<pos1>0 0 0 </pos1>
+						<pos2>2.5 0 0 </pos2>
+						<height>1.5</height>
+						<depth>0.5</depth>
+					</box>
+				</geometry_out>
+			</analyser>
+		</instrument>
+	</instrument_space>
+	<configuration>
+		<tas>
+			<2thM>42.134</2thM>
+			<2thS>-29.0139</2thS>
+			<2thA>83.9569</2thA>
+			<thM>21.067</thM>
+			<thS>102.9254</thS>
+			<thA>41.9784</thA>
+			<sense_mono>1</sense_mono>
+			<sense_sample>0</sense_sample>
+			<sense_ana>1</sense_ana>
+			<dM>3.355</dM>
+			<dA>3.355</dA>
+		</tas>
+		<crystal>
+			<lattice_a>8.9</lattice_a>
+			<lattice_b>8.9</lattice_b>
+			<lattice_c>8.9</lattice_c>
+			<lattice_alpha>90</lattice_alpha>
+			<lattice_beta>90</lattice_beta>
+			<lattice_gamma>90</lattice_gamma>
+			<plane_a0>1</plane_a0>
+			<plane_a1>1</plane_a1>
+			<plane_a2>0</plane_a2>
+			<plane_b0>0</plane_b0>
+			<plane_b1>0</plane_b1>
+			<plane_b2>1</plane_b2>
+		</crystal>
+		<coordinates>
+			<h>1.5</h>
+			<k>1.5</k>
+			<l>0.5</l>
+			<ki>2.605</ki>
+			<kf>1.4</kf>
+			<E>10</E>
+			<kf_fixed>1</kf_fixed>
+		</coordinates>
+		<path>
+			<target_2thM>90</target_2thM>
+			<target_2thS>90</target_2thS>
+		</path>
+		<camera>
+			<x>0</x>
+			<y>0</y>
+			<z>-15</z>
+			<phi>34.38</phi>
+			<theta>-51.57</theta>
+			<viewing_angle>90</viewing_angle>
+			<perspective_proj>1</perspective_proj>
+		</camera>
+	</configuration>
+	<ident>takin_taspaths</ident>
+	<timestamp>1632870289.865816</timestamp>
+</taspaths>
