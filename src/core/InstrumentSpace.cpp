@@ -804,31 +804,16 @@ void InstrumentSpace::DragObject(bool drag_start, const std::string& obj,
 
 
 /**
- * load an instrument space definition from an xml file
+ * load an instrument space definition from a property tree
  */
 std::pair<bool, std::string> InstrumentSpace::load(
-	const std::string& filename, InstrumentSpace& instrspace)
+	/*const*/ pt::ptree& prop, InstrumentSpace& instrspace, const std::string* filename)
 {
-	if(filename == "" || !fs::exists(fs::path(filename)))
-		return std::make_pair(false, "Instrument file \"" + filename + "\" does not exist.");
-
-	// open xml
-	std::ifstream ifstr{filename};
-	if(!ifstr)
-		return std::make_pair(false, "Could not read instrument file \"" + filename + "\".");
-
-	// read xml
-	pt::ptree prop;
-	pt::read_xml(ifstr, prop);
-	// check format and version
-	if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
-		!opt || *opt != PROG_IDENT)
-	{
-		return std::make_pair(false, "Instrument file \"" + filename + "\" has invalid identifier.");
-	}
+	std::string unknown = "<unknown>";
+	if(!filename) filename = &unknown;
 
 	// get variables from config file
-	std::unordered_map<std::string, std::string> propvars;
+	std::unordered_map<std::string, std::string> propvars{};
 
 	if(auto vars = prop.get_child_optional(FILE_BASENAME "variables"); vars)
 	{
@@ -849,11 +834,13 @@ std::pair<bool, std::string> InstrumentSpace::load(
 	if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
 	{
 		if(!instrspace.Load(*instr))
-			return std::make_pair(false, "Instrument configuration \"" + filename + "\" could not be loaded.");
+			return std::make_pair(false, "Instrument configuration \"" + 
+				*filename + "\" could not be loaded.");
 	}
 	else
 	{
-		return std::make_pair(false, "No instrument definition found in \"" + filename + "\".");
+		return std::make_pair(false, "No instrument definition found in \"" + 
+			*filename + "\".");
 	}
 
 	std::ostringstream timestamp;
@@ -861,6 +848,35 @@ std::pair<bool, std::string> InstrumentSpace::load(
 		timestamp << tl2::epoch_to_str(*optTime);;
 
 	return std::make_pair(true, timestamp.str());
+}
+
+
+/**
+ * load an instrument space definition from an xml file
+ */
+std::pair<bool, std::string> InstrumentSpace::load(
+	const std::string& filename, InstrumentSpace& instrspace)
+{
+	if(filename == "" || !fs::exists(fs::path(filename)))
+		return std::make_pair(false, "Instrument file \"" + filename + "\" does not exist.");
+
+	// open xml
+	std::ifstream ifstr{filename};
+	if(!ifstr)
+		return std::make_pair(false, "Could not read instrument file \"" + filename + "\".");
+
+	// read xml
+	pt::ptree prop;
+	pt::read_xml(ifstr, prop);
+	// check format and version
+	if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+		!opt || *opt != PROG_IDENT)
+	{
+		return std::make_pair(false, "Instrument file \"" + filename + 
+			"\" has invalid identifier.");
+	}
+
+	return load(prop, instrspace, &filename);
 }
 
 

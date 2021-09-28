@@ -285,6 +285,21 @@ void TASPropertiesWidget::SetAnaCrystalAngle(t_real angle)
 }
 
 
+/**
+ * set all angles
+ */
+void TASPropertiesWidget::SetAngles(t_real a1, t_real a2, t_real a3, t_real a4, t_real a5, t_real a6)
+{
+	SetMonoScatteringAngle(a2);
+	SetSampleScatteringAngle(a4);
+	SetAnaScatteringAngle(a6);
+
+	SetMonoCrystalAngle(a1);
+	SetSampleCrystalAngle(a3);
+	SetAnaCrystalAngle(a5);
+}
+
+
 t_real TASPropertiesWidget::GetMonoScatteringAngle() const
 {
 	return m_spinMonoScAngle->value();
@@ -328,6 +343,110 @@ void TASPropertiesWidget::SetScatteringSenses(bool monoccw, bool sampleccw, bool
 	m_checkScatteringSense[0]->setChecked(monoccw);
 	m_checkScatteringSense[1]->setChecked(sampleccw);
 	m_checkScatteringSense[2]->setChecked(anaccw);
+}
+
+
+/**
+ * save the dock widget's settings
+ */
+boost::property_tree::ptree TASPropertiesWidget::Save() const
+{
+	boost::property_tree::ptree prop;
+
+	// scattering angles
+	prop.put<t_real>("2thM", m_spinMonoScAngle->value());
+	prop.put<t_real>("2thS", m_spinSampleScAngle->value());
+	prop.put<t_real>("2thA", m_spinAnaScAngle->value());
+
+	// crystal angles
+	prop.put<t_real>("thM", m_spinMonoXtalAngle->value());
+	prop.put<t_real>("thS", m_spinSampleXtalAngle->value());
+	prop.put<t_real>("thA", m_spinAnaXtalAngle->value());
+
+	// scattering senses
+	prop.put<int>("sense_mono", m_checkScatteringSense[0]->isChecked());
+	prop.put<int>("sense_sample", m_checkScatteringSense[1]->isChecked());
+	prop.put<int>("sense_ana", m_checkScatteringSense[2]->isChecked());
+
+	// d spacings
+	prop.put<t_real>("dM", m_spinMonoD->value());
+	prop.put<t_real>("dA", m_spinAnaD->value());
+
+	return prop;
+}
+
+
+/**
+ * load the dock widget's settings
+ */
+bool TASPropertiesWidget::Load(const boost::property_tree::ptree& prop)
+{
+	// old scattering angles
+	t_real _2thM = m_spinMonoScAngle->value();
+	t_real _2thS = m_spinSampleScAngle->value();
+	t_real _2thA = m_spinAnaScAngle->value();
+
+	// old crystal angles
+	t_real _thM = m_spinMonoXtalAngle->value();
+	t_real _thS = m_spinSampleXtalAngle->value();
+	t_real _thA = m_spinAnaXtalAngle->value();
+
+	// old scattering senses
+	bool scM = m_checkScatteringSense[0]->isChecked();
+	bool scS = m_checkScatteringSense[0]->isChecked();
+	bool scA = m_checkScatteringSense[0]->isChecked();
+
+	// old d spacings
+	t_real dM = m_spinMonoD->value();
+	t_real dA = m_spinAnaD->value();
+
+	// scattering angles
+	if(auto opt = prop.get_optional<t_real>("2thM"); opt)
+		_2thM = *opt;
+	if(auto opt = prop.get_optional<t_real>("2thS"); opt)
+		_2thS = *opt;
+	if(auto opt = prop.get_optional<t_real>("2thA"); opt)
+		_2thA = *opt;
+
+	// crystal angles
+	if(auto opt = prop.get_optional<t_real>("thM"); opt)
+		_thM = *opt;
+	if(auto opt = prop.get_optional<t_real>("thS"); opt)
+		_thS = *opt;
+	if(auto opt = prop.get_optional<t_real>("thA"); opt)
+		_thA = *opt;
+
+	// scattering senses
+	if(auto opt = prop.get_optional<int>("sense_mono"); opt)
+		scM = (*opt != 0);
+	if(auto opt = prop.get_optional<int>("sense_sample"); opt)
+		scS = (*opt != 0);
+	if(auto opt = prop.get_optional<int>("sense_ana"); opt)
+		scA = (*opt != 0);
+
+	// d spacings
+	if(auto opt = prop.get_optional<t_real>("dM"); opt)
+		dM = *opt;
+	if(auto opt = prop.get_optional<t_real>("dA"); opt)
+		dA = *opt;
+
+	// set new values
+	SetAngles(_thM, _2thM, _thS, _2thS, _thA, _2thA);
+	SetScatteringSenses(scM, scS, scA);
+	SetDSpacings(dM, dA);
+
+	// emit changes
+	//emit AnglesChanged(_thM, _2thM, _thS, _2thS, _thA, _2thA);
+	emit MonoScatteringAngleChanged(_2thM);
+	emit SampleScatteringAngleChanged(_2thS);
+	emit AnaScatteringAngleChanged(_2thA);
+	emit MonoCrystalAngleChanged(_thM);
+	emit SampleCrystalAngleChanged(_thS);
+	emit AnaCrystalAngleChanged(_thA);
+	emit ScatteringSensesChanged(scM, scS, scA);
+	emit DSpacingsChanged(dM, dA);
+
+	return true;
 }
 // --------------------------------------------------------------------------------
 

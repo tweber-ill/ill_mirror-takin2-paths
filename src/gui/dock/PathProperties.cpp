@@ -292,6 +292,46 @@ void PathPropertiesWidget::PathMeshValid(bool valid)
 	if(!valid)
 		PathAvailable(0);
 }
+
+
+/**
+ * save the dock widget's settings
+ */
+boost::property_tree::ptree PathPropertiesWidget::Save() const
+{
+	boost::property_tree::ptree prop;
+
+	// path coordinate
+	prop.put<t_real>("target_2thM", m_spinFinish[0]->value());
+	prop.put<t_real>("target_2thS", m_spinFinish[1]->value());
+
+	return prop;
+}
+
+
+/**
+ * load the dock widget's settings
+ */
+bool PathPropertiesWidget::Load(const boost::property_tree::ptree& prop)
+{
+	// old values
+	t_real target_2thM = m_spinFinish[0]->value();
+	t_real target_2thS = m_spinFinish[1]->value();
+
+	// path coordinate
+	if(auto opt = prop.get_optional<t_real>("target_2thM"); opt)
+		target_2thM = *opt;
+	if(auto opt = prop.get_optional<t_real>("target_2thS"); opt)
+		target_2thS = *opt;
+
+	// set new values
+	SetTarget(target_2thM, target_2thS);
+
+	// emit changes
+	emit TargetChanged(target_2thM, target_2thS);
+
+	return true;
+}
 // --------------------------------------------------------------------------------
 
 

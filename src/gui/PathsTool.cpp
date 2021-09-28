@@ -216,10 +216,43 @@ bool PathsTool::OpenFile(const QString &file)
 	try
 	{
 		NewFile();
+		std::string filename = file.toStdString();
+
+
+		// get property tree
+		if(filename == "" || !fs::exists(fs::path(filename)))
+		{
+			QMessageBox::critical(this, "Error", 
+				("Instrument file \"" + filename + "\" does not exist.").c_str());
+			return false;
+		}
+
+		// open xml
+		std::ifstream ifstr{filename};
+		if(!ifstr)
+		{
+			QMessageBox::critical(this, "Error", 
+				("Could not read instrument file \"" + filename + "\".").c_str());
+			return false;
+		}
+
+		// read xml
+		pt::ptree prop;
+		pt::read_xml(ifstr, prop);
+		// check format and version
+		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+			!opt || *opt != PROG_IDENT)
+		{
+			QMessageBox::critical(this, "Error", 
+				("Instrument file \"" + filename + 
+				"\" has invalid identifier.").c_str());
+			return false;
+		}
+
 
 		// load instrument definition file
 		if(auto [instrok, msg] =
-			InstrumentSpace::load(file.toStdString(), m_instrspace); !instrok)
+			InstrumentSpace::load(prop, m_instrspace, &filename); !instrok)
 		{
 			QMessageBox::critical(this, "Error", msg.c_str());
 			return false;
@@ -324,7 +357,15 @@ bool PathsTool::SaveFile(const QString &file)
 	if(file=="")
 		return false;
 
+	// save instrument space configuration
 	pt::ptree prop = m_instrspace.Save();
+
+	// save dock window settings
+	prop.put_child(FILE_BASENAME "configuration.tas", m_tasProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.crystal", m_xtalProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.coordinates", m_coordProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.path", m_pathProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.camera", m_camProperties->GetWidget()->Save());
 
 	// set format and version
 	prop.put(FILE_BASENAME "ident", PROG_IDENT);

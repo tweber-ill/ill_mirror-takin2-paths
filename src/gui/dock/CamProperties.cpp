@@ -206,6 +206,76 @@ void CamPropertiesWidget::SetCamRotation(t_real phi, t_real theta)
 	if(m_spinRot[1]) m_spinRot[1]->setValue(theta);
 	this->blockSignals(false);
 }
+
+
+/**
+ * save the dock widget's settings
+ */
+boost::property_tree::ptree CamPropertiesWidget::Save() const
+{
+	boost::property_tree::ptree prop;
+
+	// camera position
+	prop.put<t_real>("x", m_spinPos[0]->value());
+	prop.put<t_real>("y", m_spinPos[1]->value());
+	prop.put<t_real>("z", m_spinPos[2]->value());
+
+	// camera rotation
+	prop.put<t_real>("phi", m_spinRot[0]->value());
+	prop.put<t_real>("theta", m_spinRot[1]->value());
+
+	// viewing angle and projection
+	prop.put<t_real>("viewing_angle", m_spinViewingAngle->value());
+	prop.put<int>("perspective_proj", m_checkPerspectiveProj->isChecked());
+
+	return prop;
+}
+
+
+/**
+ * load the dock widget's settings
+ */
+bool CamPropertiesWidget::Load(const boost::property_tree::ptree& prop)
+{
+	// old camera position
+	t_real pos0 = m_spinPos[0]->value();
+	t_real pos1 = m_spinPos[1]->value();
+	t_real pos2 = m_spinPos[2]->value();
+
+	// old camera rotation
+	t_real rot0 = m_spinRot[0]->value();
+	t_real rot1 = m_spinRot[1]->value();
+
+	// camera position
+	if(auto opt = prop.get_optional<t_real>("x"); opt)
+		pos0 = *opt;
+	if(auto opt = prop.get_optional<t_real>("y"); opt)
+		pos1 = *opt;
+	if(auto opt = prop.get_optional<t_real>("z"); opt)
+		pos2 = *opt;
+
+	// camera rotation
+	if(auto opt = prop.get_optional<t_real>("phi"); opt)
+		rot0 = *opt;
+	if(auto opt = prop.get_optional<t_real>("theta"); opt)
+		rot1 = *opt;
+
+	// viewing angle and projection
+	if(auto opt = prop.get_optional<t_real>("viewing_angle"); opt)
+		m_spinViewingAngle->setValue(*opt);
+	if(auto opt = prop.get_optional<int>("perspective_proj"); opt)
+		m_checkPerspectiveProj->setChecked(*opt != 0);
+
+	// set new values
+	SetCamPosition(pos0, pos1, pos2);
+	SetCamRotation(rot0, rot1);
+
+	// emit changes
+	emit CamPositionChanged(pos0, pos1, pos2);
+	emit CamRotationChanged(rot0, rot1);
+
+	return true;
+}
 // --------------------------------------------------------------------------------
 
 

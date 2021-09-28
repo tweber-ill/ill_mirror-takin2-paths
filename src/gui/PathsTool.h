@@ -91,13 +91,15 @@ private:
 	QMenu *m_contextMenuObj{ nullptr };
 	std::string m_curContextObj{};
 
-	// dialogs and docks
+	// dialogs
 	std::shared_ptr<AboutDlg> m_dlgAbout{};
 	std::shared_ptr<LicensesDlg> m_dlgLicenses{};
 	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser{};
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};
 	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace{};
+
+	// docks
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties{};
 	std::shared_ptr<XtalPropertiesDockWidget> m_xtalProperties{};
 	std::shared_ptr<XtalInfoDockWidget> m_xtalInfos{};
@@ -251,6 +253,7 @@ protected slots:
 	void RenameObject(const std::string& oldid, const std::string& newid);
 	void ChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
 
+	// propagate (changed) global settings to each object
 	void InitSettings();
 
 signals:

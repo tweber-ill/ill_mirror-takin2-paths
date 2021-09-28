@@ -27,6 +27,10 @@
 #define __CAM_PROP_WIDGET_H__
 
 #include <memory>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/signals2/signal.hpp>
+
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
@@ -43,6 +47,10 @@ public:
 
 	CamPropertiesWidget(const CamPropertiesWidget&) = delete;
 	CamPropertiesWidget& operator=(const CamPropertiesWidget&) = delete;
+
+	// save and load the dock widget's settings
+	boost::property_tree::ptree Save() const;
+	bool Load(const boost::property_tree::ptree& prop);
 
 
 public slots:

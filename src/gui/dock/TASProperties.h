@@ -27,6 +27,10 @@
 #define __TAS_PROP_WIDGET_H__
 
 #include <memory>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/signals2/signal.hpp>
+
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QDoubleSpinBox>
@@ -44,6 +48,10 @@ public:
 	TASPropertiesWidget(const TASPropertiesWidget&) = delete;
 	const TASPropertiesWidget& operator=(const TASPropertiesWidget&) = delete;
 
+	// save and load the dock widget's settings
+	boost::property_tree::ptree Save() const;
+	bool Load(const boost::property_tree::ptree& prop);
+
 
 public slots:
 	void SetMonoScatteringAngle(t_real angle);
@@ -53,6 +61,8 @@ public slots:
 	void SetMonoCrystalAngle(t_real angle);
 	void SetSampleCrystalAngle(t_real angle);
 	void SetAnaCrystalAngle(t_real angle);
+
+	void SetAngles(t_real a1, t_real a2, t_real a3, t_real a4, t_real a5, t_real a6);
 
 	t_real GetMonoScatteringAngle() const;
 	t_real GetSampleScatteringAngle() const;

@@ -213,6 +213,65 @@ void CoordPropertiesWidget::SetCoordinates(
 	this->blockSignals(false);
 }
 
+
+/**
+ * save the dock widget's settings
+ */
+boost::property_tree::ptree CoordPropertiesWidget::Save() const
+{
+	boost::property_tree::ptree prop;
+
+	// crystal coordinates
+	prop.put<t_real>("h", m_spinCoords[0]->value());
+	prop.put<t_real>("k", m_spinCoords[1]->value());
+	prop.put<t_real>("l", m_spinCoords[2]->value());
+	prop.put<t_real>("ki", m_spinCoords[3]->value());
+	prop.put<t_real>("kf", m_spinCoords[4]->value());
+	prop.put<t_real>("E", m_spinCoords[5]->value());
+
+	// fixed wave vector
+	prop.put<int>("kf_fixed", m_checkKfFixed->isChecked());
+
+	return prop;
+}
+
+
+/**
+ * load the dock widget's settings
+ */
+bool CoordPropertiesWidget::Load(const boost::property_tree::ptree& prop)
+{
+	// get current coordinate values
+	t_real h = m_spinCoords[0]->value();
+	t_real k = m_spinCoords[1]->value();
+	t_real l = m_spinCoords[2]->value();
+	t_real ki = m_spinCoords[3]->value();
+	t_real kf = m_spinCoords[4]->value();
+
+	// new coordinates
+	if(auto opt = prop.get_optional<t_real>("h"); opt)
+		h = *opt;
+	if(auto opt = prop.get_optional<t_real>("k"); opt)
+		k = *opt;
+	if(auto opt = prop.get_optional<t_real>("l"); opt)
+		l = *opt;
+	if(auto opt = prop.get_optional<t_real>("ki"); opt)
+		ki = *opt;
+	if(auto opt = prop.get_optional<t_real>("kf"); opt)
+		kf = *opt;
+
+	// fixed wave vector
+	if(auto opt = prop.get_optional<int>("kf_fixed"); opt)
+		m_checkKfFixed->setChecked(*opt != 0);
+
+	// set new coordinates
+	SetCoordinates(h, k, l, ki, kf);
+
+	// emit changes
+	emit CoordinatesChanged(h, k, l, ki, kf);
+
+	return true;
+}
 // --------------------------------------------------------------------------------
 
 

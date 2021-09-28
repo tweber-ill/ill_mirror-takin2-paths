@@ -249,6 +249,100 @@ void XtalPropertiesWidget::SetPlane(
 
 	this->blockSignals(false);
 }
+
+
+/**
+ * save the dock widget's settings
+ */
+boost::property_tree::ptree XtalPropertiesWidget::Save() const
+{
+	boost::property_tree::ptree prop;
+
+	// lattice constants
+	prop.put<t_real>("lattice_a", m_spinLatticeConsts[0]->value());
+	prop.put<t_real>("lattice_b", m_spinLatticeConsts[1]->value());
+	prop.put<t_real>("lattice_c", m_spinLatticeConsts[2]->value());
+
+	// lattice angles
+	prop.put<t_real>("lattice_alpha", m_spinLatticeAngles[0]->value());
+	prop.put<t_real>("lattice_beta", m_spinLatticeAngles[1]->value());
+	prop.put<t_real>("lattice_gamma", m_spinLatticeAngles[2]->value());
+
+	// scattering plane
+	prop.put<t_real>("plane_a0", m_spinPlane[0]->value());
+	prop.put<t_real>("plane_a1", m_spinPlane[1]->value());
+	prop.put<t_real>("plane_a2", m_spinPlane[2]->value());
+	prop.put<t_real>("plane_b0", m_spinPlane[3]->value());
+	prop.put<t_real>("plane_b1", m_spinPlane[4]->value());
+	prop.put<t_real>("plane_b2", m_spinPlane[5]->value());
+
+	return prop;
+}
+
+
+/**
+ * load the dock widget's settings
+ */
+bool XtalPropertiesWidget::Load(const boost::property_tree::ptree& prop)
+{
+	// old lattice constants
+	t_real a = m_spinLatticeConsts[0]->value();
+	t_real b = m_spinLatticeConsts[1]->value();
+	t_real c = m_spinLatticeConsts[2]->value();
+
+	// old lattice angles
+	t_real alpha = m_spinLatticeAngles[0]->value();
+	t_real beta = m_spinLatticeAngles[1]->value();
+	t_real gamma = m_spinLatticeAngles[2]->value();
+
+	// old scattering plane vectors
+	t_real a0 = m_spinPlane[0]->value();
+	t_real a1 = m_spinPlane[1]->value();
+	t_real a2 = m_spinPlane[2]->value();
+	t_real b0 = m_spinPlane[3]->value();
+	t_real b1 = m_spinPlane[4]->value();
+	t_real b2 = m_spinPlane[5]->value();
+
+	// lattice constants
+	if(auto opt = prop.get_optional<t_real>("lattice_a"); opt)
+		a = *opt;
+	if(auto opt = prop.get_optional<t_real>("lattice_b"); opt)
+		b = *opt;
+	if(auto opt = prop.get_optional<t_real>("lattice_c"); opt)
+		c = *opt;
+
+	// lattice angles
+	if(auto opt = prop.get_optional<t_real>("lattice_alpha"); opt)
+		alpha = *opt;
+	if(auto opt = prop.get_optional<t_real>("lattice_beta"); opt)
+		beta = *opt;
+	if(auto opt = prop.get_optional<t_real>("lattice_gamma"); opt)
+		gamma = *opt;
+
+	// scattering plane
+	if(auto opt = prop.get_optional<t_real>("plane_a0"); opt)
+		a0 = *opt;
+	if(auto opt = prop.get_optional<t_real>("plane_a1"); opt)
+		a1 = *opt;
+	if(auto opt = prop.get_optional<t_real>("plane_a2"); opt)
+		a2 = *opt;
+	if(auto opt = prop.get_optional<t_real>("plane_b0"); opt)
+		b0 = *opt;
+	if(auto opt = prop.get_optional<t_real>("plane_b1"); opt)
+		b1 = *opt;
+	if(auto opt = prop.get_optional<t_real>("plane_b2"); opt)
+		b2 = *opt;
+
+	// set the new values
+	SetLattice(a, b, c, alpha, beta, gamma);
+	SetPlane(a0, a1, a2, b0, b1, b2);
+
+	// emit the changes
+	emit LatticeChanged(a, b, c, alpha, beta, gamma);
+	emit PlaneChanged(a0, a1, a2, b0, b1, b2);
+
+	return true;
+}
 // --------------------------------------------------------------------------------
 
 

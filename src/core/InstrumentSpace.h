@@ -95,7 +95,13 @@ public:
 
 public:
 	static std::pair<bool, std::string> load(
-		const std::string& filename, InstrumentSpace& instrspace);
+		/*const*/ boost::property_tree::ptree& prop, 
+		InstrumentSpace& instrspace,
+		const std::string* filename = nullptr);
+
+	static std::pair<bool, std::string> load(
+		const std::string& filename,
+		InstrumentSpace& instrspace);
 
 
 private:
