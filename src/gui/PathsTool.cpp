@@ -266,6 +266,20 @@ bool PathsTool::OpenFile(const QString &file)
 			SetTmpStatus(ostr.str());
 		}
 
+
+		// load dock window settings
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.tas"); prop_dock)
+			m_tasProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.crystal"); prop_dock)
+			m_xtalProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.coordinates"); prop_dock)
+			m_coordProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.path"); prop_dock)
+			m_pathProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.camera"); prop_dock)
+			m_camProperties->GetWidget()->Load(*prop_dock);
+
+
 		SetCurrentFile(file);
 		AddRecentFile(file);
 
