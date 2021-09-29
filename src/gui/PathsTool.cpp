@@ -485,6 +485,15 @@ void PathsTool::ValidatePathMesh(bool valid)
 
 
 /**
+ * set the instrument's energy selection mode to either kf=const or ki=const
+ */
+void PathsTool::SetKfConstMode(bool kf_const)
+{
+	m_tascalc.SetKfix(kf_const);
+}
+
+
+/**
  * go to crystal coordinates
  */
 void PathsTool::GotoCoordinates(
@@ -550,7 +559,7 @@ void PathsTool::GotoCoordinates(
 		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(
 			angles.anaXtalAngle);
 
-		m_tascalc.SetKfix(kf, true);
+		m_tascalc.SetKfix(kf);
 	}
 }
 
@@ -1033,6 +1042,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	connect(coordwidget, &CoordPropertiesWidget::GotoCoordinates,
 		this, static_cast<t_gotocoords>(&PathsTool::GotoCoordinates));
+
+	// kf=const mode selection, TODO: maybe move this to TASProperties
+	connect(coordwidget, &CoordPropertiesWidget::KfConstModeChanged,
+		this, &PathsTool::SetKfConstMode);
 
 	// goto angles
 	connect(pathwidget, &PathPropertiesWidget::GotoAngles,

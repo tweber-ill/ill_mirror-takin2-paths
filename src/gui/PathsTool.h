@@ -201,6 +201,9 @@ protected slots:
 		GotoCoordinates(h, k, l, ki, kf, false);
 	}
 
+	// set either kf=const or ki=const
+	void SetKfConstMode(bool kf_const = true);
+
 	// go to instrument angles
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,

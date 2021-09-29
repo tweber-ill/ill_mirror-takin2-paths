@@ -61,9 +61,13 @@ public:
 	void SetAnalyserD(t_real d);
 	void SetSampleAngleOffset(t_real offs);
 
-	void SetKfix(t_real k_fix, bool fixed_kf = true);
 	std::pair<t_real, bool> GetKfix() const;
+	void SetKfix(bool fixed_kf = true);
+	void SetKfix(t_real k_fix, bool fixed_kf);
+	void SetKfix(t_real k_fix);
+
 	void SetKf(t_real kf) { SetKfix(kf, true); }
+	void SetKi(t_real ki) { SetKfix(ki, false); }
 
 	void SetScatteringSenses(bool monoccw, bool sampleccw, bool anaccw);
 	const t_real* GetScatteringSenses() const;

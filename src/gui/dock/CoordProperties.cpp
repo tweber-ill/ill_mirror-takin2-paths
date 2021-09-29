@@ -65,6 +65,7 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 
 	m_checkKfFixed = new QCheckBox(this);
 	m_checkKfFixed->setText("Keep kf = const.");
+	m_checkKfFixed->setToolTip("Select the energy transfer by keeping either ki or kf fixed.");
 
 	// default values
 	m_spinCoords[0]->setValue(1);
@@ -190,6 +191,14 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 
 			emit GotoCoordinates(h, k, l, ki, kf, true);
 		});
+
+	// kf == const?
+	// TODO: maybe move this to TASProperties
+	connect(m_checkKfFixed, &QCheckBox::stateChanged,
+		[this](int state) -> void
+		{
+			emit KfConstModeChanged(state == Qt::Checked);
+		});
 }
 
 
@@ -209,6 +218,16 @@ void CoordPropertiesWidget::SetCoordinates(
 	m_spinCoords[3]->setValue(ki);
 	m_spinCoords[4]->setValue(kf);
 	m_spinCoords[5]->setValue(tl2::calc_tas_E<t_real>(ki, kf));
+
+	this->blockSignals(false);
+}
+
+
+void CoordPropertiesWidget::SetKfConstMode(bool kf_const)
+{
+	this->blockSignals(true);
+
+	m_checkKfFixed->setChecked(kf_const);
 
 	this->blockSignals(false);
 }
@@ -248,6 +267,8 @@ bool CoordPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 	t_real ki = m_spinCoords[3]->value();
 	t_real kf = m_spinCoords[4]->value();
 
+	bool kf_fixed = true;
+
 	// new coordinates
 	if(auto opt = prop.get_optional<t_real>("h"); opt)
 		h = *opt;
@@ -266,6 +287,12 @@ bool CoordPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 
 	// set new coordinates
 	SetCoordinates(h, k, l, ki, kf);
+
+	// set kf=const mode
+	SetKfConstMode(kf_fixed);
+
+	// set kf=const mode
+	emit KfConstModeChanged(kf_fixed);
 
 	// emit changes
 	emit CoordinatesChanged(h, k, l, ki, kf);

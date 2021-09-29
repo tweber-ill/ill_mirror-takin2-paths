@@ -50,6 +50,15 @@ void TasCalculator::SetKfix(t_real kfix, bool fixed_kf)
 	m_kfix = kfix;
 }
 
+void TasCalculator::SetKfix(t_real kfix)
+{
+	m_kfix = kfix;
+}
+
+void TasCalculator::SetKfix(bool fixed_kf)
+{
+	SetKfix(m_kfix, fixed_kf);
+}
 
 std::pair<t_real, bool> TasCalculator::GetKfix() const
 {

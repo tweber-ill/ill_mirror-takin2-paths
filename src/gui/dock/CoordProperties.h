@@ -55,12 +55,16 @@ public:
 
 public slots:
 	void SetCoordinates(t_real h, t_real k, t_real l, t_real ki, t_real kf);
+	void SetKfConstMode(bool kf_const = true);
 
 
 signals:
 	void CoordinatesChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
 	void GotoCoordinates(t_real h, t_real k, t_real l, 
 		t_real ki, t_real kf, bool only_set_target);
+
+	// TODO: maybe move this to TASProperties
+	void KfConstModeChanged(bool kf_const);
 
 
 private:
