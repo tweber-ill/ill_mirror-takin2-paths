@@ -459,8 +459,19 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
 		std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
 
+		bool kf_fixed = true;
+		if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+		{
+			// move monochromator if kf=fixed and analyser otherwise
+			if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+				kf_fixed = false;
+		}
+
 		// move instrument
-		this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+		if(kf_fixed)
+			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+		else
+			this->EmitGotoAngles(std::nullopt, std::nullopt, a4, a1);
 	});
 
 	connect(m_plot.get(), &QCustomPlot::mouseMove,
@@ -474,13 +485,24 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
 		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
 
+		bool kf_fixed = true;
+		if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+		{
+			// move monochromator if kf=fixed and analyser otherwise
+			if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+				kf_fixed = false;
+		}
+
 		// move instrument
 		if(m_moveInstr && (evt->buttons() & Qt::LeftButton))
 		{
 			std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
 			std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
 
-			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+			if(kf_fixed)
+				this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
+			else
+				this->EmitGotoAngles(std::nullopt, std::nullopt, a4, a1);
 		}
 
 		// set status
@@ -488,7 +510,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		ostr.precision(g_prec_gui);
 
 		// show angular coordinates
-		ostr << "2θ_S = " << _a4 << " deg, 2θ_M = " << _a2 << " deg.";
+		ostr << "2θ_S = " << _a4 << " deg";
+		if(kf_fixed)
+			ostr << ", 2θ_M = " << _a2 << " deg.";
+		else
+			ostr << ", 2θ_A = " << _a2 << " deg.";
 
 		// show pixel coordinates
 		if(m_pathsbuilder)
@@ -654,15 +680,28 @@ void ConfigSpaceDlg::UpdatePlotRanges()
  */
 void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sensesCCW)
 {
-	m_curMonoScatteringAngle = instr.GetMonochromator().GetAxisAngleOut();
+	bool kf_fixed = true;
+	std::size_t mono_idx = 0;
+	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+	{
+		// move monochromator if kf=fixed and analyser otherwise
+		if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+		{
+			kf_fixed = false;
+			mono_idx = 2;
+		}
+	}
+
+	if(kf_fixed)
+		m_curMonoScatteringAngle = instr.GetMonochromator().GetAxisAngleOut();
+	else
+		m_curMonoScatteringAngle = instr.GetAnalyser().GetAxisAngleOut();
 	m_curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
-	//m_curAnaScatteringAngle = instr.GetAnalyser().GetAxisAngleOut();
 
 	if(sensesCCW)
 	{
-		m_curMonoScatteringAngle *= sensesCCW[0];
+		m_curMonoScatteringAngle *= sensesCCW[mono_idx];
 		m_curSampleScatteringAngle *= sensesCCW[1];
-		//m_anaScatteringAngle *= sensesCCW[2];
 	}
 
 	QVector<t_real> x, y;
@@ -682,14 +721,21 @@ void ConfigSpaceDlg::UpdateInstrument(const Instrument& instr, const t_real* sen
  */
 void ConfigSpaceDlg::UpdateTarget(t_real monoScAngle, t_real sampleScAngle, const t_real* sensesCCW)
 {
+	std::size_t mono_idx = 0;
+	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+	{
+		// move monochromator if kf=fixed and analyser otherwise
+		if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+			mono_idx = 2;
+	}
+
 	m_targetMonoScatteringAngle = monoScAngle;
 	m_targetSampleScatteringAngle = sampleScAngle;
 
 	if(sensesCCW)
 	{
-		m_targetMonoScatteringAngle *= sensesCCW[0];
+		m_targetMonoScatteringAngle *= sensesCCW[mono_idx];
 		m_targetSampleScatteringAngle *= sensesCCW[1];
-		//m_targetAnaScatteringAngle *= sensesCCW[2];
 	}
 
 	QVector<t_real> x, y;
@@ -753,13 +799,29 @@ void ConfigSpaceDlg::CalculatePathMesh()
 
 	const auto& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
 
+	bool kf_fixed = true;
+	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+	{
+		// move monochromator if kf=fixed and analyser otherwise
+		if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+			kf_fixed = false;
+	}
+
 	// plot angular steps
 	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
 	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
 
 	// get the angular limits from the instrument model
-	m_starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
-	m_enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+	if(kf_fixed)
+	{
+		m_starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+		m_enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+	}
+	else
+	{
+		m_starta2 = instr.GetAnalyser().GetAxisAngleOutLowerLimit();
+		m_enda2 = instr.GetAnalyser().GetAxisAngleOutUpperLimit();
+	}
 	m_starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
 	m_enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
 

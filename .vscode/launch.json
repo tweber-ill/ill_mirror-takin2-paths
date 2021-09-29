@@ -11,7 +11,8 @@
 		"environment": [],
 		"stopAtEntry": false,
 		"externalConsole": false,
-		"MIMode": "lldb"
-		//"MIMode": "gdb"
+		"MIMode": "gdb",
+		"miDebuggerPath": "/usr/bin/gdb"
+		//"MIMode": "lldb"
 	}]
 }

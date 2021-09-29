@@ -124,8 +124,13 @@ t_vec2 PathsBuilder::PixelToAngle(t_real img_x, t_real img_y, bool deg, bool inc
 
 	if(inc_sense && sensesCCW)
 	{
+		// move analysator instead of monochromator?
+		std::size_t mono_idx = 0;
+		if(!std::get<1>(m_tascalc->GetKfix()))
+			mono_idx = 2;
+
 		x *= sensesCCW[1];
-		y *= sensesCCW[0];
+		y *= sensesCCW[mono_idx];
 	}
 
 	return tl2::create<t_vec2>({x, y});
@@ -149,8 +154,13 @@ t_vec2 PathsBuilder::AngleToPixel(t_real angle_x, t_real angle_y, bool deg, bool
 
 	if(inc_sense && sensesCCW)
 	{
+		// move analysator instead of monochromator?
+		std::size_t mono_idx = 0;
+		if(!std::get<1>(m_tascalc->GetKfix()))
+			mono_idx = 2;
+
 		angle_x *= sensesCCW[1];
-		angle_y *= sensesCCW[0];
+		angle_y *= sensesCCW[mono_idx];
 	}
 
 
@@ -178,6 +188,7 @@ PathsBuilder::GetWallContours(bool full) const
 
 /**
  * calculate the obstacle regions in the angular configuration space
+ * the monochromator a2/a3 variables can alternatively refer to the analyser a5/a6 in case kf is not fixed
  */
 bool PathsBuilder::CalculateConfigSpace(
 	t_real da2, t_real da4,
@@ -196,12 +207,25 @@ bool PathsBuilder::CalculateConfigSpace(
 	ostrmsg << "Calculating configuration space in " << m_maxnum_threads << " threads...";
 	(*m_sigProgress)(true, false, 0, ostrmsg.str());
 
-	// angles and ranges
-	t_real a6 = m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut();
-
 	const t_real *sensesCCW = nullptr;
+	std::size_t mono_idx = 0;
+	bool kf_fixed = true;
 	if(m_tascalc)
+	{
 		sensesCCW = m_tascalc->GetScatteringSenses();
+
+		// move analysator instead of monochromator?
+		if(!std::get<1>(m_tascalc->GetKfix()))
+		{
+			kf_fixed = false;
+			mono_idx = 2;
+		}
+	}
+
+	// analyser angle (alternatively monochromator angle if kf is not fixed)
+	t_real a6 = kf_fixed
+		? m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut()	      // a6 or
+		: m_instrspace->GetInstrument().GetMonochromator().GetAxisAngleOut(); // a2
 
 	// include scattering senses
 	if(sensesCCW)
@@ -210,9 +234,9 @@ bool PathsBuilder::CalculateConfigSpace(
 		starta4 *= sensesCCW[1];
 		enda4 *= sensesCCW[1];
 
-		da2 *= sensesCCW[0];
-		starta2 *= sensesCCW[0];
-		enda2 *= sensesCCW[0];
+		da2 *= sensesCCW[mono_idx];
+		starta2 *= sensesCCW[mono_idx];
+		enda2 *= sensesCCW[mono_idx];
 	}
 
 	// create colour map and image
@@ -232,7 +256,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	std::atomic<std::size_t> num_pixels = 0;
 	for(std::size_t img_row=0; img_row<img_h; ++img_row)
 	{
-		auto task = [this, img_w, img_row, a6, &num_pixels]()
+		auto task = [this, img_w, img_row, a6, kf_fixed, &num_pixels]()
 		{
 			InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
@@ -243,15 +267,15 @@ bool PathsBuilder::CalculateConfigSpace(
 				t_real a2 = angle[1];
 				t_real a3 = a4 * 0.5;
 
-				// set scattering angles
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+				// set scattering angles (a2 and a6 are flipped in case kf is not fixed)
+				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(kf_fixed ? a2 : a6);
 				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
-				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a6);
+				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(kf_fixed ? a6 : a2);
 
-				// set crystal angles
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+				// set crystal angles (a1 and a5 are flipped in case kf is not fixed)
+				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(kf_fixed ? 0.5*a2 : 0.5*a6);
 				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
-				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
+				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(kf_fixed ? 0.5*a6 : 0.5*a2);
 
 				// set image value
 				bool angle_ok = instrspace_cpy.CheckAngularLimits();
@@ -638,6 +662,7 @@ bool PathsBuilder::SaveToLinesTool(const std::string& filename)
 
 /**
  * find a path from an initial (a2, a4) to a final (a2, a4)
+ * the monochromator a2/a3 variables can alternatively refer to the analyser a5/a6 in case kf is not fixed
  */
 InstrumentPath PathsBuilder::FindPath(
 	t_real a2_i, t_real a4_i,
@@ -653,8 +678,19 @@ InstrumentPath PathsBuilder::FindPath(
 			return path;
 
 		const t_real *sensesCCW = nullptr;
+		std::size_t mono_idx = 0;
+		bool kf_fixed = true;
 		if(m_tascalc)
+		{
 			sensesCCW = m_tascalc->GetScatteringSenses();
+
+			// move analysator instead of monochromator?
+			if(!std::get<1>(m_tascalc->GetKfix()))
+			{
+				kf_fixed = false;
+				mono_idx = 2;
+			}
+		}
 
 		InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
@@ -663,12 +699,21 @@ InstrumentPath PathsBuilder::FindPath(
 		t_real a4 = a4_i;
 		if(sensesCCW)
 		{
-			a2 *= sensesCCW[0];
+			a2 *= sensesCCW[mono_idx];
 			a4 *= sensesCCW[1];
 		}
-		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+
+		if(kf_fixed)
+		{
+			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+		}
+		else
+		{
+			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
+			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+		}
 		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
-		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
 
 		bool in_angular_limits = instrspace_cpy.CheckAngularLimits();
 		bool colliding = instrspace_cpy.CheckCollision2D();
@@ -680,12 +725,21 @@ InstrumentPath PathsBuilder::FindPath(
 		a4 = a4_f;
 		if(sensesCCW)
 		{
-			a2 *= sensesCCW[0];
+			a2 *= sensesCCW[mono_idx];
 			a4 *= sensesCCW[1];
 		}
-		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+
+		if(kf_fixed)
+		{
+			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+		}
+		else
+		{
+			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
+			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+		}
 		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
-		instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
 
 		in_angular_limits = instrspace_cpy.CheckAngularLimits();
 		colliding = instrspace_cpy.CheckCollision2D();
@@ -1008,11 +1062,19 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	const auto& voro_results = GetVoronoiResults();
 	const auto& voro_vertices = voro_results.GetVoronoiVertices();
 
+	bool kf_fixed = true;
+	if(m_tascalc)
+	{
+		// move analysator instead of monochromator?
+		if(!std::get<1>(m_tascalc->GetKfix()))
+			kf_fixed = false;
+	}
+
 	InstrumentSpace instrspace_cpy = *this->m_instrspace;
 
 	// convert pixel to angular coordinates and add vertex to path
 	auto add_curve_vertex =
-		[&path_vertices, &instrspace_cpy, deg, this]
+		[&path_vertices, &instrspace_cpy, kf_fixed, deg, this]
 			(const t_vec2& vertex)
 	{
 		const t_vec2 angle = PixelToAngle(vertex, deg);
@@ -1026,14 +1088,18 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 				t_real a2 = _angle[1];
 
 				// set scattering angles
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+				if(kf_fixed)
+					instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
+				else
+					instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
 				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
-				//instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a6);
 
 				// set crystal angles
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+				if(kf_fixed)
+					instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+				else
+					instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
 				//instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
-				//instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a6);
 
 				bool angle_ok = instrspace_cpy.CheckAngularLimits();
 				bool colliding = instrspace_cpy.CheckCollision2D();

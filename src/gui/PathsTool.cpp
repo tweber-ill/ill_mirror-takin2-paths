@@ -288,6 +288,13 @@ bool PathsTool::OpenFile(const QString &file)
 		if(m_renderer)
 			m_renderer->LoadInstrument(m_instrspace);
 
+
+		// is ki or kf fixed?
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
+
+
 		// update slot for instrument space (e.g. walls) changes
 		m_instrspace.AddUpdateSlot(
 			[this](const InstrumentSpace& instrspace)
@@ -301,10 +308,11 @@ bool PathsTool::OpenFile(const QString &file)
 
 		// update slot for instrument movements
 		m_instrspace.GetInstrument().AddUpdateSlot(
-			[this](const Instrument& instr)
+			[this, kf_fixed](const Instrument& instr)
 			{
 				// old angles
 				t_real oldA6 = m_tasProperties->GetWidget()->GetAnaScatteringAngle()/t_real{180}*tl2::pi<t_real>;
+				t_real oldA2 = m_tasProperties->GetWidget()->GetMonoScatteringAngle()/t_real{180}*tl2::pi<t_real>;
 
 				// get scattering angles
 				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
@@ -335,8 +343,10 @@ bool PathsTool::OpenFile(const QString &file)
 				SetInstrumentStatus(Qrlu, E,
 					in_angular_limits, colliding);
 
-				// if the analyser angle changes, the mesh also needs to be updated
-				if(!tl2::equals<t_real>(oldA6, anaScAngle, g_eps))
+				// if the analyser or monochromator angle changes, the mesh also needs to be updated
+				if(kf_fixed && !tl2::equals<t_real>(oldA6, anaScAngle, g_eps))
+					ValidatePathMesh(false);
+				if(!kf_fixed && !tl2::equals<t_real>(oldA2, monoScAngle, g_eps))
 					ValidatePathMesh(false);
 
 				if(this->m_dlgConfigSpace)
@@ -554,7 +564,7 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 	std::optional<t_real> a5, bool only_set_target)
 {
 	// set target coordinate angles
-	if(only_set_target && a1 && a4)
+	if(only_set_target && (a1 || a5) && a4)
 	{
 		if(!m_pathProperties)
 			return;
@@ -562,7 +572,13 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 		if(!pathwidget)
 			return;
 
-		t_real _a2 = *a1 * 2.;
+		// is kf or ki fixed?
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
+
+		// move either monochromator or analyser depending if kf=fixed
+		t_real _a2 = kf_fixed ? *a1 * 2. : *a5 * 2.;
 		t_real _a4 = *a4;
 
 		pathwidget->SetTarget(
@@ -1942,6 +1958,16 @@ void PathsTool::TrackPath(std::size_t idx)
 	if(idx >= m_pathvertices.size())
 		return;
 
+	bool kf_fixed = true;
+	if(!std::get<1>(m_tascalc.GetKfix()))
+		kf_fixed = false;
+
+	// get a vertex on the instrument path	
 	const t_vec2& vert = m_pathvertices[idx];
-	GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
+
+	// move either the monochromator or the analyser
+	if(kf_fixed)
+		GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
+	else
+		GotoAngles(std::nullopt, std::nullopt, vert[0], vert[1]*0.5, false);
 }
