@@ -130,6 +130,7 @@ vec3 get_campos()
 /**
  * phong lighting model
  * @see https://en.wikipedia.org/wiki/Phong_reflection_model
+ * @see (Sellers 2014), pp. 509-513
  */
 t_real lighting(vec4 objVert, vec4 objNorm)
 {
@@ -205,7 +206,7 @@ void main()
 {
 	frag_out_col = vec4(1, 1, 1, 1);
 
-	// shadow rendering pass
+	// shadow rendering pass, @see (Sellers 2014), pp. 534-540
 	if(shadow_renderpass)
 	{
 		// use colours for z value
@@ -221,6 +222,7 @@ void main()
 		frag_out_col.rgb *= frag_in.col.rgb * I;
 		frag_out_col *= lights_const_col;
 
+		// shadows, @see (Sellers 2014), pp. 534-540
 		if(shadow_enabled)
 		{
 			// get the shadow z value
@@ -231,6 +233,7 @@ void main()
 				frag_out_col.rgb *= g_shadow_atten;
 		}
 
+		// show cursor position
 		if(cursor_active && length(frag_in.coords - cursor_coords) < 0.01)
 		{
 			frag_out_col = vec4(1, 0, 0, 1);

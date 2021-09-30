@@ -30,6 +30,7 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
+#include <QtGui/QDesktopServices>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -1344,6 +1345,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// help menu
 	QMenu *menuHelp = new QMenu("Help", m_menubar);
 
+	// if the help files were not found, remove its menu item
+	std::string dev_docfile{};
+	bool show_dev_doc = true;
+	if(dev_docfile = find_resource("dev_doc/html/index.html"); dev_docfile.empty())
+		show_dev_doc = false;
+
+	QAction *actionDevDoc = nullptr;
+	if(show_dev_doc)
+		actionDevDoc = new QAction(QIcon::fromTheme("help-contents"), "Developer Documentation...", menuHelp);
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
 	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
 	QAction *actionLicenses = new QAction(QIcon::fromTheme("help-about"), "Licenses...", menuHelp);
@@ -1352,8 +1362,24 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
 	actionAbout->setMenuRole(QAction::AboutRole);
 
+	// open developer help
+	if(actionDevDoc)
+	{
+		connect(actionDevDoc, &QAction::triggered, this, [this, dev_docfile]()
+		{
+			std::string dev_docfile_abs = fs::absolute(dev_docfile).string();
+			QUrl url(("file://" + dev_docfile_abs).c_str(), QUrl::StrictMode);
+			if(!QDesktopServices::openUrl(url))
+			{
+				QMessageBox::critical(this, "Error", 
+					"Cannot open developer documentation.");
+			}
+		});
+	}
+
 	connect(actionAboutQt, &QAction::triggered, this, []() { qApp->aboutQt(); });
 
+	// show infos about renderer hardware
 	connect(actionAboutGl, &QAction::triggered, this, [this]()
 	{
 		std::ostringstream ostrInfo;
@@ -1366,16 +1392,19 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		QMessageBox::information(this, "About Renderer", ostrInfo.str().c_str());
 	});
 
+	// show licenses dialog
 	connect(actionLicenses, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgLicenses)
-			this->m_dlgLicenses = std::make_shared<LicensesDlg>(this, &m_sett);
+			this->m_dlgLicenses =
+				std::make_shared<LicensesDlg>(this, &m_sett);
 
 		m_dlgLicenses->show();
 		m_dlgLicenses->raise();
 		m_dlgLicenses->activateWindow();
 	});
 
+	// show about dialog
 	connect(actionAbout, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgAbout)
@@ -1386,6 +1415,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_dlgAbout->activateWindow();
 	});
 
+	if(actionDevDoc)
+	{
+		menuHelp->addAction(actionDevDoc);
+		menuHelp->addSeparator();
+	}
 	menuHelp->addAction(actionAboutQt);
 	menuHelp->addAction(actionAboutGl);
 	menuHelp->addSeparator();

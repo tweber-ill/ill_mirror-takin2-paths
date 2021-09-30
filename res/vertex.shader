@@ -7,7 +7,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
- *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
+ *   - (Sellers 2014) G. Sellers et al., "OpenGL SuperBible", ISBN: 978-0-321-90294-8 (2014).
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
@@ -85,6 +85,9 @@ uniform bool shadow_renderpass = false;
 // ----------------------------------------------------------------------------
 
 
+/**
+ * for shadow rendering, see (Sellers 2014), pp. 534-540
+ */
 void main()
 {
 	vec4 objPos = trafos_obj * vertex;

@@ -2,7 +2,7 @@
 
 PROJECT_NAME           = "TAS-Paths"
 PROJECT_BRIEF          = "Triple-axis path-finding tool."
-OUTPUT_DIRECTORY       = res/doc
+OUTPUT_DIRECTORY       = res/dev_doc
 
 EXTRACT_ALL            = YES
 EXTRACT_LOCAL_CLASSES  = NO
