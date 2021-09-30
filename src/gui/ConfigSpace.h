@@ -136,6 +136,8 @@ signals:
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5, bool move_target);
 
+	void PathMeshAvailable();
+
 
 protected slots:
 	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);

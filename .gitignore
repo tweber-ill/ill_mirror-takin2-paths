@@ -80,3 +80,4 @@ qcustomplot/**
 
 # Directories
 3rdparty_licenses/**
+res/doc/**

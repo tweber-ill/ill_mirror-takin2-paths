@@ -878,6 +878,9 @@ void ConfigSpaceDlg::CalculatePathMesh()
 
 	m_status->setText("Calculation finished.");
 	RedrawVoronoiPlot();
+
+	// signal the availability of a path mesh
+	emit PathMeshAvailable();
 }
 
 

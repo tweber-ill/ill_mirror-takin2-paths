@@ -1261,6 +1261,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::GotoAngles,
 				this, &PathsTool::GotoAngles);
+
+			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::PathMeshAvailable,
+				[this]() { this->ValidatePathMesh(true); } );
 		}
 
 		m_dlgConfigSpace->show();

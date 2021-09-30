@@ -1,0 +1,31 @@
+# Doxyfile 1.9.2
+
+PROJECT_NAME           = "TAS-Paths"
+PROJECT_BRIEF          = "Triple-axis path-finding tool."
+OUTPUT_DIRECTORY       = res/doc
+
+EXTRACT_ALL            = YES
+EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_LOCAL_METHODS  = NO
+BUILTIN_STL_SUPPORT    = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+NUM_PROC_THREADS       = 4
+
+RECURSIVE              = YES
+EXCLUDE                = externals
+EXCLUDE_SYMLINKS       = YES
+
+GENERATE_HTML          = YES
+HTML_DYNAMIC_SECTIONS  = YES
+
+GENERATE_LATEX         = NO
+
+HAVE_DOT               = NO
+CLASS_DIAGRAMS         = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+CALLER_GRAPH           = YES
+DOT_NUM_THREADS        = 4
+
+GENERATE_MAN           = NO
