@@ -1,5 +1,5 @@
 /**
- * TAS paths tool
+ * TAS paths tool -- settings dialog and resource management
  * @author Tobias Weber <tweber@ill.fr>
  * @date apr-2021
  * @license GPLv3, see 'LICENSE' file
@@ -53,6 +53,7 @@ extern int g_prec, g_prec_gui;
 
 // epsilons
 extern t_real g_eps, g_eps_angular, g_eps_gui;
+extern t_real g_eps_voronoiedge;
 
 // subdivision length of lines for interpolation
 extern t_real g_line_subdiv_len;

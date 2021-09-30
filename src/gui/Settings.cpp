@@ -1,5 +1,5 @@
 /**
- * TAS paths tool
+ * TAS paths tool -- settings dialog and resource management
  * @author Tobias Weber <tweber@ill.fr>
  * @date apr-2021
  * @license GPLv3, see 'LICENSE' file
@@ -28,6 +28,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
@@ -49,16 +50,19 @@
 // global settings variables
 // ----------------------------------------------------------------------------
 std::string g_apppath = ".";
+QString g_theme = "";
+QString g_font = "";
+
 unsigned int g_maxnum_threads = 4;
 
 
+// epsilons and precisions
 int g_prec = 6;
 int g_prec_gui = 4;
-
-
 t_real g_eps = 1e-6;
 t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;
+t_real g_eps_voronoiedge = 5e-1;
 
 t_real g_line_subdiv_len = 0.025;
 
@@ -67,11 +71,10 @@ t_real g_a3_offs = tl2::pi<t_real>*0.5;
 t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
 t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
 
+
+// path-finding options
 int g_pathstrategy = 0;
 int g_verifypath = 1;
-
-QString g_theme = "";
-QString g_font = "";
 
 
 // which backend to use for voronoi diagram calculation?
@@ -85,19 +88,22 @@ int g_poly_intersection_method = 1;
 
 
 // path-tracker and renderer FPS
-unsigned int g_pathtracker_fps = 10;
+unsigned int g_pathtracker_fps = 30;
 unsigned int g_timer_fps = 30;
 
 
+// renderer options
 tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
-tl2::t_real_gl g_rotation_scale = 0.02;
+tl2::t_real_gl g_rotation_scale = tl2::t_real_gl(0.02);
 
 int g_light_follows_cursor = 0;
 int g_enable_shadow_rendering = 1;
+// ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // variables register
+// ----------------------------------------------------------------------------
 struct SettingsVariable
 {
 	const char* description{};
@@ -106,10 +112,11 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 18> g_settingsvariables
+static constexpr std::array<SettingsVariable, 19> g_settingsvariables
 {{
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
+	{.description = "Voronoi edge epsilon", .key = "settings/eps_voronoi_edge", .value = &g_eps_voronoiedge},
 	{.description = "Drawing epsilon", .key = "settings/eps_gui", .value = &g_eps_gui},
 	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
 	{.description = "GUI number precision", .key = "settings/prec_gui", .value = &g_prec_gui},
@@ -342,7 +349,16 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		m_table->item(row, 2)->setFlags(m_table->item(row, 2)->flags() | Qt::ItemIsEditable);
 	}
 
-	gridGeneral->addWidget(m_table, 0,0,1,1);
+	// search field
+	QLabel *labelSearch = new QLabel("Search:", panelGeneral);
+	QLineEdit *editSearch = new QLineEdit(panelGeneral);
+
+	labelSearch->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	editSearch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+	gridGeneral->addWidget(m_table, 0, 0, 1, 2);
+	gridGeneral->addWidget(labelSearch, 1, 0, 1, 1);
+	gridGeneral->addWidget(editSearch, 1, 1, 1, 1);
 
 
 	// gui settings
@@ -436,6 +452,31 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		// apply button was pressed
 		if(btn == static_cast<QAbstractButton*>(buttons->button(QDialogButtonBox::Apply)))
 			ApplySettings();
+	});
+
+	// search items
+	connect(editSearch, &QLineEdit::textChanged, [editSearch, this]()
+	{
+		QList<QTableWidgetItem*> items = 
+			m_table->findItems(editSearch->text(), Qt::MatchContains);
+
+		/*
+		// unselect all items
+		for(int row=0; row<m_table->rowCount(); ++row)
+		{
+			m_table->item(row, 0)->setSelected(false);
+			m_table->item(row, 1)->setSelected(false);
+			m_table->item(row, 2)->setSelected(false);
+		}
+
+		// select all found items
+		for(auto* item : items)
+			item->setSelected(true);
+		*/
+
+		// scroll to first found item
+		if(items.size())
+			m_table->setCurrentItem(items[0]);
 	});
 }
 
