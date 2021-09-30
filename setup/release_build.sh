@@ -35,7 +35,7 @@ USE_OVD=False
 
 
 echo -e "--------------------------------------------------------------------------------"
-echo -e "Create Documentation..."
+echo -e "Creating Documentation..."
 echo -e "--------------------------------------------------------------------------------"
 rm -rfv res/dev_doc
 doxygen setup/dev_doc
