@@ -29,6 +29,7 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QComboBox>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 
@@ -85,7 +86,15 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 
 		auto text = new QTextEdit(tab);
 		text->setReadOnly(true);
-		grid->addWidget(text, 0, 0, 1, 1);
+		grid->addWidget(text, 0, 0, 1, 2);
+
+		// jump to license
+		QLabel *labelJump = new QLabel("Jump to License Text:", tab);
+		QComboBox *comboJump = new QComboBox(tab);
+		labelJump->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		comboJump->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+		grid->addWidget(labelJump, 1, 0, 1, 1);
+		grid->addWidget(comboJump, 1, 1, 1, 1);
 
 		std::ostringstream ostr;
 		ostr << "<html>\n";
@@ -112,6 +121,9 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 				std::string libname = file.string();
 				libname = libname.substr(0, libname.find("_"));
 
+				comboJump->addItem(libname.c_str());
+
+				ostr << "<a name=\"" << libname << "\"/>\n";
 				ostr << "<h2>License for \"" << libname << "\"</h2>\n";
 	
 				ostr << "<p><pre>\n";
@@ -125,6 +137,14 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		ostr << "</html>\n";
 		text->setHtml(ostr.str().c_str());
 		tabwidget->addTab(tab, "3rd Party Licenses");
+
+		// jump to a selected license text
+		connect(comboJump, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+		[text, comboJump](int idx)
+		{
+			QString item = comboJump->itemText(idx);
+			text->scrollToAnchor(item);
+		});
 	}
 
 
@@ -144,6 +164,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 	grid_main->addWidget(buttons, y_main++, 0, 1, 1);
 
 	connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+
 }
 
 
