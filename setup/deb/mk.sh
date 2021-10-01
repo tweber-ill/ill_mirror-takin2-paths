@@ -7,7 +7,7 @@
 #
 # -----------------------------------------------------------------------------
 # TAS-Paths (part of the Takin software suite)
-# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
 #                     Grenoble, France).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -47,7 +47,7 @@ if [ $create_appdir -ne 0 ]; then
 	mkdir -p ${APPDIRNAME}/DEBIAN
 
 	# debian package control file
-	echo -e "Package: ${APPNAME}\nVersion: 0.9.0" > ${APPDIRNAME}/DEBIAN/control
+	echo -e "Package: ${APPNAME}\nVersion: 1.0.0" > ${APPDIRNAME}/DEBIAN/control
 	echo -e "Architecture: $(dpkg --print-architecture)" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Section: base\nPriority: optional" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Description: TAS path-finding tool" >> ${APPDIRNAME}/DEBIAN/control
