@@ -15,10 +15,15 @@ Triple-axis path-finding tool.
 
 
 ## External Dependencies
-|Library     |URL                                        |License URL                                                   |
-|------------|-------------------------------------------|--------------------------------------------------------------|
-|Boost       |http://www.boost.org                       |http://www.boost.org/LICENSE_1_0.txt                          |
-|CGAL        |https://github.com/CGAL/cgal               |https://github.com/CGAL/cgal/blob/master/Installation/LICENSE |
-|QCustomPlot |https://www.qcustomplot.com                |https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt   |
-|Lapack(e)   |https://www.netlib.org/lapack/lapacke.html |http://www.netlib.org/lapack/LICENSE.txt                      |
-|QHull       |http://www.qhull.org                       |https://github.com/qhull/qhull/blob/master/COPYING.txt        |
+|Library     |URL                                        |License URL                                                          |
+|------------|-------------------------------------------|---------------------------------------------------------------------|
+|Boost       |http://www.boost.org                       |http://www.boost.org/LICENSE_1_0.txt                                 |
+|CGAL        |https://github.com/CGAL/cgal               |https://github.com/CGAL/cgal/blob/master/Installation/LICENSE        |
+|Qt          |https://www.qt.io                          |https://github.com/qt/qt5/blob/dev/LICENSE.QT-LICENSE-AGREEMENT      |
+|QCustomPlot |https://www.qcustomplot.com                |https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt          |
+|Lapack(e)   |https://www.netlib.org/lapack/lapacke.html |http://www.netlib.org/lapack/LICENSE.txt                             |
+|QHull       |http://www.qhull.org                       |https://github.com/qhull/qhull/blob/master/COPYING.txt               |
+|Python      |https://www.python.org                     |https://github.com/python/cpython/blob/main/Doc/license.rst          |
+|Numpy       |https://numpy.org                          |https://github.com/numpy/numpy/blob/main/LICENSE.txt                 |
+|Scipy       |https://www.scipy.org                      |https://github.com/scipy/scipy/blob/master/LICENSE.txt               |
+|Matplotlib  |https://matplotlib.org                     |https://github.com/matplotlib/matplotlib/blob/master/LICENSE/LICENSE |

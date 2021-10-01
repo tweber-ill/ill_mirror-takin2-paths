@@ -66,6 +66,11 @@ if ! wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O ${
 	echo -e "Error: Cannot download Qhull license.";
 fi
 
+# qt
+if ! wget https://raw.githubusercontent.com/qt/qt5/dev/LICENSE.QT-LICENSE-AGREEMENT -O ${LICDIR}/Qt_license.txt; then
+	echo -e "Error: Cannot download Qt license.";
+fi
+
 # qcustomplot
 if ! wget https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt -O ${LICDIR}/QCustomPlot_license.txt; then
 	echo -e "Error: Cannot download QCustomPlot license.";
