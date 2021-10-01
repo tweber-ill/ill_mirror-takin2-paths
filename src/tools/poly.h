@@ -29,9 +29,6 @@
 #ifndef __POLY_GUI_H__
 #define __POLY_GUI_H__
 
-#include "src/libs/voronoi_lines.h"
-#include "src/libs/lines.h"
-
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QGraphicsView>
@@ -41,6 +38,9 @@
 
 #include <memory>
 #include <vector>
+
+#include "src/libs/voronoi_lines.h"
+#include "src/libs/lines.h"
 
 #include "about.h"
 #include "settings.h"

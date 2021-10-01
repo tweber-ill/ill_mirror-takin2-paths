@@ -26,9 +26,6 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "tlibs2/libs/helper.h"
-#include "src/libs/voronoi_lines.h"
-
 #include "lines.h"
 
 #if QT_VERSION >= 0x060000
@@ -54,6 +51,9 @@
 #include <mutex>
 #include <future>
 #include <iostream>
+
+#include "tlibs2/libs/helper.h"
+#include "src/libs/voronoi_lines.h"
 
 #include "src/core/mingw_hacks.h"
 #include <boost/asio.hpp>

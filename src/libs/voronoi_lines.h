@@ -52,6 +52,12 @@
 #endif
 
 #ifdef USE_CGAL
+	// undefine problematic defines
+	#pragma push_macro("True")
+	#pragma push_macro("False")
+	#undef True
+	#undef False
+
 	#include <CGAL/Simple_cartesian.h>
 	#include <CGAL/Filtered_kernel.h>
 
@@ -61,6 +67,9 @@
 	#include <CGAL/Voronoi_diagram_2.h>
 	#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
 	#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
+
+	#pragma pop_macro("False")
+	#pragma pop_macro("True")
 #endif
 
 #include "tlibs2/libs/maths.h"
