@@ -19,7 +19,7 @@ Triple-axis path-finding tool.
 |Library     |URL                                        |License URL                                                          |
 |------------|-------------------------------------------|---------------------------------------------------------------------|
 |Boost       |http://www.boost.org                       |http://www.boost.org/LICENSE_1_0.txt                                 |
-|CGAL        |https://github.com/CGAL/cgal               |https://github.com/CGAL/cgal/blob/master/Installation/LICENSE        |
+|CGAL        |https://www.cgal.org                       |https://github.com/CGAL/cgal/blob/master/Installation/LICENSE        |
 |Qt          |https://www.qt.io                          |https://github.com/qt/qt5/blob/dev/LICENSE.QT-LICENSE-AGREEMENT      |
 |QCustomPlot |https://www.qcustomplot.com                |https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt          |
 |Lapack(e)   |https://www.netlib.org/lapack/lapacke.html |http://www.netlib.org/lapack/LICENSE.txt                             |
