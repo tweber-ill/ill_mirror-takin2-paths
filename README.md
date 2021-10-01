@@ -5,13 +5,13 @@ Triple-axis path-finding tool.
 
 
 ## Building
-- Install development versions of the following external libraries: [*Boost*](https://www.boost.org/), [*Qt*](https://www.qt.io/), and optionally [*Lapack(e)*](https://www.netlib.org/lapack/).
+- Install development versions of at least the following external libraries: [*Boost*](https://www.boost.org/), [*Qt*](https://www.qt.io/), and optionally [*Lapack(e)*](https://www.netlib.org/lapack/).
 - Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
 - Go to the repository's root directory: `cd paths`.
-- Get the *tlibs* library: `./setup/get_libs.sh`.
-- Create a build directory in the repository's root directory: `mkdir build && cd build`.
-- Use CMake from the build directory: `cmake -DCMAKE_BUILD_TYPE=Release ..`.
-- Use Make from the build directory: `make -j4`.
+- Get the external dependencies: `./setup/get_libs.sh`.
+- Build the binaries using: `./setup/release_build.sh`.
+- Optionally create a package using either `./setup/deb/mk.sh`, `./setup/osx/mk.sh`, or `./setup/mingw/mk.sh`, depending on the system.
+- The application can be started via `./build/taspaths`
 
 
 ## External Dependencies
