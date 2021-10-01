@@ -11,7 +11,7 @@ Triple-axis path-finding tool.
 - Get the external dependencies: `./setup/get_libs.sh`.
 - Build the binaries using: `./setup/release_build.sh`.
 - Optionally create a package using either `./setup/deb/mk.sh`, `./setup/osx/mk.sh`, or `./setup/mingw/mk.sh`, depending on the system.
-- The application can be started via `./build/taspaths`
+- The application can be started via `./build/taspaths`.
 
 
 ## External Dependencies
