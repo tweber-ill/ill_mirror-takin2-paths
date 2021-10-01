@@ -15,6 +15,7 @@ NUM_PROC_THREADS       = 4
 
 RECURSIVE              = YES
 EXCLUDE                = externals
+EXCLUDE               += 3rdparty_licenses
 EXCLUDE_PATTERNS       = */build/*
 EXCLUDE_SYMLINKS       = YES
 

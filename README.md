@@ -12,3 +12,15 @@ Triple-axis path-finding tool.
 - Create a build directory in the repository's root directory: `mkdir build && cd build`.
 - Use CMake from the build directory: `cmake -DCMAKE_BUILD_TYPE=Release ..`.
 - Use Make from the build directory: `make -j4`.
+
+
+## External Dependencies
+============ =========================================== ==============================================================
+Library      URL                                         License URL
+============ =========================================== ==============================================================
+Boost        http://www.boost.org                        http://www.boost.org/LICENSE_1_0.txt
+CGAL         https://github.com/CGAL/cgal                https://github.com/CGAL/cgal/blob/master/Installation/LICENSE
+QCustomPlot  https://www.qcustomplot.com                 https://gitlab.com/DerManu/QCustomPlot/-/raw/master/GPL.txt
+Lapack(e)    https://www.netlib.org/lapack/lapacke.html  http://www.netlib.org/lapack/LICENSE.txt
+QHull        http://www.qhull.org                        https://github.com/qhull/qhull/blob/master/COPYING.txt
+============ =========================================== ==============================================================
