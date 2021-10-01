@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -60,8 +60,8 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	m_geotree->headerItem()->setText(0, "Instrument Space");
 
  	QSizePolicy sptree(QSizePolicy::Preferred, QSizePolicy::Expanding, QSizePolicy::DefaultType);
-    sptree.setHorizontalStretch(1);
-    sptree.setVerticalStretch(1);
+	sptree.setHorizontalStretch(1);
+	sptree.setVerticalStretch(1);
 	m_geotree->setSizePolicy(sptree);
 	m_geotree->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -270,7 +270,8 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
 
 			// value
-			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem(ostr.str().c_str()));
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE,
+				new QTableWidgetItem(ostr.str().c_str()));
 		}
 
 		// vector value
@@ -297,7 +298,8 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
 
 			// value
-			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem(ostr.str().c_str()));
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE,
+				new QTableWidgetItem(ostr.str().c_str()));
 		}
 	}
 

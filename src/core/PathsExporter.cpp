@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 /**
  * export the path as raw data
  */
-bool PathsExporterRaw::Export(const PathsBuilder* builder, 
+bool PathsExporterRaw::Export(const PathsBuilder* builder,
 	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)
@@ -85,7 +85,7 @@ bool PathsExporterRaw::Export(const PathsBuilder* builder,
 /**
  * export the path into Nomad commands
  */
-bool PathsExporterNomad::Export(const PathsBuilder* builder, 
+bool PathsExporterNomad::Export(const PathsBuilder* builder,
 	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)
@@ -136,7 +136,7 @@ bool PathsExporterNomad::Export(const PathsBuilder* builder,
 /**
  * export the path into Nicos commands
  */
-bool PathsExporterNicos::Export(const PathsBuilder* builder, 
+bool PathsExporterNicos::Export(const PathsBuilder* builder,
 	const std::vector<t_vec2>& path, bool path_in_rad) const
 {
 	if(!builder)

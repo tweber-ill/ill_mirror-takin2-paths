@@ -12,7 +12,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -838,7 +838,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	m_pathsbuilder->Clear();
 
 	m_status->setText("Calculating configuration space.");
-	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4, 
+	if(!m_pathsbuilder->CalculateConfigSpace(da2, da4,
 		m_starta2, m_enda2, m_starta4, m_enda4))
 	{
 		m_status->setText("Error: Configuration space calculation failed.");

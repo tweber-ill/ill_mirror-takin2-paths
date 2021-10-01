@@ -12,7 +12,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -378,7 +378,7 @@ void XtalConfigSpaceDlg::RedrawPlot()
 			t_pixel pixel_val = m_img.GetPixel(x, y);
 
 			// val > 0 => colliding
-			t_real val = std::lerp(t_real(0), t_real(1), 
+			t_real val = std::lerp(t_real(0), t_real(1),
 				t_real(pixel_val)/t_real(std::numeric_limits<t_pixel>::max()));
 			m_colourMap->data()->setCell(x, y, val);
 		}
@@ -393,7 +393,7 @@ void XtalConfigSpaceDlg::RedrawPlot()
 /**
  * calculate crystal coordinates from graph position
  */
-std::tuple<t_vec, t_real, t_real> 
+std::tuple<t_vec, t_real, t_real>
 XtalConfigSpaceDlg::GetQkikf(t_real x, t_real y) const
 {
 	// orientation vectors

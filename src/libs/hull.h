@@ -1,7 +1,7 @@
 /**
  * convex hull
  * @author Tobias Weber <tweber@ill.fr>
- * @date Oct/Nov-2020
+ * @date October/November 2020
  * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *
@@ -98,10 +98,12 @@ requires tl2::is_vec<t_vec>
 	// upper part
 	bool leftIsOnMax=false, rightIsOnMin=false;
 	{
-		auto _iterLeftMax = std::max_element(hullLeft.begin(), hullLeft.end(), [](const t_vec& vec1, const t_vec& vec2)->bool
-		{ return vec1[0] < vec2[0]; });
-		auto _iterRightMin = std::min_element(hullRight.begin(), hullRight.end(), [](const t_vec& vec1, const t_vec& vec2)->bool
-		{ return vec1[0] < vec2[0]; });
+		auto _iterLeftMax = std::max_element(hullLeft.begin(), hullLeft.end(),
+			[](const t_vec& vec1, const t_vec& vec2)->bool
+			{ return vec1[0] < vec2[0]; });
+		auto _iterRightMin = std::min_element(hullRight.begin(), hullRight.end(),
+			[](const t_vec& vec1, const t_vec& vec2)->bool
+			{ return vec1[0] < vec2[0]; });
 
 		circular_wrapper circhullLeft(hullLeft);
 		circular_wrapper circhullRight(hullRight);
@@ -143,10 +145,12 @@ requires tl2::is_vec<t_vec>
 
 	// lower part
 	{
-		auto _iterLeftMax = std::max_element(hullLeft.begin(), hullLeft.end(), [](const t_vec& vec1, const t_vec& vec2)->bool
-		{ return vec1[0] < vec2[0]; });
-		auto _iterRightMin = std::min_element(hullRight.begin(), hullRight.end(), [](const t_vec& vec1, const t_vec& vec2)->bool
-		{ return vec1[0] < vec2[0]; });
+		auto _iterLeftMax = std::max_element(hullLeft.begin(), hullLeft.end(),
+			[](const t_vec& vec1, const t_vec& vec2)->bool
+			{ return vec1[0] < vec2[0]; });
+		auto _iterRightMin = std::min_element(hullRight.begin(), hullRight.end(),
+			[](const t_vec& vec1, const t_vec& vec2)->bool
+			{ return vec1[0] < vec2[0]; });
 
 		circular_wrapper circhullLeft(hullLeft);
 		circular_wrapper circhullRight(hullRight);
@@ -532,12 +536,14 @@ requires tl2::is_vec<t_vec>
 		{
 			for(std::size_t lastgood = curidx; lastgood >= 1; --lastgood)
 			{
-				if(side_of_line<t_vec>(circularverts[lastgood-1], circularverts[lastgood], circularverts[curidx+1]) <= 0.)
+				if(side_of_line<t_vec>(circularverts[lastgood-1],
+					circularverts[lastgood], circularverts[curidx+1]) <= 0.)
 				{
 					if(lastgood+1 > curidx+1)
 						continue;
 
-					circularverts.erase(std::next(circularverts.begin(), lastgood+1), std::next(circularverts.begin(), curidx+1));
+					circularverts.erase(std::next(circularverts.begin(),
+						lastgood+1), std::next(circularverts.begin(), curidx+1));
 					curidx = lastgood;
 					removed_points = true;
 					break;

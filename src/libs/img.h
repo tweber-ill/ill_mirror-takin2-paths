@@ -1,7 +1,7 @@
 /**
  * image processing concepts, containers and algorithms
  * @author Tobias Weber <tweber@ill.fr>
- * @date may-2021
+ * @date May 2021
  * @note Forked on 26-may-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  * @license GPLv3, see 'LICENSE' file
  *

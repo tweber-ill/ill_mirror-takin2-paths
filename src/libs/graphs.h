@@ -1,7 +1,7 @@
 /**
  * graph containers, concepts and algorithms
  * @author Tobias Weber <tweber@ill.fr>
- * @date may-2021
+ * @date May 2021
  * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *
@@ -734,7 +734,7 @@ bool print_graph(const t_graph& graph, std::ostream& ostr = std::cout)
  * @see (Erickson 2019), p. 288
  */
 template<class t_graph,
-	class t_weight_func = 
+	class t_weight_func =
 		std::optional<typename t_graph::t_weight>(std::size_t, std::size_t)>
 requires is_graph<t_graph>
 std::vector<std::optional<std::size_t>>
@@ -869,7 +869,7 @@ dijk(const t_graph& graph, const std::string& startvert,
  * @see (Erickson 2019), p. 285
  */
 template<class t_graph,
-	class t_weight_func = 
+	class t_weight_func =
 		std::optional<typename t_graph::t_weight>(std::size_t, std::size_t)>
 requires is_graph<t_graph>
 std::vector<std::optional<std::size_t>>

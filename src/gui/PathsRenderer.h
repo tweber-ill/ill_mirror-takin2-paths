@@ -8,10 +8,11 @@
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
+ *   - initially forked from tlibs2/libs/qt/glplot.h
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -274,7 +275,9 @@ signals:
 	void AfterGLInitialisation();
 
 	void ObjectClicked(const std::string& obj, bool left, bool mid, bool right);
-	void ObjectDragged(bool drag_start, const std::string& obj, t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y);
+	void ObjectDragged(bool drag_start, const std::string& obj,
+		t_real_gl x_start, t_real_gl y_start,
+		t_real_gl x, t_real_gl y);
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);

@@ -1,7 +1,7 @@
 /**
  * geometric calculations, line segment intersections
  * @author Tobias Weber <tweber@ill.fr>
- * @date Oct/Nov-2020, Apr-2021
+ * @date October/November 2020, April 2021
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *
@@ -491,7 +491,7 @@ bool pt_inside_poly(
 
 		t_line polyline(vec1, vec2);
 
-		if(auto [intersects, inters_pt] = 
+		if(auto [intersects, inters_pt] =
 			intersect_lines<t_line>(line, polyline, eps, false, false); intersects)
 		{
 			++num_inters;
@@ -508,7 +508,7 @@ bool pt_inside_poly(
  * tests if a point is inside a polygon using the raycasting algo:
  * @see https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm
  */
-template<class t_vec, class t_line = std::tuple<t_vec, t_vec>, 
+template<class t_vec, class t_line = std::tuple<t_vec, t_vec>,
 	class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 bool pt_inside_poly(
@@ -580,7 +580,7 @@ bool pt_inside_poly(
 	{
 		const t_line& polyline = polylines[lineidx];
 
-		if(auto [intersects, inters_pt] = 
+		if(auto [intersects, inters_pt] =
 			intersect_lines<t_line>(line, polyline, eps, false, false); intersects)
 		{
 			++num_inters;
@@ -613,7 +613,7 @@ std::optional<std::size_t> get_containing_triag(
 
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::vector<t_vec> _remove_duplicates(
-	const std::vector<t_vec>& _verts, 
+	const std::vector<t_vec>& _verts,
 	t_real eps=std::numeric_limits<t_real>::epsilon())
 requires tl2::is_vec<t_vec>
 {
@@ -631,13 +631,13 @@ requires tl2::is_vec<t_vec>
 
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::vector<t_vec> _sort_vertices(
-	const std::vector<t_vec>& _verts, 
+	const std::vector<t_vec>& _verts,
 	t_real eps=std::numeric_limits<t_real>::epsilon())
 requires tl2::is_vec<t_vec>
 {
 	std::vector<t_vec> verts = _verts;
 
-	std::stable_sort(verts.begin(), verts.end(), 
+	std::stable_sort(verts.begin(), verts.end(),
 		[eps](const t_vec& vert1, const t_vec& vert2) -> bool
 		{
 			if(tl2::equals<t_real>(vert1[0], vert2[0], eps))
@@ -663,7 +663,7 @@ requires tl2::is_vec<t_vec>
 }
 
 
-template<class t_vec, 
+template<class t_vec,
 	class t_real = typename t_vec::value_type,
 	class t_vec_real = tl2::vec<t_real, std::vector>>
 std::tuple<std::vector<t_vec>, t_vec_real>
@@ -676,10 +676,10 @@ requires tl2::is_vec<t_vec>
 	t_vec_real mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
 	mean /= t_real(verts.size());
 
-	std::stable_sort(verts.begin(), verts.end(), 
+	std::stable_sort(verts.begin(), verts.end(),
 		[&mean](const t_vec& vec1, const t_vec& vec2)->bool
 		{
-			return line_angle<t_vec_real, t_real>(mean, vec1) 
+			return line_angle<t_vec_real, t_real>(mean, vec1)
 				< line_angle<t_vec_real, t_real>(mean, vec2);
 		});
 
@@ -693,8 +693,8 @@ requires tl2::is_vec<t_vec>
 template<class t_vec, class t_real = typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 bool is_on_circle(
-	const t_vec& org, t_real rad, 
-	const t_vec& pos, 
+	const t_vec& org, t_real rad,
+	const t_vec& pos,
 	t_real eps = std::numeric_limits<typename t_vec::value_type>::epsilon())
 {
 	t_real val = tl2::inner<t_vec>(org-pos, org-pos);
@@ -1418,7 +1418,7 @@ requires tl2::is_vec<t_vec>
 /**
  * subdivide line segments on a path
  */
-template<class t_vec, 
+template<class t_vec,
 	class t_real = typename t_vec::value_type,
 	template<class...> class t_cont = std::vector>
 t_cont<t_vec> subdivide_lines(
@@ -1538,7 +1538,7 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * generate potentially intersecting random line segments 
+ * generate potentially intersecting random line segments
  */
 template<class t_line, class t_vec, class t_mat,
 	class t_real = typename t_vec::value_type>
@@ -1581,7 +1581,7 @@ requires tl2::is_vec<t_vec> && tl2::is_mat<t_mat>
 
 
 /**
- * generate non-intersecting random line segments 
+ * generate non-intersecting random line segments
  */
 template<class t_line, class t_vec, class t_mat,
 	class t_real = typename t_vec::value_type>
@@ -1595,8 +1595,8 @@ requires tl2::is_vec<t_vec> && tl2::is_mat<t_mat>
 	do
 	{
 		lines = random_lines<t_line, t_vec, t_mat, t_real>
-			(num_lines, max_range, 
-			min_seg_len, max_seg_len, 
+			(num_lines, max_range,
+			min_seg_len, max_seg_len,
 			round_vec);
 	}
 	while(intersect_sweep<t_vec, t_line, t_real>(lines).size());

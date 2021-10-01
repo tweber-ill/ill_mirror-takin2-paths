@@ -1,12 +1,12 @@
 /**
- * TAS path tool
+ * TAS path tool, main window
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify

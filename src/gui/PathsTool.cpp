@@ -1,5 +1,5 @@
 /**
- * TAS path tool
+ * TAS path tool, main window
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
  * @license GPLv3, see 'LICENSE' file
@@ -2013,7 +2013,7 @@ void PathsTool::TrackPath(std::size_t idx)
 	if(!std::get<1>(m_tascalc.GetKfix()))
 		kf_fixed = false;
 
-	// get a vertex on the instrument path	
+	// get a vertex on the instrument path
 	const t_vec2& vert = m_pathvertices[idx];
 
 	// move either the monochromator or the analyser

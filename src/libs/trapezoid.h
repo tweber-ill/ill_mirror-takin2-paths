@@ -1,7 +1,7 @@
 /**
  * trapezoid map
  * @author Tobias Weber <tweber@ill.fr>
- * @date Oct/Nov-2020
+ * @date April 2021
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *
@@ -474,7 +474,7 @@ std::ostream& operator<<(std::ostream& ostr,
 /**
  * find a neighbouring trapezoid in the tree
  */
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::shared_ptr<TrapezoidNodeTrapezoid<t_vec>> find_neighbour_trapezoid(
@@ -496,7 +496,7 @@ std::shared_ptr<TrapezoidNodeTrapezoid<t_vec>> find_neighbour_trapezoid(
 
 	// function to traverse the tree
 	std::function<void(const std::shared_ptr<TrapezoidNode<t_vec>>&)> traverse;
-	traverse = [&candidates, &traverse, &cache, 
+	traverse = [&candidates, &traverse, &cache,
 		lineTop, lineBottom, ptLeft, ptRight, left, top, eps]
 		(const std::shared_ptr<TrapezoidNode<t_vec>>& node)
 	{

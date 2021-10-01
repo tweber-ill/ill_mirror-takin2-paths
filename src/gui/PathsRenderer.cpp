@@ -10,10 +10,11 @@
  *   - https://doc.qt.io/qt-5/qtgui-openglwindow-example.html
  *   - http://doc.qt.io/qt-5/qopengltexture.html
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
+ *   - initially forked from tlibs2/libs/qt/glplot.cpp
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -485,7 +486,7 @@ void PathsRenderer::UpdatePicker()
 			tl2::create<t_vec3_gl>({0,0,0}), t_real_gl(m_pickerSphereRadius));
 	for(const auto& result : intersUnitSphere)
 	{
-		t_vec_gl vecInters4 = 
+		t_vec_gl vecInters4 =
 			tl2::create<t_vec_gl>({result[0], result[1], result[2], 1});
 
 		if(!hasSphereInters)
@@ -605,8 +606,10 @@ void PathsRenderer::UpdatePicker()
 	}
 
 	m_pickerNeedsUpdate = false;
-	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
-	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
+	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({
+		vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
+	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({
+		vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
 	update();
 	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr,
@@ -1372,8 +1375,8 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	// an object is being dragged
 	if(m_draggedObj != "")
 	{
-		emit ObjectDragged(false, m_draggedObj, 
-			m_dragstartcursor[0], m_dragstartcursor[1], 
+		emit ObjectDragged(false, m_draggedObj,
+			m_dragstartcursor[0], m_dragstartcursor[1],
 			m_cursor[0], m_cursor[1]);
 	}
 
@@ -1406,8 +1409,8 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 		m_dragstartcursor[0] = m_cursor[0];
 		m_dragstartcursor[1] = m_cursor[1];
 
-		emit ObjectDragged(true, m_draggedObj, 
-			m_dragstartcursor[0], m_dragstartcursor[1], 
+		emit ObjectDragged(true, m_draggedObj,
+			m_dragstartcursor[0], m_dragstartcursor[1],
 			m_cursor[0], m_cursor[1]);
 	}
 

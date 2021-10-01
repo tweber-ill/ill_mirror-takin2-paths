@@ -1,7 +1,7 @@
 /**
  * voronoi diagrams for line segments
  * @author Tobias Weber <tweber@ill.fr>
- * @date Oct/Nov-2020 - Jul-2021
+ * @date October/November 2020 - September 2021
  * @note Forked on 19-apr-2021 and 3-jun-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *

@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -56,7 +56,8 @@ class Axis
 {
 public:
 	// constructor and destructor
-	Axis(const std::string &id="", const Axis *prev=nullptr, const Axis *next=nullptr, Instrument *instr=nullptr);
+	Axis(const std::string &id = "", const Axis *prev = nullptr,
+		const Axis *next = nullptr, Instrument *instr = nullptr);
 	~Axis();
 
 	// copy constructor and operator

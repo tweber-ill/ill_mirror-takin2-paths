@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -60,7 +60,7 @@ public slots:
 
 signals:
 	void CoordinatesChanged(t_real h, t_real k, t_real l, t_real ki, t_real kf);
-	void GotoCoordinates(t_real h, t_real k, t_real l, 
+	void GotoCoordinates(t_real h, t_real k, t_real l,
 		t_real ki, t_real kf, bool only_set_target);
 
 	// TODO: maybe move this to TASProperties

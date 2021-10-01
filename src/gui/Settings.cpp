@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -398,7 +398,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	gridGui->addWidget(m_editFont, yGui,1,1,1);
 	gridGui->addWidget(btnFont, yGui++,2,1,1);
 
-	QSpacerItem *spacer_end = new QSpacerItem(1, 1, 
+	QSpacerItem *spacer_end = new QSpacerItem(1, 1,
 		QSizePolicy::Minimum, QSizePolicy::Expanding);
 	gridGui->addItem(spacer_end, yGui++,0,1,3);
 
@@ -457,7 +457,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	// search items
 	connect(editSearch, &QLineEdit::textChanged, [editSearch, this]()
 	{
-		QList<QTableWidgetItem*> items = 
+		QList<QTableWidgetItem*> items =
 			m_table->findItems(editSearch->text(), Qt::MatchContains);
 
 		/*
@@ -487,7 +487,7 @@ SettingsDlg::~SettingsDlg()
 
 
 /**
- * read the settings and set the global variables 
+ * read the settings and set the global variables
  */
 void SettingsDlg::ReadSettings(QSettings* sett)
 {

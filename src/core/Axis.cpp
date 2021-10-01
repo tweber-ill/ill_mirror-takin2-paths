@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -110,25 +110,25 @@ void Axis::SetParentInstrument(Instrument* instr)
 }
 
 
-t_real Axis::GetAxisAngleInLowerLimit() const 
-{ 
-	if(m_angle_in_limits[0]) 
+t_real Axis::GetAxisAngleInLowerLimit() const
+{
+	if(m_angle_in_limits[0])
 		return *m_angle_in_limits[0];
 	else
 		return -tl2::pi<t_real>;
 }
 
 
-t_real Axis::GetAxisAngleInUpperLimit() const 
+t_real Axis::GetAxisAngleInUpperLimit() const
 {
 	if(m_angle_in_limits[1])
 		return *m_angle_in_limits[1];
 	else
-		return tl2::pi<t_real>; 
+		return tl2::pi<t_real>;
 }
 
 
-t_real Axis::GetAxisAngleOutLowerLimit() const 
+t_real Axis::GetAxisAngleOutLowerLimit() const
 {
 	if(m_angle_out_limits[0])
 		return *m_angle_out_limits[0];
@@ -137,7 +137,7 @@ t_real Axis::GetAxisAngleOutLowerLimit() const
 }
 
 
-t_real Axis::GetAxisAngleOutUpperLimit() const 
+t_real Axis::GetAxisAngleOutUpperLimit() const
 {
 	if(m_angle_out_limits[1])
 		return *m_angle_out_limits[1];
@@ -146,16 +146,16 @@ t_real Axis::GetAxisAngleOutUpperLimit() const
 }
 
 
-t_real Axis::GetAxisAngleInternalLowerLimit() const 
+t_real Axis::GetAxisAngleInternalLowerLimit() const
 {
-	if(m_angle_internal_limits[0]) 
+	if(m_angle_internal_limits[0])
 		return *m_angle_internal_limits[0];
 	else
 		return -tl2::pi<t_real>;
 }
 
 
-t_real Axis::GetAxisAngleInternalUpperLimit() const 
+t_real Axis::GetAxisAngleInternalUpperLimit() const
 {
 	if(m_angle_internal_limits[1])
 		return *m_angle_internal_limits[1];
@@ -295,22 +295,22 @@ pt::ptree Axis::Save() const
 
 	// angular limits
 	if(m_angle_in_limits[0])
-		prop.put<t_real>("angle_in_lower_limit", 
+		prop.put<t_real>("angle_in_lower_limit",
 			*m_angle_in_limits[0]/tl2::pi<t_real>*t_real(180));
 	if(m_angle_in_limits[1])
-		prop.put<t_real>("angle_in_upper_limit", 
+		prop.put<t_real>("angle_in_upper_limit",
 			*m_angle_in_limits[1]/tl2::pi<t_real>*t_real(180));
 	if(m_angle_internal_limits[0])
-		prop.put<t_real>("angle_internal_lower_limit", 
+		prop.put<t_real>("angle_internal_lower_limit",
 			*m_angle_internal_limits[0]/tl2::pi<t_real>*t_real(180));
 	if(m_angle_internal_limits[1])
-		prop.put<t_real>("angle_internal_upper_limit", 
+		prop.put<t_real>("angle_internal_upper_limit",
 			*m_angle_internal_limits[1]/tl2::pi<t_real>*t_real(180));
 	if(m_angle_out_limits[0])
-		prop.put<t_real>("angle_out_lower_limit", 
+		prop.put<t_real>("angle_out_lower_limit",
 			*m_angle_out_limits[0]/tl2::pi<t_real>*t_real(180));
 	if(m_angle_out_limits[1])
-		prop.put<t_real>("angle_out_upper_limit", 
+		prop.put<t_real>("angle_out_upper_limit",
 			*m_angle_out_limits[1]/tl2::pi<t_real>*t_real(180));
 
 	// geometries
@@ -434,7 +434,7 @@ bool Axis::IsObjectOnAxis(const std::string& obj, AxisAngle ax) const
 		comps = &m_comps_internal;
 	else if(ax == AxisAngle::OUTGOING)
 		comps = &m_comps_out;
-	
+
 	if(!comps)
 		return false;
 

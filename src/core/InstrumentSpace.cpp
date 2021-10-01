@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -193,7 +193,7 @@ bool InstrumentSpace::DeleteObject(const std::string& id)
 bool InstrumentSpace::RenameObject(const std::string& oldid, const std::string& newid)
 {
 	// find the wall with the given id
-	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(),
 		[&oldid](const std::shared_ptr<Geometry>& wall) -> bool
 		{
 			return wall->GetId() == oldid;
@@ -337,8 +337,8 @@ bool InstrumentSpace::CheckCollision2D() const
 
 
 	auto get_circles = [&get_comps_circles](
-		const Axis& axis, 
-		std::vector<std::tuple<t_vec, t_real>>& circles, 
+		const Axis& axis,
+		std::vector<std::tuple<t_vec, t_real>>& circles,
 		bool inc_incoming = true,
 		bool inc_internal = true,
 		bool inc_outgoing = true)
@@ -413,7 +413,7 @@ bool InstrumentSpace::CheckCollision2D() const
 
 
 	auto get_polys = [&get_comps_polys](
-		const Axis& axis, 
+		const Axis& axis,
 		std::vector<std::vector<t_vec>>& polys,
 		bool inc_incoming = true,
 		bool inc_internal = true,
@@ -616,11 +616,11 @@ bool InstrumentSpace::CheckCollision2D() const
 	const Axis& ana = GetInstrument().GetAnalyser();
 	const auto& walls = GetWalls();
 
-	std::vector<std::tuple<t_vec, t_real>> 
-		monoCircles, monoCirclesIntOut, 
+	std::vector<std::tuple<t_vec, t_real>>
+		monoCircles, monoCirclesIntOut,
 		sampleCircles,
 		anaCircles;
-	std::vector<std::vector<t_vec>> 
+	std::vector<std::vector<t_vec>>
 		monoPolys, monoPolysIn, monoPolysIntOut,
 		samplePolys, samplePolysIn,
 		anaPolys;
@@ -719,7 +719,7 @@ bool InstrumentSpace::CheckCollision2D() const
 				return true;
 			if(check_collision_circle_circle(anaCircles2d, wallCircles2d))
 				return true;
-			
+
 			if(check_collision_circle_poly(wallCircles2d, monoPolys2d, wallCirclesBB, monoBB))
 				return true;
 			if(check_collision_circle_poly(wallCircles2d, samplePolys2d, wallCirclesBB, sampleBB))
@@ -761,7 +761,7 @@ bool InstrumentSpace::CheckCollision2D() const
 /**
  * an object is requested to be dragged from the gui
  */
-void InstrumentSpace::DragObject(bool drag_start, const std::string& obj, 
+void InstrumentSpace::DragObject(bool drag_start, const std::string& obj,
 	t_real x_start, t_real y_start, t_real x, t_real y)
 {
 	// cases concerning instrument axes
@@ -834,12 +834,12 @@ std::pair<bool, std::string> InstrumentSpace::load(
 	if(auto instr = prop.get_child_optional(FILE_BASENAME "instrument_space"); instr)
 	{
 		if(!instrspace.Load(*instr))
-			return std::make_pair(false, "Instrument configuration \"" + 
+			return std::make_pair(false, "Instrument configuration \"" +
 				*filename + "\" could not be loaded.");
 	}
 	else
 	{
-		return std::make_pair(false, "No instrument definition found in \"" + 
+		return std::make_pair(false, "No instrument definition found in \"" +
 			*filename + "\".");
 	}
 
@@ -872,7 +872,7 @@ std::pair<bool, std::string> InstrumentSpace::load(
 	if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
 		!opt || *opt != PROG_IDENT)
 	{
-		return std::make_pair(false, "Instrument file \"" + filename + 
+		return std::make_pair(false, "Instrument file \"" + filename +
 			"\" has invalid identifier.");
 	}
 
@@ -886,7 +886,7 @@ std::pair<bool, std::string> InstrumentSpace::load(
 std::vector<GeometryProperty> InstrumentSpace::GetGeoProperties(const std::string& obj) const
 {
 	// find the wall with the given id
-	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(),
 		[&obj](const std::shared_ptr<Geometry>& wall) -> bool
 		{
 			return wall->GetId() == obj;
@@ -907,7 +907,7 @@ std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::SetGeoProperties(
 	const std::string& obj, const std::vector<GeometryProperty>& props)
 {
 	// find the wall with the given id
-	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(), 
+	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(),
 		[&obj](const std::shared_ptr<Geometry>& wall) -> bool
 		{
 			return wall->GetId() == obj;

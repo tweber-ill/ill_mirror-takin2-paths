@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,8 @@ class PathsExporterBase
 {
 public:
 	virtual ~PathsExporterBase() = default;
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec2>& path, 
+	virtual bool Export(const PathsBuilder* builder,
+		const std::vector<t_vec2>& path,
 		bool path_in_rad = false) const = 0;
 };
 
@@ -63,7 +64,8 @@ public:
 	PathsExporterRaw(const std::string& filename) : m_filename(filename) {};
 	virtual ~PathsExporterRaw() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec2>& path, 
+	virtual bool Export(const PathsBuilder* builder,
+		const std::vector<t_vec2>& path,
 		bool path_in_rad = false) const override;
 
 private:
@@ -81,7 +83,8 @@ public:
 	PathsExporterNomad(const std::string& filename) : m_filename(filename) {};
 	virtual ~PathsExporterNomad() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec2>& path, 
+	virtual bool Export(const PathsBuilder* builder,
+		const std::vector<t_vec2>& path,
 		bool path_in_rad = false) const override;
 
 private:
@@ -99,7 +102,8 @@ public:
 	PathsExporterNicos(const std::string& filename) : m_filename(filename) {}
 	virtual ~PathsExporterNicos() = default;
 
-	virtual bool Export(const PathsBuilder* builder, const std::vector<t_vec2>& path, 
+	virtual bool Export(const PathsBuilder* builder,
+		const std::vector<t_vec2>& path,
 		bool path_in_rad = false) const override;
 
 private:

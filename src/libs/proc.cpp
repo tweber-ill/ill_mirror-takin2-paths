@@ -1,7 +1,7 @@
 /**
  * TAS path tool, process helpers
  * @author Tobias Weber <tweber@ill.fr>
- * @date aug-2021
+ * @date August 2021
  * @license GPLv3, see 'LICENSE' file
  * @note Forked on 27-aug-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  *

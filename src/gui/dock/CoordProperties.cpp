@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -307,7 +307,7 @@ bool CoordPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 // properties dock widget
 // --------------------------------------------------------------------------------
 CoordPropertiesDockWidget::CoordPropertiesDockWidget(QWidget *parent)
-	: QDockWidget{parent}, 
+	: QDockWidget{parent},
 		m_widget{std::make_shared<CoordPropertiesWidget>(this)}
 {
 	setObjectName("CoordPropertiesDockWidget");
