@@ -43,10 +43,11 @@ EXT_LIBS=( \
 	libpcre2-16-0.dll libpcre-1.dll libssp-0.dll \
 	libharfbuzz-0.dll \
 	iconv.dll libintl-8.dll \
+	libgmp-10.dll \
 )
 
 # lapack(e) libraries
-if [ $create_appdir -ne 0 ]; then
+if [ $use_lapacke -ne 0 ]; then
 	EXT_LIBS+=( \
 		liblapack.dll liblapacke.dll libblas.dll \
 		libgfortran-5.dll libquadmath-0.dll \

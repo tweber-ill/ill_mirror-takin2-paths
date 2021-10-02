@@ -142,5 +142,7 @@ if ! wget https://raw.githubusercontent.com/sethtroisi/libgmp/master/COPYINGv3 -
 	exit -1
 fi
 
+# TODO: mpfr, freetype
+
 
 echo -e "\nAll OK.\n"
