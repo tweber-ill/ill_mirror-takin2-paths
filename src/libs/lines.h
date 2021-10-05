@@ -393,7 +393,7 @@ bool pt_inside_hull(const std::vector<t_vec>& hull, const t_vec& pt)
 
 /**
  * get barycentric coordinates of a point
- * see https://en.wikipedia.org/wiki/Barycentric_coordinate_system
+ * @see https://en.wikipedia.org/wiki/Barycentric_coordinate_system
  */
 template<class t_vec> requires tl2::is_vec<t_vec>
 std::optional<t_vec> get_barycentric(
@@ -412,6 +412,10 @@ std::optional<t_vec> get_barycentric(
 }
 
 
+/**
+ * check if a point is inside a triangle
+ * @see https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_triangles
+ */
 template<class t_vec> requires tl2::is_vec<t_vec>
 bool pt_inside_triag(
 	const t_vec& tri1, const t_vec& tri2, const t_vec& tri3, const t_vec& pt)

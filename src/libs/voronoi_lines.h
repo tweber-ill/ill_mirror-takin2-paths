@@ -1021,7 +1021,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 		catch(const std::exception& ex)
 		{
-			std::cerr << "Error inserting voronoi point sites: " 
+			std::cerr << "Error inserting voronoi point sites: "
 				<< ex.what() << std::endl;
 		}
 	}
@@ -1034,7 +1034,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		}
 		catch(const std::exception& ex)
 		{
-			std::cerr << "Error inserting voronoi line segment sites: " 
+			std::cerr << "Error inserting voronoi line segment sites: "
 				<< ex.what() << std::endl;
 		}
 	}
