@@ -59,6 +59,10 @@ namespace geo {
 /**
  * delaunay triangulation and voronoi vertices
  * @returns [ voronoi vertices, triangles, neighbour triangle indices ]
+ *
+ * @see http://www.qhull.org/html/qh-code.htm#cpp
+ * @see https://github.com/qhull/qhull/tree/master/src/libqhullcpp
+ * @see https://github.com/qhull/qhull/blob/master/src/qhulltest/Qhull_test.cpp
  */
 template<class t_vec> requires tl2::is_vec<t_vec>
 std::tuple<std::vector<t_vec>, std::vector<std::vector<t_vec>>, std::vector<std::set<std::size_t>>>
@@ -174,7 +178,8 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 					continue;
 
 				qh::QhullFacetSet neighbourFacets{iterFacet->neighborFacets()};
-				for(auto iterNeighbour=neighbourFacets.begin(); iterNeighbour!=neighbourFacets.end(); ++iterNeighbour)
+				for(auto iterNeighbour=neighbourFacets.begin(); iterNeighbour!=neighbourFacets.end();
+					++iterNeighbour)
 				{
 					void* handle = (*iterNeighbour).getBaseT();
 					auto iterHandle = std::find(facetHandles.begin(), facetHandles.end(), handle);
@@ -434,6 +439,10 @@ requires tl2::is_vec<t_vec>
  * delaunay triangulation using parabolic trafo
  * @see (Berg 2008), pp. 254-256 and p. 168
  * @see (FUH 2020), ch. 6.5, pp. 298-300
+ *
+ * @see http://www.qhull.org/html/qh-code.htm#cpp
+ * @see https://github.com/qhull/qhull/tree/master/src/libqhullcpp
+ * @see https://github.com/qhull/qhull/blob/master/src/qhulltest/Qhull_test.cpp
  */
 template<class t_vec, class t_vec_dyn = t_vec>
 requires tl2::is_vec<t_vec> && tl2::is_dyn_vec<t_vec_dyn>
