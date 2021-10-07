@@ -80,7 +80,7 @@ struct ClosestPairTreeLeaf
  * closest pair (2d)
  *  - @see (Klein 2005), ch 2.3.1, p. 57
  *  - @see (FUH 2020), ch. 2.3.1, pp. 62-69
- *	- @see https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
+ *  - @see https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::tuple<t_vec, t_vec, t_real>

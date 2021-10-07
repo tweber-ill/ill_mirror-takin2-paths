@@ -1462,6 +1462,8 @@ requires tl2::is_vec<t_vec>
 
 /**
  * visibility kernel of a polygon
+ * @see (Klein 2005), ch. 4.4, pp. 195ff
+ * @see (FUH 2020), ch. 3.3, pp. 141ff
  */
 template<class t_vec, class t_edge = std::pair<t_vec, t_vec>,
 	class t_real = typename t_vec::value_type>
