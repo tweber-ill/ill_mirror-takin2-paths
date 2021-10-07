@@ -167,6 +167,29 @@ void PathsTool::SaveFileAs()
 
 
 /**
+ * File -> Save Screenshot
+ */
+void PathsTool::SaveScreenshot()
+{
+	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+
+	QString filename = QFileDialog::getSaveFileName(
+		this, "Images", dirLast, "PNG Images (*.png);;JPEG Images (*.jpg)");
+	if(filename=="")
+		return;
+
+	bool ok = false;
+	if(g_combined_screenshots)
+		ok = SaveCombinedScreenshot(filename);
+	else
+		ok = SaveScreenshot(filename);
+
+	if(ok)
+		m_sett.setValue("cur_dir", QFileInfo(filename).path());
+}
+
+
+/**
  * File -> Export Path
  */
 bool PathsTool::ExportPath(PathsExporterFormat fmt)
@@ -409,6 +432,39 @@ bool PathsTool::SaveFile(const QString &file)
 	SetCurrentFile(file);
 	AddRecentFile(file);
 	return true;
+}
+
+
+/**
+ * save screenshot
+ */
+bool PathsTool::SaveScreenshot(const QString &file)
+{
+	if(file=="" || !m_renderer)
+		return false;
+
+	QImage img = m_renderer->grabFramebuffer();
+	return img.save(file, nullptr, 90);
+}
+
+
+/**
+ * save a combined screenshot of the instrument view and config space
+ */
+bool PathsTool::SaveCombinedScreenshot(const QString& filename)
+{
+	bool ok1 = SaveScreenshot(filename);
+
+	bool ok2 = false;
+	if(m_dlgConfigSpace)
+	{
+		fs::path file_pdf{filename.toStdString()};
+		file_pdf.replace_extension(fs::path{".pdf"});
+
+		ok2 = m_dlgConfigSpace->SaveFigure(file_pdf.string().c_str());
+	}
+
+	return ok1 && ok2;
 }
 
 
@@ -861,7 +917,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 			if(m_camProperties)
 				m_camProperties->GetWidget()->SetCamRotation(
-					phi*t_real{180}/tl2::pi<t_real>, 
+					phi*t_real{180}/tl2::pi<t_real>,
 					theta*t_real{180}/tl2::pi<t_real>);
 		});
 
@@ -1111,6 +1167,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionOpen = new QAction(QIcon::fromTheme("document-open"), "Open...", menuFile);
 	QAction *actionSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
 	QAction *actionSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
+	QAction *actionScreenshot = new QAction(QIcon::fromTheme("image-x-generic"), "Save Screenshot...", menuFile);
 	QAction *actionGarbage = new QAction(QIcon::fromTheme("user-trash-full"), "Collect Garbage", menuFile);
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", menuFile);
 	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
@@ -1145,6 +1202,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
 	connect(actionSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
 	connect(actionSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
+	connect(actionScreenshot, &QAction::triggered, this, [this]() { this->SaveScreenshot(); });
 	connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
 
 	// collect garbage
@@ -1208,6 +1266,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuFile->addSeparator();
 	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
+	menuFile->addAction(actionScreenshot);
 	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
 	menuFile->addAction(actionGarbage);
@@ -1280,7 +1339,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->m_dlgXtalConfigSpace->SetInstrumentSpace(&this->m_instrspace);
 			this->m_dlgXtalConfigSpace->SetTasCalculator(&this->m_tascalc);
 
-			using t_gotocoords = 
+			using t_gotocoords =
 				void (PathsTool::*)(t_real, t_real, t_real, t_real, t_real);
 
 			this->connect(

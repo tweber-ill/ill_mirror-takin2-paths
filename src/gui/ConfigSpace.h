@@ -141,6 +141,10 @@ signals:
 
 protected slots:
 	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
+
+
+public slots:
+	bool SaveFigure(const QString& file);
 };
 
 

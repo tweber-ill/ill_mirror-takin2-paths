@@ -374,7 +374,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(filename=="")
 			return;
 
-		if(this->m_plot->savePdf(filename))
+		if(this->SaveFigure(filename))
 			this->m_sett->setValue("configspace/cur_dir", QFileInfo(filename).path());
 	};
 
@@ -669,7 +669,7 @@ void ConfigSpaceDlg::UpdatePlotRanges()
 	if(m_colourMap)
 	{
 		m_colourMap->data()->setRange(
-			QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.}, 
+			QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.},
 			QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
 	}
 }
@@ -1186,4 +1186,13 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 	}
 
 	return ok;
+}
+
+
+bool ConfigSpaceDlg::SaveFigure(const QString& filename)
+{
+	if(!m_plot)
+		return false;
+
+	return m_plot->savePdf(filename);
 }

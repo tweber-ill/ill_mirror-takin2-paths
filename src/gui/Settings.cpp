@@ -98,6 +98,8 @@ tl2::t_real_gl g_rotation_scale = tl2::t_real_gl(0.02);
 
 int g_light_follows_cursor = 0;
 int g_enable_shadow_rendering = 1;
+
+int g_combined_screenshots = 0;
 // ----------------------------------------------------------------------------
 
 
@@ -112,7 +114,7 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 19> g_settingsvariables
+static constexpr std::array<SettingsVariable, 20> g_settingsvariables
 {{
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
@@ -139,6 +141,8 @@ static constexpr std::array<SettingsVariable, 19> g_settingsvariables
 
 	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
 	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},
+
+	{.description = "Combine instrument/configuration space screenshots", .key = "settings/combined_screenshots", .value = &g_combined_screenshots},
 }};
 // ----------------------------------------------------------------------------
 

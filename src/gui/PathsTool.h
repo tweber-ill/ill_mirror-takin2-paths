@@ -160,6 +160,12 @@ protected:
 	// save file
 	bool SaveFile(const QString &file);
 
+	// save a screenshot of the instrument 3d view
+	bool SaveScreenshot(const QString& file);
+
+	// save a combined screenshot of the instrument view and config space
+	bool SaveCombinedScreenshot(const QString& file);
+
 	// adds a file to the recent files menu
 	void AddRecentFile(const QString &file);
 
@@ -190,6 +196,9 @@ protected slots:
 
 	// File -> Save As
 	void SaveFileAs();
+
+	// File -> Save Screenshot
+	void SaveScreenshot();
 
 	// go to crystal coordinates (or set target angles)
 	void GotoCoordinates(t_real h, t_real k, t_real l,
