@@ -96,7 +96,9 @@ extern unsigned int g_timer_fps;
 extern int g_light_follows_cursor;
 extern int g_enable_shadow_rendering;
 
+// screenshots
 extern int g_combined_screenshots;
+extern int g_automatic_screenshots;
 
 // camera translation scaling factor
 extern tl2::t_real_gl g_move_scale;

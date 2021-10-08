@@ -2080,4 +2080,15 @@ void PathsTool::TrackPath(std::size_t idx)
 		GotoAngles(vert[1]*0.5, std::nullopt, vert[0], std::nullopt, false);
 	else
 		GotoAngles(std::nullopt, std::nullopt, vert[0], vert[1]*0.5, false);
+
+	// automatically take a screenshot
+	if(g_automatic_screenshots)
+	{
+		std::ostringstream ostrfilename;
+		ostrfilename << "screenshot_" << std::setfill('0') << std::setw(8) << idx << ".png";
+		if(g_combined_screenshots)
+			SaveCombinedScreenshot(ostrfilename.str().c_str());
+		else
+			SaveScreenshot(ostrfilename.str().c_str());
+	}
 }
