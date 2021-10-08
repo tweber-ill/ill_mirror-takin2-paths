@@ -25,6 +25,7 @@
 #
 
 convert_pdfs=1
+trim_images=0
 join_images=1
 create_movie=1
 
@@ -42,12 +43,35 @@ if [ $convert_pdfs -ne 0 ]; then
 		if [ ! -f "${filename_in}" ]; then
 			break
 		fi
-		
+
 		echo -e "${filename_in} -> ${filename_out}"
-		
+
 		convert ${filename_in} ${filename_out}
 	done
-	
+
+	echo -e "-------------------------------------------------------------------------------"
+fi
+
+
+# trim images
+if [ $trim_images -ne 0 ]; then
+	echo -e "\n-------------------------------------------------------------------------------"
+	echo -e "Trimming instrument space images..."
+	echo -e "-------------------------------------------------------------------------------"
+
+	for idx in {1..9999}; do
+		printf -v filename_in "screenshot_%08d.png" ${idx}
+		printf -v filename_out "screenshot_trimmed_%08d.png" ${idx}
+
+		if [ ! -f "${filename_in}" ]; then
+			break
+		fi
+
+		echo -e "${filename_in} -> ${filename_out}"
+
+		convert -gravity north -chop 0x300 ${filename_in} ${filename_out}
+	done
+
 	echo -e "-------------------------------------------------------------------------------"
 fi
 
@@ -59,19 +83,23 @@ if [ $join_images -ne 0 ]; then
 	echo -e "-------------------------------------------------------------------------------"
 
 	for idx in {1..9999}; do
-		printf -v filename_1 "screenshot_%08d.png" ${idx}
+		if [ $trim_images -ne 0 ]; then
+			printf -v filename_1 "screenshot_trimmed_%08d.png" ${idx}
+		else
+			printf -v filename_1 "screenshot_%08d.png" ${idx}
+		fi
 		printf -v filename_2 "screenshot_cfg_%08d.png" ${idx}
 		printf -v filename_out "screenshot_joined_%08d.png" ${idx}
 
 		if [ ! -f "${filename_1}" ]; then
 			break
 		fi
-		
+
 		echo -e "${filename_1} + ${filename_2} -> ${filename_out}"
-		
-		convert ${filename_1} ${filename_2} +append ${filename_out}
+
+		convert +append ${filename_1} ${filename_2} ${filename_out}
 	done
-	
+
 	echo -e "-------------------------------------------------------------------------------"
 fi
 
@@ -83,6 +111,6 @@ if [ $create_movie -ne 0 ]; then
 	echo -e "-------------------------------------------------------------------------------"
 
 	ffmpeg -i screenshot_joined_%08d.png -y screenshot.mp4
-	
+
 	echo -e "-------------------------------------------------------------------------------"
 fi
