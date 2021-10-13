@@ -117,7 +117,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(BOOST_SUFFIX -x64)
 	set(MINGW_WINSOCK "ws2_32")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	add_compile_options(-mmacosx-version-min=10.14)
+	add_compile_options(-mmacosx-version-min=10.15)
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/externals")

@@ -273,7 +273,6 @@ public:
 	void SetLineGroups(const std::vector<std::pair<std::size_t, std::size_t>>* g) { line_groups = g; }
 	void SetPointsOutsideRegions(const std::vector<t_vec>* p) { points_outside_regions = p; }
 	void SetInvertedRegions(const std::vector<bool>* r) { inverted_regions = r; }
-	//void SetRegionFunc(bool (* const f)(const t_vec& vert)) { region_func = f; }
 	void SetRegionFunc(const std::function<bool(const t_vec& vert)>* f) { region_func = f; }
 	// ------------------------------------------------------------------------
 
@@ -290,7 +289,6 @@ private:
 	const std::vector<bool>* inverted_regions = nullptr;
 
 	// alternate callback function for defining regions
-	//bool (* const region_func)(const t_vec& vert) = nullptr;
 	const std::function<bool(const t_vec& vert)>* region_func = nullptr;
 };
 

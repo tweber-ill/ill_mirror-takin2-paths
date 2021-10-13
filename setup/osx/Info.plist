@@ -15,8 +15,8 @@
     <key>CFBundleDisplayName</key>                  <string>TASPaths</string>
     <key>CFBundleIdentifier</key>                   <string>eu.ill.cs.takin.taspaths</string>
     <key>CFBundleExecutable</key>                   <string>taspaths</string>
-    <key>CFBundleVersion</key>                      <string>1.0.0</string>
-    <key>CFBundleShortVersionString</key>           <string>1.0.0</string>
+    <key>CFBundleVersion</key>                      <string>1.1.0</string>
+    <key>CFBundleShortVersionString</key>           <string>1.1.0</string>
     <key>CFBundleIconFile</key>                     <string>taspaths.icns</string>
 
     <key>NSPrincipalClass</key>                     <string>NSApplication</string>
@@ -25,7 +25,7 @@
     <key>NSSupportsAutomaticGraphicsSwitching</key> <string>True</string>
     <key>NSHumanReadableCopyright</key>             <string>Copyright (C) 2021 by Tobias Weber (ILL, Grenoble, France). Copyleft: GPLv3.</string>
 
-    <key>LSMinimumSystemVersion</key>               <string>10.14</string>
+    <key>LSMinimumSystemVersion</key>               <string>10.15</string>
     <key>LSApplicationCategoryType</key>            <string>public.app-category.education</string>
   </dict>
 </plist>
