@@ -156,7 +156,9 @@ public:
 	bool CalculateWallsIndexTree();
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
 	bool CalculateLineSegments();
-	bool CalculateVoronoi(bool group_lines=true, VoronoiBackend backend=VoronoiBackend::BOOST);
+	bool CalculateVoronoi(bool group_lines=true,
+		VoronoiBackend backend = VoronoiBackend::BOOST,
+		bool use_region_function = true);
 
 	// number of line segment groups -- for scripting interface
 	std::size_t GetNumberOfLineSegmentRegions() const { return m_linegroups.size(); }
@@ -205,6 +207,9 @@ public:
 
 	bool GetVerifyPath() const { return m_verifypath; }
 	void SetVerifyPath(bool verify) { m_verifypath = verify; }
+
+	//bool GetUseRegionFunction() const { return m_use_region_function; }
+	//void SetUseRegionFunction(bool b) { m_use_region_function = b; }
 	// ------------------------------------------------------------------------
 
 	// ------------------------------------------------------------------------
@@ -297,6 +302,9 @@ private:
 
 	// check the generated path for collisions
 	bool m_verifypath = true;
+
+	// use alternate region calculation via callback function
+	//bool m_use_region_function = true;
 
 	// maximum number of threads to use in calculations
 	unsigned int m_maxnum_threads = 4;

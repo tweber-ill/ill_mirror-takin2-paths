@@ -88,6 +88,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			m_pathstrategy = PathStrategy::PENALISE_WALLS;
 			break;
 	}
+
+
+	m_use_region_function = (g_use_region_function != 0);
 	// --------------------------------------------------------------------
 
 
@@ -253,6 +256,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acCalcVoro->setCheckable(true);
 	acCalcVoro->setChecked(m_calcvoronoi);
 	menuMeshOptions->addAction(acCalcVoro);
+
+	QAction *acUseRegionFunc = new QAction("Use Region Function", menuView);
+	acUseRegionFunc->setCheckable(true);
+	acUseRegionFunc->setChecked(m_use_region_function);
+	menuMeshOptions->addAction(acUseRegionFunc);
 
 	QAction *acSubdivPath = new QAction("Subdivide Path", menuView);
 	acSubdivPath->setCheckable(true);
@@ -539,6 +547,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
 	{ m_calcvoronoi = calc; });
+
+	connect(acUseRegionFunc, &QAction::toggled, [this](bool b)->void
+	{ m_use_region_function = b; });
 
 	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)->void
 	{ m_subdivide_path = subdiv; });
@@ -869,7 +880,8 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(m_calcvoronoi)
 	{
 		m_status->setText("Calculating Voronoi regions.");
-		if(!m_pathsbuilder->CalculateVoronoi(m_grouplines, m_voronoibackend))
+		if(!m_pathsbuilder->CalculateVoronoi(m_grouplines, m_voronoibackend,
+			m_use_region_function))
 		{
 			m_status->setText("Error: Voronoi regions calculation failed.");
 			return;

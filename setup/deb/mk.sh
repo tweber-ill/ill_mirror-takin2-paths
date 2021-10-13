@@ -69,9 +69,9 @@ if [ $create_appdir -ne 0 ]; then
 
 	# binaries
 	cp -v build/taspaths		${APPDIRNAME}/usr/local/bin
-	cp -v build/lines		${APPDIRNAME}/usr/local/bin
-	cp -v build/hull		${APPDIRNAME}/usr/local/bin
-	cp -v build/poly		${APPDIRNAME}/usr/local/bin
+	cp -v build/taspaths_lines	${APPDIRNAME}/usr/local/bin
+	cp -v build/taspaths_hull	${APPDIRNAME}/usr/local/bin
+	cp -v build/taspaths_poly	${APPDIRNAME}/usr/local/bin
 
 	# libraries
 	cp -v build/*.so		${APPDIRNAME}/usr/local/lib

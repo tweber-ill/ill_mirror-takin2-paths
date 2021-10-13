@@ -72,19 +72,21 @@ t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
 t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
 
 
-// path-finding options
-int g_pathstrategy = 0;
-int g_verifypath = 1;
-
+// which polygon intersection method should be used?
+// 0: sweep, 1: half-plane test
+int g_poly_intersection_method = 1;
 
 // which backend to use for voronoi diagram calculation?
 // 0: boost.polygon, 1: cgal
 int g_voronoi_backend = 0;
 
+// use region calculation function
+int g_use_region_function = 1;
 
-// which polygon intersection method should be used?
-// 0: sweep, 1: half-plane test
-int g_poly_intersection_method = 1;
+
+// path-finding options
+int g_pathstrategy = 0;
+int g_verifypath = 1;
 
 
 // path-tracker and renderer FPS
@@ -116,8 +118,9 @@ struct SettingsVariable
 	bool is_angle{false};
 };
 
-static constexpr std::array<SettingsVariable, 21> g_settingsvariables
+static constexpr std::array<SettingsVariable, 22> g_settingsvariables
 {{
+	// epsilons and precisions
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
 	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
 	{.description = "Voronoi edge epsilon", .key = "settings/eps_voronoi_edge", .value = &g_eps_voronoiedge},
@@ -127,23 +130,30 @@ static constexpr std::array<SettingsVariable, 21> g_settingsvariables
 
 	{.description = "Line subdivision length", .key = "settings/line_subdiv_len", .value = &g_line_subdiv_len},
 
+	// threading options
 	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
 
+	// angle options
 	{.description = "Sample rotation offset", .key = "settings/a3_offs", .value = &g_a3_offs, .is_angle = true},
 	{.description = "Monochromator scattering angle delta", .key = "settings/a2_delta", .value = &g_a2_delta, .is_angle = true},
 	{.description = "Sample scattering angle delta", .key = "settings/a4_delta", .value = &g_a4_delta, .is_angle = true},
 
+	// mesh options
+	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
 	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
+	{.description = "Use region function", .key = "settings/use_region_function", .value = &g_use_region_function},
+
+	// path options
 	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
 	{.description = "Verify generated path", .key = "settings/verify_path", .value = &g_verifypath},
-	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
-
 	{.description = "Path tracker FPS", .key = "settings/pathtracker_fps", .value = &g_pathtracker_fps},
-	{.description = "Renderer FPS", .key = "settings/renderer_fps", .value = &g_timer_fps},
 
+	// renderer options
+	{.description = "Renderer FPS", .key = "settings/renderer_fps", .value = &g_timer_fps},
 	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
 	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},
 
+	// screenshot options
 	{.description = "Combine instrument/configuration space screenshots", .key = "settings/combined_screenshots", .value = &g_combined_screenshots},
 	{.description = "Automatically take screenshots (careful!)", .key = "settings/automatic_screenshots", .value = &g_automatic_screenshots},
 }};

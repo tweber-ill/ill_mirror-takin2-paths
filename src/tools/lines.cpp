@@ -538,27 +538,29 @@ void LinesScene::UpdateVoro()
 		return;
 
 
+	t_real edge_eps = 1e-2;
+	geo::VoronoiLinesRegions<t_vec, t_line> regions{};
 	geo::VoronoiLinesResults<t_vec, t_line, t_graph> results{};
+	regions.SetGroupLines(m_grouplines);
+	regions.SetRemoveVoronoiVertices(m_removeverticesinregions);
+	regions.SetLineGroups(&m_linegroups);
 
 	switch(m_voronoicalculationmethod)
 	{
 		case VoronoiCalculationMethod::BOOSTPOLY:
 			results = geo::calc_voro<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines,
-				m_removeverticesinregions);
+				m_lines, edge_eps, &regions);
 			break;
 #ifdef USE_CGAL
 		case VoronoiCalculationMethod::CGAL:
 			results = geo::calc_voro_cgal<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines,
-				m_removeverticesinregions);
+				m_lines, edge_eps, &regions);
 			break;
 #endif
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			results = geo::calc_voro_ovd<t_vec, t_line, t_graph>(
-				m_lines, m_linegroups, m_grouplines,
-				m_removeverticesinregions);
+				m_lines, edge_eps, &regions);
 			break;
 #endif
 		default:

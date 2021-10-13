@@ -1359,9 +1359,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// tools menu
 	QMenu *menuTools = new QMenu("Tools", m_menubar);
 
-	fs::path hullpath = fs::path(g_apppath) / fs::path("hull" EXEC_EXTENSION);
-	fs::path linespath = fs::path(g_apppath) / fs::path("lines" EXEC_EXTENSION);
-	fs::path polypath = fs::path(g_apppath) / fs::path("poly" EXEC_EXTENSION);
+	fs::path hullpath = fs::path(g_apppath) / fs::path("taspaths_hull" EXEC_EXTENSION);
+	fs::path linespath = fs::path(g_apppath) / fs::path("taspaths_lines" EXEC_EXTENSION);
+	fs::path polypath = fs::path(g_apppath) / fs::path("taspaths_poly" EXEC_EXTENSION);
 
 	std::size_t num_tools = 0;
 	if(fs::exists(linespath))
@@ -1652,6 +1652,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetVoronoiEdgeEpsilon(g_eps_voronoiedge);
 	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
+	//m_pathsbuilder.SetUseRegionFunction(g_use_region_function != 0);
 
 	if(m_renderer)
 	{
@@ -1992,9 +1993,9 @@ void PathsTool::CalculatePathMesh()
 		// voronoi backend
 		VoronoiBackend backend{VoronoiBackend::BOOST};
 		if(g_voronoi_backend == 1)
-		backend = VoronoiBackend::CGAL;
+			backend = VoronoiBackend::CGAL;
 
-		if(!m_pathsbuilder.CalculateVoronoi(false, backend))
+		if(!m_pathsbuilder.CalculateVoronoi(false, backend, g_use_region_function!=0))
 		{
 			SetTmpStatus("Error: Voronoi regions calculation failed.");
 			return;

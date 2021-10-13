@@ -118,6 +118,7 @@ private:
 
 	// path mesh options
 	VoronoiBackend m_voronoibackend{VoronoiBackend::BOOST};
+	bool m_use_region_function = true;
 	bool m_grouplines = false;
 	bool m_simplifycontour = true;
 	bool m_splitcontour = false;

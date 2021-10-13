@@ -336,7 +336,7 @@ add_executable(taspaths
 
 
 if(BUILD_TEST_TOOLS)
-	add_executable(hull
+	add_executable(taspaths_hull
 		src/tools/hull_main.cpp
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -347,7 +347,7 @@ if(BUILD_TEST_TOOLS)
 		src/libs/voronoi.h
 	)
 
-	add_executable(lines
+	add_executable(taspaths_lines
 		src/tools/lines_main.cpp
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -358,7 +358,7 @@ if(BUILD_TEST_TOOLS)
 		src/libs/voronoi_lines.h
 	)
 
-	add_executable(poly
+	add_executable(taspaths_poly
 		src/tools/poly_main.cpp
 		src/tools/poly.cpp src/tools/poly.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -394,7 +394,7 @@ if(QT_VER EQUAL 6)
 
 
 	if(BUILD_TEST_TOOLS)
-		target_link_libraries(hull
+		target_link_libraries(taspaths_hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
@@ -402,7 +402,7 @@ if(QT_VER EQUAL 6)
 			Qt6::Svg
 		)
 
-		target_link_libraries(lines
+		target_link_libraries(taspaths_lines
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
@@ -413,7 +413,7 @@ if(QT_VER EQUAL 6)
 			Qt6::Svg
 		)
 
-		target_link_libraries(poly
+		target_link_libraries(taspaths_poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt6::Core Qt6::Gui Qt6::Widgets
@@ -436,7 +436,7 @@ elseif(QT_VER EQUAL 5)
 
 
 	if(BUILD_TEST_TOOLS)
-		target_link_libraries(hull
+		target_link_libraries(taspaths_hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
@@ -447,7 +447,7 @@ elseif(QT_VER EQUAL 5)
 			Qt5::Svg
 		)
 
-		target_link_libraries(lines
+		target_link_libraries(taspaths_lines
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
@@ -458,7 +458,7 @@ elseif(QT_VER EQUAL 5)
 			Qt5::Svg
 		)
 
-		target_link_libraries(poly
+		target_link_libraries(taspaths_poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt5::Core Qt5::Gui Qt5::Widgets

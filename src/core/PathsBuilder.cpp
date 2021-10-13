@@ -535,27 +535,51 @@ bool PathsBuilder::CalculateLineSegments()
 /**
  * calculate the voronoi diagram
  */
-bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend)
+bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
+	bool use_region_function)
 {
 	std::string message{"Calculating Voronoi diagram..."};
 	(*m_sigProgress)(true, false, 0, message);
+
+	// is the vector in a forbidden region?
+	std::function<bool(const t_vec2&)> region_func = [this](const t_vec2& vec) -> bool
+	{
+		if(vec[0] < 0 || vec[1] < 0)
+			return true;
+
+		std::size_t x = vec[0];
+		std::size_t y = vec[1];
+
+		if(x >= m_img.GetWidth() || y >= m_img.GetHeight())
+			return true;
+
+		// an occupied pixel signifies a forbidden region
+		if(m_img.GetPixel(x, y) != 0)
+			return true;
+
+		return false;
+	};
+
+	geo::VoronoiLinesRegions<t_vec2, t_line> regions{};
+	regions.SetGroupLines(group_lines);
+	regions.SetRemoveVoronoiVertices(true);
+	regions.SetLineGroups(&m_linegroups);
+	regions.SetPointsOutsideRegions(&m_points_outside_regions);
+	regions.SetInvertedRegions(&m_inverted_regions);
+	regions.SetRegionFunc(use_region_function ? &region_func : nullptr);
 
 	if(backend == VoronoiBackend::BOOST)
 	{
 		m_voro_results
 			= geo::calc_voro<t_vec2, t_line, t_graph>(
-				m_lines, m_linegroups, group_lines, true,
-				m_voroedge_eps, &m_points_outside_regions,
-				&m_inverted_regions);
+				m_lines, m_voroedge_eps, &regions);
 	}
 #ifdef USE_CGAL
 	else if(backend == VoronoiBackend::CGAL)
 	{
 		m_voro_results
 			= geo::calc_voro_cgal<t_vec2, t_line, t_graph>(
-				m_lines, m_linegroups, group_lines, true,
-				m_voroedge_eps, &m_points_outside_regions,
-				&m_inverted_regions);
+				m_lines, m_voroedge_eps, &regions);
 	}
 #endif
 

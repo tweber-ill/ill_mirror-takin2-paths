@@ -132,6 +132,169 @@ struct boost::polygon::segment_traits<std::pair<t_vec, t_vec>>
 
 namespace geo {
 
+/**
+ * options for defining regions
+ */
+template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
+requires tl2::is_vec<t_vec>
+class VoronoiLinesRegions
+{
+public:
+	using t_scalar = typename t_vec::value_type;
+	using t_vert_index = std::size_t;
+	using t_vert_index_opt = std::optional<t_vert_index>;
+
+
+public:
+	/**
+	 * remove the voronoi vertex if it's inside a region defined by a line group
+	 */
+	bool IsVertexInRegion(
+		const std::vector<t_line>& lines, const std::vector<t_vec>& vertices,
+		const t_vert_index_opt& vert0idx, const t_vert_index_opt& vert1idx,
+		t_scalar eps = std::numeric_limits<t_scalar>::eps()) const
+	{
+		if(!remove_voronoi_vertices_in_regions)
+			return false;
+
+		// use alternate method if a callback function is available
+		if(region_func)
+		{
+			bool vert0_inside_region = false;
+			bool vert1_inside_region = false;
+
+			// check edge vertex 0
+			if(vert0idx)
+			{
+				const auto& vorovert = vertices[*vert0idx];
+				vert0_inside_region = (*region_func)(vorovert);
+			}
+
+			// check edge vertex 1
+			if(vert1idx)
+			{
+				const auto& vorovert = vertices[*vert1idx];
+				vert1_inside_region = (*region_func)(vorovert);
+			}
+
+			if(vert0_inside_region || vert1_inside_region)
+				return true;
+		}
+
+		// use standard method without callback function
+		else
+		{
+			bool vert0_inside_norm_region = false;
+			bool vert1_inside_norm_region = false;
+			bool has_inv_regions = false;
+			bool vert0_outside_all_inv_regions = true;
+			bool vert1_outside_all_inv_regions = true;
+
+			for(std::size_t grpidx=0; grpidx<line_groups->size(); ++grpidx)
+			{
+				bool vert_inside_region = false;
+				auto [grp_beg, grp_end] = (*line_groups)[grpidx];
+				const t_vec* pt_outside = nullptr;
+				bool inv_region = false;
+
+				if(points_outside_regions && points_outside_regions->size())
+					pt_outside = &(*points_outside_regions)[grpidx];
+				if(inverted_regions && inverted_regions->size())
+					inv_region = (*inverted_regions)[grpidx];
+
+				// check edge vertex 0
+				if(vert0idx)
+				{
+					const auto& vorovert = vertices[*vert0idx];
+					vert_inside_region = pt_inside_poly<t_vec>(
+						lines, vorovert, grp_beg, grp_end, pt_outside, eps);
+					if(inv_region)
+					{
+						has_inv_regions = true;
+						if(vert_inside_region)
+							vert0_outside_all_inv_regions = false;
+					}
+					else
+					{
+						if(vert_inside_region)
+						{
+							vert0_inside_norm_region = true;
+							break;
+						}
+					}
+				}
+
+				// check edge vertex 1
+				if(vert1idx)
+				{
+					const auto& vorovert = vertices[*vert1idx];
+					vert_inside_region = pt_inside_poly<t_vec>(
+						lines, vorovert, grp_beg, grp_end, pt_outside, eps);
+					if(inv_region)
+					{
+						has_inv_regions = true;
+						if(vert_inside_region)
+							vert1_outside_all_inv_regions = false;
+					}
+					else
+					{
+						if(vert_inside_region)
+						{
+							vert1_inside_norm_region = true;
+							break;
+						}
+					}
+				}
+			}
+
+			// ignore this voronoi edge and skip to the next one
+			if(vert0_inside_norm_region || vert1_inside_norm_region)
+				return true;
+			if(has_inv_regions &&
+				(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
+				return true;
+		}
+
+		return false;
+	}
+
+
+	// ------------------------------------------------------------------------
+	// getters & setters
+	// ------------------------------------------------------------------------
+	bool GetGroupLines() const { return group_lines; }
+	bool GetRemoveVoronoiVertices() const { return remove_voronoi_vertices_in_regions; }
+	const std::vector<std::pair<std::size_t, std::size_t>>* GetLineGroups() const { return line_groups; }
+	const std::vector<t_vec>* GetPointsOutsideRegions() const { return points_outside_regions; }
+	const std::vector<bool>* GetInvertedRegions() const { return inverted_regions; }
+
+	void SetGroupLines(bool b) { group_lines = b; }
+	void SetRemoveVoronoiVertices(bool b) { remove_voronoi_vertices_in_regions = b; }
+	void SetLineGroups(const std::vector<std::pair<std::size_t, std::size_t>>* g) { line_groups = g; }
+	void SetPointsOutsideRegions(const std::vector<t_vec>* p) { points_outside_regions = p; }
+	void SetInvertedRegions(const std::vector<bool>* r) { inverted_regions = r; }
+	//void SetRegionFunc(bool (* const f)(const t_vec& vert)) { region_func = f; }
+	void SetRegionFunc(const std::function<bool(const t_vec& vert)>* f) { region_func = f; }
+	// ------------------------------------------------------------------------
+
+
+private:
+	// group lines for which the bisector isn't calculated
+	bool group_lines = true;
+	// if a voronoi vertex is inside a region, remove it
+	bool remove_voronoi_vertices_in_regions = false;
+
+	// line groups and regions
+	const std::vector<std::pair<std::size_t, std::size_t>>* line_groups = nullptr;
+	const std::vector<t_vec>* points_outside_regions = nullptr;
+	const std::vector<bool>* inverted_regions = nullptr;
+
+	// alternate callback function for defining regions
+	//bool (* const region_func)(const t_vec& vert) = nullptr;
+	const std::function<bool(const t_vec& vert)>* region_func = nullptr;
+};
+
+
 template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>>
@@ -250,91 +413,6 @@ public:
 	typename t_idxtree::size_type GetIndexTreeSize() const
 	{
 		return idxtree.size();
-	}
-
-
-	/*
-	 * remove the voronoi vertex if it's inside a region defined by a line group
-	 * TODO: could alternatively directly query path builder's m_img pixels
-	 */
-	bool IsVertexInRegion(
-		const std::vector<t_line>& lines,
-		const std::vector<std::pair<std::size_t, std::size_t>>& line_groups,
-		const std::vector<t_vec>* points_outside_regions,
-		const std::vector<bool>* inverted_regions,
-		const t_vert_index_opt& vert0idx, const t_vert_index_opt& vert1idx,
-		t_scalar eps = std::numeric_limits<t_scalar>::eps()) const
-	{
-		bool vert_inside_norm_region = false;
-		bool has_inv_regions = false;
-		bool vert0_outside_all_inv_regions = true;
-		bool vert1_outside_all_inv_regions = true;
-
-		for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
-		{
-			bool vert_inside_region = false;
-			auto [grp_beg, grp_end] = line_groups[grpidx];
-			const t_vec* pt_outside = nullptr;
-			bool inv_region = false;
-
-			if(points_outside_regions && points_outside_regions->size())
-				pt_outside = &(*points_outside_regions)[grpidx];
-			if(inverted_regions && inverted_regions->size())
-				inv_region = (*inverted_regions)[grpidx];
-
-			// check edge vertex 0
-			if(vert0idx)
-			{
-				const auto& vorovert = vertices[*vert0idx];
-				vert_inside_region = pt_inside_poly<t_vec>(
-					lines, vorovert, grp_beg, grp_end, pt_outside, eps);
-				if(inv_region)
-				{
-					has_inv_regions = true;
-					if(vert_inside_region)
-						vert0_outside_all_inv_regions = false;
-				}
-				else
-				{
-					if(vert_inside_region)
-					{
-						vert_inside_norm_region = true;
-						break;
-					}
-				}
-			}
-
-			// check edge vertex 1
-			if(vert1idx)
-			{
-				const auto& vorovert = vertices[*vert1idx];
-				vert_inside_region = pt_inside_poly<t_vec>(
-					lines, vorovert, grp_beg, grp_end, pt_outside, eps);
-				if(inv_region)
-				{
-					has_inv_regions = true;
-					if(vert_inside_region)
-						vert1_outside_all_inv_regions = false;
-				}
-				else
-				{
-					if(vert_inside_region)
-					{
-						vert_inside_norm_region = true;
-						break;
-					}
-				}
-			}
-		}
-
-		// ignore this voronoi edge and skip to the next one
-		if(vert_inside_norm_region)
-			return true;
-		if(has_inv_regions &&
-			(vert0_outside_all_inv_regions || vert1_outside_all_inv_regions))
-			return true;
-
-		return false;
 	}
 
 
@@ -573,12 +651,9 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
-	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
+calc_voro(const std::vector<t_line>& lines, 
 	typename t_vec::value_type edge_eps = 1e-2,
-	const std::vector<t_vec> *points_outside_regions = nullptr,
-	const std::vector<bool> *inverted_regions = nullptr)
+	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	namespace poly = boost::polygon;
@@ -654,12 +729,15 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	};
 
 	// get the group index of the line segment
-	auto get_group_idx = [&line_groups](std::size_t segidx)
+	auto get_group_idx = [regions](std::size_t segidx)
 		-> std::optional<std::size_t>
 	{
-		for(std::size_t grpidx=0; grpidx<line_groups.size(); ++grpidx)
+		if(!regions)
+			return std::nullopt;
+
+		for(std::size_t grpidx=0; grpidx<regions->GetLineGroups()->size(); ++grpidx)
 		{
-			auto [grp_beg, grp_end] = line_groups[grpidx];
+			auto [grp_beg, grp_end] = (*regions->GetLineGroups())[grpidx];
 
 			if(segidx >= grp_beg && segidx < grp_end)
 				return grpidx;
@@ -733,7 +811,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		bool valid_vertices = vert0idx && vert1idx;
 
 		// line groups defined?
-		if(line_groups.size())
+		if(regions && regions->GetLineGroups()->size())
 		{
 			// get index of the segment
 			auto seg1idx = get_segment_idx(edge, false);
@@ -745,7 +823,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				auto region1 = get_group_idx(*seg1idx);
 				auto region2 = get_group_idx(*seg2idx);
 
-				if(group_lines)
+				if(regions->GetGroupLines())
 				{
 					// are the generating line segments part of the same group?
 					// if so, ignore this voronoi edge and skip to next one
@@ -754,13 +832,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				}
 			}
 
-			if(remove_voronoi_vertices_in_regions)
-			{
-				if(results.IsVertexInRegion(lines, line_groups,
-					points_outside_regions, inverted_regions,
-					vert0idx, vert1idx, eps))
-					continue;
-			}
+			if(regions->IsVertexInRegion(lines, 
+				vertices, vert0idx, vert1idx, eps))
+				continue;
 		}
 
 		if(valid_vertices)
@@ -953,7 +1027,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 
-	if(line_groups.size())
+	if(regions && regions->GetLineGroups()->size())
 		results.RemoveUnconnectedVertices();
 	results.CreateEdgeMaps();
 	results.CreateIndexTree();
@@ -973,12 +1047,9 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro_ovd(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
-	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,	// TODO
+calc_voro_ovd(const std::vector<t_line>& lines, 
 	typename t_vec::value_type edge_eps = 1e-2,
-	const std::vector<t_vec>* points_outside_regions = nullptr,
-	const std::vector<bool>* inverted_region = nullptr)
+	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1177,12 +1248,9 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro_cgal(const std::vector<t_line>& lines,
-	std::vector<std::pair<std::size_t, std::size_t>>& line_groups /*= {}*/,
-	bool group_lines = true, bool remove_voronoi_vertices_in_regions = false,
+calc_voro_cgal(const std::vector<t_line>& lines, 
 	typename t_vec::value_type edge_eps = 1e-2,
-	const std::vector<t_vec>* points_outside_regions = nullptr,
-	const std::vector<bool>* inverted_regions = nullptr)
+	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
@@ -1337,7 +1405,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					break;
 			}
 
-			/*if(line_groups.size() && group_lines)
+			/*if(regions->GetLineGroups()->size() && regions->GetGroupLines())
 			{
 				// TODO
 				// get the group indices of the segments
@@ -1358,15 +1426,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(line_groups.size())
+				if(regions && regions->GetLineGroups()->size())
 				{
-					if(remove_voronoi_vertices_in_regions)
-					{
-						if(results.IsVertexInRegion(lines, line_groups,
-							points_outside_regions, inverted_regions,
-							vert0idx, vert1idx, eps))
-							continue;
-					}
+					if(regions->IsVertexInRegion(lines, 
+						vertices, vert0idx, vert1idx, eps))
+						continue;
 				}
 
 				if(valid_vertices)
@@ -1420,15 +1484,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				//bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(line_groups.size())
+				if(regions && regions->GetLineGroups()->size())
 				{
-					if(remove_voronoi_vertices_in_regions)
-					{
-						if(results.IsVertexInRegion(lines, line_groups,
-							points_outside_regions, inverted_regions,
-							vert0idx, vert1idx, eps))
-							continue;
-					}
+					if(regions->IsVertexInRegion(lines,
+						vertices, vert0idx, vert1idx, eps))
+						continue;
 				}
 
 				linear_edges_vec.emplace_back(
@@ -1461,15 +1521,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(line_groups.size())
+				if(regions && regions->GetLineGroups()->size())
 				{
-					if(remove_voronoi_vertices_in_regions)
-					{
-						if(results.IsVertexInRegion(lines, line_groups,
-							points_outside_regions, inverted_regions,
-							vert0idx, vert1idx, eps))
-							continue;
-					}
+					if(regions->IsVertexInRegion(lines,
+						vertices, vert0idx, vert1idx, eps))
+						continue;
 				}
 
 				// add graph edges
@@ -1495,7 +1551,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 
-	if(line_groups.size())
+	if(regions && regions->GetLineGroups()->size())
 		results.RemoveUnconnectedVertices();
 	results.CreateEdgeMaps();
 	results.CreateIndexTree();
