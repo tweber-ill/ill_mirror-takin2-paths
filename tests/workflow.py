@@ -124,10 +124,10 @@ if not builder.CalculateConfigSpace(
 if not builder.CalculateWallContours(True, False):
 	error("Obstacle contours could not be calculated.")
 
-if not builder.CalculateLineSegments():
+if not builder.CalculateLineSegments(False):
 	error("Line segments could not be calculated.")
 
-if not builder.CalculateVoronoi(False):
+if not builder.CalculateVoronoi(False, tas.VoronoiBackend_BOOST, True):
 	error("Voronoi diagram could not be calculated.")
 
 print("Finished building path mesh.\n")
@@ -172,7 +172,8 @@ print("Target angles: a1 = %.2f deg, a5 = %.2f deg, a3 = %.2f deg, a4 = %.2f deg
 
 path = builder.FindPath(
 		start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
-		target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle)
+		target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle,
+		tas.PathStrategy_PENALISE_WALLS)
 if not path.ok:
 	error("No path could be found.")
 

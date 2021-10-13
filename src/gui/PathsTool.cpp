@@ -1550,12 +1550,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_buttonStop->setToolTip("Stop Calculation.");
 
 	m_labelStatus = new QLabel(this);
-	m_labelStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	m_labelStatus->setSizePolicy(QSizePolicy::/*Ignored*/Expanding, QSizePolicy::Fixed);
 	m_labelStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
 	m_labelStatus->setLineWidth(1);
 
 	m_labelCollisionStatus = new QLabel(this);
-	m_labelCollisionStatus->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	m_labelCollisionStatus->setSizePolicy(QSizePolicy::/*Ignored*/Expanding, QSizePolicy::Fixed);
 	m_labelCollisionStatus->setFrameStyle(int(QFrame::Sunken) | int(QFrame::Panel));
 	m_labelCollisionStatus->setLineWidth(1);
 
@@ -1980,7 +1980,7 @@ void PathsTool::CalculatePathMesh()
 		CHECK_STOP
 
 		SetTmpStatus("Calculating line segments.", 0);
-		if(!m_pathsbuilder.CalculateLineSegments())
+		if(!m_pathsbuilder.CalculateLineSegments(g_use_region_function!=0))
 		{
 			SetTmpStatus("Error: Line segment calculation failed.");
 			return;

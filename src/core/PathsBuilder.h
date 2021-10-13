@@ -155,8 +155,8 @@ public:
 		t_real starta4 = 0., t_real enda4 = tl2::pi<t_real>);
 	bool CalculateWallsIndexTree();
 	bool CalculateWallContours(bool simplify = true, bool convex_split = false);
-	bool CalculateLineSegments();
-	bool CalculateVoronoi(bool group_lines=true,
+	bool CalculateLineSegments(bool use_region_function = false);
+	bool CalculateVoronoi(bool group_lines = true,
 		VoronoiBackend backend = VoronoiBackend::BOOST,
 		bool use_region_function = true);
 

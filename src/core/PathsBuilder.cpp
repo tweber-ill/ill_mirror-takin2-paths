@@ -408,7 +408,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 /**
  * calculate lines segments and groups
  */
-bool PathsBuilder::CalculateLineSegments()
+bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 {
 	std::string message{"Calculating obstacle line segments..."};
 	(*m_sigProgress)(true, false, 0, message);
@@ -457,8 +457,12 @@ bool PathsBuilder::CalculateLineSegments()
 
 	m_lines.reserve(totalverts/2 + 1);
 	m_linegroups.reserve(m_wallcontours.size());
-	m_points_outside_regions.reserve(m_wallcontours.size());
-	m_inverted_regions.reserve(m_wallcontours.size());
+
+	if(!use_region_function)
+	{
+		m_points_outside_regions.reserve(m_wallcontours.size());
+		m_inverted_regions.reserve(m_wallcontours.size());
+	}
 
 	// contour vertices
 	std::size_t linectr = 0;
@@ -479,7 +483,8 @@ bool PathsBuilder::CalculateLineSegments()
 			t_vec2 linevec1 = vec1;
 			t_vec2 linevec2 = vec2;
 
-			m_lines.emplace_back(std::make_pair(std::move(linevec1), std::move(linevec2)));
+			m_lines.emplace_back(
+				std::make_pair(std::move(linevec1), std::move(linevec2)));
 
 			++linectr;
 		}
@@ -505,25 +510,29 @@ bool PathsBuilder::CalculateLineSegments()
 		{
 			m_linegroups.emplace_back(std::make_pair(groupstart, groupend));
 
-			t_vec2 point_outside_regions =
-				find_point_outside_regions(contour[0][0], contour[0][1], true);
-			m_points_outside_regions.emplace_back(std::move(point_outside_regions));
+			if(!use_region_function)
+			{
+				t_vec2 point_outside_regions =
+					find_point_outside_regions(contour[0][0], contour[0][1], true);
+				m_points_outside_regions.emplace_back(
+					std::move(point_outside_regions));
 
-			//auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
-			auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
+				//auto pix_incontour = m_img.GetPixel(inside_contour[0], inside_contour[1]);
+				auto pix_outcontour = m_img.GetPixel(outside_contour[0], outside_contour[1]);
 
 #ifdef DEBUG
-			std::cout << "contour " << std::dec << contouridx
-				<< ", pixel inside " << inside_contour[0] << ", " << inside_contour[1]
-				<< ": " << std::hex << int(pix_incontour) << std::dec
-				<< "; pixel outside " << outside_contour[0] << ", " << outside_contour[1]
-				<< ": " << std::hex << int(pix_outcontour) << std::endl;
+				std::cout << "contour " << std::dec << contouridx
+					<< ", pixel inside " << inside_contour[0] << ", " << inside_contour[1]
+					<< ": " << std::hex << int(pix_incontour) << std::dec
+					<< "; pixel outside " << outside_contour[0] << ", " << outside_contour[1]
+					<< ": " << std::hex << int(pix_outcontour) << std::endl;
 #endif
 
-			// normal regions encircle forbidden coordinate points
-			// inverted regions encircle allowed coordinate points
-			//m_inverted_regions.push_back(pix_incontour == 0);
-			m_inverted_regions.push_back(pix_outcontour != 0);
+				// normal regions encircle forbidden coordinate points
+				// inverted regions encircle allowed coordinate points
+				//m_inverted_regions.push_back(pix_incontour == 0);
+				m_inverted_regions.push_back(pix_outcontour != 0);
+			}
 		}
 	}
 

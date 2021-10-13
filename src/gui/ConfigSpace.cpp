@@ -871,7 +871,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	}
 
 	m_status->setText("Calculating line segments.");
-	if(!m_pathsbuilder->CalculateLineSegments())
+	if(!m_pathsbuilder->CalculateLineSegments(m_use_region_function))
 	{
 		m_status->setText("Error: Line segment calculation failed.");
 		return;
