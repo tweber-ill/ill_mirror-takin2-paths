@@ -879,6 +879,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	setWindowTitle("Line Segments");
 	setCentralWidget(m_view.get());
 
+	m_statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
 	QStatusBar *statusBar = new QStatusBar{this};
 	statusBar->addPermanentWidget(m_statusLabel.get(), 1);
 	setStatusBar(statusBar);

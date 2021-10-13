@@ -661,6 +661,8 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	setWindowTitle("Convex Hull");
 	setCentralWidget(m_view.get());
 
+	m_statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+
 	QStatusBar *statusBar = new QStatusBar{this};
 	statusBar->addPermanentWidget(m_statusLabel.get(), 1);
 	setStatusBar(statusBar);
