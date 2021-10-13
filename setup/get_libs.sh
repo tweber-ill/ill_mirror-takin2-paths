@@ -7,7 +7,7 @@
 #
 # -----------------------------------------------------------------------------
 # TAS-Paths (part of the Takin software suite)
-# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
 #                     Grenoble, France).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,8 +30,16 @@
 # -----------------------------------------------------------------------------
 WGET=wget
 UNZIP=unzip
-TAR=tar
-UZIP=unzip
+
+TAR=$(which gtar)
+if [ $? -ne 0 ]; then
+	TAR=$(which tar)
+fi
+
+SED=$(which gsed)
+if [ $? -ne 0 ]; then
+	SED=$(which sed)
+fi
 # -----------------------------------------------------------------------------
 
 
@@ -147,7 +155,7 @@ function setup_boostpoly()
 	mv -v ${BOOST_POLY_UTIL_LOCAL} externals/
 
 	# add some checks to the header file
-	sed -i "103 a if(sqr_segment_length==0 || std::isnan(new_x) || std::isnan(new_y)) return;" \
+	${SED} -i "103 a if(sqr_segment_length==0 || std::isnan(new_x) || std::isnan(new_y)) return;" \
 		externals/${BOOST_POLY_UTIL_LOCAL}
 }
 # -----------------------------------------------------------------------------
