@@ -200,10 +200,10 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu
 	// ------------------------------------------------------------------------
 	QMenu *menuFile = new QMenu("File", this);
+	QMenu *menuView = new QMenu("View", this);
 	QMenu *menuMeshOptions = new QMenu("Mesh Options", this);
 	QMenu *menuPathOptions = new QMenu("Path Options", this);
 	QMenu *menuCalc = new QMenu("Calculate", this);
-	QMenu *menuView = new QMenu("View", this);
 
 
 	// file
@@ -343,10 +343,10 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu bar
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuMeshOptions);
 	menuBar->addMenu(menuPathOptions);
 	menuBar->addMenu(menuCalc);
-	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
 	// ------------------------------------------------------------------------
 
