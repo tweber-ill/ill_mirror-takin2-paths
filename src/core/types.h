@@ -29,6 +29,11 @@
 
 #include "tlibs2/libs/maths.h"
 
+/**
+ * version number of this software
+ */
+#define TASPATHS_VERSION "1.1"
+
 
 /**
  * which SSSP algorithm to use for finding the shortest path?

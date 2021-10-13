@@ -24,6 +24,7 @@
  */
 
 #include "About.h"
+#include "src/core/types.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
@@ -72,6 +73,13 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 		"10.5281/zenodo.4625649</a>.", this);
 	labSubtitle2->setOpenExternalLinks(1);
 	grid->addWidget(labSubtitle2, y++,1,1,1);
+
+	QLabel *labVersion1 = new QLabel("Version: ", this);
+	fontLabel1.setWeight(QFont::Bold);
+	labVersion1->setFont(fontLabel1);
+	grid->addWidget(labVersion1, y,0,1,1);
+	QLabel *labVersion2 = new QLabel(TASPATHS_VERSION ".", this);
+	grid->addWidget(labVersion2, y++,1,1,1);
 
 	QSpacerItem *spacer1 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
 	grid->addItem(spacer1, y++,0,1,2);

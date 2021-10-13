@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 		app->setOrganizationName("tw");
 		app->setApplicationName("taspaths");
 		app->setApplicationDisplayName("TAS-Paths");
-		app->setApplicationVersion("1.1");
+		app->setApplicationVersion(TASPATHS_VERSION);
 
 		g_apppath = app->applicationDirPath().toStdString();
 		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
