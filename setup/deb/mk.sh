@@ -81,7 +81,7 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v AUTHORS			${APPDIRNAME}/usr/local/share/${APPNAME}/
 	cp -v LICENSE			${APPDIRNAME}/usr/local/share/${APPNAME}/
 	cp -rv 3rdparty_licenses/*	${APPDIRNAME}/usr/local/share/${APPNAME}/3rdparty_licenses/
-	#cp -v setup_lin/taspaths.desktop	${APPDIRNAME}/usr/share/applications
+	cp -v setup/deb/taspaths.desktop	${APPDIRNAME}/usr/share/applications
 
 	# binary permissions & stripping
 	chmod a+x ${APPDIRNAME}/usr/local/bin/*

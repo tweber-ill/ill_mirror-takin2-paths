@@ -48,7 +48,10 @@
 #include <vector>
 #include <cstdlib>
 
-#include <boost/gil/image.hpp>
+#ifdef USE_GIL
+	#include <boost/gil/image.hpp>
+#endif
+
 #if GEO_OBSTACLES_INDEX_TREE == 1
 	#include <boost/geometry.hpp>
 	#include <boost/geometry/index/rtree.hpp>
@@ -236,6 +239,7 @@ std::pair<std::size_t, std::size_t> get_image_dims(const t_image& img)
 }
 
 
+#ifdef USE_GIL
 /**
  * get a pixel from an image view
  */
@@ -264,6 +268,7 @@ void set_pixel(t_imageview& img, int x, int y,
 
 	img.row_begin(y)[x] = pixel;
 }
+#endif
 
 
 /**

@@ -31,6 +31,7 @@
 #include <boost/gil/extension/io/png.hpp>
 namespace gil = boost::gil;
 
+#define USE_GIL
 #include "../src/libs/img.h"
 
 using t_int = int;
