@@ -69,8 +69,9 @@ if ! ${make_tool} -j4; then
 fi
 
 strip -v taspaths
-strip -v lines
-strip -v hull
+strip -v taspaths_lines
+strip -v taspaths_hull
+strip -v taspaths_poly
 strip -v libqcustomplot_local.so
 
 popd
