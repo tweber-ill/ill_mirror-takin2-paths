@@ -69,6 +69,7 @@ unittests/build/**
 *.pdf
 *.svg
 *.dot
+!res/taspaths.svg
 
 # Libraries
 tlibs2
