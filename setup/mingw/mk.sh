@@ -29,6 +29,9 @@ use_lapacke=0
 APPNAME="TASPaths"
 APPDIRNAME="${APPNAME}"
 
+APPICON="res/taspaths.svg"
+APPICON_ICO="${APPICON%\.svg}.ico"
+
 
 # third-party libraries
 EXT_LIBS=( \
@@ -63,6 +66,33 @@ QT_PLUGINS=( \
 # create directories
 mkdir -p ${APPDIRNAME}
 mkdir -p ${APPDIRNAME}/res
+
+
+# 
+# create a png icon with the specified size out of an svg
+#
+svg_to_png() {
+	local ICON_SVG="$1"
+	local ICON_PNG="${APPICON%\.svg}.png"
+	local ICON_SIZE="$2"
+
+	echo -e "${ICON_SVG} -> ${ICON_PNG} (size: ${ICON_SIZE}x${ICON_SIZE})..."
+	convert -resize "${ICON_SIZE}x${ICON_SIZE}" \
+		-antialias -channel rgba \
+		-background "#ffffff00" -alpha background \
+		"${ICON_SVG}" "${ICON_PNG}"
+
+	svg_to_png_result="${ICON_PNG}"
+}
+
+
+# create the application icon
+svg_to_png "${APPICON}" 128
+APPICON_PNG="${svg_to_png_result}"
+
+echo -e "${APPICON_PNG} -> ${APPICON_ICO}..."
+convert "${APPICON_PNG}" "${APPICON_ICO}"
+
 
 # copy program files
 cp -v build/*.exe          ${APPDIRNAME}/

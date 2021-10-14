@@ -24,6 +24,7 @@
 # -----------------------------------------------------------------------------
 #
 
+create_icon=1
 create_appdir=1
 create_dmg=1
 strip_binaries=1
@@ -33,6 +34,8 @@ APPNAME="TASPaths"
 APPDIRNAME="${APPNAME}.app"
 APPDMGNAME="${APPNAME}.dmg"
 TMPFILE="${APPNAME}_tmp.dmg"
+APPICON="res/taspaths.svg"
+APPICON_ICNS="${APPICON%\.svg}.icns"
 
 
 declare -a QT_LIBS=(QtCore QtGui QtWidgets QtOpenGL QtDBus QtPrintSupport QtSvg)
@@ -102,6 +105,40 @@ change_to_rpath() {
 
 
 #
+# create a png icon with the specified size out of an svg
+#
+svg_to_png() {
+	local ICON_SVG="$1"
+	local ICON_PNG="${APPICON%\.svg}.png"
+	local ICON_SIZE="$2"
+
+	echo -e "${ICON_SVG} -> ${ICON_PNG} (size: ${ICON_SIZE}x${ICON_SIZE})..."
+	convert -resize "${ICON_SIZE}x${ICON_SIZE}" \
+		-antialias -channel rgba \
+		-background "#ffffff00" -alpha background \
+		"${ICON_SVG}" "${ICON_PNG}"
+
+	svg_to_png_result="${ICON_PNG}"
+}
+
+
+#
+# create the application icon
+#
+if [ $create_icon -ne 0 ]; then
+	echo -e "\nCreating icons from ${APPICON}..."
+
+	svg_to_png "${APPICON}" 512
+	APPICON_PNG="${svg_to_png_result}"
+
+	echo -e "${APPICON_PNG} -> ${APPICON_ICNS}..."
+	makeicns -512 -in "${APPICON_PNG}" -out "${APPICON_ICNS}"
+
+	echo -e "--------------------------------------------------------------------------------"
+fi
+
+
+#
 # create the application directory
 #
 if [ $create_appdir -ne 0 ]; then
@@ -129,6 +166,7 @@ if [ $create_appdir -ne 0 ]; then
 
 	# resources
 	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
+	cp -v "${APPICON_ICNS}" "${APPDIRNAME}/Contents/Resources/"
 	cp -v AUTHORS "${APPDIRNAME}/Contents/Resources/"
 	cp -v LICENSE "${APPDIRNAME}/Contents/Resources/"
 	cp -rv 3rdparty_licenses "${APPDIRNAME}/Contents/Resources/"

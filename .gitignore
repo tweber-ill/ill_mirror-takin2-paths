@@ -68,6 +68,8 @@ unittests/build/**
 *.png
 *.pdf
 *.svg
+*.icns
+*.ico
 *.dot
 !res/taspaths.svg
 
