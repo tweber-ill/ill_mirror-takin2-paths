@@ -1372,7 +1372,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	std::size_t num_tools = 0;
 	if(fs::exists(linespath))
 	{
-		QAction *acLinesTool = new QAction("Line Segments...", menuTools);
+		QAction *acLinesTool = new QAction("Line Segment Voronoi Diagrams...", menuTools);
 		menuTools->addAction(acLinesTool);
 		++num_tools;
 
@@ -1384,7 +1384,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	if(fs::exists(hullpath))
 	{
-		QAction *acHullTool = new QAction("Convex Hull...", menuTools);
+		QAction *acHullTool = new QAction("Vertex Voronoi Diagrams and Convex Hull...", menuTools);
 		menuTools->addAction(acHullTool);
 		++num_tools;
 
@@ -1396,7 +1396,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	if(fs::exists(polypath))
 	{
-		QAction *acPolyTool = new QAction("Polygon...", menuTools);
+		QAction *acPolyTool = new QAction("Polygons...", menuTools);
 		menuTools->addAction(acPolyTool);
 		++num_tools;
 
