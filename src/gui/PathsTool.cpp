@@ -877,6 +877,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
 	setWindowTitle(PROG_TITLE);
 
+	if(std::string icon_file = find_resource("res/taspaths.svg"); !icon_file.empty())
+	{
+		QIcon icon{icon_file.c_str()};
+		setWindowIcon(icon);
+	}
+
 	// restore settings
 	SettingsDlg::ReadSettings(&m_sett);
 

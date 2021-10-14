@@ -1,0 +1,10 @@
+[Desktop Entry]
+	Name=TAS-Paths
+	GenericName=TAS-Paths
+	Comment=Triple Axis Pathfinding Tool
+	Exec=/usr/local/bin/taspaths
+	Type=Application
+	Terminal=false
+	StartupNotify=false
+	Categories=Science
+	Icon=/usr/local/share/TASPaths/res/taspaths.svg
