@@ -66,6 +66,40 @@ void PathsBuilder::Clear()
 
 
 /**
+ * get path length, taking into account the motor speeds
+ */
+t_real PathsBuilder::GetPathLength(const t_vec2& _vec) const
+{
+	// directly calculate length if motor speeds are not used
+	if(!m_use_motor_speeds)
+		return tl2::norm<t_vec2>(_vec);
+
+
+	// move analysator instead of monochromator?
+	bool kf_fixed = true;
+	if(m_tascalc)
+	{
+		if(!std::get<1>(m_tascalc->GetKfix()))
+			kf_fixed = false;
+	}
+
+	// monochromator 2theta angular speed (alternatively analyser speed if kf is not fixed)
+	t_real a2_speed = kf_fixed
+		? m_instrspace->GetInstrument().GetMonochromator().GetAxisAngleOutSpeed()
+		: m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOutSpeed();
+
+	// sample 2theta angular speed
+	t_real a4_speed = m_instrspace->GetInstrument().GetSample().GetAxisAngleOutSpeed();
+
+	t_vec2 vec = _vec;
+	vec[0] /= a4_speed;
+	vec[1] /= a2_speed;
+
+	return tl2::norm<t_vec2>(vec);
+}
+
+
+/**
  * show progress messages on the console
  */
 void PathsBuilder::AddConsoleProgressHandler()
@@ -907,8 +941,8 @@ InstrumentPath PathsBuilder::FindPath(
 		t_vec2 nearest_vertex2_angle = this->PixelToAngle(nearest_vertices2[0]);
 
 		// get minimum angular distances
-		t_real dist1 = tl2::norm<t_vec2>(nearest_vertex1_angle - vertex1_angle);
-		t_real dist2 = tl2::norm<t_vec2>(nearest_vertex2_angle - vertex2_angle);
+		t_real dist1 = GetPathLength(nearest_vertex1_angle - vertex1_angle);
+		t_real dist2 = GetPathLength(nearest_vertex2_angle - vertex2_angle);
 		t_real min_dist = std::min(dist1, dist2);
 
 		// modify edge weights using the minimum distance to the next wall
@@ -971,7 +1005,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 	// find closest point on a path segment
-	auto closest_point = [&voro_vertices]
+	auto closest_point = [this, &voro_vertices]
 	(std::size_t idx1, std::size_t idx2, const t_vec2& vec)
 		-> std::tuple<t_real, t_real>
 	{
@@ -979,7 +1013,7 @@ InstrumentPath PathsBuilder::FindPath(
 		const t_vec2& vert2 = voro_vertices[idx2];
 
 		t_vec2 dir = vert2 - vert1;
-		t_real dir_len = tl2::norm<t_vec2>(dir);
+		t_real dir_len = GetPathLength(dir);
 		dir /= dir_len;
 
 		auto [ptProj, dist, paramProj] =

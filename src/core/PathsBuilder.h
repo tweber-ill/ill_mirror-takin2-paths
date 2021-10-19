@@ -110,6 +110,10 @@ public:
 	//using t_graph = geo::AdjacencyMatrix<t_real>;
 
 
+protected:
+	// get path length, taking into account the motor speeds
+	t_real GetPathLength(const t_vec2& vec) const;
+
 public:
 	PathsBuilder();
 	~PathsBuilder();
@@ -207,6 +211,9 @@ public:
 
 	bool GetVerifyPath() const { return m_verifypath; }
 	void SetVerifyPath(bool verify) { m_verifypath = verify; }
+
+	bool GetUseMotorSpeeds() const { return m_use_motor_speeds; }
+	void SetUseMotorSpeeds(bool b) { m_use_motor_speeds = b; }
 	// ------------------------------------------------------------------------
 
 	// ------------------------------------------------------------------------
@@ -293,6 +300,8 @@ private:
 
 	// minimum distance to consider "staircase artefacts"
 	t_real m_simplify_mindist = 3.;
+
+	bool m_use_motor_speeds = true;
 
 	// line segment length for subdivisions
 	t_real m_subdiv_len = 0.1;

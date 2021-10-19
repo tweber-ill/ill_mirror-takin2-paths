@@ -97,6 +97,14 @@ public:
 	void SetAxisAngleInternalLowerLimit(t_real angle);
 	void SetAxisAngleInternalUpperLimit(t_real angle);
 
+	t_real GetAxisAngleInSpeed() const;
+	t_real GetAxisAngleInternalSpeed() const;
+	t_real GetAxisAngleOutSpeed() const;
+
+	void SetAxisAngleInSpeed(t_real speed);
+	void SetAxisAngleInternalSpeed(t_real speed);
+	void SetAxisAngleOutSpeed(t_real speed);
+
 	// which==1: in, which==2: internal, which==3: out
 	const t_mat& GetTrafo(AxisAngle which=AxisAngle::INCOMING) const;
 	void UpdateTrafos() const;
@@ -134,6 +142,11 @@ private:
 	std::optional<t_real> m_angle_in_limits[2];
 	std::optional<t_real> m_angle_internal_limits[2];
 	std::optional<t_real> m_angle_out_limits[2];
+
+	// optional angular speeds
+	std::optional<t_real> m_angle_in_speed;
+	std::optional<t_real> m_angle_internal_speed;
+	std::optional<t_real> m_angle_out_speed;
 
 	// components relative to incoming and outgoing axis
 	std::vector<std::shared_ptr<Geometry>> m_comps_in = {};

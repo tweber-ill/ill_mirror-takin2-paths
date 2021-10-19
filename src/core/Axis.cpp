@@ -76,6 +76,10 @@ const Axis& Axis::operator=(const Axis& axis)
 		this->m_angle_internal_limits[i] = axis.m_angle_internal_limits[i];
 	}
 
+	this->m_angle_in_speed = axis.m_angle_in_speed;
+	this->m_angle_internal_speed = axis.m_angle_internal_speed;
+	this->m_angle_out_speed = axis.m_angle_out_speed;
+
 	this->m_comps_in = axis.m_comps_in;
 	this->m_comps_out = axis.m_comps_out;
 	this->m_comps_internal = axis.m_comps_internal;
@@ -200,6 +204,51 @@ void Axis::SetAxisAngleInternalUpperLimit(t_real angle)
 }
 
 
+t_real Axis::GetAxisAngleInSpeed() const
+{
+	if(m_angle_in_speed)
+		return *m_angle_in_speed;
+	else
+		return 1.;
+}
+
+
+t_real Axis::GetAxisAngleInternalSpeed() const
+{
+	if(m_angle_internal_speed)
+		return *m_angle_internal_speed;
+	else
+		return 1.;
+}
+
+
+t_real Axis::GetAxisAngleOutSpeed() const
+{
+	if(m_angle_out_speed)
+		return *m_angle_out_speed;
+	else
+		return 1.;
+}
+
+
+void Axis::SetAxisAngleInSpeed(t_real speed)
+{
+	m_angle_in_speed = speed;
+}
+
+
+void Axis::SetAxisAngleInternalSpeed(t_real speed)
+{
+	m_angle_internal_speed = speed;
+}
+
+
+void Axis::SetAxisAngleOutSpeed(t_real speed)
+{
+	m_angle_out_speed = speed;
+}
+
+
 void Axis::Clear()
 {
 	m_comps_in.clear();
@@ -212,6 +261,10 @@ void Axis::Clear()
 		this->m_angle_out_limits[i] = std::nullopt;
 		this->m_angle_internal_limits[i] = std::nullopt;
 	}
+
+	this->m_angle_in_speed = std::nullopt;
+	this->m_angle_internal_speed = std::nullopt;
+	this->m_angle_out_speed = std::nullopt;
 
 	m_trafos_need_update = true;
 }
@@ -250,6 +303,14 @@ bool Axis::Load(const pt::ptree& prop)
 		m_angle_out_limits[0] = *opt/t_real{180}*tl2::pi<t_real>;
 	if(auto opt = prop.get_optional<t_real>("angle_out_upper_limit"); opt)
 		m_angle_out_limits[1] = *opt/t_real{180}*tl2::pi<t_real>;
+
+	// angular speeds
+	if(auto opt = prop.get_optional<t_real>("angle_in_speed"); opt)
+		m_angle_in_speed = *opt /*/t_real{180}*tl2::pi<t_real>*/;
+	if(auto opt = prop.get_optional<t_real>("angle_internal_speed"); opt)
+		m_angle_internal_speed = *opt /*/t_real{180}*tl2::pi<t_real>*/;
+	if(auto opt = prop.get_optional<t_real>("angle_out_speed"); opt)
+		m_angle_out_speed = *opt /*/t_real{180}*tl2::pi<t_real>*/;
 
 	auto load_geo = [this, &prop](const std::string& name,
 		std::vector<std::shared_ptr<Geometry>>& comp_geo) -> void
@@ -312,6 +373,17 @@ pt::ptree Axis::Save() const
 	if(m_angle_out_limits[1])
 		prop.put<t_real>("angle_out_upper_limit",
 			*m_angle_out_limits[1]/tl2::pi<t_real>*t_real(180));
+
+	// angular speeds
+	if(m_angle_in_speed)
+		prop.put<t_real>("angle_in_speed",
+			*m_angle_in_speed /*/tl2::pi<t_real>*t_real(180)*/);
+	if(m_angle_internal_speed)
+		prop.put<t_real>("angle_internal_speed",
+			*m_angle_internal_speed /*/tl2::pi<t_real>*t_real(180)*/);
+	if(m_angle_out_speed)
+		prop.put<t_real>("angle_out_speed",
+			*m_angle_out_speed /*/tl2::pi<t_real>*t_real(180)*/);
 
 	// geometries
 	auto allcomps = { m_comps_in, m_comps_internal, m_comps_out };
