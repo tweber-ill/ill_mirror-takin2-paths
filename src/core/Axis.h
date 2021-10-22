@@ -144,9 +144,9 @@ private:
 	std::optional<t_real> m_angle_out_limits[2];
 
 	// optional angular speeds
-	std::optional<t_real> m_angle_in_speed;
-	std::optional<t_real> m_angle_internal_speed;
-	std::optional<t_real> m_angle_out_speed;
+	std::optional<t_real> m_angle_in_speed = std::nullopt;
+	std::optional<t_real> m_angle_internal_speed = std::nullopt;
+	std::optional<t_real> m_angle_out_speed = std::nullopt;
 
 	// components relative to incoming and outgoing axis
 	std::vector<std::shared_ptr<Geometry>> m_comps_in = {};
