@@ -58,11 +58,18 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(voronoi_lineseg, t_real,
 
 	std::vector<std::pair<std::size_t, std::size_t>> line_groups{};
 
+	geo::VoronoiLinesRegions<t_vec<t_real>, t_line<t_real>> regions{};
+	regions.SetGroupLines(true);
+	regions.SetRemoveVoronoiVertices(false);
+	regions.SetLineGroups(&line_groups);
+
+	t_real voro_eps = 1e-2;
+
 	// calculate the voronoi diagrams
 	auto res_boost = geo::calc_voro<t_vec<t_real>, t_line<t_real>>
-		(lines, line_groups, false, false);
+		(lines, voro_eps, &regions);
 	auto res_cgal = geo::calc_voro_cgal<t_vec<t_real>, t_line<t_real>>
-		(lines, line_groups, false, false);
+		(lines, voro_eps, &regions);
 
 	// same number of voronoi vertices found?
 	BOOST_TEST((res_boost.GetVoronoiVertices().size() ==
