@@ -372,9 +372,9 @@ endif()
 
 
 #if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+#	# create an __info_plist section in the binary
 #	target_link_options(taspaths
-#		# create an __info_plist section in the binary
-#		PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/../../../core/setup_mac/InfoBundle.plist
+#		PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/Info.plist
 #	)
 #endif()
 
@@ -394,6 +394,21 @@ if(QT_VER EQUAL 6)
 
 
 	if(BUILD_TEST_TOOLS)
+		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+			target_link_options(taspaths_hull
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
+			)
+
+			target_link_options(taspaths_lines
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
+			)
+
+			target_link_options(taspaths_poly
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
+			)
+		endif()
+
+
 		target_link_libraries(taspaths_hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
@@ -436,6 +451,21 @@ elseif(QT_VER EQUAL 5)
 
 
 	if(BUILD_TEST_TOOLS)
+		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+			target_link_options(taspaths_hull
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
+			)
+
+			target_link_options(taspaths_lines
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
+			)
+
+			target_link_options(taspaths_poly
+				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
+			)
+		endif()
+
+
 		target_link_libraries(taspaths_hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
