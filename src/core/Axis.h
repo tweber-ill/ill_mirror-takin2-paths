@@ -111,12 +111,16 @@ public:
 	void TrafosNeedUpdate() const;
 
 	const std::vector<std::shared_ptr<Geometry>>&
-		GetComps(AxisAngle which=AxisAngle::INCOMING) const;
+		GetComps(AxisAngle which = AxisAngle::INCOMING) const;
 
 	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
 
 	std::vector<ObjectProperty> GetProperties() const;
 	void SetProperties(const std::vector<ObjectProperty>& props);
+
+	std::vector<ObjectProperty> GetProperties(const std::string& objname) const;
+	std::tuple<bool, std::shared_ptr<Geometry>> SetProperties(
+		const std::string& objname, const std::vector<ObjectProperty>& props);
 
 private:
 	// identifier

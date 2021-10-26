@@ -583,3 +583,60 @@ void Axis::SetProperties(const std::vector<ObjectProperty>& props)
 			SetAxisAngleOutSpeed(std::get<t_real>(prop.value)/*/180.*tl2::pi<t_real>*/);
 	}
 }
+
+
+/**
+ * get the properties of a geometry object on the axis
+ */
+std::vector<ObjectProperty> Axis::GetProperties(const std::string& objname) const
+{
+	// iterate all coordinate system definitions
+	for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
+	{
+		// get components along coordinate system
+		const auto& comps = GetComps(axisangle);
+
+		// find the component with the given id
+		if(auto iter = std::find_if(comps.begin(), comps.end(),
+			[&objname](const std::shared_ptr<Geometry>& comp) -> bool
+			{
+				return comp->GetId() == objname;
+			}); iter != comps.end())
+		{
+			return (*iter)->GetProperties();
+		}
+	}
+
+	// nothing was found
+	return {};
+}
+
+
+/**
+ * set the properties of a geometry object on the axis
+ */
+std::tuple<bool, std::shared_ptr<Geometry>>
+Axis::SetProperties(const std::string& objname,
+	const std::vector<ObjectProperty>& props)
+{
+	// iterate all coordinate system definitions
+	for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
+	{
+		// get components along coordinate system
+		auto& comps = GetComps(axisangle);
+
+		// find the component with the given id
+		if(auto iter = std::find_if(comps.begin(), comps.end(),
+			[&objname](const std::shared_ptr<Geometry>& comp) -> bool
+			{
+				return comp->GetId() == objname;
+			}); iter != comps.end())
+		{
+			(*iter)->SetProperties(props);
+			return std::make_tuple(true, *iter);
+		}
+	}
+
+	// nothing was found
+	return std::make_tuple(false, nullptr);
+}

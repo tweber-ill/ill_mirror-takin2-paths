@@ -69,8 +69,10 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	fontLabel1.setWeight(QFont::Bold);
 	labSubtitle1->setFont(fontLabel1);
 	grid->addWidget(labSubtitle1, y,0,1,1);
-	QLabel *labSubtitle2 = new QLabel("<a href=\"https://doi.org/10.5281/zenodo.4625649\">"
-		"10.5281/zenodo.4625649</a>.", this);
+	QLabel *labSubtitle2 = new QLabel(
+		"<a href=\"https://doi.org/10.5281/zenodo.4625649\">"
+		"10.5281/zenodo.4625649</a>.",
+		this);
 	labSubtitle2->setOpenExternalLinks(1);
 	grid->addWidget(labSubtitle2, y++,1,1,1);
 
@@ -80,7 +82,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(labUrl1, y,0,1,1);
 	QLabel *labUrl2 = new QLabel(
 		"<a href=\"https://code.ill.fr/scientific-software/takin/paths\">Main</a>, "
-		"<a href=\"https://github.com/tweber-ill/ill_mirror-takin2-paths\">Mirror</a>.", this);
+		"<a href=\"https://github.com/tweber-ill/ill_mirror-takin2-paths\">Mirror</a>.",
+		this);
 	labUrl2->setOpenExternalLinks(1);
 	grid->addWidget(labUrl2, y++,1,1,1);
 

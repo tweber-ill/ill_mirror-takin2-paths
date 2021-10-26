@@ -81,6 +81,9 @@ private:
 	Axis m_sample{"sample", &m_mono, &m_ana, this};
 	Axis m_ana{"analyser", &m_sample, nullptr, this};
 
+	// TODO: allow instrument editing
+	bool m_allow_editing = false;
+
 	// starting position for drag operation
 	t_vec m_drag_pos_axis_start{};
 

@@ -131,7 +131,7 @@ pt::ptree Instrument::Save() const
 	const std::string& mono_id = GetMonochromator().GetId();
 	const std::string& sample_id = GetSample().GetId();
 	const std::string& ana_id = GetAnalyser().GetId();
-	
+
 	prop.put_child(mono_id, GetMonochromator().Save());
 	prop.put_child(sample_id, GetSample().Save());
 	prop.put_child(ana_id, GetAnalyser().Save());
@@ -247,7 +247,18 @@ std::vector<ObjectProperty> Instrument::GetProperties(const std::string& objname
 		return GetAnalyser().GetProperties();
 	}
 
-	// TODO: also look into the mono/sample/ana geometry objects
+
+	// find mono/sample/ana geometry objects
+	if(m_allow_editing)
+	{
+		if(auto props = GetMonochromator().GetProperties(objname); props.size())
+			return props;
+		if(auto props = GetSample().GetProperties(objname); props.size())
+			return props;
+		if(auto props = GetAnalyser().GetProperties(objname); props.size())
+			return props;
+	}
+
 	return {};
 }
 
@@ -255,7 +266,7 @@ std::vector<ObjectProperty> Instrument::GetProperties(const std::string& objname
 /**
  * set the properties of an object in the instrument
  */
-std::tuple<bool, std::shared_ptr<Geometry>> 
+std::tuple<bool, std::shared_ptr<Geometry>>
 Instrument::SetProperties(const std::string& objname,
 	const std::vector<ObjectProperty>& props)
 {
@@ -276,6 +287,17 @@ Instrument::SetProperties(const std::string& objname,
 		return std::make_tuple(true, nullptr);
 	}
 
-	// TODO: also look into the mono/sample/ana geometry objects
+
+	// find mono/sample/ana geometry objects
+	if(m_allow_editing)
+	{
+		if(auto retval = GetMonochromator().SetProperties(objname, props); std::get<0>(retval))
+			return retval;
+		if(auto retval = GetSample().SetProperties(objname, props); std::get<0>(retval))
+			return retval;
+		if(auto retval = GetAnalyser().SetProperties(objname, props); std::get<0>(retval))
+			return retval;
+	}
+
 	return std::make_tuple(false, nullptr);
 }
