@@ -1421,7 +1421,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		actionDevDoc = new QAction(QIcon::fromTheme("help-contents"), "Developer Documentation...", menuHelp);
 	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
 	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
-	QAction *actionLicenses = new QAction(QIcon::fromTheme("help-about"), "Licenses...", menuHelp);
+	QAction *actionLicenses = new QAction("Licenses...", menuHelp);
+	QAction *actionBug = new QAction("Report Bug...", menuHelp);
 	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About TAS-Paths...", menuHelp);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
@@ -1480,6 +1481,13 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_dlgAbout->activateWindow();
 	});
 
+	// go to bug report url
+	connect(actionBug, &QAction::triggered, this, [this]()
+	{
+		QUrl url("https://code.ill.fr/scientific-software/takin/paths/-/issues");
+		QDesktopServices::openUrl(url);
+	});
+
 	if(actionDevDoc)
 	{
 		menuHelp->addAction(actionDevDoc);
@@ -1490,6 +1498,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionLicenses);
 	menuHelp->addSeparator();
+	menuHelp->addAction(actionBug);
 	menuHelp->addAction(actionAbout);
 
 

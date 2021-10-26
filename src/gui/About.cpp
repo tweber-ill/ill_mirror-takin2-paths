@@ -74,6 +74,16 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	labSubtitle2->setOpenExternalLinks(1);
 	grid->addWidget(labSubtitle2, y++,1,1,1);
 
+	QLabel *labUrl1 = new QLabel("Repositories: ", this);
+	fontLabel1.setWeight(QFont::Bold);
+	labUrl1->setFont(fontLabel1);
+	grid->addWidget(labUrl1, y,0,1,1);
+	QLabel *labUrl2 = new QLabel(
+		"<a href=\"https://code.ill.fr/scientific-software/takin/paths\">Main</a>, "
+		"<a href=\"https://github.com/tweber-ill/ill_mirror-takin2-paths\">Mirror</a>.", this);
+	labUrl2->setOpenExternalLinks(1);
+	grid->addWidget(labUrl2, y++,1,1,1);
+
 	QLabel *labVersion1 = new QLabel("Version: ", this);
 	fontLabel1.setWeight(QFont::Bold);
 	labVersion1->setFont(fontLabel1);
