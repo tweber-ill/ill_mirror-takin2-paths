@@ -4,6 +4,9 @@
  * @date 19-sep-2021
  * @license GPLv3, see 'LICENSE' file
  *
+ * References:
+ *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
+ * 
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
  * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),

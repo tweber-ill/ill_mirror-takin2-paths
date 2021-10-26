@@ -1461,6 +1461,24 @@ requires tl2::is_vec<t_vec>
 
 
 /**
+ * arc length of a path
+ */
+template<class t_vec,
+class t_real = typename t_vec::value_type,
+template<class...> class t_cont = std::vector>
+t_real path_length(const t_cont<t_vec>& vertices)
+requires tl2::is_vec<t_vec>
+{
+	t_real len{0};
+
+	for(std::size_t vertidx=0; vertidx<vertices.size()-1; ++vertidx)
+		len += tl2::norm(vertices[vertidx+1] - vertices[vertidx]);
+
+	return len;
+}
+
+
+/**
  * visibility kernel of a polygon
  * @see (Klein 2005), ch. 4.4, pp. 195ff
  * @see (FUH 2020), ch. 3.3, pp. 141ff

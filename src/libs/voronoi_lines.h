@@ -837,7 +837,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 		if(valid_vertices)
 		{
-			// add to graph, TODO: arc length of parabolic edges
+			// add edge to graph
 			t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
 
 			graph.AddEdge(*vert0idx, *vert1idx, len);
@@ -947,6 +947,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 				for(const auto& parabola_pt : parabola)
 					parabolic_edges.emplace_back(to_vec(parabola_pt));
+
+				// update edge weight for parabolic case
+				t_real len = path_length<t_vec>(parabolic_edges);
+				graph.SetWeight(*vert0idx, *vert1idx, len);
+				graph.SetWeight(*vert1idx, *vert0idx, len);
 
 				all_parabolic_edges_vec.emplace_back(
 					std::make_tuple(
@@ -1268,9 +1273,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// helper to find the index of a given voronoi vertex coordinate
- 	auto get_vertex_idx = [&vertices, eps](const t_vec& vert)
+	auto get_vertex_idx = [&vertices, &graph, eps](const t_vec& vert, bool add_vertex)
 	 	-> std::optional<std::size_t>
 	{
+		// search the vertex and return its index
 		for(std::size_t idx=0; idx<vertices.size(); ++idx)
 		{
 			const t_vec& vertex = vertices[idx];
@@ -1278,6 +1284,15 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				return idx;
 		}
 
+		// otherwise add the voronoi vertex and return the new index
+		if(add_vertex)
+		{
+			vertices.push_back(vert);
+			graph.AddVertex(std::to_string(vertices.size()-1));
+			return vertices.size()-1;
+		}
+
+		// vertex was not found
 		return std::nullopt;
 	};
 
@@ -1296,13 +1311,13 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	// kernel type
 	using t_kernel = CGAL::Filtered_kernel<CGAL::Simple_cartesian<t_real>>;
 
-	// delaunay and voronoi types
+	// delaunay graph type
 	using t_delgraph = CGAL::Segment_Delaunay_graph_2<
 		CGAL::Segment_Delaunay_graph_traits_2<t_kernel>>;
-	using t_voronoi = CGAL::Voronoi_diagram_2<
-		t_delgraph,
-		CGAL::Segment_Delaunay_graph_adaptation_traits_2<t_delgraph>,
-		CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<t_delgraph>>;
+	//using t_voronoi = CGAL::Voronoi_diagram_2<
+	//	t_delgraph,
+	//	CGAL::Segment_Delaunay_graph_adaptation_traits_2<t_delgraph>,
+	//	CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<t_delgraph>>;
 
 	// site and vertex types
 	using t_geotraits = typename t_delgraph::Geom_traits;
@@ -1333,17 +1348,17 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 
 	// voronoi diagram from delaunay triangulation
-	t_voronoi voronoi(delgraph);
-	vertices.reserve(voronoi.number_of_vertices());
+	//t_voronoi voronoi(delgraph);
+	//vertices.reserve(voronoi.number_of_vertices()*2);
 
 	// iterate voronoi vertices
-	for(auto iter = voronoi.vertices_begin();
+	/*for(auto iter = voronoi.vertices_begin();
 		iter.operator!=(voronoi.vertices_end());
 		++iter)
 	{
 		vertices.emplace_back(tl2::create<t_vec>({ iter->point()[0], iter->point()[1] }));
 		graph.AddVertex(std::to_string(vertices.size()));
-	}
+	}*/
 
 	// iterate voronoi edges
 	for(auto iter = delgraph.finite_edges_begin();
@@ -1419,8 +1434,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			if(!is_helper_edge)
 			{
 				// add graph edges
-				auto vert0idx = get_vertex_idx(vert0);
-				auto vert1idx = get_vertex_idx(vert1);
+				auto vert0idx = get_vertex_idx(vert0, true);
+				auto vert1idx = get_vertex_idx(vert1, true);
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
@@ -1467,7 +1482,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			bool is_helper_edge = false;
 			for(const t_vec& site : sites)
 			{
-				// TODO: edge is only infinite with respect to the second edge
+				// TODO: edge is only infinite with respect to the second vertex
 				is_helper_edge = tl2::equals_0<t_real>(
 					tl2::dist_pt_line<t_vec>(site, vert0, vert1, true), eps);
 				if(is_helper_edge)
@@ -1477,9 +1492,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			if(!is_helper_edge)
 			{
 				// add graph edges
-				auto vert0idx = get_vertex_idx(vert0);
-				auto vert1idx = get_vertex_idx(vert1);
-				//bool valid_vertices = vert0idx && vert1idx;
+				auto vert0idx = get_vertex_idx(vert0, true);
+				auto vert1idx = get_vertex_idx(vert1, false);
+				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
 				if(regions && regions->GetLineGroups()->size())
@@ -1487,6 +1502,14 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 					if(regions->IsVertexInRegion(lines,
 						vertices, vert0idx, vert1idx, eps))
 						continue;
+				}
+
+				// add graph edges
+				if(valid_vertices)
+				{
+					t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+					graph.AddEdge(*vert0idx, *vert1idx, len);
+					graph.AddEdge(*vert1idx, *vert0idx, len);
 				}
 
 				linear_edges_vec.emplace_back(
@@ -1514,8 +1537,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 			if(parabolic_edge.size() >= 2)
 			{
-				auto vert0idx = get_vertex_idx(*parabolic_edge.begin());
-				auto vert1idx = get_vertex_idx(*parabolic_edge.rbegin());
+				auto vert0idx = get_vertex_idx(*parabolic_edge.begin(), true);
+				auto vert1idx = get_vertex_idx(*parabolic_edge.rbegin(), true);
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
@@ -1529,8 +1552,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				// add graph edges
 				if(valid_vertices)
 				{
-					// TODO: arc length of parabolic edges
-					t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+					t_real len = path_length<t_vec>(parabolic_edge);
+					//t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
+
 					graph.AddEdge(*vert0idx, *vert1idx, len);
 					graph.AddEdge(*vert1idx, *vert0idx, len);
 				}

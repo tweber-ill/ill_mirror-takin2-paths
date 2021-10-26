@@ -6,9 +6,6 @@
  * @note Forked on 5-jun-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  *
  * References:
- *  * http://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html
- *  * https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/reference/algorithms/buffer/buffer_7_with_strategies.html
- *  * https://github.com/boostorg/geometry/tree/develop/example
  *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
  *
  * ----------------------------------------------------------------------------

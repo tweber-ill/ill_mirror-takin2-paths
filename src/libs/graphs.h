@@ -538,9 +538,14 @@ public:
 
 	void AddEdge(std::size_t idx1, std::size_t idx2, t_weight w=0)
 	{
-		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+		if(idx1 >= m_nodes.size() || idx2 >= m_nodes.size())
+			return;
 
+		// get previous head of list
+		std::shared_ptr<AdjNode> node = m_nodes[idx1];
+		// make new head of list
 		m_nodes[idx1] = std::make_shared<AdjNode>();
+		// previous head is next to new head
 		m_nodes[idx1]->next = node;
 		m_nodes[idx1]->idx = idx2;
 		m_nodes[idx1]->weight = w;

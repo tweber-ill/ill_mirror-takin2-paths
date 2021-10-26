@@ -4,6 +4,12 @@
  * @date sep-2021
  * @license GPLv3, see 'LICENSE' file
  *
+ * References:
+ *  * http://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html
+ *  * https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/geometry/reference/algorithms/buffer/buffer_7_with_strategies.html
+ *  * https://github.com/boostorg/geometry/tree/develop/example
+ *  * https://www.boost.org/doc/libs/1_76_0/libs/test/doc/html/index.html
+ *
  * g++ -I.. -Wall -Wextra -Weffc++ -std=c++20 -o index_trees index_trees.cpp
  *
  * ----------------------------------------------------------------------------
