@@ -274,11 +274,11 @@ void LinesScene::UpdateIntersections()
 	switch(m_intersectioncalculationmethod)
 	{
 		case IntersectionCalculationMethod::DIRECT:
-			intersections = 
+			intersections =
 				geo::intersect_ineff<t_vec, std::pair<t_vec, t_vec>>(m_lines, g_eps);
 			break;
 		case IntersectionCalculationMethod::SWEEP:
-			intersections = 
+			intersections =
 				geo::intersect_sweep<t_vec, std::pair<t_vec, t_vec>>(m_lines, g_eps);
 			break;
 		default:
@@ -549,18 +549,18 @@ void LinesScene::UpdateVoro()
 	{
 		case VoronoiCalculationMethod::BOOSTPOLY:
 			results = geo::calc_voro<t_vec, t_line, t_graph>(
-				m_lines, edge_eps, &regions);
+				m_lines, g_eps, edge_eps, &regions);
 			break;
 #ifdef USE_CGAL
 		case VoronoiCalculationMethod::CGAL:
 			results = geo::calc_voro_cgal<t_vec, t_line, t_graph>(
-				m_lines, edge_eps, &regions);
+				m_lines, g_eps, edge_eps, &regions);
 			break;
 #endif
 #ifdef USE_OVD
 		case VoronoiCalculationMethod::OVD:
 			results = geo::calc_voro_ovd<t_vec, t_line, t_graph>(
-				m_lines, edge_eps, &regions);
+				m_lines, g_eps, edge_eps, &regions);
 			break;
 #endif
 		default:

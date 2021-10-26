@@ -650,7 +650,8 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro(const std::vector<t_line>& lines, 
-	typename t_vec::value_type edge_eps = 1e-2,
+	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
+	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
@@ -663,8 +664,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	VoronoiLinesResults<t_vec, t_line, t_graph> results{};
 
 	// internal scale for int-conversion
-	const t_real eps = edge_eps*edge_eps;
-	const t_real scale = std::ceil(1./eps);
+	const t_real scale = std::ceil(1./std::cbrt(eps));
 
 	// length of infinite edges
 	t_real infline_len = 1.;
@@ -690,7 +690,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			bool operator()(const vertex_type& vert1, const vertex_type& vert2) const
 			{
 				// TODO: use external epsilon value
-				const t_real eps = 1e-3;
+				const t_real eps = 1e-4; //std::sqrt(std::numeric_limits<t_real>::epsilon());
 
 				return tl2::equals(vert1.x(), vert2.x(), eps)
 					&& tl2::equals(vert1.y(), vert2.y(), eps);
@@ -938,7 +938,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 			poly::voronoi_visual_utils<t_real>::discretize(
 				to_point_data(*pt), to_segment_data(*seg),
-				edge_eps, &parabola);
+				para_edge_eps, &parabola);
 
 			if(parabola.size())
 			{
@@ -1051,7 +1051,8 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_ovd(const std::vector<t_line>& lines, 
-	typename t_vec::value_type edge_eps = 1e-2,
+	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
+	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
@@ -1210,10 +1211,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		else if(ty == ovd::PARABOLA)
 		{
 			std::vector<t_vec> para_edge;
-			para_edge.reserve(std::size_t(std::ceil(1./edge_eps)));
+			para_edge.reserve(std::size_t(std::ceil(1./para_edge_eps)));
 
 			// TODO: check parameter range because of gaps in the bisector
-			for(t_real param = 0.; param <= 1.; param += edge_eps)
+			for(t_real param = 0.; param <= 1.; param += para_edge_eps)
 			{
 				t_real para_pos =
 					std::lerp(vdgraph[vert1].dist(), vdgraph[vert2].dist(), param);
@@ -1252,13 +1253,12 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_cgal(const std::vector<t_line>& lines, 
-	typename t_vec::value_type edge_eps = 1e-2,
+	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
+	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;
-	//const t_real eps = std::sqrt(std::numeric_limits<t_real>::epsilon());
-	const t_real eps = edge_eps*edge_eps;
 
 	VoronoiLinesResults<t_vec, t_line, t_graph> results{};
 	// voronoi vertices
@@ -1509,8 +1509,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		// parabolic, finite edge
 		else if(t_paraseg paraseg; CGAL::assign(paraseg, dual))
 		{
-			std::vector<t_point> points;
-			t_real step = 2;
+			std::vector<t_point> points, points2;
+			t_real step = para_edge_eps;
 			paraseg.generate_points(points, step);
 
 			std::vector<t_vec> parabolic_edge;
@@ -1536,7 +1536,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				if(valid_vertices)
 				{
 					t_real len = path_length<t_vec>(parabolic_edge);
-					//t_real len = tl2::norm(vertices[*vert1idx] - vertices[*vert0idx]);
 
 					graph.AddEdge(*vert0idx, *vert1idx, len);
 					graph.AddEdge(*vert1idx, *vert0idx, len);

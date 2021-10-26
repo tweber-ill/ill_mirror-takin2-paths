@@ -615,14 +615,14 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	{
 		m_voro_results
 			= geo::calc_voro<t_vec2, t_line, t_graph>(
-				m_lines, m_voroedge_eps, &regions);
+				m_lines, m_eps, m_voroedge_eps, &regions);
 	}
 #ifdef USE_CGAL
 	else if(backend == VoronoiBackend::CGAL)
 	{
 		m_voro_results
 			= geo::calc_voro_cgal<t_vec2, t_line, t_graph>(
-				m_lines, m_voroedge_eps, &regions);
+				m_lines, m_eps, m_voroedge_eps, &regions);
 	}
 #endif
 
