@@ -1785,13 +1785,13 @@ void PathsTool::RotateCurrentObject(t_real angle)
 /**
  * rotate the given object
  */
-void PathsTool::RotateObject(const std::string& obj, t_real angle)
+void PathsTool::RotateObject(const std::string& objname, t_real angle)
 {
-	if(obj == "")
+	if(objname == "")
 		return;
 
-	// remove object from instrument space
-	if(auto [ok, objgeo] = m_instrspace.RotateObject(obj, angle); ok)
+	// rotate the given object
+	if(auto [ok, objgeo] = m_instrspace.RotateObject(objname, angle); ok)
 	{
 		// invalidate the path mesh
 		ValidatePathMesh(false);
@@ -1801,18 +1801,17 @@ void PathsTool::RotateObject(const std::string& obj, t_real angle)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
 
 		// remove old 3d representation of object and create a new one
-		if(m_renderer)
+		// TODO: handle other cases besides walls
+		if(m_renderer && objgeo)
 		{
-			m_renderer->DeleteObject(obj);
+			m_renderer->DeleteObject(objname);
 			m_renderer->AddWall(*objgeo, true);
-
-			// TODO: handle other cases besides walls
 		}
 	}
 	else
 	{
 		QMessageBox::warning(this, "Warning",
-			QString("Object \"") + obj.c_str() + QString("\" cannot be rotated."));
+			QString("Object \"") + objname.c_str() + QString("\" cannot be rotated."));
 	}
 }
 
@@ -1886,13 +1885,13 @@ void PathsTool::RenameObject(const std::string& oldid, const std::string& newid)
 /**
  * change the properties of the given object in instrument space
  */
-void PathsTool::ChangeObjectProperty(const std::string& obj, const GeometryProperty& prop)
+void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectProperty& prop)
 {
-	if(obj == "")
+	if(objname == "")
 		return;
 
-	// remove object from instrument space
-	if(auto [ok, objgeo] = m_instrspace.SetGeoProperties(obj, { prop} ); ok)
+	// change object properties
+	if(auto [ok, objgeo] = m_instrspace.SetProperties(objname, { prop} ); ok)
 	{
 		// invalidate the path mesh
 		ValidatePathMesh(false);
@@ -1902,18 +1901,17 @@ void PathsTool::ChangeObjectProperty(const std::string& obj, const GeometryPrope
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
 
 		// remove old 3d representation of object and create a new one
-		if(m_renderer)
+		// TODO: handle other cases besides walls
+		if(m_renderer && objgeo)
 		{
-			m_renderer->DeleteObject(obj);
+			m_renderer->DeleteObject(objname);
 			m_renderer->AddWall(*objgeo, true);
-
-			// TODO: handle other cases besides walls
 		}
 	}
 	else
 	{
 		QMessageBox::warning(this, "Warning",
-			QString("Properties of object \"") + obj.c_str() + QString("\" cannot be changed."));
+			QString("Properties of object \"") + objname.c_str() + QString("\" cannot be changed."));
 	}
 }
 

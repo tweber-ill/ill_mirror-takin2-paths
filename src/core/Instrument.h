@@ -71,6 +71,10 @@ public:
 
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
+	std::vector<ObjectProperty> GetProperties(const std::string& obj) const;
+	std::tuple<bool, std::shared_ptr<Geometry>> SetProperties(
+		const std::string& obj, const std::vector<ObjectProperty>& props);
+
 
 private:
 	Axis m_mono{"monochromator", nullptr, &m_sample, this};

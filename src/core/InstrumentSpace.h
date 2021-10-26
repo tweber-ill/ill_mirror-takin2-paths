@@ -83,9 +83,9 @@ public:
 
 	void EmitUpdate() { (*m_sigUpdate)(*this); }
 
-	std::vector<GeometryProperty> GetGeoProperties(const std::string& obj) const;
-	std::tuple<bool, std::shared_ptr<Geometry>> SetGeoProperties(
-		const std::string& obj, const std::vector<GeometryProperty>& props);
+	std::vector<ObjectProperty> GetProperties(const std::string& obj) const;
+	std::tuple<bool, std::shared_ptr<Geometry>> SetProperties(
+		const std::string& obj, const std::vector<ObjectProperty>& props);
 
 	t_real GetEpsilon() const { return m_eps; }
 	void SetEpsilon(t_real eps) { m_eps = eps; }

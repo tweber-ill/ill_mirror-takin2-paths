@@ -518,3 +518,68 @@ bool Axis::IsObjectOnAxis(const std::string& obj, AxisAngle ax) const
 
 	return false;
 }
+
+
+/**
+ * get the properties of the axis
+ */
+std::vector<ObjectProperty> Axis::GetProperties() const
+{
+	std::vector<ObjectProperty> props;
+
+	// angular limits
+	props.emplace_back(ObjectProperty{.key = "angle_in_lower_limit",
+		.value = GetAxisAngleInLowerLimit()/tl2::pi<t_real>*180.});
+	props.emplace_back(ObjectProperty{.key = "angle_in_upper_limit",
+		.value = GetAxisAngleInUpperLimit()/tl2::pi<t_real>*180.});
+	props.emplace_back(ObjectProperty{.key = "angle_internal_lower_limit",
+		.value = GetAxisAngleInternalLowerLimit()/tl2::pi<t_real>*180.});
+	props.emplace_back(ObjectProperty{.key = "angle_internal_upper_limit",
+		.value = GetAxisAngleInternalUpperLimit()/tl2::pi<t_real>*180.});
+	props.emplace_back(ObjectProperty{.key = "angle_out_lower_limit",
+		.value = GetAxisAngleOutLowerLimit()/tl2::pi<t_real>*180.});
+	props.emplace_back(ObjectProperty{.key = "angle_out_upper_limit",
+		.value = GetAxisAngleOutUpperLimit()/tl2::pi<t_real>*180.});
+
+	// motor speeds
+	props.emplace_back(ObjectProperty{.key = "angle_in_speed",
+		.value = GetAxisAngleInSpeed()/*/tl2::pi<t_real>*180.*/});
+	props.emplace_back(ObjectProperty{.key = "angle_internal_speed",
+		.value = GetAxisAngleInternalSpeed()/*/tl2::pi<t_real>*180.*/});
+	props.emplace_back(ObjectProperty{.key = "angle_out_speed",
+		.value = GetAxisAngleOutSpeed()/*/tl2::pi<t_real>*180.*/});
+	
+	return props;
+}
+
+
+/**
+ * set the properties of the axis
+ */
+void Axis::SetProperties(const std::vector<ObjectProperty>& props)
+{
+	for(const auto& prop : props)
+	{
+		// angular limits
+		if(prop.key == "angle_in_lower_limit")
+			SetAxisAngleInLowerLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+		else if(prop.key == "angle_in_upper_limit")
+			SetAxisAngleInUpperLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+		else if(prop.key == "angle_internal_lower_limit")
+			SetAxisAngleInternalLowerLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+		else if(prop.key == "angle_internal_upper_limit")
+			SetAxisAngleInternalUpperLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+		else if(prop.key == "angle_out_lower_limit")
+			SetAxisAngleOutLowerLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+		else if(prop.key == "angle_out_upper_limit")
+			SetAxisAngleOutUpperLimit(std::get<t_real>(prop.value)/180.*tl2::pi<t_real>);
+
+		// motor speeds
+		else if(prop.key == "angle_in_speed")
+			SetAxisAngleInSpeed(std::get<t_real>(prop.value)/*/180.*tl2::pi<t_real>*/);
+		else if(prop.key == "angle_internal_speed")
+			SetAxisAngleInternalSpeed(std::get<t_real>(prop.value)/*/180.*tl2::pi<t_real>*/);
+		else if(prop.key == "angle_out_speed")
+			SetAxisAngleOutSpeed(std::get<t_real>(prop.value)/*/180.*tl2::pi<t_real>*/);
+	}
+}

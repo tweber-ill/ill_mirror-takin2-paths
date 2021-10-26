@@ -263,7 +263,7 @@ protected slots:
 	void RotateObject(const std::string& id, t_real angle);
 	void DeleteObject(const std::string& id);
 	void RenameObject(const std::string& oldid, const std::string& newid);
-	void ChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
+	void ChangeObjectProperty(const std::string& id, const ObjectProperty& prop);
 
 	// propagate (changed) global settings to each object
 	void InitSettings();

@@ -323,15 +323,15 @@ void BoxGeometry::Rotate(t_real angle)
 /**
  * obtain all defining properties of the geometry object
  */
-std::vector<GeometryProperty> BoxGeometry::GetProperties() const
+std::vector<ObjectProperty> BoxGeometry::GetProperties() const
 {
-	std::vector<GeometryProperty> props;
+	std::vector<ObjectProperty> props;
 
-	props.emplace_back(GeometryProperty{.key="position 1", .value=m_pos1});
-	props.emplace_back(GeometryProperty{.key="position 2", .value=m_pos2});
-	props.emplace_back(GeometryProperty{.key="height", .value=m_height});
-	props.emplace_back(GeometryProperty{.key="depth", .value=m_depth});
-	props.emplace_back(GeometryProperty{.key="colour", .value=m_colour});
+	props.emplace_back(ObjectProperty{.key="position 1", .value=m_pos1});
+	props.emplace_back(ObjectProperty{.key="position 2", .value=m_pos2});
+	props.emplace_back(ObjectProperty{.key="height", .value=m_height});
+	props.emplace_back(ObjectProperty{.key="depth", .value=m_depth});
+	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
 
 	return props;
 }
@@ -340,7 +340,7 @@ std::vector<GeometryProperty> BoxGeometry::GetProperties() const
 /**
  * set the properties of the geometry object
  */
-void BoxGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+void BoxGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 {
 	for(const auto& prop : props)
 	{
@@ -474,14 +474,14 @@ void CylinderGeometry::Rotate(t_real)
 /**
  * obtain all defining properties of the geometry object
  */
-std::vector<GeometryProperty> CylinderGeometry::GetProperties() const
+std::vector<ObjectProperty> CylinderGeometry::GetProperties() const
 {
-	std::vector<GeometryProperty> props;
+	std::vector<ObjectProperty> props;
 
-	props.emplace_back(GeometryProperty{.key="position", .value=m_pos});
-	props.emplace_back(GeometryProperty{.key="height", .value=m_height});
-	props.emplace_back(GeometryProperty{.key="radius", .value=m_radius});
-	props.emplace_back(GeometryProperty{.key="colour", .value=m_colour});
+	props.emplace_back(ObjectProperty{.key="position", .value=m_pos});
+	props.emplace_back(ObjectProperty{.key="height", .value=m_height});
+	props.emplace_back(ObjectProperty{.key="radius", .value=m_radius});
+	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
 
 	return props;
 }
@@ -490,7 +490,7 @@ std::vector<GeometryProperty> CylinderGeometry::GetProperties() const
 /**
  * set the properties of the geometry object
  */
-void CylinderGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+void CylinderGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 {
 	for(const auto& prop : props)
 	{
@@ -620,13 +620,13 @@ void SphereGeometry::Rotate(t_real)
 /**
  * obtain all defining properties of the geometry object
  */
-std::vector<GeometryProperty> SphereGeometry::GetProperties() const
+std::vector<ObjectProperty> SphereGeometry::GetProperties() const
 {
-	std::vector<GeometryProperty> props;
+	std::vector<ObjectProperty> props;
 
-	props.emplace_back(GeometryProperty{.key="position", .value=m_pos});
-	props.emplace_back(GeometryProperty{.key="radius", .value=m_radius});
-	props.emplace_back(GeometryProperty{.key="colour", .value=m_colour});
+	props.emplace_back(ObjectProperty{.key="position", .value=m_pos});
+	props.emplace_back(ObjectProperty{.key="radius", .value=m_radius});
+	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
 
 	return props;
 }
@@ -635,7 +635,7 @@ std::vector<GeometryProperty> SphereGeometry::GetProperties() const
 /**
  * set the properties of the geometry object
  */
-void SphereGeometry::SetProperties(const std::vector<GeometryProperty>& props)
+void SphereGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 {
 	for(const auto& prop : props)
 	{

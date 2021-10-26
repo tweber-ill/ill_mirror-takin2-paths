@@ -47,12 +47,18 @@ Instrument::~Instrument()
 }
 
 
+/**
+ * assign data from another instrument
+ */
 Instrument::Instrument(const Instrument& instr)
 {
 	*this = operator=(instr);
 }
 
 
+/**
+ * assign data from another instrument
+ */
 const Instrument& Instrument::operator=(const Instrument& instr)
 {
 	this->m_mono = instr.m_mono;
@@ -78,40 +84,57 @@ const Instrument& Instrument::operator=(const Instrument& instr)
 }
 
 
+/**
+ * clear all data in the instrument
+ */
 void Instrument::Clear()
 {
-	m_mono.Clear();
-	m_sample.Clear();
-	m_ana.Clear();
+	GetMonochromator().Clear();
+	GetSample().Clear();
+	GetAnalyser().Clear();
 
 	m_sigUpdate = std::make_shared<t_sig_update>();
 }
 
 
+/**
+ * load an instrument from a property tree
+ */
 bool Instrument::Load(const pt::ptree& prop)
 {
 	bool mono_ok = false;
 	bool sample_ok = false;
 	bool ana_ok = false;
 
-	if(auto mono = prop.get_child_optional("monochromator"); mono)
-		mono_ok = m_mono.Load(*mono);
-	if(auto sample = prop.get_child_optional("sample"); sample)
-		sample_ok = m_sample.Load(*sample);
-	if(auto ana = prop.get_child_optional("analyser"); ana)
-		ana_ok = m_ana.Load(*ana);
+	const std::string& mono_id = GetMonochromator().GetId();
+	const std::string& sample_id = GetSample().GetId();
+	const std::string& ana_id = GetAnalyser().GetId();
+
+	if(auto mono = prop.get_child_optional(mono_id); mono)
+		mono_ok = GetMonochromator().Load(*mono);
+	if(auto sample = prop.get_child_optional(sample_id); sample)
+		sample_ok = GetSample().Load(*sample);
+	if(auto ana = prop.get_child_optional(ana_id); ana)
+		ana_ok = GetAnalyser().Load(*ana);
 
 	return mono_ok && sample_ok && ana_ok;
 }
 
 
+/**
+ * save an instrument to a property tree
+ */
 pt::ptree Instrument::Save() const
 {
 	pt::ptree prop;
 
-	prop.put_child("monochromator", m_mono.Save());
-	prop.put_child("sample", m_sample.Save());
-	prop.put_child("analyser", m_ana.Save());
+	const std::string& mono_id = GetMonochromator().GetId();
+	const std::string& sample_id = GetSample().GetId();
+	const std::string& ana_id = GetAnalyser().GetId();
+	
+	prop.put_child(mono_id, GetMonochromator().Save());
+	prop.put_child(sample_id, GetSample().Save());
+	prop.put_child(ana_id, GetAnalyser().Save());
 
 	return prop;
 }
@@ -129,28 +152,28 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 	bool use_out_axis = false;
 
 	// move sample position around monochromator axis
-	if(m_sample.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
-		/*|| m_sample.IsObjectOnAxis(obj, AxisAngle::OUTGOING)
-		|| m_sample.IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
+	if(GetSample().IsObjectOnAxis(obj, AxisAngle::INTERNAL)
+		/*|| GetSample().IsObjectOnAxis(obj, AxisAngle::OUTGOING)
+		 | | GetSample()*.IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
 	{
-		ax = &m_sample;
-		ax_prev = &m_mono;
+		ax = &GetSample();
+		ax_prev = &GetMonochromator();
 		set_xtal_angle = true;
 	}
 
 	// move analyser position around sample axis
-	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::INTERNAL)
-		/*|| m_ana.IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
+	else if(GetAnalyser().IsObjectOnAxis(obj, AxisAngle::INTERNAL)
+		/*|| GetAnalyser().IsObjectOnAxis(obj, AxisAngle::INCOMING)*/)
 	{
-		ax = &m_ana;
-		ax_prev = &m_sample;
+		ax = &GetAnalyser();
+		ax_prev = &GetSample();
 	}
 
 	// move detector around analyser axis
-	else if(m_ana.IsObjectOnAxis(obj, AxisAngle::OUTGOING))
+	else if(GetAnalyser().IsObjectOnAxis(obj, AxisAngle::OUTGOING))
 	{
-		ax = &m_ana;
-		ax_prev = &m_ana;
+		ax = &GetAnalyser();
+		ax_prev = &GetAnalyser();
 		use_out_axis = true;
 		set_xtal_angle = true;
 	}
@@ -202,4 +225,57 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 		if(set_xtal_angle)
 			ax->SetAxisAngleInternal(new_angle * t_real(0.5));
 	}
+}
+
+
+/**
+ * get the properties of an object in the instrument
+ */
+std::vector<ObjectProperty> Instrument::GetProperties(const std::string& objname) const
+{
+	// find the axis with the given id
+	if(GetMonochromator().GetId() == objname)
+	{
+		return GetMonochromator().GetProperties();
+	}
+	else if(GetSample().GetId() == objname)
+	{
+		return GetSample().GetProperties();
+	}
+	else if(GetAnalyser().GetId() == objname)
+	{
+		return GetAnalyser().GetProperties();
+	}
+
+	// TODO: also look into the mono/sample/ana geometry objects
+	return {};
+}
+
+
+/**
+ * set the properties of an object in the instrument
+ */
+std::tuple<bool, std::shared_ptr<Geometry>> 
+Instrument::SetProperties(const std::string& objname,
+	const std::vector<ObjectProperty>& props)
+{
+	// find the axis with the given id
+	if(GetMonochromator().GetId() == objname)
+	{
+		GetMonochromator().SetProperties(props);
+		return std::make_tuple(true, nullptr);
+	}
+	else if(GetSample().GetId() == objname)
+	{
+		GetSample().SetProperties(props);
+		return std::make_tuple(true, nullptr);
+	}
+	else if(GetAnalyser().GetId() == objname)
+	{
+		GetAnalyser().SetProperties(props);
+		return std::make_tuple(true, nullptr);
+	}
+
+	// TODO: also look into the mono/sample/ana geometry objects
+	return std::make_tuple(false, nullptr);
 }

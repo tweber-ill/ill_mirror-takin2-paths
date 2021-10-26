@@ -63,10 +63,10 @@ enum class GeometryType
 
 
 /**
- * representation of a property of a geometry object
- * for easy data exchange
+ * representation of a property of an object in instrument
+ * space for easy data exchange
  */
-struct GeometryProperty
+struct ObjectProperty
 {
 	std::string key{};
 	std::variant<t_real, t_vec> value{};
@@ -101,8 +101,8 @@ public:
 
 	virtual void Rotate(t_real angle) = 0;
 
-	virtual std::vector<GeometryProperty> GetProperties() const = 0;
-	virtual void SetProperties(const std::vector<GeometryProperty>& props) = 0;
+	virtual std::vector<ObjectProperty> GetProperties() const = 0;
+	virtual void SetProperties(const std::vector<ObjectProperty>& props) = 0;
 
 	static std::tuple<bool, std::vector<std::shared_ptr<Geometry>>>
 		load(const boost::property_tree::ptree& prop);
@@ -150,8 +150,8 @@ public:
 
 	virtual void Rotate(t_real angle) override;
 
-	virtual std::vector<GeometryProperty> GetProperties() const override;
-	virtual void SetProperties(const std::vector<GeometryProperty>& props) override;
+	virtual std::vector<ObjectProperty> GetProperties() const override;
+	virtual void SetProperties(const std::vector<ObjectProperty>& props) override;
 
 private:
 	t_vec m_pos1 = tl2::create<t_vec>({-0.5, 0, 0});
@@ -195,8 +195,8 @@ public:
 
 	virtual void Rotate(t_real angle) override;
 
-	virtual std::vector<GeometryProperty> GetProperties() const override;
-	virtual void SetProperties(const std::vector<GeometryProperty>& props) override;
+	virtual std::vector<ObjectProperty> GetProperties() const override;
+	virtual void SetProperties(const std::vector<ObjectProperty>& props) override;
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});
@@ -236,8 +236,8 @@ public:
 
 	virtual void Rotate(t_real angle) override;
 
-	virtual std::vector<GeometryProperty> GetProperties() const override;
-	virtual void SetProperties(const std::vector<GeometryProperty>& props) override;
+	virtual std::vector<ObjectProperty> GetProperties() const override;
+	virtual void SetProperties(const std::vector<ObjectProperty>& props) override;
 
 private:
 	t_vec m_pos = tl2::create<t_vec>({0, 0, 0});

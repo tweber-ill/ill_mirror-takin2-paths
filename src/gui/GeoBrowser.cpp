@@ -238,7 +238,7 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 
 
 	// get the geometry object properties and insert them in the table
-	const auto& props = m_instrspace->GetGeoProperties(m_curObject);
+	const auto& props = m_instrspace->GetProperties(m_curObject);
 
 	m_geosettings->clearContents();
 	m_geosettings->setRowCount(props.size());
@@ -329,7 +329,7 @@ void GeometriesBrowser::GeoSettingsItemChanged(QTableWidgetItem *item)
 		std::string ty = itemType->text().toStdString();
 		std::string val = itemVal->text().toStdString();
 
-		GeometryProperty prop;
+		ObjectProperty prop;
 		prop.key = itemKey->text().toStdString();
 
 		// real value

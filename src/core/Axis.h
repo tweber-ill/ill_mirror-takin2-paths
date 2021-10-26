@@ -115,6 +115,8 @@ public:
 
 	bool IsObjectOnAxis(const std::string& obj, AxisAngle ax) const;
 
+	std::vector<ObjectProperty> GetProperties() const;
+	void SetProperties(const std::vector<ObjectProperty>& props);
 
 private:
 	// identifier

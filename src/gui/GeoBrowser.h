@@ -82,7 +82,7 @@ signals:
 	void SignalDeleteObject(const std::string& id);
 	void SignalRenameObject(const std::string& oldId, const std::string& newId);
 
-	void SignalChangeObjectProperty(const std::string& id, const GeometryProperty& prop);
+	void SignalChangeObjectProperty(const std::string& id, const ObjectProperty& prop);
 };
 
 

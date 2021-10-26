@@ -47,12 +47,18 @@ InstrumentSpace::~InstrumentSpace()
 }
 
 
+/**
+ * assign data from another instrument space
+ */
 InstrumentSpace::InstrumentSpace(const InstrumentSpace& instr)
 {
 	*this = instr;
 }
 
 
+/**
+ * assign data from another instrument space
+ */
 const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
 {
 	this->m_floorlen[0] = instr.m_floorlen[0];
@@ -68,6 +74,9 @@ const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
 }
 
 
+/**
+ * clear all data in the instrument space
+ */
 void InstrumentSpace::Clear()
 {
 	// reset to defaults
@@ -82,7 +91,7 @@ void InstrumentSpace::Clear()
 
 
 /**
- * load instrument and wall configuration
+ * load instrument and wall configuration from a property tree
  */
 bool InstrumentSpace::Load(const pt::ptree& prop)
 {
@@ -122,6 +131,9 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 }
 
 
+/**
+ * save the instrument and wall configuration into a property tree
+ */
 pt::ptree InstrumentSpace::Save() const
 {
 	pt::ptree prop;
@@ -883,7 +895,7 @@ std::pair<bool, std::string> InstrumentSpace::load(
 /**
  * get the properties of a geometry object in the instrument space
  */
-std::vector<GeometryProperty> InstrumentSpace::GetGeoProperties(const std::string& obj) const
+std::vector<ObjectProperty> InstrumentSpace::GetProperties(const std::string& obj) const
 {
 	// find the wall with the given id
 	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(),
@@ -895,16 +907,16 @@ std::vector<GeometryProperty> InstrumentSpace::GetGeoProperties(const std::strin
 		return (*iter)->GetProperties();
 	}
 
-	// TODO: handle other cases besides walls
-	return {};
+	// otherwise look for the properties in the instrument
+	return m_instr.GetProperties(obj);
 }
 
 
 /**
  * set the properties of a geometry object in the instrument space
  */
-std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::SetGeoProperties(
-	const std::string& obj, const std::vector<GeometryProperty>& props)
+std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::SetProperties(
+	const std::string& obj, const std::vector<ObjectProperty>& props)
 {
 	// find the wall with the given id
 	if(auto iter = std::find_if(m_walls.begin(), m_walls.end(),
@@ -917,6 +929,6 @@ std::tuple<bool, std::shared_ptr<Geometry>> InstrumentSpace::SetGeoProperties(
 		return std::make_tuple(true, *iter);
 	}
 
-	// TODO: handle other cases besides walls
-	return std::make_tuple(false, nullptr);
+	// otherwise pass the data on to the instrument
+	return m_instr.SetProperties(obj, props);
 }
