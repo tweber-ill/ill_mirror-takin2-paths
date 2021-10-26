@@ -1314,10 +1314,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	// delaunay graph type
 	using t_delgraph = CGAL::Segment_Delaunay_graph_2<
 		CGAL::Segment_Delaunay_graph_traits_2<t_kernel>>;
-	//using t_voronoi = CGAL::Voronoi_diagram_2<
-	//	t_delgraph,
-	//	CGAL::Segment_Delaunay_graph_adaptation_traits_2<t_delgraph>,
-	//	CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<t_delgraph>>;
 
 	// site and vertex types
 	using t_geotraits = typename t_delgraph::Geom_traits;
@@ -1346,19 +1342,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		delgraph.insert(site);
 	}
 
-
-	// voronoi diagram from delaunay triangulation
-	//t_voronoi voronoi(delgraph);
-	//vertices.reserve(voronoi.number_of_vertices()*2);
-
-	// iterate voronoi vertices
-	/*for(auto iter = voronoi.vertices_begin();
-		iter.operator!=(voronoi.vertices_end());
-		++iter)
-	{
-		vertices.emplace_back(tl2::create<t_vec>({ iter->point()[0], iter->point()[1] }));
-		graph.AddVertex(std::to_string(vertices.size()));
-	}*/
 
 	// iterate voronoi edges
 	for(auto iter = delgraph.finite_edges_begin();
