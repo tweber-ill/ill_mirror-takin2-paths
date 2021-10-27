@@ -660,12 +660,10 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 	using t_real = typename t_vec::value_type;
 
-
-	VoronoiLinesResults<t_vec, t_line, t_graph> results{};
-
 	// internal scale for int-conversion
-	const t_real scale = std::ceil(1./std::cbrt(eps));
+	const t_real scale = std::sqrt(std::numeric_limits<t_int>::max());
 
+	
 	// length of infinite edges
 	t_real infline_len = 1.;
 	for(const t_line& line : lines)
@@ -745,6 +743,9 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		return std::nullopt;
 	};
 
+
+	// results
+	VoronoiLinesResults<t_vec, t_line, t_graph> results{};
 
 	// graph of voronoi vertices
 	t_graph& graph = results.GetVoronoiGraph();
@@ -1324,6 +1325,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	using t_paraseg = CGAL::Parabola_segment_2<t_geotraits>;
 	using t_seg = typename t_geotraits::Segment_2;
 	using t_ray = typename t_geotraits::Ray_2;
+
+	static_assert(std::is_same_v<typename t_geotraits::FT, t_real>, "Data type mismatch!");
 
 
 	// delaunay triangulation object

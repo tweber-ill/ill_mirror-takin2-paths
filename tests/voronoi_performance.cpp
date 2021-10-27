@@ -47,8 +47,8 @@ int main()
 {
 	std::cout.precision(8);
 
-	std::cout 
-		<< std::left << std::setw(20) << "# number of lines " 
+	std::cout
+		<< std::left << std::setw(20) << "# number of lines "
 		<< std::left << std::setw(20) << "time (boost)"
 		<< std::left << std::setw(20) << "time (cgal)"
 		<< std::left << std::setw(20) << "vertices (boost)"
@@ -59,7 +59,7 @@ int main()
 	for(std::size_t num_lines = 10; num_lines <= 500; num_lines += 10)
 	{
 		// create non-intersecting line segments
-		std::vector<t_line> lines = 
+		std::vector<t_line> lines =
 			geo::random_nonintersecting_lines<t_line, t_vec, t_matrix, t_real>
 				(num_lines, 1e4, 1., 100., true);;
 
@@ -77,10 +77,10 @@ int main()
 		auto res_cgal = geo::calc_voro_cgal<t_vector, t_line>(lines, line_groups, false, false);
 		timer_cgal.stop();
 
-		std::cout << std::left << std::setw(20) << num_lines 
-			<< std::left << std::setw(20) << timer_boost.GetDur() 
-			<< std::left << std::setw(20) << timer_cgal.GetDur() 
-			<< std::left << std::setw(20) << res_boost.GetVoronoiVertices().size() 
+		std::cout << std::left << std::setw(20) << num_lines
+			<< std::left << std::setw(20) << timer_boost.GetDur()
+			<< std::left << std::setw(20) << timer_cgal.GetDur()
+			<< std::left << std::setw(20) << res_boost.GetVoronoiVertices().size()
 			<< std::left << std::setw(20) << res_cgal.GetVoronoiVertices().size()
 			<< std::endl;
 	}

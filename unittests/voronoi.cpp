@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(voronoi_lineseg, t_real,
 	regions.SetRemoveVoronoiVertices(false);
 	regions.SetLineGroups(&line_groups);
 
-	t_real eps = std::sqrt(std::numeric_limits<t_real>::epsilon());
+	t_real eps = 1e-4; //std::sqrt(std::numeric_limits<t_real>::epsilon());
 	t_real para_edge_eps = 1e-2;
 
 	// calculate the voronoi diagrams
