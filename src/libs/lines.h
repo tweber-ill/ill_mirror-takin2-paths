@@ -1169,7 +1169,7 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 					if constexpr(use_line_groups)
 					{
 						// if the lines belong to the same group, don't report the intersection
-						if(std::get<2>(lines[*evt.lower_idx]) 
+						if(std::get<2>(lines[*evt.lower_idx])
 							!= std::get<2>(lines[*evt.upper_idx]))
 						{
 							// report an intersection
@@ -1456,6 +1456,45 @@ requires tl2::is_vec<t_vec>
 		}
 	}
 
+	return newverts;
+}
+
+
+/**
+ * remove vertices that are closer than the given distance
+ */
+template<class t_vec,
+	class t_real = typename t_vec::value_type,
+	template<class...> class t_cont = std::vector>
+t_cont<t_vec> remove_close_vertices(
+	const t_cont<t_vec>& vertices, t_real dist)
+requires tl2::is_vec<t_vec>
+{
+	if(vertices.size() <= 2)
+		return vertices;
+
+	t_cont<t_vec> newverts;
+	newverts.reserve(vertices.size());
+
+	// first vertex
+	newverts.push_back(*vertices.begin());
+
+	const t_vec* cur_vert = &vertices[0];
+
+	for(std::size_t idx = 1; idx < vertices.size()-1; ++idx)
+	{
+		// find first vertex with is further away than "dist"
+		const t_vec& next_vert = vertices[idx];
+		t_real len = tl2::norm<t_vec>(next_vert - *cur_vert);
+		if(len >= dist)
+		{
+			newverts.push_back(next_vert);
+			cur_vert = &next_vert;
+		}
+	}
+
+	// last vertex
+	newverts.push_back(*vertices.rbegin());
 	return newverts;
 }
 

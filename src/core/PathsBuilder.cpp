@@ -1271,6 +1271,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	if(subdivide_lines)
 	{
 		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
+		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
 	}
 
 	return path_vertices;
