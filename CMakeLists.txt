@@ -351,6 +351,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/lines_main.cpp
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/vertex.cpp src/tools/vertex.h
+		src/tools/info.cpp src/tools/info.h
 		src/tools/about.cpp src/tools/about.h
 		src/tools/settings.cpp src/tools/settings.h
 

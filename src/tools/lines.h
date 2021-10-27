@@ -1,7 +1,7 @@
 /**
  * line intersection test program
  * @author Tobias Weber <tweber@ill.fr>
- * @date 11-Nov-2020
+ * @date November-2020 - October-2021
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *
@@ -44,10 +44,10 @@
 #include "src/libs/graphs.h"
 #include "src/libs/trapezoid.h"
 
+#include "info.h"
 #include "about.h"
 #include "settings.h"
 #include "vertex.h"
-
 
 
 enum class IntersectionCalculationMethod
@@ -65,9 +65,8 @@ enum class VoronoiCalculationMethod
 };
 
 
-
 class LinesScene : public QGraphicsScene
-{
+{ Q_OBJECT
 public:
 	using t_vec = ::t_vec2;
 	using t_mat = ::t_mat22;
@@ -133,6 +132,14 @@ public:
 	void UpdateVoro();
 	const t_graph& GetVoroGraph() const { return m_vorograph; }
 
+	// infos
+	std::size_t GetNumLines() const { return m_numLines; }
+	std::size_t GetNumIntersections() const { return m_numIntersections; }
+	std::size_t GetNumTrapezoids() const { return m_numTrapezoids; }
+	std::size_t GetNumVoronoiVertices() const { return m_numVoronoiVertices; }
+	std::size_t GetNumVoronoiLinearEdges() const { return m_numVoronoiLinearEdges; }
+	std::size_t GetNumVoronoiParabolicEdges() const { return m_numVoronoiLParabolicEdges; }
+
 private:
 	QWidget *m_parent = nullptr;
 
@@ -162,14 +169,24 @@ private:
 		= VoronoiCalculationMethod::BOOSTPOLY;
 	bool m_calctrapezoids = false;
 
+	// infos
+	std::size_t m_numLines{};
+	std::size_t m_numIntersections{};
+	std::size_t m_numTrapezoids{};
+	std::size_t m_numVoronoiVertices{};
+	std::size_t m_numVoronoiLinearEdges{};
+	std::size_t m_numVoronoiLParabolicEdges{};
+
 private:
 	std::size_t GetClosestLineIdx(const t_vec& pt) const;
+
+signals:
+	void CalculationFinished();
 };
 
 
-
 class LinesView : public QGraphicsView
-{Q_OBJECT
+{ Q_OBJECT
 public:
 	LinesView(LinesScene *scene=nullptr, QWidget *parent=nullptr);
 	virtual ~LinesView();
@@ -202,9 +219,8 @@ signals:
 };
 
 
-
 class LinesWnd : public QMainWindow
-{
+{ Q_OBJECT
 public:
 	using QMainWindow::QMainWindow;
 
@@ -219,12 +235,16 @@ private:
 private:
 	QSettings m_sett{"geo_tools", "lines"};
 
+	std::shared_ptr<GeoInfoDlg> m_dlgInfo{};
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
 
 	std::shared_ptr<LinesScene> m_scene{};
 	std::shared_ptr<LinesView> m_view{};
 	std::shared_ptr<QLabel> m_statusLabel{};
+
+public slots:
+	void UpdateInfos();
 };
 
 

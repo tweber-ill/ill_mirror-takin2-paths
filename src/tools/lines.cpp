@@ -210,10 +210,12 @@ void LinesScene::UpdateLines()
 		removeItem(item);
 		delete item;
 	}
-	m_elems_lines.clear();
 
 	// get new lines
+	m_elems_lines.clear();
 	m_lines.clear();
+	m_numLines = 0;
+
 
 	const std::size_t num_vertices = m_elems_vertices.size();
 	if(num_vertices < 2)
@@ -250,6 +252,10 @@ void LinesScene::UpdateLines()
 		QGraphicsItem *item = addLine(qline, penEdge);
 		m_elems_lines.push_back(item);
 	}
+
+
+	m_numLines = m_lines.size();
+	emit CalculationFinished();
 }
 
 
@@ -261,7 +267,9 @@ void LinesScene::UpdateIntersections()
 		removeItem(item);
 		delete item;
 	}
+
 	m_elems_inters.clear();
+	m_numIntersections = 0;
 
 
 	// don't calculate if disabled
@@ -308,6 +316,10 @@ void LinesScene::UpdateIntersections()
 		QGraphicsItem *item = addEllipse(rect, pen, brush);
 		m_elems_inters.push_back(item);
 	}
+
+
+	m_numIntersections = intersections.size();
+	emit CalculationFinished();
 }
 
 
@@ -370,6 +382,8 @@ void LinesScene::UpdateTrapezoids()
 		delete item;
 	}
 	m_elems_trap.clear();
+	m_numTrapezoids = 0;
+
 
 	// don't calculate if disabled or if there are intersections
 	if(!m_calctrapezoids)
@@ -407,6 +421,10 @@ void LinesScene::UpdateTrapezoids()
 			m_elems_trap.push_back(item);
 		}
 	}
+
+
+	m_numTrapezoids = trapezoids.size();
+	emit CalculationFinished();
 }
 
 
@@ -495,6 +513,8 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 	progdlg.setValue(m_elem_voro->height());
 
 	setBackgroundBrush(*m_elem_voro);
+
+	//emit CalculationFinished();
 }
 
 
@@ -529,7 +549,12 @@ void LinesScene::UpdateVoro()
 		removeItem(item);
 		delete item;
 	}
+
 	m_elems_voro.clear();
+	m_numVoronoiVertices = 0;
+	m_numVoronoiLinearEdges = 0;
+	m_numVoronoiLParabolicEdges = 0;
+
 
 	// don't calculate if disabled or if there are intersections
 	if(!m_calcvoro && !m_calcvorovertex)
@@ -636,6 +661,12 @@ void LinesScene::UpdateVoro()
 			m_elems_voro.push_back(item);
 		}
 	}
+
+
+	m_numVoronoiVertices = results.GetVoronoiVertices().size();
+	m_numVoronoiLinearEdges = results.GetLinearEdges().size();
+	m_numVoronoiLParabolicEdges = results.GetParabolicEdges().size();
+	emit CalculationFinished();
 }
 
 // ----------------------------------------------------------------------------
@@ -730,6 +761,7 @@ void LinesView::mousePressEvent(QMouseEvent *evt)
 		{
 			m_scene->AddVertex(posScene);
 			m_dragging = true;
+
 			m_scene->UpdateAll();
 		}
 
@@ -776,6 +808,7 @@ void LinesView::mouseReleaseEvent(QMouseEvent *evt)
 		m_dragging = false;
 
 	m_scene->UpdateAll();
+
 	QGraphicsView::mouseReleaseEvent(evt);
 }
 
@@ -888,7 +921,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	setStatusBar(statusBar);
 
 
-	// menu actions
+	// file menu
 	QAction *actionNew = new QAction{QIcon::fromTheme("document-new"), "New", this};
 	connect(actionNew, &QAction::triggered, [this]()
 	{
@@ -1102,6 +1135,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
 
 
+	// view menu
 	QAction *actionZoomIn = new QAction{QIcon::fromTheme("zoom-in"), "Zoom in", this};
 	connect(actionZoomIn, &QAction::triggered, [this]()
 	{
@@ -1150,7 +1184,25 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		m_scene->update(QRectF());
 	});
 
+	QAction *actionInfos = new QAction{"Infos...", this};
+	connect(actionInfos, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgInfo)
+		{
+			this->m_dlgInfo = std::make_shared<GeoInfoDlg>(this, &m_sett);
+			connect(m_scene.get(), &LinesScene::CalculationFinished,
+				this, &LinesWnd::UpdateInfos);
 
+			this->UpdateInfos();
+		}
+
+		m_dlgInfo->show();
+		m_dlgInfo->raise();
+		m_dlgInfo->activateWindow();
+	});
+
+
+	// calculate menu
 	QAction *actionIntersections = new QAction{"Intersections", this};
 	actionIntersections->setCheckable(true);
 	actionIntersections->setChecked(m_scene->GetCalculateIntersections());
@@ -1180,6 +1232,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	{ m_scene->SetCalculateTrapezoids(b); });
 
 
+	// options menu
 	QAction *actionIntersDirect = new QAction{"Direct", this};
 	actionIntersDirect->setCheckable(true);
 	actionIntersDirect->setChecked(false);
@@ -1301,6 +1354,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuView->addSeparator();
 	menuView->addAction(actionIncreaseVertexSize);
 	menuView->addAction(actionDecreaseVertexSize);
+	menuView->addSeparator();
+	menuView->addAction(actionInfos);
 
 	menuCalc->addAction(actionIntersections);
 	menuCalc->addSeparator();
@@ -1384,9 +1439,35 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 }
 
 
+/**
+ * update the text on the status line
+ */
 void LinesWnd::SetStatusMessage(const QString& msg)
 {
+	if(!m_statusLabel)
+		return;
+
 	m_statusLabel->setText(msg);
+}
+
+
+/**
+ * update the text in the info dialog
+ */
+void LinesWnd::UpdateInfos()
+{
+	if(!m_dlgInfo || !m_scene)
+		return;
+
+	std::ostringstream ostr;
+	ostr << "Number of line segments: " << m_scene->GetNumLines() << ".\n";
+	ostr << "Number of Voronoi vertices: " << m_scene->GetNumVoronoiVertices() << ".\n";
+	ostr << "Number of linear Voronoi bisectors: " << m_scene->GetNumVoronoiLinearEdges() << ".\n";
+	ostr << "Number of quadratic Voronoi bisectors: " << m_scene->GetNumVoronoiParabolicEdges() << ".\n";
+	ostr << "Number of intersections: " << m_scene->GetNumIntersections() << ".\n";
+	ostr << "Number of trapezoids: " << m_scene->GetNumTrapezoids() << ".\n";
+
+	m_dlgInfo->SetInfo(ostr.str().c_str());
 }
 
 
