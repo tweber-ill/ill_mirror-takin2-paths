@@ -63,18 +63,15 @@ int main()
 			geo::random_nonintersecting_lines<t_line, t_vec, t_matrix, t_real>
 				(num_lines, 1e4, 1., 100., true);;
 
-		std::vector<std::pair<std::size_t, std::size_t>> line_groups{};
-
-
 		// calculate the voronoi diagrams
 		tl2::Stopwatch<t_real> timer_boost;
 		timer_boost.start();
-		auto res_boost = geo::calc_voro<t_vector, t_line>(lines, line_groups, false, false);
+		auto res_boost = geo::calc_voro<t_vector, t_line>(lines);
 		timer_boost.stop();
 
 		tl2::Stopwatch<t_real> timer_cgal;
 		timer_cgal.start();
-		auto res_cgal = geo::calc_voro_cgal<t_vector, t_line>(lines, line_groups, false, false);
+		auto res_cgal = geo::calc_voro_cgal<t_vector, t_line>(lines);
 		timer_cgal.stop();
 
 		std::cout << std::left << std::setw(20) << num_lines
