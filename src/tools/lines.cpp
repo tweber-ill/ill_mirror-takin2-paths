@@ -59,6 +59,7 @@
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
+#include <boost/scope_exit.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 namespace ptree = boost::property_tree;
@@ -195,15 +196,24 @@ void LinesScene::SetVoronoiCalculationMethod(VoronoiCalculationMethod m)
 
 void LinesScene::UpdateAll()
 {
+	// don't send the finished signal for every calculation
+	// if we anyway send it in the end
+	blockSignals(true);
+
 	UpdateLines();
 	UpdateIntersections();
 	UpdateTrapezoids();
 	UpdateVoro();
+
+	blockSignals(false);
+	emit CalculationFinished();
 }
 
 
 void LinesScene::UpdateLines()
 {
+	BOOST_SCOPE_EXIT(this_) { emit this_->CalculationFinished(); } BOOST_SCOPE_EXIT_END
+
 	// remove previous lines
 	for(QGraphicsItem* item : m_elems_lines)
 	{
@@ -255,12 +265,13 @@ void LinesScene::UpdateLines()
 
 
 	m_numLines = m_lines.size();
-	emit CalculationFinished();
 }
 
 
 void LinesScene::UpdateIntersections()
 {
+	BOOST_SCOPE_EXIT(this_) { emit this_->CalculationFinished(); } BOOST_SCOPE_EXIT_END
+
 	// remove previous intersection points
 	for(QGraphicsItem* item : m_elems_inters)
 	{
@@ -319,7 +330,6 @@ void LinesScene::UpdateIntersections()
 
 
 	m_numIntersections = intersections.size();
-	emit CalculationFinished();
 }
 
 
@@ -375,6 +385,8 @@ void LinesScene::SetGroupLines(bool b)
 
 void LinesScene::UpdateTrapezoids()
 {
+	BOOST_SCOPE_EXIT(this_) { emit this_->CalculationFinished(); } BOOST_SCOPE_EXIT_END
+
 	// remove previous trapezoids
 	for(QGraphicsItem* item : m_elems_trap)
 	{
@@ -424,12 +436,13 @@ void LinesScene::UpdateTrapezoids()
 
 
 	m_numTrapezoids = trapezoids.size();
-	emit CalculationFinished();
 }
 
 
 void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 {
+	//BOOST_SCOPE_EXIT(this_) { emit this_->CalculationFinished(); } BOOST_SCOPE_EXIT_END
+
 	QTransform trafoVPToScene = trafoSceneToVP.inverted();
 
 	if(!m_elem_voro)
@@ -513,8 +526,6 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 	progdlg.setValue(m_elem_voro->height());
 
 	setBackgroundBrush(*m_elem_voro);
-
-	//emit CalculationFinished();
 }
 
 
@@ -541,6 +552,8 @@ std::size_t LinesScene::GetClosestLineIdx(const t_vec& pt) const
 
 void LinesScene::UpdateVoro()
 {
+	BOOST_SCOPE_EXIT(this_) { emit this_->CalculationFinished(); } BOOST_SCOPE_EXIT_END
+
 	using t_line = std::pair<t_vec, t_vec>;
 
 	// remove previous voronoi diagram
@@ -666,7 +679,6 @@ void LinesScene::UpdateVoro()
 	m_numVoronoiVertices = results.GetVoronoiVertices().size();
 	m_numVoronoiLinearEdges = results.GetLinearEdges().size();
 	m_numVoronoiLParabolicEdges = results.GetParabolicEdges().size();
-	emit CalculationFinished();
 }
 
 // ----------------------------------------------------------------------------
