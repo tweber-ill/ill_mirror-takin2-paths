@@ -1437,7 +1437,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			QUrl url(("file://" + dev_docfile_abs).c_str(), QUrl::StrictMode);
 			if(!QDesktopServices::openUrl(url))
 			{
-				QMessageBox::critical(this, "Error", 
+				QMessageBox::critical(this, "Error",
 					"Cannot open developer documentation.");
 			}
 		});
@@ -1482,7 +1482,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	});
 
 	// go to bug report url
-	connect(actionBug, &QAction::triggered, this, [this]()
+	connect(actionBug, &QAction::triggered, this, []()
 	{
 		QUrl url("https://code.ill.fr/scientific-software/takin/paths/-/issues");
 		QDesktopServices::openUrl(url);
