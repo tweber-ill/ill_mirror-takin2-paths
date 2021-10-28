@@ -1318,13 +1318,12 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 
 	// add target point
 	add_curve_vertex(path.vec_f);
+	path_vertices = geo::simplify_path<t_vec2>(path_vertices);
 
 
 	// interpolate points on path line segments
 	if(subdivide_lines)
 	{
-		// TODO: check for wall collisions after simplify step!
-		//path_vertices = geo::simplify_path<t_vec2>(path_vertices);
 		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
 		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
 	}
