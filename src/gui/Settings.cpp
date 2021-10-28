@@ -62,7 +62,7 @@ int g_prec_gui = 4;
 t_real g_eps = 1e-6;
 t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;
-t_real g_eps_voronoiedge = 5e-1;
+t_real g_eps_voronoiedge = 2e-2;
 
 t_real g_line_subdiv_len = 0.025;
 

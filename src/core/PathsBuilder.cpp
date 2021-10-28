@@ -1026,15 +1026,8 @@ InstrumentPath PathsBuilder::FindPath(
 		t_real dist_lin = std::numeric_limits<t_real>::max();
 		if(lin_result != lin_edges.end())
 		{
-			//const t_vec2& _vert1 = lin_result->second.first;
-			//const t_vec2& _vert2 = lin_result->second.second;
-
-			// get correct iteration order of the bisector,
-			// which is stored in an unordered fashion
-			//bool inverted_iter_order = tl2::equals<t_vec2>(_vert2, vert2, m_eps);
-
 			t_vec2 dir = vert2 - vert1;
-			t_real dir_len = GetPathLength(dir);
+			t_real dir_len = tl2::norm<t_vec2>(dir);
 			dir /= dir_len;
 
 			auto [ptProj, _dist_lin, paramProj] =
@@ -1043,8 +1036,6 @@ InstrumentPath PathsBuilder::FindPath(
 
 			param_lin = paramProj / dir_len;
 			dist_lin = _dist_lin;
-			//if(inverted_iter_order)
-			//	param_lin = 1. - param_lin;
 		}
 
 		// if the voronoi vertices belong to a quadratic bisector,
@@ -1126,13 +1117,8 @@ InstrumentPath PathsBuilder::FindPath(
 			path.voronoi_indices.insert(path.voronoi_indices.begin(), min_dist_idx_begin);
 
 		path.param_i = min_param_i;
+		path.param_i = tl2::clamp<t_real>(path.param_i, 0., 1.);
 		path.is_linear_i = is_linear_bisector_begin;
-
-		if(path.param_i > 1.)
-			path.param_i = 1.;
-		else if(path.param_i < 0.)
-			path.param_i = 0.;
-
 
 		// find closest end point
 		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
@@ -1169,12 +1155,8 @@ InstrumentPath PathsBuilder::FindPath(
 			path.voronoi_indices.push_back(min_dist_idx_end);
 
 		path.param_f = min_param_f;
+		path.param_f = tl2::clamp<t_real>(path.param_f, 0., 1.);
 		path.is_linear_f = is_linear_bisector_end;
-
-		if(path.param_f > 1.)
-			path.param_f = 1.;
-		else if(path.param_f < 0.)
-			path.param_f = 0.;
 	}
 
 	return path;
@@ -1289,21 +1271,15 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 			// use the closest position on the path for the initial vertex
 			if(idx == 1)
 			{
-				begin_idx = path.param_i * vertices.size();
-				if(begin_idx >= (std::ptrdiff_t)vertices.size())
-					begin_idx = (std::ptrdiff_t)(vertices.size()-1);
-				if(begin_idx < 0)
-					begin_idx = 0;
+				begin_idx = path.param_i * (vertices.size()-1);
+				begin_idx = tl2::clamp<std::ptrdiff_t>(begin_idx, 0, vertices.size()-1);
 			}
 
 			// use the closest position on the path for the final vertex
 			else if(idx == path.voronoi_indices.size()-1)
 			{
-				end_idx = (1.-path.param_f) * vertices.size();
-				if(end_idx >= (std::ptrdiff_t)vertices.size())
-					end_idx = (std::ptrdiff_t)(vertices.size()-1);
-				if(end_idx < 0)
-					end_idx = 0;
+				end_idx = (1.-path.param_f) * (vertices.size()-1);
+				end_idx = tl2::clamp<std::ptrdiff_t>(end_idx, 0, vertices.size()-1);
 			}
 
 			if(inverted_iter_order)
@@ -1318,7 +1294,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 			}
 		}
 
-		// if it's a linear bisector, just connect the voronoi vertices
+		// just connect the voronoi vertices for linear bisectors
 		else
 		{
 			// use the closest position on the path for the initial vertex
