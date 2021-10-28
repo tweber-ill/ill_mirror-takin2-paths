@@ -1026,7 +1026,7 @@ InstrumentPath PathsBuilder::FindPath(
 		t_real dist_lin = std::numeric_limits<t_real>::max();
 		if(lin_result != lin_edges.end())
 		{
-			//const t_vec2& vert1 = lin_result->second.first;
+			//const t_vec2& _vert1 = lin_result->second.first;
 			//const t_vec2& _vert2 = lin_result->second.second;
 
 			// get correct iteration order of the bisector,
@@ -1258,8 +1258,9 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		// check if the current one is a quadratic bisector
 		std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
 
-		auto iter_lin = voro_results.GetLinearEdges().find(
-			std::make_pair(prev_voro_idx, voro_idx));
+		// find bisector for the given voronoi vertices
+		//auto iter_lin = voro_results.GetLinearEdges().find(
+		//	std::make_pair(prev_voro_idx, voro_idx));
 		auto iter_quadr = voro_results.GetParabolicEdges().find(
 			std::make_pair(prev_voro_idx, voro_idx));
 
@@ -1270,7 +1271,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		else if(idx == path.voronoi_indices.size()-1 && idx > 1)
 			is_linear_bisector = path.is_linear_f;
 		else
-			is_linear_bisector = (iter_lin != voro_results.GetLinearEdges().end());
+			is_linear_bisector = (iter_quadr == voro_results.GetParabolicEdges().end());
 
 		// it's a quadratic bisector
 		if(!is_linear_bisector)
