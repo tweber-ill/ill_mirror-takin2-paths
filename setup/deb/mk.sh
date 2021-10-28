@@ -47,7 +47,7 @@ if [ $create_appdir -ne 0 ]; then
 	mkdir -p ${APPDIRNAME}/DEBIAN
 
 	# debian package control file
-	echo -e "Package: ${APPNAME}\nVersion: 1.1.0" > ${APPDIRNAME}/DEBIAN/control
+	echo -e "Package: ${APPNAME}\nVersion: 1.2.0" > ${APPDIRNAME}/DEBIAN/control
 	echo -e "Architecture: $(dpkg --print-architecture)" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Section: base\nPriority: optional" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Description: TAS path-finding tool" >> ${APPDIRNAME}/DEBIAN/control

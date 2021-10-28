@@ -32,7 +32,7 @@
 /**
  * version number of this software
  */
-#define TASPATHS_VERSION "1.1"
+#define TASPATHS_VERSION "1.2"
 
 
 /**
