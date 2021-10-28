@@ -1420,6 +1420,63 @@ requires tl2::is_vec<t_vec>
 
 
 /**
+ * simplify path
+ */
+template<class t_vec,
+class t_real = typename t_vec::value_type,
+template<class...> class t_cont = std::vector>
+t_cont<t_vec> simplify_path(const t_cont<t_vec>& _vertices)
+requires tl2::is_vec<t_vec>
+{
+	if(_vertices.size() <= 2)
+		return _vertices;
+
+	t_cont<t_vec> vertices = _vertices;
+
+	// find the vertex on the path closest to the start vertex
+	const t_vec& start = *vertices.begin();
+	t_real distToStart_sq = std::numeric_limits<t_real>::max();
+	std::size_t idxStart = 1;
+	for(std::size_t idx=1; idx<vertices.size(); ++idx)
+	{
+		const t_vec& vert = vertices[idx];
+		t_real len_sq = tl2::inner<t_vec>(vert-start, vert-start);
+		if(len_sq < distToStart_sq)
+		{
+			distToStart_sq = len_sq;
+			idxStart = idx;
+		}
+	}
+
+	// remove vertices between start and the closest vertex to it
+	if(idxStart > 1)
+		vertices.erase(vertices.begin()+1, vertices.begin()+idxStart);
+
+
+	// find the vertex on the path closest to the end vertex
+	const t_vec& end = *vertices.rbegin();
+	t_real distToEnd_sq = std::numeric_limits<t_real>::max();
+	std::size_t idxEnd = vertices.size()-1;
+	for(std::size_t idx=vertices.size()-1; idx>0; --idx)
+	{
+		const t_vec& vert = vertices[idx];
+		t_real len_sq = tl2::inner<t_vec>(vert-end, vert-end);
+		if(len_sq < distToEnd_sq)
+		{
+			distToEnd_sq = len_sq;
+			idxEnd = idx;
+		}
+	}
+
+	// remove vertices between end and the closest vertex to it
+	if(idxEnd < vertices.size()-1)
+		vertices.erase(vertices.begin()+idxEnd+1, vertices.end());
+
+	return vertices;
+}
+
+
+/**
  * subdivide line segments on a path
  */
 template<class t_vec,
@@ -1461,7 +1518,7 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * remove vertices that are closer than the given distance
+ * remove path vertices that are closer than the given distance
  */
 template<class t_vec,
 	class t_real = typename t_vec::value_type,

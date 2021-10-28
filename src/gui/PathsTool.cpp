@@ -1562,7 +1562,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_buttonStop->setText("X");
 	else
 		m_buttonStop->setIcon(stopIcon);
-	m_buttonStop->setToolTip("Stop Calculation.");
+	m_buttonStop->setToolTip("Stop calculation.");
 
 	m_labelStatus = new QLabel(this);
 	m_labelStatus->setSizePolicy(QSizePolicy::/*Ignored*/Expanding, QSizePolicy::Fixed);

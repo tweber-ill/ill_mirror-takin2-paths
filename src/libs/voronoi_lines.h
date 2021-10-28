@@ -293,6 +293,9 @@ private:
 };
 
 
+/**
+ * class holding the results of a voronoi diagram calculation
+ */
 template<class t_vec,
 	class t_line = std::pair<t_vec, t_vec>,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>>
@@ -300,18 +303,25 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 class VoronoiLinesResults
 {
 public:
+	// the scalar/real type to use
 	using t_scalar = typename t_vec::value_type;
 
+	// type used for voronoi vertex indices
 	using t_vert_index = std::size_t;
+	// type describing a pair of voronoi vertex indices
 	using t_vert_indices = std::pair<t_vert_index, t_vert_index>;
 
+	// an optional voronoi vertex index
 	using t_vert_index_opt = std::optional<t_vert_index>;
+	// a pair of optional voronoi vertex indices
 	using t_vert_indices_opt = std::pair<t_vert_index_opt, t_vert_index_opt>;
 
+	// vertex type for the spatial index tree
 	template<class T = t_scalar>
 	using t_idxvertex = boost::geometry::model::point<
 		T, 2, boost::geometry::cs::cartesian>;
 
+	// the spatial index tree to use for finding voronoi vertices
 	using t_idxtree = boost::geometry::index::rtree<
 		std::tuple<t_idxvertex<t_scalar>, std::size_t>,
 		boost::geometry::index::dynamic_rstar>;
@@ -388,9 +398,11 @@ public:
 	// ------------------------------------------------------------------------
 	// edge types
 	// ------------------------------------------------------------------------
+	// container type mapping voronoi vertex indices to their respective linear bisectors
 	using t_edgemap_lin =
 		std::unordered_map<
 			t_vert_indices_opt, t_line, t_vert_hash_opt, t_vert_equ_opt>;
+	// container type mapping voronoi vertex indices to their respective quadratic bisectors
 	using t_edgemap_quadr =
 		std::unordered_map<
 			t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>;
@@ -610,10 +622,10 @@ public:
 
 private:
 	// ------------------------------------------------------------------------
-	// linear bisectors
+	// container type mapping voronoi vertex indices to their respective linear bisectors
 	t_edgemap_lin linear_edges{};
 
-	// quadratic bisectors
+	// container type mapping voronoi vertex indices to their respective quadratic bisectors
 	t_edgemap_quadr parabolic_edges{};
 
 	// TODO: get rid of these and use the above maps directly

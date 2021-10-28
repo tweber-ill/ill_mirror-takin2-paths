@@ -1005,23 +1005,85 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 	// find closest point on a path segment
-	auto closest_point = [this, &voro_vertices]
+	auto closest_point = [this]
 	(std::size_t idx1, std::size_t idx2, const t_vec2& vec)
-		-> std::tuple<t_real, t_real>
+		-> std::tuple<t_real, t_real, bool>
 	{
+		const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
+		const auto& lin_edges = m_voro_results.GetLinearEdges();
+		const auto& para_edges = m_voro_results.GetParabolicEdges();
+
+		auto lin_result = lin_edges.find({idx1, idx2});
+		auto para_result = para_edges.find({idx1, idx2});
+
+		// voronoi vertices at the bisector endpoints
 		const t_vec2& vert1 = voro_vertices[idx1];
 		const t_vec2& vert2 = voro_vertices[idx2];
 
-		t_vec2 dir = vert2 - vert1;
-		t_real dir_len = GetPathLength(dir);
-		dir /= dir_len;
+		// if the voronoi vertices belong to a linear bisector,
+		// find the closest point by projecting 'vec' onto it
+		t_real param_lin = -1;
+		t_real dist_lin = std::numeric_limits<t_real>::max();
+		if(lin_result != lin_edges.end())
+		{
+			//const t_vec2& vert1 = lin_result->second.first;
+			//const t_vec2& _vert2 = lin_result->second.second;
 
-		auto [ptProj, dist, paramProj] =
-			tl2::project_line<t_vec2, t_real>(
-				vec, vert1, dir, true);
+			// get correct iteration order of the bisector,
+			// which is stored in an unordered fashion
+			//bool inverted_iter_order = tl2::equals<t_vec2>(_vert2, vert2, m_eps);
 
-		paramProj /= dir_len;
-		return std::make_tuple(paramProj, dist);
+			t_vec2 dir = vert2 - vert1;
+			t_real dir_len = GetPathLength(dir);
+			dir /= dir_len;
+
+			auto [ptProj, _dist_lin, paramProj] =
+				tl2::project_line<t_vec2, t_real>(
+					vec, vert1, dir, true);
+
+			param_lin = paramProj / dir_len;
+			dist_lin = _dist_lin;
+			//if(inverted_iter_order)
+			//	param_lin = 1. - param_lin;
+		}
+
+		// if the voronoi vertices belong to a quadratic bisector,
+		// find the closest vertex along its segment
+		t_real param_quadr = -1;
+		t_real dist_quadr = std::numeric_limits<t_real>::max();
+		if(para_result != para_edges.end())
+		{
+			// get correct iteration order of the bisector,
+			// which is stored in an unordered fashion
+			bool inverted_iter_order = false;
+			const auto& path_vertices = para_result->second;
+			if(path_vertices.size() && tl2::equals<t_vec2>(path_vertices[0], vert2, m_eps))
+				inverted_iter_order = true;
+
+			t_real min_dist2 = std::numeric_limits<t_real>::max();
+			std::size_t min_idx = 0;
+			for(std::size_t vertidx=0; vertidx<path_vertices.size(); ++vertidx)
+			{
+				const auto& path_vertex = path_vertices[vertidx];
+				t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
+				if(dist2 < min_dist2)
+				{
+					min_dist2 = dist2;
+					min_idx = vertidx;
+				}
+			}
+
+			// use the vertex index as curve parameter
+			param_quadr = t_real(min_idx)/t_real(path_vertices.size()-1);
+			dist_quadr = std::sqrt(min_dist2);
+			if(inverted_iter_order)
+				param_quadr = 1. - param_quadr;
+		}
+
+		if(dist_lin < dist_quadr)
+			return std::make_tuple(param_lin, dist_lin, true);
+		else
+			return std::make_tuple(param_quadr, dist_quadr, false);
 	};
 
 
@@ -1032,7 +1094,7 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx2_begin = path.voronoi_indices[1];
 
 		std::size_t min_dist_idx_begin = vert_idx2_begin;
-		auto [min_param_begin, min_dist_begin] =
+		auto [min_param_i, min_dist_begin, is_linear_bisector_begin] =
 			closest_point(vert_idx1_begin, vert_idx2_begin, path.vec_i);
 
 		// check if any neighbour path before first vertex is even closer
@@ -1042,7 +1104,7 @@ InstrumentPath PathsBuilder::FindPath(
 			if(neighbour_idx == vert_idx2_begin)
 				continue;
 
-			auto [neighbour_param, neighbour_dist] =
+			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
 				closest_point(neighbour_idx, vert_idx1_begin, path.vec_i);
 
 			// choose a new position on the adjacent edge if it's either
@@ -1050,11 +1112,12 @@ InstrumentPath PathsBuilder::FindPath(
 			// and are now within [0, 1]
 			if((neighbour_param >= 0. && neighbour_param <= 1.)
 				&& (neighbour_dist < min_dist_begin
-				|| (min_param_begin < 0. || min_param_begin > 1.)))
+					|| (min_param_i < 0. || min_param_i > 1.)))
 			{
 				min_dist_begin = neighbour_dist;
-				min_param_begin = neighbour_param;
+				min_param_i = neighbour_param;
 				min_dist_idx_begin = neighbour_idx;
+				is_linear_bisector_begin = neighbour_is_linear_bisector;
 			}
 		}
 
@@ -1062,19 +1125,20 @@ InstrumentPath PathsBuilder::FindPath(
 		if(min_dist_idx_begin != vert_idx2_begin)
 			path.voronoi_indices.insert(path.voronoi_indices.begin(), min_dist_idx_begin);
 
-		path.param_begin = min_param_begin;
+		path.param_i = min_param_i;
+		path.is_linear_i = is_linear_bisector_begin;
 
-		if(path.param_begin > 1.)
-			path.param_begin = 1.;
-		else if(path.param_begin < 0.)
-			path.param_begin = 0.;
+		if(path.param_i > 1.)
+			path.param_i = 1.;
+		else if(path.param_i < 0.)
+			path.param_i = 0.;
 
 
 		// find closest end point
 		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
 		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
 		std::size_t min_dist_idx_end = vert_idx1_end;
-		auto [min_param_end, min_dist_end] =
+		auto [min_param_f, min_dist_end, is_linear_bisector_end] =
 			closest_point(vert_idx1_end, vert_idx2_end, path.vec_f);
 
 		// check if any neighbour path before first vertex is even closer
@@ -1083,7 +1147,7 @@ InstrumentPath PathsBuilder::FindPath(
 			if(neighbour_idx == vert_idx1_end)
 				continue;
 
-			auto [neighbour_param, neighbour_dist] =
+			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
 				closest_point(vert_idx2_end, neighbour_idx, path.vec_f);
 
 			// choose a new position on the adjacent edge if it's either
@@ -1091,11 +1155,12 @@ InstrumentPath PathsBuilder::FindPath(
 			// and are now within [0, 1]
 			if((neighbour_param >= 0. && neighbour_param <= 1.)
 				&& (neighbour_dist < min_dist_end
-				|| (min_param_end < 0. || min_param_end > 1.)))
+				|| (min_param_f < 0. || min_param_f > 1.)))
 			{
 				min_dist_end = neighbour_dist;
-				min_param_end = neighbour_param;
+				min_param_f = neighbour_param;
 				min_dist_idx_end = neighbour_idx;
+				is_linear_bisector_end = neighbour_is_linear_bisector;
 			}
 		}
 
@@ -1103,12 +1168,13 @@ InstrumentPath PathsBuilder::FindPath(
 		if(min_dist_idx_end != vert_idx1_end)
 			path.voronoi_indices.push_back(min_dist_idx_end);
 
-		path.param_end = min_param_end;
+		path.param_f = min_param_f;
+		path.is_linear_f = is_linear_bisector_end;
 
-		if(path.param_end > 1.)
-			path.param_end = 1.;
-		else if(path.param_end < 0.)
-			path.param_end = 0.;
+		if(path.param_f > 1.)
+			path.param_f = 1.;
+		else if(path.param_f < 0.)
+			path.param_f = 0.;
 	}
 
 	return path;
@@ -1188,18 +1254,27 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
 		const t_vec2& voro_vertex = voro_vertices[voro_idx];
-		bool is_linear_bisector = true;
 
 		// check if the current one is a quadratic bisector
 		std::size_t prev_voro_idx = path.voronoi_indices[idx-1];
+
+		auto iter_lin = voro_results.GetLinearEdges().find(
+			std::make_pair(prev_voro_idx, voro_idx));
 		auto iter_quadr = voro_results.GetParabolicEdges().find(
 			std::make_pair(prev_voro_idx, voro_idx));
 
-		if(iter_quadr != voro_results.GetParabolicEdges().end())
-		{
-			// it's a quadratic bisector
-			is_linear_bisector = false;
+		// determine if the current voronoi edge is a linear bisector
+		bool is_linear_bisector = true;
+		if(idx == 1 && path.voronoi_indices.size() > 1)
+			is_linear_bisector = path.is_linear_i;
+		else if(idx == path.voronoi_indices.size()-1 && idx > 1)
+			is_linear_bisector = path.is_linear_f;
+		else
+			is_linear_bisector = (iter_lin != voro_results.GetLinearEdges().end());
 
+		// it's a quadratic bisector
+		if(!is_linear_bisector)
+		{
 			// get correct iteration order of bisector,
 			// which is stored in an unordered fashion
 			bool inverted_iter_order = false;
@@ -1213,16 +1288,17 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 			// use the closest position on the path for the initial vertex
 			if(idx == 1)
 			{
-				begin_idx = path.param_begin * vertices.size();
+				begin_idx = path.param_i * vertices.size();
 				if(begin_idx >= (std::ptrdiff_t)vertices.size())
 					begin_idx = (std::ptrdiff_t)(vertices.size()-1);
 				if(begin_idx < 0)
 					begin_idx = 0;
 			}
+
 			// use the closest position on the path for the final vertex
 			else if(idx == path.voronoi_indices.size()-1)
 			{
-				end_idx = (1.-path.param_end) * vertices.size();
+				end_idx = (1.-path.param_f) * vertices.size();
 				if(end_idx >= (std::ptrdiff_t)vertices.size())
 					end_idx = (std::ptrdiff_t)(vertices.size()-1);
 				if(end_idx < 0)
@@ -1242,19 +1318,19 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		}
 
 		// if it's a linear bisector, just connect the voronoi vertices
-		if(is_linear_bisector)
+		else
 		{
 			// use the closest position on the path for the initial vertex
 			if(idx == 1 && path.voronoi_indices.size() > 1)
 			{
 				const t_vec2& voro_vertex1 = voro_vertices[path.voronoi_indices[0]];
-				add_curve_vertex(voro_vertex1 + path.param_begin*(voro_vertex-voro_vertex1));
+				add_curve_vertex(voro_vertex1 + path.param_i*(voro_vertex-voro_vertex1));
 			}
 			// use the closest position on the path for the final vertex
 			else if(idx == path.voronoi_indices.size()-1 && idx > 1)
 			{
 				const t_vec2& voro_vertex1 = voro_vertices[path.voronoi_indices[idx-1]];
-				add_curve_vertex(voro_vertex1 + path.param_end*(voro_vertex-voro_vertex1));
+				add_curve_vertex(voro_vertex1 + path.param_f*(voro_vertex-voro_vertex1));
 			}
 			else
 			{
@@ -1270,6 +1346,8 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	// interpolate points on path line segments
 	if(subdivide_lines)
 	{
+		// TODO: check for wall collisions after simplify step!
+		//path_vertices = geo::simplify_path<t_vec2>(path_vertices);
 		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
 		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
 	}
