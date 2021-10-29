@@ -1,7 +1,7 @@
 /**
  * line intersection test program
  * @author Tobias Weber <tweber@ill.fr>
- * @date 11-Nov-2020
+ * @date November-2020 - October-2021
  * @note Forked on 19-apr-2021 from my privately developed "geo" project (https://github.com/t-weber/geo).
  * @license GPLv3, see 'LICENSE' file
  *

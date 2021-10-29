@@ -1258,39 +1258,51 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		// it's a quadratic bisector
 		if(!is_linear_bisector)
 		{
-			// get correct iteration order of bisector,
-			// which is stored in an unordered fashion
-			bool inverted_iter_order = false;
-			const std::vector<t_vec2>& vertices = iter_quadr->second;
-			if(vertices.size() && tl2::equals<t_vec2>(vertices[0], voro_vertex, m_eps))
-				inverted_iter_order = true;
-
-			std::ptrdiff_t begin_idx = 0;
-			std::ptrdiff_t end_idx = 0;
-
-			// use the closest position on the path for the initial vertex
-			if(idx == 1)
+			// get the vertices of the parabolic path segment
+			if(const std::vector<t_vec2>& vertices = iter_quadr->second; vertices.size())
 			{
-				begin_idx = path.param_i * (vertices.size()-1);
-				begin_idx = tl2::clamp<std::ptrdiff_t>(begin_idx, 0, vertices.size()-1);
-			}
+				// get correct iteration order of bisector,
+				// which is stored in an unordered fashion
+				bool inverted_iter_order = false;
 
-			// use the closest position on the path for the final vertex
-			else if(idx == path.voronoi_indices.size()-1)
-			{
-				end_idx = (1.-path.param_f) * (vertices.size()-1);
-				end_idx = tl2::clamp<std::ptrdiff_t>(end_idx, 0, vertices.size()-1);
-			}
+				if(tl2::equals<t_vec2>(vertices[0], voro_vertex, m_eps))
+					inverted_iter_order = true;
 
-			if(inverted_iter_order)
-			{
-				for(auto iter_vert = vertices.rbegin()+begin_idx; iter_vert != vertices.rend()-end_idx; ++iter_vert)
-					add_curve_vertex(*iter_vert);
-			}
-			else
-			{
-				for(auto iter_vert = vertices.begin()+begin_idx; iter_vert != vertices.end()-end_idx; ++iter_vert)
-					add_curve_vertex(*iter_vert);
+				std::ptrdiff_t begin_idx = 0;
+				std::ptrdiff_t end_idx = 0;
+
+				// use the closest position on the path for the initial vertex
+				if(idx == 1)
+				{
+					begin_idx = path.param_i * (vertices.size()-1);
+					begin_idx = tl2::clamp<std::ptrdiff_t>(begin_idx, 0, vertices.size()-1);
+				}
+
+				// use the closest position on the path for the final vertex
+				else if(idx == path.voronoi_indices.size()-1)
+				{
+					end_idx = (1.-path.param_f) * (vertices.size()-1);
+					end_idx = tl2::clamp<std::ptrdiff_t>(end_idx, 0, vertices.size()-1);
+				}
+
+				if(inverted_iter_order)
+				{
+					for(auto iter_vert = vertices.rbegin()+begin_idx;
+						iter_vert != vertices.rend()-end_idx;
+						++iter_vert)
+					{
+						add_curve_vertex(*iter_vert);
+					}
+				}
+				else
+				{
+					for(auto iter_vert = vertices.begin()+begin_idx;
+						iter_vert != vertices.end()-end_idx;
+						++iter_vert)
+					{
+						add_curve_vertex(*iter_vert);
+					}
+				}
 			}
 		}
 
