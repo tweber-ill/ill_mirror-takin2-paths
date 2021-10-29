@@ -560,13 +560,13 @@ std::shared_ptr<TrapezoidNodeTrapezoid<t_vec>> find_neighbour_trapezoid(
 		std::cerr << "Warning: more than one neighbour trapezoid found." << std::endl;
 
 		// find maximum / minimum neighbour
-		t_real limit_offs = -std::numeric_limits<t_real>::max();
+		t_real limit_offs = std::numeric_limits<t_real>::lowest();
 		std::size_t limit_offs_idx = 0;
 
 		for(std::size_t candidate_idx=0; candidate_idx<candidates.size(); ++candidate_idx)
 		{
 			const auto& candidate = candidates[candidate_idx];
-			auto [slope, offs] = 
+			auto [slope, offs] =
 				get_line_slope_offs<t_vec, t_line>(
 					candidate->GetTrapezoid()->GetTopLine());
 

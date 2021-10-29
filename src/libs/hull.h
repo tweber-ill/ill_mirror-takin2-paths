@@ -465,7 +465,7 @@ requires tl2::is_vec<t_vec>
 		std::list<t_vec> contour_left_top, contour_left_bottom;
 
 		std::pair<t_real, t_real> minmax_y_left
-			= std::make_pair(std::numeric_limits<t_real>::max(), -std::numeric_limits<t_real>::max());
+			= std::make_pair(std::numeric_limits<t_real>::max(), std::numeric_limits<t_real>::lowest());
 
 		for(const t_vec& vec : verts)
 		{
@@ -484,7 +484,7 @@ requires tl2::is_vec<t_vec>
 
 		std::list<t_vec> contour_right_top, contour_right_bottom;
 		std::pair<t_real, t_real> minmax_y_right
-			= std::make_pair(std::numeric_limits<t_real>::max(), -std::numeric_limits<t_real>::max());
+			= std::make_pair(std::numeric_limits<t_real>::max(), std::numeric_limits<t_real>::lowest());
 
 		for(auto iter = verts.rbegin(); iter != verts.rend(); std::advance(iter, 1))
 		{
