@@ -30,6 +30,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
 
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
@@ -45,6 +46,9 @@ extern QString g_theme;
 
 // gui font
 extern QString g_font;
+
+// native menubar?
+extern int g_use_native_menubar;
 // ----------------------------------------------------------------------------
 
 
@@ -76,6 +80,7 @@ private:
 
 	QComboBox *m_comboTheme{nullptr};
 	QLineEdit *m_editFont{nullptr};
+	QCheckBox *m_checkMenubar{nullptr};
 };
 
 #endif

@@ -685,7 +685,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// menu bar
 	QMenuBar *menuBar = new QMenuBar{this};
-	menuBar->setNativeMenuBar(false);
+	//menuBar->setNativeMenuBar(false);
 	menuBar->addMenu(menuFile);
 	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuCalc);

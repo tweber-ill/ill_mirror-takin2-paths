@@ -31,6 +31,7 @@
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
 
 #include <string>
 #include "tlibs2/libs/qt/gl.h"
@@ -86,12 +87,6 @@ extern int g_pathstrategy;
 extern int g_verifypath;
 
 
-// gui theme
-extern QString g_theme;
-
-// gui font
-extern QString g_font;
-
 // path tracker fps
 extern unsigned int g_pathtracker_fps;
 
@@ -110,6 +105,16 @@ extern tl2::t_real_gl g_move_scale;
 
 // camera rotation scaling factor
 extern tl2::t_real_gl g_rotation_scale;
+
+
+// gui theme
+extern QString g_theme;
+
+// gui font
+extern QString g_font;
+
+// native menu bar?
+extern int g_use_native_menubar;
 // ----------------------------------------------------------------------------
 
 
@@ -162,6 +167,7 @@ private:
 
 	QComboBox *m_comboTheme{nullptr};
 	QLineEdit *m_editFont{nullptr};
+	QCheckBox *m_checkMenubar{nullptr};
 
 
 signals:

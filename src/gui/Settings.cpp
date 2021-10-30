@@ -50,9 +50,9 @@
 // global settings variables
 // ----------------------------------------------------------------------------
 std::string g_apppath = ".";
-QString g_theme = "";
-QString g_font = "";
 
+
+// maximum number of threads
 unsigned int g_maxnum_threads = 4;
 
 
@@ -104,6 +104,16 @@ int g_enable_shadow_rendering = 1;
 // screenshots
 int g_combined_screenshots = 0;
 int g_automatic_screenshots = 0;
+
+
+// gui theme
+QString g_theme = "";
+
+// gui font
+QString g_font = "";
+
+// native menu bar?
+int g_use_native_menubar = 0;
 // ----------------------------------------------------------------------------
 
 
@@ -385,6 +395,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	gridGui->setContentsMargins(6, 6, 6, 6);
 	int yGui = 0;
 
+	// theme
 	QLabel *labelTheme = new QLabel("Style:", panelGui);
 	labelTheme->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 	m_comboTheme = new QComboBox(panelGui);
@@ -398,6 +409,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 			m_comboTheme->setCurrentIndex(idxTheme);
 	}
 
+	// font
 	QLabel *labelFont = new QLabel("Font:", panelGui);
 	labelFont->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 	m_editFont = new QLineEdit(panelGui);
@@ -409,11 +421,18 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		g_font = QApplication::font().toString();
 	m_editFont->setText(g_font);
 
+	// menubar
+	m_checkMenubar = new QCheckBox("Use native menubar", panelGui);
+	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
+	m_checkMenubar->setChecked(g_use_native_menubar!=0);
+
+	// add widgets to layout
 	gridGui->addWidget(labelTheme, yGui,0,1,1);
 	gridGui->addWidget(m_comboTheme, yGui++,1,1,2);
 	gridGui->addWidget(labelFont, yGui,0,1,1);
 	gridGui->addWidget(m_editFont, yGui,1,1,1);
 	gridGui->addWidget(btnFont, yGui++,2,1,1);
+	gridGui->addWidget(m_checkMenubar, yGui++,0,1,3);
 
 	QSpacerItem *spacer_end = new QSpacerItem(1, 1,
 		QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -516,6 +535,7 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 
 	get_setting<decltype(g_theme)>(sett, "settings/theme", &g_theme);
 	get_setting<decltype(g_font)>(sett, "settings/font", &g_font);
+	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
 
 	ApplyGuiSettings();
 }
@@ -532,12 +552,14 @@ void SettingsDlg::ApplySettings()
 	// set the global variables
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
+	g_use_native_menubar = m_checkMenubar->isChecked();
 
 	// write out the settings
 	if(m_sett)
 	{
 		m_sett->setValue("settings/theme", g_theme);
 		m_sett->setValue("settings/font", g_font);
+		m_sett->setValue("settings/native_menubar", g_use_native_menubar);
 	}
 
 	ApplyGuiSettings();
@@ -561,6 +583,9 @@ void SettingsDlg::ApplyGuiSettings()
 		if(font.fromString(g_font))
 			QApplication::setFont(font);
 	}
+
+	// set native menubar
+	QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, !g_use_native_menubar);
 }
 
 

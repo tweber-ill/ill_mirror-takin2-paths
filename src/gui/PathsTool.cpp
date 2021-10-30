@@ -1510,7 +1510,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	if(num_tools)
 		m_menubar->addMenu(menuTools);
 	m_menubar->addMenu(menuHelp);
-	//m_menubar->setNativeMenuBar(0);
+	//m_menubar->setNativeMenuBar(false);
 	setMenuBar(m_menubar);
 	// --------------------------------------------------------------------
 
