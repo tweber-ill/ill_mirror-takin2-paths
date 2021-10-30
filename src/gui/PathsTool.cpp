@@ -1520,12 +1520,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	m_contextMenuObj = new QMenu(this);
 
+	QAction *actionObjRotP10 = new QAction(QIcon::fromTheme("object-rotate-left"), "Rotate Object by +10°", m_contextMenuObj);
+	QAction *actionObjRotM10 = new QAction(QIcon::fromTheme("object-rotate-right"), "Rotate Object by -10°", m_contextMenuObj);
 	QAction *actionObjRotP45 = new QAction(QIcon::fromTheme("object-rotate-left"), "Rotate Object by +45°", m_contextMenuObj);
 	QAction *actionObjRotM45 = new QAction(QIcon::fromTheme("object-rotate-right"), "Rotate Object by -45°", m_contextMenuObj);
 	QAction *actionObjCentreCam = new QAction(QIcon::fromTheme("camera-video"), "Centre Camera on Object", m_contextMenuObj);
 	QAction *actionObjDel = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object", m_contextMenuObj);
 	QAction *actionObjProp = new QAction(QIcon::fromTheme("document-properties"), "Object Properties...", m_contextMenuObj);
 
+	m_contextMenuObj->addAction(actionObjRotP10);
+	m_contextMenuObj->addAction(actionObjRotM10);
 	m_contextMenuObj->addAction(actionObjRotP45);
 	m_contextMenuObj->addAction(actionObjRotM45);
 	m_contextMenuObj->addSeparator();
@@ -1534,6 +1538,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_contextMenuObj->addAction(actionObjDel);
 	m_contextMenuObj->addAction(actionObjProp);
 
+	connect(actionObjRotP10, &QAction::triggered,
+		[this]() { RotateCurrentObject(10./180.*tl2::pi<t_real>); });
+	connect(actionObjRotM10, &QAction::triggered,
+		[this]() { RotateCurrentObject(-10./180.*tl2::pi<t_real>); });
 	connect(actionObjRotP45, &QAction::triggered,
 		[this]() { RotateCurrentObject(45./180.*tl2::pi<t_real>); });
 	connect(actionObjRotM45, &QAction::triggered,

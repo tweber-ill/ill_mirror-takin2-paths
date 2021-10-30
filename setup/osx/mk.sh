@@ -165,7 +165,7 @@ if [ $create_appdir -ne 0 ]; then
 	cp -v build/taspaths_poly "${APPDIRNAME}/Contents/MacOS/"
 
 	# resources
-	cp -v res/* "${APPDIRNAME}/Contents/Resources/"
+	cp -rv res/* "${APPDIRNAME}/Contents/Resources/"
 	cp -v "${APPICON_ICNS}" "${APPDIRNAME}/Contents/Resources/"
 	cp -v AUTHORS "${APPDIRNAME}/Contents/Resources/"
 	cp -v LICENSE "${APPDIRNAME}/Contents/Resources/"
