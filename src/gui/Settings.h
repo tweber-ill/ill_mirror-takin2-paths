@@ -113,8 +113,11 @@ extern QString g_theme;
 // gui font
 extern QString g_font;
 
-// native menu bar?
+// use native menubar?
 extern int g_use_native_menubar;
+
+// use native dialogs?
+extern int g_use_native_dialogs;
 // ----------------------------------------------------------------------------
 
 
@@ -168,6 +171,7 @@ private:
 	QComboBox *m_comboTheme{nullptr};
 	QLineEdit *m_editFont{nullptr};
 	QCheckBox *m_checkMenubar{nullptr};
+	QCheckBox *m_checkDialogs{nullptr};
 
 
 signals:

@@ -112,8 +112,11 @@ QString g_theme = "";
 // gui font
 QString g_font = "";
 
-// native menu bar?
+// use native menubar?
 int g_use_native_menubar = 0;
+
+// use native dialogs?
+int g_use_native_dialogs = 1;
 // ----------------------------------------------------------------------------
 
 
@@ -421,10 +424,15 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		g_font = QApplication::font().toString();
 	m_editFont->setText(g_font);
 
-	// menubar
+	// native menubar
 	m_checkMenubar = new QCheckBox("Use native menubar", panelGui);
 	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
 	m_checkMenubar->setChecked(g_use_native_menubar!=0);
+
+	// native dialogs
+	m_checkDialogs = new QCheckBox("Use native dialogs", panelGui);
+	get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
+	m_checkDialogs->setChecked(g_use_native_dialogs!=0);
 
 	// add widgets to layout
 	gridGui->addWidget(labelTheme, yGui,0,1,1);
@@ -433,6 +441,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	gridGui->addWidget(m_editFont, yGui,1,1,1);
 	gridGui->addWidget(btnFont, yGui++,2,1,1);
 	gridGui->addWidget(m_checkMenubar, yGui++,0,1,3);
+	gridGui->addWidget(m_checkDialogs, yGui++,0,1,3);
 
 	QSpacerItem *spacer_end = new QSpacerItem(1, 1,
 		QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -536,6 +545,7 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<decltype(g_theme)>(sett, "settings/theme", &g_theme);
 	get_setting<decltype(g_font)>(sett, "settings/font", &g_font);
 	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
+	get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
 
 	ApplyGuiSettings();
 }
@@ -553,6 +563,7 @@ void SettingsDlg::ApplySettings()
 	g_theme = m_comboTheme->currentText();
 	g_font = m_editFont->text();
 	g_use_native_menubar = m_checkMenubar->isChecked();
+	g_use_native_dialogs = m_checkDialogs->isChecked();
 
 	// write out the settings
 	if(m_sett)
@@ -560,6 +571,7 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/theme", g_theme);
 		m_sett->setValue("settings/font", g_font);
 		m_sett->setValue("settings/native_menubar", g_use_native_menubar);
+		m_sett->setValue("settings/native_dialogs", g_use_native_dialogs);
 	}
 
 	ApplyGuiSettings();
@@ -584,8 +596,9 @@ void SettingsDlg::ApplyGuiSettings()
 			QApplication::setFont(font);
 	}
 
-	// set native menubar
+	// set native menubar and dialogs
 	QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, !g_use_native_menubar);
+	QApplication::setAttribute(Qt::AA_DontUseNativeDialogs, !g_use_native_dialogs);
 }
 
 
