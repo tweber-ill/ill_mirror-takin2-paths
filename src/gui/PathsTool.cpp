@@ -127,13 +127,21 @@ void PathsTool::OpenFile()
 {
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
-	QString filename = QFileDialog::getOpenFileName(
-		this, "Open File", dirLast, "TAS-Paths Files (*.taspaths)");
-	if(filename=="" || !QFile::exists(filename))
+	QFileDialog filedlg(this, "Open File", dirLast,
+		"TAS-Paths Files (*.taspaths)");
+	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
+	filedlg.setDefaultSuffix("taspaths");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
 		return;
 
-	if(OpenFile(filename))
-		m_sett.setValue("cur_dir", QFileInfo(filename).path());
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+		return;
+
+	if(OpenFile(files[0]))
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
 }
 
 
@@ -156,13 +164,21 @@ void PathsTool::SaveFileAs()
 {
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
-	QString filename = QFileDialog::getSaveFileName(
-		this, "Save File", dirLast, "TAS-Paths Files (*.taspaths)");
-	if(filename=="")
+	QFileDialog filedlg(this, "Open File", dirLast,
+		"TAS-Paths Files (*.taspaths)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("taspaths");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
 		return;
 
-	if(SaveFile(filename))
-		m_sett.setValue("cur_dir", QFileInfo(filename).path());
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+		return;
+
+	if(SaveFile(files[0]))
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
 }
 
 
@@ -173,19 +189,27 @@ void PathsTool::SaveScreenshot()
 {
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
 
-	QString filename = QFileDialog::getSaveFileName(
-		this, "Images", dirLast, "PNG Images (*.png);;JPEG Images (*.jpg)");
-	if(filename=="")
+	QFileDialog filedlg(this, "Save Screenshot", dirLast,
+		"PNG Images (*.png);;JPEG Images (*.jpg)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("png");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
 		return;
 
 	bool ok = false;
 	if(g_combined_screenshots)
-		ok = SaveCombinedScreenshot(filename);
+		ok = SaveCombinedScreenshot(files[0]);
 	else
-		ok = SaveScreenshot(filename);
+		ok = SaveScreenshot(files[0]);
 
 	if(ok)
-		m_sett.setValue("cur_dir", QFileInfo(filename).path());
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
 }
 
 
@@ -197,21 +221,30 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 	std::shared_ptr<PathsExporterBase> exporter;
 
 	QString dirLast = m_sett.value("cur_dir", "~/").toString();
-	QString filename = QFileDialog::getSaveFileName(
-		this, "Export Path", dirLast, "Text Files (*.txt)");
-	if(filename == "")
+
+	QFileDialog filedlg(this, "Export Path", dirLast,
+		"Text Files (*.txt)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("txt");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return false;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
 		return false;
 
 	switch(fmt)
 	{
 		case PathsExporterFormat::RAW:
-			exporter = std::make_shared<PathsExporterRaw>(filename.toStdString());
+			exporter = std::make_shared<PathsExporterRaw>(files[0].toStdString());
 			break;
 		case PathsExporterFormat::NOMAD:
-			exporter = std::make_shared<PathsExporterNomad>(filename.toStdString());
+			exporter = std::make_shared<PathsExporterNomad>(files[0].toStdString());
 			break;
 		case PathsExporterFormat::NICOS:
-			exporter = std::make_shared<PathsExporterNicos>(filename.toStdString());
+			exporter = std::make_shared<PathsExporterNicos>(files[0].toStdString());
 			break;
 	}
 
@@ -227,7 +260,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 		return false;
 	}
 
-	m_sett.setValue("cur_dir", QFileInfo(filename).path());
+	m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
 	return true;
 }
 
@@ -240,18 +273,17 @@ bool PathsTool::OpenFile(const QString &file)
 	try
 	{
 		NewFile();
-		std::string filename = file.toStdString();
-
 
 		// get property tree
-		if(filename == "" || !fs::exists(fs::path(filename)))
+		if(file == "" || !QFile::exists(file))
 		{
 			QMessageBox::critical(this, "Error",
-				("Instrument file \"" + filename + "\" does not exist.").c_str());
+				"Instrument file \"" + file + "\" does not exist.");
 			return false;
 		}
 
 		// open xml
+		std::string filename = file.toStdString();
 		std::ifstream ifstr{filename};
 		if(!ifstr)
 		{
@@ -518,9 +550,20 @@ void PathsTool::RebuildRecentFiles()
 	m_menuOpenRecent->clear();
 
 	std::size_t num_recent_files = 0;
-	for(auto iter = m_recentFiles.rbegin(); iter != m_recentFiles.rend(); ++iter)
+	for(auto iter = m_recentFiles.rbegin(); iter != m_recentFiles.rend();)
 	{
 		QString filename = *iter;
+
+		// remove recent file entries which do not exist anymore
+		if(!QFile::exists(filename))
+		{
+			// get corresponding forward iterator
+			auto iter_fwd = (iter+1).base();
+			++iter;
+			m_recentFiles.erase(iter_fwd);
+			continue;
+		}
+
 		auto *acFile = new QAction(QIcon::fromTheme("document"), filename, m_menubar);
 
 		connect(acFile, &QAction::triggered, [this, filename]() { this->OpenFile(filename); });
@@ -528,6 +571,8 @@ void PathsTool::RebuildRecentFiles()
 
 		if(++num_recent_files >= MAX_RECENT_FILES)
 			break;
+
+		++iter;
 	}
 }
 
