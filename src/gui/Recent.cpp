@@ -85,8 +85,11 @@ void RecentFiles::RebuildRecentFiles()
 		{
 			if(!m_open_func)
 				return;
-			(*m_open_func)(filename);
+
+			if((*m_open_func)(filename))
+				m_curFile = filename;
 		});
+
 		m_menuOpenRecent->addAction(acFile);
 
 		if(++num_recent_files >= m_maxRecentFiles)

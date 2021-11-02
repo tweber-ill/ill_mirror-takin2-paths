@@ -65,6 +65,9 @@ public:
 	void SetRecentFilesMenu(QMenu *menu) { m_menuOpenRecent = menu; };
 	QMenu* GetRecentFilesMenu() { return m_menuOpenRecent; }
 
+	void SetCurFile(const QString& file) { m_curFile = file; }
+	const QString& GetCurFile() const { return m_curFile; }
+
 	void SetMaxRecentFiles(std::size_t num) { m_maxRecentFiles = num; }
 
 
@@ -75,8 +78,11 @@ private:
 	// recent file menu
 	QMenu* m_menuOpenRecent{ nullptr };
 
-	// recent file list and currently active file
+	// recent file list
 	QStringList m_recentFiles{};
+
+	// currently active file
+	QString m_curFile{};
 
 	// function to be called when the menu element is clicked
 	const std::function<bool(const QString& filename)>* m_open_func{ nullptr };

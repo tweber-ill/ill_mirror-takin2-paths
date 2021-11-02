@@ -111,8 +111,6 @@ private:
 
 	std::string m_initialInstrFile = "instrument.taspaths";
 
-	// currently active file
-	QString m_curFile{};
 	// recently opened files
 	RecentFiles m_recent{};
 

@@ -148,10 +148,10 @@ void PathsTool::OpenFile()
  */
 void PathsTool::SaveFile()
 {
-	if(m_curFile == "")
+	if(m_recent.GetCurFile() == "")
 		SaveFileAs();
 	else
-		SaveFile(m_curFile);
+		SaveFile(m_recent.GetCurFile());
 }
 
 
@@ -504,12 +504,12 @@ bool PathsTool::SaveCombinedScreenshot(const QString& filename)
 void PathsTool::SetCurrentFile(const QString &file)
 {
 	static const QString title(PROG_TITLE);
-	m_curFile = file;
+	m_recent.SetCurFile(file);
 
-	if(m_curFile == "")
+	if(m_recent.GetCurFile() == "")
 		this->setWindowTitle(title);
 	else
-		this->setWindowTitle(title + " -- " + m_curFile);
+		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());
 }
 
 
