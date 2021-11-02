@@ -38,6 +38,7 @@
 #include <string>
 #include <memory>
 #include <future>
+#include <functional>
 
 #include "src/core/PathsBuilder.h"
 #include "src/core/InstrumentSpace.h"
@@ -52,6 +53,7 @@
 #include "About.h"
 #include "Licenses.h"
 #include "Settings.h"
+#include "Recent.h"
 
 #include "dock/TASProperties.h"
 #include "dock/XtalProperties.h"
@@ -109,9 +111,17 @@ private:
 
 	std::string m_initialInstrFile = "instrument.taspaths";
 
-	// recent file list and currently active file
-	QStringList m_recentFiles{};
+	// currently active file
 	QString m_curFile{};
+	// recently opened files
+	RecentFiles m_recent{};
+
+	// function to call for the recent file menu items
+	std::function<bool(const QString& filename)> m_open_func
+		= [this](const QString& filename) -> bool
+	{
+		return this->OpenFile(filename);
+	};
 
 	// instrument configuration and paths builder
 	InstrumentSpace m_instrspace{};
@@ -166,17 +176,8 @@ protected:
 	// save a combined screenshot of the instrument view and config space
 	bool SaveCombinedScreenshot(const QString& file);
 
-	// adds a file to the recent files menu
-	void AddRecentFile(const QString &file);
-
 	// remember current file and set window title
 	void SetCurrentFile(const QString &file);
-
-	// sets the recent file menu
-	void SetRecentFiles(const QStringList &files);
-
-	// creates the "recent files" sub-menu
-	void RebuildRecentFiles();
 
 	void UpdateUB();
 

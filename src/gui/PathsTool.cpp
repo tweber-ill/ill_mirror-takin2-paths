@@ -95,10 +95,8 @@ void PathsTool::closeEvent(QCloseEvent *evt)
 	m_sett.setValue("geo", saveGeometry());
 	m_sett.setValue("state", saveState());
 
-	// remove superfluous entries and save the recent files list
-	while(m_recentFiles.size() > MAX_RECENT_FILES)
-		m_recentFiles.pop_front();
-	m_sett.setValue("recent_files", m_recentFiles);
+	m_recent.TrimEntries();
+	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
 
 	QMainWindow::closeEvent(evt);
 }
@@ -337,7 +335,7 @@ bool PathsTool::OpenFile(const QString &file)
 
 
 		SetCurrentFile(file);
-		AddRecentFile(file);
+		m_recent.AddRecentFile(file);
 
 		if(m_dlgGeoBrowser)
 			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
@@ -462,7 +460,7 @@ bool PathsTool::SaveFile(const QString &file)
 	pt::write_xml(ofstr, prop, pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
 
 	SetCurrentFile(file);
-	AddRecentFile(file);
+	m_recent.AddRecentFile(file);
 	return true;
 }
 
@@ -501,23 +499,6 @@ bool PathsTool::SaveCombinedScreenshot(const QString& filename)
 
 
 /**
- * adds a file to the recent files menu
- */
-void PathsTool::AddRecentFile(const QString &file)
-{
-	for(const auto &recentfile : m_recentFiles)
-	{
-		// file already in list?
-		if(recentfile == file)
-			return;
-	}
-
-	m_recentFiles.push_back(file);
-	RebuildRecentFiles();
-}
-
-
-/**
  * remember current file and set window title
  */
 void PathsTool::SetCurrentFile(const QString &file)
@@ -529,51 +510,6 @@ void PathsTool::SetCurrentFile(const QString &file)
 		this->setWindowTitle(title);
 	else
 		this->setWindowTitle(title + " -- " + m_curFile);
-}
-
-
-/**
- * sets the recent file menu
- */
-void PathsTool::SetRecentFiles(const QStringList &files)
-{
-	m_recentFiles = files;
-	RebuildRecentFiles();
-}
-
-
-/**
- * creates the "recent files" sub-menu
- */
-void PathsTool::RebuildRecentFiles()
-{
-	m_menuOpenRecent->clear();
-
-	std::size_t num_recent_files = 0;
-	for(auto iter = m_recentFiles.rbegin(); iter != m_recentFiles.rend();)
-	{
-		QString filename = *iter;
-
-		// remove recent file entries which do not exist anymore
-		if(!QFile::exists(filename))
-		{
-			// get corresponding forward iterator
-			auto iter_fwd = (iter+1).base();
-			++iter;
-			m_recentFiles.erase(iter_fwd);
-			continue;
-		}
-
-		auto *acFile = new QAction(QIcon::fromTheme("document"), filename, m_menubar);
-
-		connect(acFile, &QAction::triggered, [this, filename]() { this->OpenFile(filename); });
-		m_menuOpenRecent->addAction(acFile);
-
-		if(++num_recent_files >= MAX_RECENT_FILES)
-			break;
-
-		++iter;
-	}
 }
 
 
@@ -1245,6 +1181,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
+	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
+	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetOpenFunc(&m_open_func);
+
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 	actionQuit->setMenuRole(QAction::QuitRole);
 
@@ -1657,7 +1597,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	// recent files
 	if(m_sett.contains("recent_files"))
-		SetRecentFiles(m_sett.value("recent_files").toStringList());
+		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
 
 	//QFont font = this->font();
 	//font.setPointSizeF(14.);

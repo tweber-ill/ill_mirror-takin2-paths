@@ -313,6 +313,7 @@ add_executable(taspaths
 	src/gui/main.cpp
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/Settings.cpp src/gui/Settings.h
+	src/gui/Recent.cpp src/gui/Recent.h
 	src/gui/About.cpp src/gui/About.h
 	src/gui/Licenses.cpp src/gui/Licenses.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
