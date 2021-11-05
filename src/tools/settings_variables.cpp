@@ -40,7 +40,7 @@ int g_prec = 6;
 t_real g_eps = 1e-6;
 
 // gui theme
-QString g_theme = "";
+QString g_theme = "Fusion";
 
 // gui font
 QString g_font = "";

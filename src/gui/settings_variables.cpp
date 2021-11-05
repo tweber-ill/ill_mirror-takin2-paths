@@ -89,7 +89,7 @@ int g_automatic_screenshots = 0;
 
 
 // gui theme
-QString g_theme = "";
+QString g_theme = "Fusion";
 
 // gui font
 QString g_font = "";
