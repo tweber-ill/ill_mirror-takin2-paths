@@ -29,6 +29,7 @@
 
 #include "PathsTool.h"
 #include "settings_variables.h"
+#include "tlibs2/libs/file.h"
 #include "tlibs2/libs/helper.h"
 
 
@@ -80,20 +81,36 @@ int main(int argc, char** argv)
 		// set maximum number of threads
 		g_maxnum_threads = std::max<unsigned int>(1, std::thread::hardware_concurrency()/2);
 
+		// application settings
 		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
 		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
 		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
 
+		// create application
 		auto app = std::make_unique<QApplication>(argc, argv);
 		app->setOrganizationName("tw");
 		app->setApplicationName("taspaths");
 		app->setApplicationDisplayName("TAS-Paths");
 		app->setApplicationVersion(TASPATHS_VERSION);
 
+		// application path
 		g_apppath = app->applicationDirPath().toStdString();
 		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
 			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
+
+		// resource paths
+		fs::path apppath = g_apppath;
+		g_res.AddPath((apppath / "res").string());
+		g_res.AddPath((apppath / ".." / "res").string());
+		g_res.AddPath((apppath / "Resources").string());
+		g_res.AddPath((apppath / ".." / "Resources").string());
+		g_res.AddPath(g_apppath);
+		g_res.AddPath((apppath / "..").string());
+		g_res.AddPath(fs::path("/usr/local/share/TASPaths/res").string());
+		g_res.AddPath(fs::path("/usr/share/TASPaths/res").string());
+		g_res.AddPath(fs::path("/usr/local/share/TASPaths").string());
+		g_res.AddPath(fs::path("/usr/share/TASPaths").string());
 
 		// make type definitions known as qt meta objects
 		qRegisterMetaType<t_real>("t_real");
@@ -101,6 +118,7 @@ int main(int argc, char** argv)
 		qRegisterMetaType<t_mat>("t_mat");
 		qRegisterMetaType<std::string>("std::string");
 
+		// create main window
 		auto mainwnd = std::make_unique<PathsTool>(nullptr);
 		if(argc > 1)
 			mainwnd->SetInitialInstrumentFile(argv[1]);
@@ -108,6 +126,7 @@ int main(int argc, char** argv)
 		mainwnd->raise();
 		mainwnd->activateWindow();
 
+		// run application
 		return app->exec();
 	}
 	catch(const std::exception& ex)

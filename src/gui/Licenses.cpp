@@ -6,7 +6,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,6 +33,7 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 
+#include "settings_variables.h"
 #include "Settings.h"
 #include "Resources.h"
 #include "tlibs2/libs/file.h"
@@ -67,7 +68,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		grid->addWidget(text, 0, 0, 1, 1);
 
 		// find the license file
-		std::string license_file = find_resource("LICENSE");
+		std::string license_file = g_res.FindResource("LICENSE");
 		auto [license_ok, license_text] = tl2::load_file<std::string>(license_file);
 
 		if(license_file == "" || !license_ok)
@@ -102,7 +103,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		ostr << "<h1>Licenses for 3rd Party Software</h1>\n";
 
 		// find the directory with the license files
-		std::string license_dir = find_resource("3rdparty_licenses");
+		std::string license_dir = g_res.FindResource("3rdparty_licenses");
 		if(license_dir == "")
 		{
 			text->setPlainText("Error: 3rd party license directory could not be found!");

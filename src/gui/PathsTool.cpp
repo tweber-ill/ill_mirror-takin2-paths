@@ -700,7 +700,7 @@ void PathsTool::AfterGLInitialisation()
 		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
 
 	// load an initial instrument definition
-	if(std::string instrfile = find_resource(m_initialInstrFile); !instrfile.empty())
+	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
 	{
 		if(OpenFile(instrfile.c_str()))
 			m_renderer->LoadInstrument(m_instrspace);
@@ -859,7 +859,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
 	setWindowTitle(PROG_TITLE);
 
-	if(std::string icon_file = find_resource("res/taspaths.svg"); !icon_file.empty())
+	if(std::string icon_file = g_res.FindResource("res/taspaths.svg"); !icon_file.empty())
 	{
 		QIcon icon{icon_file.c_str()};
 		setWindowIcon(icon);
@@ -1399,7 +1399,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// if the help files were not found, remove its menu item
 	std::string dev_docfile{};
 	bool show_dev_doc = true;
-	if(dev_docfile = find_resource("dev_doc/html/index.html"); dev_docfile.empty())
+	if(dev_docfile = g_res.FindResource("dev_doc/html/index.html"); dev_docfile.empty())
 		show_dev_doc = false;
 
 	QAction *actionDevDoc = nullptr;

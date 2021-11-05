@@ -32,14 +32,18 @@
 #include <array>
 #include <variant>
 
-#include "tlibs2/libs/qt/gl.h"
+#include "Resources.h"
 #include "src/core/types.h"
+#include "tlibs2/libs/qt/gl.h"
 
 
 
 // ----------------------------------------------------------------------------
 // global settings variables
 // ----------------------------------------------------------------------------
+// resource manager
+extern Resources g_res;
+
 // application binary path
 extern std::string g_apppath;
 

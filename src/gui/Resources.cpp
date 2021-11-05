@@ -2,6 +2,7 @@
  * TAS paths tool -- resource file handling
  * @author Tobias Weber <tweber@ill.fr>
  * @date apr-2021
+ * @note Forked on 5-November-2021 from my privately developed "qm" project (https://github.com/t-weber/qm).
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------
@@ -24,31 +25,33 @@
  */
 
 #include "Resources.h"
-
-#include "settings_variables.h"
 #include "tlibs2/libs/file.h"
 
 
 /**
- * get the path to a resource file
+ * add a resource search path entry
  */
-std::string find_resource(const std::string& resfile)
+void Resources::AddPath(const std::string& pathname)
 {
-	fs::path res = resfile;
-	fs::path apppath = g_apppath;
+	fs::path path{pathname};
+	m_paths.push_back(path);
+}
 
-	// iterate possible resource directories
-	for(const fs::path& path :
+
+/**
+ * find a resource file
+ */
+std::string Resources::FindResource(const std::string& filename) const
+{
+	fs::path file{filename};
+
+	for(const std::string& pathname : m_paths)
 	{
-		apppath/"res"/res, apppath/".."/"res"/res,
-		apppath/"Resources"/res, apppath/".."/"Resources"/res,
-		apppath/res, apppath/".."/res,
-		fs::path("/usr/local/share/TASPaths/res")/res, fs::path("/usr/share/TASPaths/res")/res,
-		fs::path("/usr/local/share/TASPaths")/res, fs::path("/usr/share/TASPaths")/res,
-	})
-	{
-		if(fs::exists(path))
-			return path.string();
+		fs::path path{pathname};
+		fs::path respath = path / file;
+
+		if(fs::exists(respath))
+			return respath.string();
 	}
 
 	return "";

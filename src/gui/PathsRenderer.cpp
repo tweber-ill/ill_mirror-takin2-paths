@@ -659,8 +659,8 @@ void PathsRenderer::initializeGL()
 	// --------------------------------------------------------------------
 	// shaders
 	// --------------------------------------------------------------------
-	std::string fragfile = find_resource("frag.shader");
-	std::string vertexfile = find_resource("vertex.shader");
+	std::string fragfile = g_res.FindResource("frag.shader");
+	std::string vertexfile = g_res.FindResource("vertex.shader");
 
 	auto [frag_ok, strFragShader] = tl2::load_file<std::string>(fragfile);
 	auto [vertex_ok, strVertexShader] = tl2::load_file<std::string>(vertexfile);
