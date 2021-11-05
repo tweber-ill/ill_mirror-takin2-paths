@@ -36,6 +36,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 namespace pt = boost::property_tree;
 
+#include "settings_variables.h"
 #include "src/libs/proc.h"
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"

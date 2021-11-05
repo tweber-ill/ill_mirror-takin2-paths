@@ -39,7 +39,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QProgressDialog>
 
-#include "Settings.h"
+#include "settings_variables.h"
 
 #include "src/core/mingw_hacks.h"
 #include <boost/asio.hpp>

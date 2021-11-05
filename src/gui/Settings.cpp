@@ -1,5 +1,5 @@
 /**
- * TAS paths tool -- settings dialog and resource management
+ * TAS paths tool -- settings dialog
  * @author Tobias Weber <tweber@ill.fr>
  * @date apr-2021
  * @license GPLv3, see 'LICENSE' file
@@ -37,176 +37,12 @@
 #include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QFontDialog>
 
-#include <array>
 #include <type_traits>
 
-#include "tlibs2/libs/file.h"
+#include "settings_variables.h"
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
-
-
-// ----------------------------------------------------------------------------
-// global settings variables
-// ----------------------------------------------------------------------------
-std::string g_apppath = ".";
-
-
-// maximum number of threads
-unsigned int g_maxnum_threads = 4;
-
-
-// epsilons and precisions
-int g_prec = 6;
-int g_prec_gui = 4;
-t_real g_eps = 1e-6;
-t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
-t_real g_eps_gui = 1e-4;
-t_real g_eps_voronoiedge = 2e-2;
-
-t_real g_line_subdiv_len = 0.025;
-
-t_real g_a3_offs = tl2::pi<t_real>*0.5;
-
-t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
-t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
-
-
-// which polygon intersection method should be used?
-// 0: sweep, 1: half-plane test
-int g_poly_intersection_method = 1;
-
-// which backend to use for voronoi diagram calculation?
-// 0: boost.polygon, 1: cgal
-int g_voronoi_backend = 0;
-
-// use region calculation function
-int g_use_region_function = 1;
-
-
-// path-finding options
-int g_pathstrategy = 0;
-int g_verifypath = 1;
-
-
-// path-tracker and renderer FPS
-unsigned int g_pathtracker_fps = 30;
-unsigned int g_timer_fps = 30;
-
-
-// renderer options
-tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
-tl2::t_real_gl g_rotation_scale = tl2::t_real_gl(0.02);
-
-int g_light_follows_cursor = 0;
-int g_enable_shadow_rendering = 1;
-
-// screenshots
-int g_combined_screenshots = 0;
-int g_automatic_screenshots = 0;
-
-
-// gui theme
-QString g_theme = "";
-
-// gui font
-QString g_font = "";
-
-// use native menubar?
-int g_use_native_menubar = 0;
-
-// use native dialogs?
-int g_use_native_dialogs = 1;
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// variables register
-// ----------------------------------------------------------------------------
-struct SettingsVariable
-{
-	const char* description{};
-	const char* key{};
-	std::variant<t_real*, int*, unsigned int*> value{};
-	bool is_angle{false};
-};
-
-static constexpr std::array<SettingsVariable, 22> g_settingsvariables
-{{
-	// epsilons and precisions
-	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
-	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
-	{.description = "Voronoi edge epsilon", .key = "settings/eps_voronoi_edge", .value = &g_eps_voronoiedge},
-	{.description = "Drawing epsilon", .key = "settings/eps_gui", .value = &g_eps_gui},
-	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
-	{.description = "GUI number precision", .key = "settings/prec_gui", .value = &g_prec_gui},
-
-	{.description = "Line subdivision length", .key = "settings/line_subdiv_len", .value = &g_line_subdiv_len},
-
-	// threading options
-	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
-
-	// angle options
-	{.description = "Sample rotation offset", .key = "settings/a3_offs", .value = &g_a3_offs, .is_angle = true},
-	{.description = "Monochromator scattering angle delta", .key = "settings/a2_delta", .value = &g_a2_delta, .is_angle = true},
-	{.description = "Sample scattering angle delta", .key = "settings/a4_delta", .value = &g_a4_delta, .is_angle = true},
-
-	// mesh options
-	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
-	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
-	{.description = "Use region function", .key = "settings/use_region_function", .value = &g_use_region_function},
-
-	// path options
-	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
-	{.description = "Verify generated path", .key = "settings/verify_path", .value = &g_verifypath},
-	{.description = "Path tracker FPS", .key = "settings/pathtracker_fps", .value = &g_pathtracker_fps},
-
-	// renderer options
-	{.description = "Renderer FPS", .key = "settings/renderer_fps", .value = &g_timer_fps},
-	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
-	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},
-
-	// screenshot options
-	{.description = "Combine instrument/configuration space screenshots", .key = "settings/combined_screenshots", .value = &g_combined_screenshots},
-	{.description = "Automatically take screenshots (careful!)", .key = "settings/automatic_screenshots", .value = &g_automatic_screenshots},
-}};
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// functions
-// ----------------------------------------------------------------------------
-/**
- * get the path to a resource file
- */
-std::string find_resource(const std::string& resfile)
-{
-	fs::path res = resfile;
-	fs::path apppath = g_apppath;
-
-	// iterate possible resource directories
-	for(const fs::path& path :
-	{
-		apppath/"res"/res, apppath/".."/"res"/res,
-		apppath/"Resources"/res, apppath/".."/"Resources"/res,
-		apppath/res, apppath/".."/res,
-		fs::path("/usr/local/share/TASPaths/res")/res, fs::path("/usr/share/TASPaths/res")/res,
-		fs::path("/usr/local/share/TASPaths")/res, fs::path("/usr/share/TASPaths")/res,
-	})
-	{
-		if(fs::exists(path))
-			return path.string();
-	}
-
-	return "";
-}
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-// settings dialog
-// ----------------------------------------------------------------------------
 
 // type names
 template<class T> const char* type_str = "Unknown";
@@ -613,4 +449,3 @@ void SettingsDlg::accept()
 		m_sett->setValue("settings/geo", saveGeometry());
 	QDialog::accept();
 }
-// ----------------------------------------------------------------------------

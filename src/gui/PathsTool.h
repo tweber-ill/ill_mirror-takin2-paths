@@ -53,6 +53,7 @@
 #include "About.h"
 #include "Licenses.h"
 #include "Settings.h"
+#include "Resources.h"
 #include "Recent.h"
 
 #include "dock/TASProperties.h"

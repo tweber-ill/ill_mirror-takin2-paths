@@ -24,7 +24,7 @@
  */
 
 #include "CamProperties.h"
-#include "../Settings.h"
+#include "../settings_variables.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QPushButton>

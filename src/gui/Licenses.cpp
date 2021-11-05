@@ -34,6 +34,7 @@
 #include <QtWidgets/QDialogButtonBox>
 
 #include "Settings.h"
+#include "Resources.h"
 #include "tlibs2/libs/file.h"
 
 

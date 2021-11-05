@@ -24,7 +24,6 @@
  */
 
 #include "GeoBrowser.h"
-#include "Settings.h"
 
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
@@ -35,6 +34,7 @@
 
 #include <boost/scope_exit.hpp>
 
+#include "settings_variables.h"
 #include "tlibs2/libs/expr.h"
 #include "tlibs2/libs/str.h"
 

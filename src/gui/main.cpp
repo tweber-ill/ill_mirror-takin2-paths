@@ -28,6 +28,7 @@
 #include <QtWidgets/QApplication>
 
 #include "PathsTool.h"
+#include "settings_variables.h"
 #include "tlibs2/libs/helper.h"
 
 

@@ -32,7 +32,8 @@
  */
 
 #include "PathsRenderer.h"
-#include "Settings.h"
+#include "Resources.h"
+#include "settings_variables.h"
 
 #include <QtCore/QtGlobal>
 #include <QtCore/QThread>
