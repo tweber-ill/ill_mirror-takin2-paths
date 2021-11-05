@@ -29,6 +29,9 @@
 #include <QtCore/QString>
 
 #include <string>
+#include <array>
+#include <variant>
+
 #include "tlibs2/libs/qt/gl.h"
 #include "src/core/types.h"
 

@@ -44,10 +44,12 @@
 #include "src/libs/graphs.h"
 #include "src/libs/trapezoid.h"
 
+#include "vertex.h"
 #include "info.h"
 #include "about.h"
-#include "settings.h"
-#include "vertex.h"
+#include "Settings.h"
+
+#define GeoSettingsDlg SettingsDlg
 
 
 enum class IntersectionCalculationMethod
@@ -71,8 +73,6 @@ public:
 	using t_vec = ::t_vec2;
 	using t_mat = ::t_mat22;
 	using t_graph = geo::AdjacencyList<t_real>;
-
-	static const constexpr t_real g_eps = 1e-5;
 
 public:
 	LinesScene(QWidget *parent=nullptr);

@@ -42,9 +42,11 @@
 #include "src/libs/voronoi_lines.h"
 #include "src/libs/lines.h"
 
-#include "about.h"
-#include "settings.h"
 #include "vertex.h"
+#include "about.h"
+#include "Settings.h"
+
+#define GeoSettingsDlg SettingsDlg
 
 
 class PolyView : public QGraphicsView
@@ -52,9 +54,6 @@ class PolyView : public QGraphicsView
 public:
 	using t_vec = ::t_vec2;
 	using t_mat = ::t_mat22;
-
-	static const constexpr t_real g_eps = 1e-5;
-
 
 public:
 	PolyView(QGraphicsScene *scene=nullptr, QWidget *parent=nullptr);

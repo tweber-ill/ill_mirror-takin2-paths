@@ -1,12 +1,12 @@
 /**
- * settings dialog
+ * TAS paths tool -- global settings variables
  * @author Tobias Weber <tweber@ill.fr>
- * @date aug-2021
+ * @date apr-2021
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------
- * TAS-Paths (part of the Takin software suite) and private "Geo" project
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * TAS-Paths (part of the Takin software suite)
+ * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
  *                     Grenoble, France).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,17 +23,14 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef __TASPATHS_TOOLS_SETTINGS__
-#define __TASPATHS_TOOLS_SETTINGS__
+#ifndef __TASPATHS_TOOLS_SETTINGS_VARIABLES__
+#define __TASPATHS_TOOLS_SETTINGS_VARIABLES__
 
-#include <QtCore/QSettings>
-#include <QtWidgets/QDialog>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QComboBox>
-#include <QtWidgets/QCheckBox>
+#include <QtCore/QString>
 
-#include <string>
-#include "tlibs2/libs/qt/gl.h"
+#include <array>
+#include <variant>
+
 #include "src/core/types.h"
 
 
@@ -41,6 +38,15 @@
 // ----------------------------------------------------------------------------
 // global settings variables
 // ----------------------------------------------------------------------------
+// maximum number of threads for calculations
+extern unsigned int g_maxnum_threads;
+
+// number precision
+extern int g_prec;
+
+// epsilon
+extern t_real g_eps;
+
 // gui theme
 extern QString g_theme;
 
@@ -57,35 +63,27 @@ extern int g_use_native_dialogs;
 
 
 // ----------------------------------------------------------------------------
-// settings dialog
+// variables register
 // ----------------------------------------------------------------------------
-class GeoSettingsDlg : public QDialog
+struct SettingsVariable
 {
-public:
-	GeoSettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
-	virtual ~GeoSettingsDlg();
-
-	GeoSettingsDlg(const GeoSettingsDlg&) = delete;
-	const GeoSettingsDlg& operator=(const GeoSettingsDlg&) = delete;
-
-	static void ReadSettings(QSettings* sett);
-
-
-protected:
-	virtual void accept() override;
-
-	void ApplySettings();
-	static void ApplyGuiSettings();
-
-
-private:
-	QSettings *m_sett{nullptr};
-
-	QComboBox *m_comboTheme{nullptr};
-	QLineEdit *m_editFont{nullptr};
-	QCheckBox *m_checkMenubar{nullptr};
-	QCheckBox *m_checkDialogs{nullptr};
+	const char* description{};
+	const char* key{};
+	std::variant<t_real*, int*, unsigned int*> value{};
+	bool is_angle{false};
 };
 
-#endif
+
+constexpr std::array<SettingsVariable, 3> g_settingsvariables
+{{
+	// epsilons and precisions
+	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
+	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
+
+	// threading options
+	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
+}};
 // ----------------------------------------------------------------------------
+
+
+#endif

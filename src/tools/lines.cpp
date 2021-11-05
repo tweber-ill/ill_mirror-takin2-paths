@@ -54,8 +54,9 @@
 
 #include "tlibs2/libs/helper.h"
 #include "src/libs/voronoi_lines.h"
-
+#include "settings_variables.h"
 #include "src/core/mingw_hacks.h"
+
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
@@ -448,13 +449,9 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 	if(!m_elem_voro)
 		return;
 
-	unsigned int num_threads = std::thread::hardware_concurrency();
-	if(num_threads > 8)
-		num_threads = 8;
-	asio::thread_pool tp{num_threads};
-
-	std::vector<std::shared_ptr<std::packaged_task<void()>>> packages;
-	std::mutex mtx;
+	asio::thread_pool tp{g_maxnum_threads};
+	std::vector<std::shared_ptr<std::packaged_task<void()>>> packages{};
+	std::mutex mtx{};
 
 	const int width = m_elem_voro->width();
 	const int height = m_elem_voro->height();
@@ -464,7 +461,7 @@ void LinesScene::UpdateVoroImage(const QTransform& trafoSceneToVP)
 	progdlg.setWindowModality(Qt::WindowModal);
 	progdlg.setMinimum(0);
 	progdlg.setMaximum(height);
-	QString msg = QString("Calculating Voronoi regions in %1 threads...").arg(num_threads);
+	QString msg = QString("Calculating Voronoi regions in %1 threads...").arg(g_maxnum_threads);
 	progdlg.setLabel(new QLabel(msg));
 
 	packages.reserve(height);
@@ -847,7 +844,7 @@ void LinesView::mouseMoveEvent(QMouseEvent *evt)
 
 		auto vec = tl2::create<typename LinesScene::t_vec>({ posScene.x(), posScene.y() });
 		bool in_region = geo::pt_inside_poly<typename LinesScene::t_vec>(
-			region, vec, nullptr, LinesScene::g_eps);
+			region, vec, nullptr, g_eps);
 
 		if(in_region)
 			cursor_regions.push_back(regionidx);

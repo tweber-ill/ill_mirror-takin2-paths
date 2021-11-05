@@ -31,62 +31,13 @@
 // ----------------------------------------------------------------------------
 // global settings variables
 // ----------------------------------------------------------------------------
-std::string g_apppath = ".";
-
-
 // maximum number of threads
 unsigned int g_maxnum_threads = 4;
 
 
 // epsilons and precisions
 int g_prec = 6;
-int g_prec_gui = 4;
 t_real g_eps = 1e-6;
-t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
-t_real g_eps_gui = 1e-4;
-t_real g_eps_voronoiedge = 2e-2;
-
-t_real g_line_subdiv_len = 0.025;
-
-t_real g_a3_offs = tl2::pi<t_real>*0.5;
-
-t_real g_a2_delta = 0.5 / 180. * tl2::pi<t_real>;
-t_real g_a4_delta = 1. / 180. * tl2::pi<t_real>;
-
-
-// which polygon intersection method should be used?
-// 0: sweep, 1: half-plane test
-int g_poly_intersection_method = 1;
-
-// which backend to use for voronoi diagram calculation?
-// 0: boost.polygon, 1: cgal
-int g_voronoi_backend = 0;
-
-// use region calculation function
-int g_use_region_function = 1;
-
-
-// path-finding options
-int g_pathstrategy = 0;
-int g_verifypath = 1;
-
-
-// path-tracker and renderer FPS
-unsigned int g_pathtracker_fps = 30;
-unsigned int g_timer_fps = 30;
-
-
-// renderer options
-tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
-tl2::t_real_gl g_rotation_scale = tl2::t_real_gl(0.02);
-
-int g_light_follows_cursor = 0;
-int g_enable_shadow_rendering = 1;
-
-// screenshots
-int g_combined_screenshots = 0;
-int g_automatic_screenshots = 0;
-
 
 // gui theme
 QString g_theme = "";

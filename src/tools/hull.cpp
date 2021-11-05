@@ -7,7 +7,7 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL), 
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
  *                          Grenoble, France).
  * "geo" project
  * Copyright (C) 2020-2021  Tobias WEBER (privately developed).
@@ -56,10 +56,10 @@
 #include <boost/property_tree/xml_parser.hpp>
 namespace ptree = boost::property_tree;
 
+#include "settings_variables.h"
 #include "src/libs/hull.h"
 #include "src/libs/voronoi.h"
 #include "src/libs/graphs.h"
-
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
