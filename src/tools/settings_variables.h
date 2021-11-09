@@ -79,14 +79,32 @@ struct SettingsVariable
 
 constexpr std::array<SettingsVariable, 4> g_settingsvariables
 {{
-	// epsilons and precisions
-	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
-	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
+	// epsilon
+	{
+		.description = "Calculation epsilon",
+		.key = "settings/eps",
+		.value = &g_eps,
+	},
+
+	// precision
+	{
+		.description = "Number precision",
+		.key = "settings/prec",
+		.value = &g_prec
+	},
 
 	// threading options
-	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
+	{
+		.description = "Maximum number of threads",
+		.key = "settings/maxnum_threads",
+		.value = &g_maxnum_threads},
+
 	// file options
-	{.description = "Maximum number of recent files", .key = "settings/maxnum_recents", .value = &g_maxnum_recents},
+	{
+		.description = "Maximum number of recent files",
+		.key = "settings/maxnum_recents",
+		.value = &g_maxnum_recents
+	},
 }};
 // ----------------------------------------------------------------------------
 

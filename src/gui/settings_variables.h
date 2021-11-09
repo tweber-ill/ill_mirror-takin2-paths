@@ -142,43 +142,139 @@ struct SettingsVariable
 constexpr std::array<SettingsVariable, 23> g_settingsvariables
 {{
 	// epsilons and precisions
-	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
-	{.description = "Angular epsilon", .key = "settings/eps_angular", .value = &g_eps_angular, .is_angle = true},
-	{.description = "Voronoi edge epsilon", .key = "settings/eps_voronoi_edge", .value = &g_eps_voronoiedge},
-	{.description = "Drawing epsilon", .key = "settings/eps_gui", .value = &g_eps_gui},
-	{.description = "Number precision", .key = "settings/prec", .value = &g_prec},
-	{.description = "GUI number precision", .key = "settings/prec_gui", .value = &g_prec_gui},
+	{
+		.description = "Calculation epsilon",
+		.key = "settings/eps",
+		.value = &g_eps,
+	},
+	{
+		.description = "Angular epsilon",
+		.key = "settings/eps_angular",
+		.value = &g_eps_angular,
+		.is_angle = true
+	},
+	{
+		.description = "Voronoi edge epsilon",
+		.key = "settings/eps_voronoi_edge",
+		.value = &g_eps_voronoiedge
+	},
+	{
+		.description = "Drawing epsilon",
+		.key = "settings/eps_gui",
+		.value = &g_eps_gui
+	},
+	{
+		.description = "Number precision",
+		.key = "settings/prec",
+		.value = &g_prec
+	},
+	{
+		.description = "GUI number precision",
+		.key = "settings/prec_gui",
+		.value = &g_prec_gui
+	},
 
-	{.description = "Line subdivision length", .key = "settings/line_subdiv_len", .value = &g_line_subdiv_len},
+	{
+		.description = "Line subdivision length",
+		.key = "settings/line_subdiv_len",
+		.value = &g_line_subdiv_len
+	},
 
 	// threading options
-	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
+	{
+		.description = "Maximum number of threads",
+		.key = "settings/maxnum_threads",
+		.value = &g_maxnum_threads
+	},
 	// file options
-	{.description = "Maximum number of recent files", .key = "settings/maxnum_recents", .value = &g_maxnum_recents},
+	{
+		.description = "Maximum number of recent files",
+		.key = "settings/maxnum_recents",
+		.value = &g_maxnum_recents
+	},
 
 	// angle options
-	{.description = "Sample rotation offset", .key = "settings/a3_offs", .value = &g_a3_offs, .is_angle = true},
-	{.description = "Monochromator scattering angle delta", .key = "settings/a2_delta", .value = &g_a2_delta, .is_angle = true},
-	{.description = "Sample scattering angle delta", .key = "settings/a4_delta", .value = &g_a4_delta, .is_angle = true},
+	{
+		.description = "Sample rotation offset",
+		.key = "settings/a3_offs",
+		.value = &g_a3_offs,
+		.is_angle = true
+	},
+	{
+		.description = "Monochromator scattering angle delta",
+		.key = "settings/a2_delta",
+		.value = &g_a2_delta,
+		.is_angle = true
+	},
+	{
+		.description = "Sample scattering angle delta",
+		.key = "settings/a4_delta",
+		.value = &g_a4_delta,
+		.is_angle = true
+	},
 
 	// mesh options
-	{.description = "Polygon intersection method", .key = "settings/poly_inters_method", .value = &g_poly_intersection_method},
-	{.description = "Voronoi calculation backend", .key = "settings/voronoi_backend", .value = &g_voronoi_backend},
-	{.description = "Use region function", .key = "settings/use_region_function", .value = &g_use_region_function},
+	{
+		.description = "Polygon intersection method",
+		.key = "settings/poly_inters_method",
+		.value = &g_poly_intersection_method
+	},
+	{
+		.description = "Voronoi calculation backend",
+		.key = "settings/voronoi_backend",
+		.value = &g_voronoi_backend
+	},
+	{
+		.description = "Use region function",
+		.key = "settings/use_region_function",
+		.value = &g_use_region_function
+	},
 
 	// path options
-	{.description = "Path finding strategy", .key = "settings/path_finding_strategy", .value = &g_pathstrategy},
-	{.description = "Verify generated path", .key = "settings/verify_path", .value = &g_verifypath},
-	{.description = "Path tracker FPS", .key = "settings/pathtracker_fps", .value = &g_pathtracker_fps},
+	{
+		.description = "Path finding strategy",
+		.key = "settings/path_finding_strategy",
+		.value = &g_pathstrategy
+	},
+	{
+		.description = "Verify generated path",
+		.key = "settings/verify_path",
+		.value = &g_verifypath
+	},
+	{
+		.description = "Path tracker FPS",
+		.key = "settings/pathtracker_fps",
+		.value = &g_pathtracker_fps
+	},
 
 	// renderer options
-	{.description = "Renderer FPS", .key = "settings/renderer_fps", .value = &g_timer_fps},
-	{.description = "Light follows cursor", .key = "settings/light_follows_cursor", .value = &g_light_follows_cursor},
-	{.description = "Enable shadow rendering", .key = "settings/enable_shadow_rendering", .value = &g_enable_shadow_rendering},
+	{
+		.description = "Renderer FPS",
+		.key = "settings/renderer_fps",
+		.value = &g_timer_fps
+	},
+	{
+		.description = "Light follows cursor",
+		.key = "settings/light_follows_cursor",
+		.value = &g_light_follows_cursor
+	},
+	{
+		.description = "Enable shadow rendering",
+		.key = "settings/enable_shadow_rendering",
+		.value = &g_enable_shadow_rendering
+	},
 
 	// screenshot options
-	{.description = "Combine instrument/configuration space screenshots", .key = "settings/combined_screenshots", .value = &g_combined_screenshots},
-	{.description = "Automatically take screenshots (careful!)", .key = "settings/automatic_screenshots", .value = &g_automatic_screenshots},
+	{
+		.description = "Combine instrument/configuration space screenshots",
+		.key = "settings/combined_screenshots",
+		.value = &g_combined_screenshots
+	},
+	{
+		.description = "Automatically take screenshots (careful!)",
+		.key = "settings/automatic_screenshots",
+		.value = &g_automatic_screenshots
+	},
 }};
 // ----------------------------------------------------------------------------
 
