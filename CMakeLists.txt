@@ -314,6 +314,7 @@ add_executable(taspaths
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
 	src/gui/Settings.cpp src/gui/Settings.h
 	src/gui/settings_variables.cpp src/gui/settings_variables.h
+	src/gui/settings_common.h
 	src/gui/Resources.cpp src/gui/Resources.h
 	src/gui/Recent.cpp src/gui/Recent.h
 	src/gui/About.cpp src/gui/About.h
@@ -346,6 +347,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/tools/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
@@ -360,6 +362,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/tools/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
@@ -373,6 +376,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/tools/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h

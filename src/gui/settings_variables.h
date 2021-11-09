@@ -36,6 +36,8 @@
 #include "src/core/types.h"
 #include "tlibs2/libs/qt/gl.h"
 
+#include "settings_common.h"
+
 
 
 // ----------------------------------------------------------------------------
@@ -130,15 +132,6 @@ extern int g_use_native_dialogs;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-struct SettingsVariable
-{
-	const char* description{};
-	const char* key{};
-	std::variant<t_real*, int*, unsigned int*> value{};
-	bool is_angle{false};
-};
-
-
 constexpr std::array<SettingsVariable, 23> g_settingsvariables
 {{
 	// epsilons and precisions
@@ -217,29 +210,34 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 	{
 		.description = "Polygon intersection method",
 		.key = "settings/poly_inters_method",
-		.value = &g_poly_intersection_method
+		.value = &g_poly_intersection_method,
+		.editor = SettingsVariableEditor::COMBOBOX,
 	},
 	{
 		.description = "Voronoi calculation backend",
 		.key = "settings/voronoi_backend",
-		.value = &g_voronoi_backend
+		.value = &g_voronoi_backend,
+		.editor = SettingsVariableEditor::COMBOBOX,
 	},
 	{
 		.description = "Use region function",
 		.key = "settings/use_region_function",
-		.value = &g_use_region_function
+		.value = &g_use_region_function,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 
 	// path options
 	{
 		.description = "Path finding strategy",
 		.key = "settings/path_finding_strategy",
-		.value = &g_pathstrategy
+		.value = &g_pathstrategy,
+		.editor = SettingsVariableEditor::COMBOBOX,
 	},
 	{
 		.description = "Verify generated path",
 		.key = "settings/verify_path",
-		.value = &g_verifypath
+		.value = &g_verifypath,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
 		.description = "Path tracker FPS",
@@ -256,24 +254,28 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 	{
 		.description = "Light follows cursor",
 		.key = "settings/light_follows_cursor",
-		.value = &g_light_follows_cursor
+		.value = &g_light_follows_cursor,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
 		.description = "Enable shadow rendering",
 		.key = "settings/enable_shadow_rendering",
-		.value = &g_enable_shadow_rendering
+		.value = &g_enable_shadow_rendering,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 
 	// screenshot options
 	{
 		.description = "Combine instrument/configuration space screenshots",
 		.key = "settings/combined_screenshots",
-		.value = &g_combined_screenshots
+		.value = &g_combined_screenshots,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
 		.description = "Automatically take screenshots (careful!)",
 		.key = "settings/automatic_screenshots",
-		.value = &g_automatic_screenshots
+		.value = &g_automatic_screenshots,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 }};
 // ----------------------------------------------------------------------------

@@ -65,6 +65,7 @@ public:
 
 protected:
 	virtual void accept() override;
+
 	void ApplySettings();
 	static void ApplyGuiSettings();
 

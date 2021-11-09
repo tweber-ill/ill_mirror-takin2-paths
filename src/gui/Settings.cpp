@@ -29,6 +29,7 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QComboBox>
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
@@ -65,9 +66,20 @@ static void add_table_item(QTableWidget *table)
 	if(var.is_angle)
 		finalval = finalval / tl2::pi<t_real>*180;
 
+	QTableWidgetItem *item = new NumericTableWidgetItem<t_value>(finalval, 10);
 	table->setItem((int)idx, 0, new QTableWidgetItem{var.description});
 	table->setItem((int)idx, 1, new QTableWidgetItem{type_str<t_value>});
-	table->setItem((int)idx, 2, new NumericTableWidgetItem<t_value>(finalval, 10));
+	table->setItem((int)idx, 2, item);
+
+	if(var.editor == SettingsVariableEditor::YESNO)
+	{
+		QComboBox *combo = new QComboBox(table);
+		combo->addItem("No");
+		combo->addItem("Yes");
+
+		combo->setCurrentIndex(finalval==0 ? 0 : 1);
+		table->setCellWidget((int)idx, 2, combo);
+	}
 }
 
 
@@ -130,7 +142,7 @@ static constexpr void get_settings_loop(
  * corresponding global variable and to the QSettings object
  */
 template<std::size_t idx>
-static void apply_settings_item(QTableWidget* table, QSettings *sett)
+static void apply_settings_item(QTableWidget *table, QSettings *sett)
 {
 	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
 	constexpr auto* value = std::get<var.value.index()>(var.value);
@@ -140,6 +152,14 @@ static void apply_settings_item(QTableWidget* table, QSettings *sett)
 		table->item((int)idx, 2))->GetValue();
 	if(var.is_angle)
 		finalval = finalval / 180.*tl2::pi<t_real>;
+
+	// alternatively use the value from the editor widget if available
+	if(var.editor == SettingsVariableEditor::YESNO)
+	{
+		QComboBox *combo = static_cast<QComboBox*>(
+			table->cellWidget((int)idx, 2));
+		finalval = (t_value)combo->currentIndex();
+	}
 
 	// set the global variable
 	*value = finalval;

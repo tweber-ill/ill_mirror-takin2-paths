@@ -32,6 +32,7 @@
 #include <variant>
 
 #include "src/core/types.h"
+#include "settings_common.h"
 
 
 
@@ -68,15 +69,6 @@ extern int g_use_native_dialogs;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-struct SettingsVariable
-{
-	const char* description{};
-	const char* key{};
-	std::variant<t_real*, int*, unsigned int*> value{};
-	bool is_angle{false};
-};
-
-
 constexpr std::array<SettingsVariable, 4> g_settingsvariables
 {{
 	// epsilon
