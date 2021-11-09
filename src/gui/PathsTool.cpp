@@ -1258,6 +1258,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuFile->addSeparator();
 	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
+	menuFile->addSeparator();
 	menuFile->addAction(actionScreenshot);
 	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();

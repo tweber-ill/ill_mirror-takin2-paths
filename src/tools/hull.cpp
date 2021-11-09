@@ -64,6 +64,9 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
 
+#define MAX_RECENT_FILES 16
+
+
 HullScene::HullScene(QWidget* parent) : QGraphicsScene(parent), m_parent{parent}
 {
 }
@@ -628,21 +631,6 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
 
-	if(m_sett.contains("wnd_geo"))
-	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
-		this->restoreGeometry(arr);
-	}
-	else
-	{
-		resize(1024, 768);
-	}
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
-	}
-
 	m_scene->SetCalculateHull(
 		m_sett.value("calc_hull", m_scene->GetCalculateHull()).toBool());
 	m_scene->SetCalculateVoronoiVertices(
@@ -670,100 +658,26 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// menu actions
 	QAction *actionNew = new QAction{QIcon::fromTheme("document-new"), "New", this};
-	connect(actionNew, &QAction::triggered, [this]()
-		{ m_scene->ClearVertices(); });
+	connect(actionNew, &QAction::triggered, this, &HullWnd::NewFile);
 
 	QAction *actionLoad = new QAction{QIcon::fromTheme("document-open"), "Open...", this};
-	connect(actionLoad, &QAction::triggered, [this]()
-	{
-		QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	connect(actionLoad, &QAction::triggered, this,
+		static_cast<void (HullWnd::*)()>(&HullWnd::OpenFile));
 
-		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", dirLast,
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ifstream ifstr(file.toStdString());
-			if(!ifstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for loading.");
-				return;
-			}
-
-			m_scene->ClearVertices();
-
-			ptree::ptree prop{};
-			ptree::read_xml(ifstr, prop);
-
-			std::size_t vertidx = 0;
-			while(true)
-			{
-				std::ostringstream ostrVert;
-				ostrVert << "voro2d.vertices." << vertidx;
-
-				auto vertprop = prop.get_child_optional(ostrVert.str());
-				if(!vertprop)
-					break;
-
-				auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
-				auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
-
-				if(!vertx || !verty)
-					break;
-
-				m_scene->AddVertex(QPointF{*vertx, *verty});
-
-				++vertidx;
-			}
-
-			if(vertidx > 0)
-			{
-				m_sett.setValue("cur_dir", QFileInfo(file).path());
-				m_scene->UpdateAll();
-			}
-			else
-			{
-				QMessageBox::warning(this, "Warning", "File contains no data.");
-			}
-		}
-	});
+	QAction *actionSave = new QAction{QIcon::fromTheme("document-save"), "Save", this};
+	connect(actionSave, &QAction::triggered, this,
+		static_cast<void (HullWnd::*)()>(&HullWnd::SaveFile));
 
 	QAction *actionSaveAs = new QAction{QIcon::fromTheme("document-save-as"), "Save as...", this};
-	connect(actionSaveAs, &QAction::triggered, [this]()
-	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Save Data", "",
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ofstream ofstr(file.toStdString());
-			if(!ofstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for saving.");
-				return;
-			}
-
-			ptree::ptree prop{};
-
-			std::size_t vertidx = 0;
-			for(const Vertex* vertex : m_scene->GetVertices())
-			{
-				QPointF vertexpos = vertex->scenePos();
-
-				std::ostringstream ostrX, ostrY;
-				ostrX << "voro2d.vertices." << vertidx << ".<xmlattr>.x";
-				ostrY << "voro2d.vertices." << vertidx << ".<xmlattr>.y";
-
-				prop.put<t_real>(ostrX.str(), vertexpos.x());
-				prop.put<t_real>(ostrY.str(), vertexpos.y());
-
-				++vertidx;
-			}
-
-			ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
-		}
-	});
+	connect(actionSaveAs, &QAction::triggered, this, &HullWnd::SaveFileAs);
 
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Export SVG", "",
+		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getSaveFileName(
+			this, "Export SVG", dirLast,
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -975,9 +889,23 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenu *menuTools = new QMenu{"Tools", this};
 	QMenu *menuHelp = new QMenu("Help", this);
 
+
+	// recent files
+	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
+	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
+
+	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
+	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetOpenFunc(&m_open_func);
+
+
+	// menu items
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
 	menuFile->addAction(actionLoad);
+	menuFile->addMenu(m_menuOpenRecent);
+	menuFile->addSeparator();
+	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
@@ -1030,7 +958,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
 	actionLoad->setShortcut(QKeySequence::Open);
-	//actionSave->setShortcut(QKeySequence::Save);
+	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
@@ -1048,6 +976,29 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuTools);
 	menuBar->addMenu(menuHelp);
 	setMenuBar(menuBar);
+
+
+	// ------------------------------------------------------------------------
+	// restore settings
+	if(m_sett.contains("wnd_geo"))
+	{
+		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		this->restoreGeometry(arr);
+	}
+	else
+	{
+		resize(1024, 768);
+	}
+	if(m_sett.contains("wnd_state"))
+	{
+		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
+		this->restoreState(arr);
+	}
+
+	// recent files
+	if(m_sett.contains("recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	// ------------------------------------------------------------------------
 
 
 	// connections
@@ -1070,7 +1021,6 @@ void HullWnd::SetStatusMessage(const QString& msg)
 
 void HullWnd::closeEvent(QCloseEvent *e)
 {
-	// ------------------------------------------------------------------------
 	// save settings
 	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
 	m_sett.setValue("wnd_geo", geo);
@@ -1080,7 +1030,10 @@ void HullWnd::closeEvent(QCloseEvent *e)
 	m_sett.setValue("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions());
 	m_sett.setValue("calc_delaunay", m_scene->GetCalculateDelaunay());
 	m_sett.setValue("calc_kruskal", m_scene->GetCalculateKruskal());
-	// ------------------------------------------------------------------------
+
+	// save recent files
+	m_recent.TrimEntries();
+	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
 
 	QMainWindow::closeEvent(e);
 }
@@ -1090,6 +1043,172 @@ HullWnd::~HullWnd()
 {
 }
 
+
+/**
+ * File -> New
+ */
+void HullWnd::NewFile()
+{
+	SetCurrentFile("");
+
+	m_scene->ClearVertices();
+}
+
+
+/**
+ * open file
+ */
+bool HullWnd::OpenFile(const QString& file)
+{
+	std::ifstream ifstr(file.toStdString());
+	if(!ifstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for loading.");
+		return false;
+	}
+
+	m_scene->ClearVertices();
+
+	ptree::ptree prop{};
+	ptree::read_xml(ifstr, prop);
+
+	std::size_t vertidx = 0;
+	while(true)
+	{
+		std::ostringstream ostrVert;
+		ostrVert << "voro2d.vertices." << vertidx;
+
+		auto vertprop = prop.get_child_optional(ostrVert.str());
+		if(!vertprop)
+			break;
+
+		auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
+		auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
+
+		if(!vertx || !verty)
+			break;
+
+		m_scene->AddVertex(QPointF{*vertx, *verty});
+
+		++vertidx;
+	}
+
+	if(vertidx > 0)
+	{
+		m_sett.setValue("recent_dir", QFileInfo(file).path());
+		m_scene->UpdateAll();
+
+		SetCurrentFile(file);
+		m_recent.AddRecentFile(file);
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning", "File contains no data.");
+		return false;
+	}
+
+	return true;
+}
+
+
+/**
+ * File -> Open
+ */
+void HullWnd::OpenFile()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getOpenFileName(this,
+		"Open Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		OpenFile(file);
+	}
+}
+
+
+/**
+ * save file
+ */
+bool HullWnd::SaveFile(const QString& file)
+{
+	std::ofstream ofstr(file.toStdString());
+	if(!ofstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for saving.");
+		return false;
+	}
+
+	ptree::ptree prop{};
+
+	std::size_t vertidx = 0;
+	for(const Vertex* vertex : m_scene->GetVertices())
+	{
+		QPointF vertexpos = vertex->scenePos();
+
+		std::ostringstream ostrX, ostrY;
+		ostrX << "voro2d.vertices." << vertidx << ".<xmlattr>.x";
+		ostrY << "voro2d.vertices." << vertidx << ".<xmlattr>.y";
+
+		prop.put<t_real>(ostrX.str(), vertexpos.x());
+		prop.put<t_real>(ostrY.str(), vertexpos.y());
+
+		++vertidx;
+	}
+
+	ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
+
+	SetCurrentFile(file);
+	m_recent.AddRecentFile(file);
+	m_sett.setValue("recent_dir", QFileInfo(file).path());
+
+	return true;
+}
+
+
+/**
+ * File -> Save
+ */
+void HullWnd::SaveFile()
+{
+	if(m_recent.GetCurFile() == "")
+		SaveFileAs();
+	else
+		SaveFile(m_recent.GetCurFile());
+}
+
+
+/**
+ * File -> Save As
+ */
+void HullWnd::SaveFileAs()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getSaveFileName(this,
+		"Save Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		SaveFile(file);
+	}
+}
+
+
+/**
+ * remember current file and set window title
+ */
+void HullWnd::SetCurrentFile(const QString &file)
+{
+	m_recent.SetCurFile(file);
+
+	/*static const QString title(PROG_TITLE);
+	if(m_recent.GetCurFile() == "")
+		this->setWindowTitle(title);
+	else
+		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());*/
+}
+
+
 // ----------------------------------------------------------------------------
 
 
@@ -1097,8 +1216,6 @@ HullWnd::~HullWnd()
 // ----------------------------------------------------------------------------
 HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 {
-	setWindowTitle("Convex Hull Calculation");
-
 	// ------------------------------------------------------------------------
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
@@ -1113,6 +1230,8 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 		resize(450, 400);
 	}
 	// ------------------------------------------------------------------------
+
+	setWindowTitle("Convex Hull Calculation");
 
 
 	// table
@@ -1204,7 +1323,7 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 		&HullDlg::DelTabItem);
 
 
-	// signals
+	// connect the signals
 	connect(tabBtnAdd, &QToolButton::clicked,
 		this, [this]() { this->AddTabItem(-1); });
 	connect(tabBtnDel, &QToolButton::clicked,

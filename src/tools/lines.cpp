@@ -66,6 +66,9 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 
+#define MAX_RECENT_FILES 16
+
+
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
 	ClearRegions();
@@ -897,26 +900,8 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	m_view{new LinesView{m_scene.get(), this}},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
-	// ------------------------------------------------------------------------
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
-
-	if(m_sett.contains("wnd_geo"))
-	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
-		this->restoreGeometry(arr);
-	}
-	else
-	{
-		resize(1024, 768);
-	}
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
-	}
-	// ------------------------------------------------------------------------
-
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 
@@ -932,176 +917,26 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// file menu
 	QAction *actionNew = new QAction{QIcon::fromTheme("document-new"), "New", this};
-	connect(actionNew, &QAction::triggered, [this]()
-	{
-		m_scene->ClearRegions();
-		m_scene->ClearGroups();
-		m_scene->ClearVertices();
-	});
+	connect(actionNew, &QAction::triggered, this, &LinesWnd::NewFile);
 
 	QAction *actionLoad = new QAction{QIcon::fromTheme("document-open"), "Open...", this};
-	connect(actionLoad, &QAction::triggered, [this]()
-	{
-		QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	connect(actionLoad, &QAction::triggered, this,
+		static_cast<void (LinesWnd::*)()>(&LinesWnd::OpenFile));
 
-		if(QString file = QFileDialog::getOpenFileName(this, "Open Data", dirLast,
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ifstream ifstr(file.toStdString());
-			if(!ifstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for loading.");
-				return;
-			}
-
-			m_scene->ClearRegions();
-			m_scene->ClearGroups();
-			m_scene->ClearVertices();
-
-			ptree::ptree prop{};
-			ptree::read_xml(ifstr, prop);
-
-			// read vertices
-			std::size_t vertidx = 0;
-			while(true)
-			{
-				std::ostringstream ostrVert;
-				ostrVert << "lines2d.vertices." << vertidx;
-
-				auto vertprop = prop.get_child_optional(ostrVert.str());
-				if(!vertprop)
-					break;
-
-				auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
-				auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
-
-				if(!vertx || !verty)
-					break;
-
-				m_scene->AddVertex(QPointF{*vertx, *verty});
-				++vertidx;
-			}
-
-			// read groups
-			std::size_t groupidx = 0;
-			while(true)
-			{
-				std::ostringstream ostrGroup;
-				ostrGroup << "lines2d.groups." << groupidx;
-
-				auto groupprop = prop.get_child_optional(ostrGroup.str());
-				if(!groupprop)
-					break;
-
-				auto beg = groupprop->get_optional<t_real>("begin");
-				auto end = groupprop->get_optional<t_real>("end");
-
-				if(beg && end)
-				{
-					auto group = std::make_pair(*beg, *end);
-					m_scene->AddGroup(std::move(group));
-				}
-
-				++groupidx;
-			}
-
-			m_scene->MakeRegionsFromGroups();
-
-			// read regions (if groups is not defined)
-			std::size_t regionidx = 0;
-			while(true)
-			{
-				std::ostringstream ostrRegion;
-				ostrRegion << "lines2d.regions." << regionidx;
-
-				auto regionprop = prop.get_child_optional(ostrRegion.str());
-				if(!regionprop)
-					break;
-
-				if(regionidx==0 && m_scene->GetRegions().size())
-				{
-					std::cerr << "Warning: A vertex group is already defined, ignoring regions." << std::endl;
-					break;
-				}
-
-				std::size_t regionvertidx = 0;
-				std::vector<typename LinesScene::t_vec> region;
-				while(true)
-				{
-					std::ostringstream ostrVert;
-					ostrVert << regionvertidx;
-
-					auto vertprop = regionprop->get_child_optional(ostrVert.str());
-					if(!vertprop)
-						break;
-
-					auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
-					auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
-
-					if(!vertx || !verty)
-						break;
-
-					region.emplace_back(tl2::create<LinesScene::t_vec>({ *vertx, *verty }));
-					++regionvertidx;
-				}
-
-				//std::reverse(region.begin(), region.end());
-				m_scene->AddRegion(std::move(region));
-				++regionidx;
-			}
-
-			if(vertidx > 0)
-			{
-				m_view->UpdateAll();
-				m_scene->UpdateAll();
-
-				m_sett.setValue("cur_dir", QFileInfo(file).path());
-			}
-			else
-			{
-				QMessageBox::warning(this, "Warning", "File contains no data.");
-			}
-		}
-	});
+	QAction *actionSave = new QAction{QIcon::fromTheme("document-save"), "Save", this};
+	connect(actionSave, &QAction::triggered, this,
+		static_cast<void (LinesWnd::*)()>(&LinesWnd::SaveFile));
 
 	QAction *actionSaveAs = new QAction{QIcon::fromTheme("document-save-as"), "Save as...", this};
-	connect(actionSaveAs, &QAction::triggered, [this]()
-	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Save Data", "",
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ofstream ofstr(file.toStdString());
-			if(!ofstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for saving.");
-				return;
-			}
-
-			ptree::ptree prop{};
-
-			std::size_t vertidx = 0;
-			for(const Vertex* vertex : m_scene->GetVertexElems())
-			{
-				QPointF vertexpos = vertex->scenePos();
-
-				std::ostringstream ostrX, ostrY;
-				ostrX << "lines2d.vertices." << vertidx << ".<xmlattr>.x";
-				ostrY << "lines2d.vertices." << vertidx << ".<xmlattr>.y";
-
-				prop.put<t_real>(ostrX.str(), vertexpos.x());
-				prop.put<t_real>(ostrY.str(), vertexpos.y());
-
-				++vertidx;
-			}
-
-			ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
-		}
-	});
+	connect(actionSaveAs, &QAction::triggered, this, &LinesWnd::SaveFileAs);
 
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Export SVG", "",
+		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getSaveFileName(this,
+			"Export SVG", dirLast,
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -1116,7 +951,10 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportGraph = new QAction{"Export Voronoi Graph...", this};
 	connect(actionExportGraph, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Export DOT", "",
+		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getSaveFileName(this,
+			"Export DOT", dirLast,
 			"DOT Files (*.dot);;All Files (* *.*)"); file!="")
 		{
 			const auto& graph = m_scene->GetVoroGraph();
@@ -1329,7 +1167,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
 	actionLoad->setShortcut(QKeySequence::Open);
-	//actionSave->setShortcut(QKeySequence::Save);
+	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
@@ -1346,9 +1184,23 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenu *menuVoro = new QMenu{"Voronoi Diagram Backends", this};
 	QMenu *menuHelp = new QMenu("Help", this);
 
+
+	// recent files
+	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
+	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
+
+	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
+	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetOpenFunc(&m_open_func);
+
+
+	// menu items
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
 	menuFile->addAction(actionLoad);
+	menuFile->addMenu(m_menuOpenRecent);
+	menuFile->addSeparator();
+	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
@@ -1405,6 +1257,29 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	setMenuBar(menuBar);
 
 
+	// ------------------------------------------------------------------------
+	// restore settings
+	if(m_sett.contains("wnd_geo"))
+	{
+		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		this->restoreGeometry(arr);
+	}
+	else
+	{
+		resize(1024, 768);
+	}
+	if(m_sett.contains("wnd_state"))
+	{
+		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
+		this->restoreState(arr);
+	}
+
+	// recent files
+	if(m_sett.contains("recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	// ------------------------------------------------------------------------
+
+
 	// connections
 	connect(m_view.get(), &LinesView::SignalMouseCoordinates,
 	[this](t_real x, t_real y, t_real vpx, t_real vpy, 
@@ -1449,6 +1324,246 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 
 /**
+ * File -> New
+ */
+void LinesWnd::NewFile()
+{
+	SetCurrentFile("");
+
+	m_scene->ClearRegions();
+	m_scene->ClearGroups();
+	m_scene->ClearVertices();
+}
+
+
+/**
+ * open file
+ */
+bool LinesWnd::OpenFile(const QString& file)
+{
+	std::ifstream ifstr(file.toStdString());
+	if(!ifstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for loading.");
+		return false;
+	}
+
+	m_scene->ClearRegions();
+	m_scene->ClearGroups();
+	m_scene->ClearVertices();
+
+	ptree::ptree prop{};
+	ptree::read_xml(ifstr, prop);
+
+	// read vertices
+	std::size_t vertidx = 0;
+	while(true)
+	{
+		std::ostringstream ostrVert;
+		ostrVert << "lines2d.vertices." << vertidx;
+
+		auto vertprop = prop.get_child_optional(ostrVert.str());
+		if(!vertprop)
+			break;
+
+		auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
+		auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
+
+		if(!vertx || !verty)
+			break;
+
+		m_scene->AddVertex(QPointF{*vertx, *verty});
+		++vertidx;
+	}
+
+	// read groups
+	std::size_t groupidx = 0;
+	while(true)
+	{
+		std::ostringstream ostrGroup;
+		ostrGroup << "lines2d.groups." << groupidx;
+
+		auto groupprop = prop.get_child_optional(ostrGroup.str());
+		if(!groupprop)
+			break;
+
+		auto beg = groupprop->get_optional<t_real>("begin");
+		auto end = groupprop->get_optional<t_real>("end");
+
+		if(beg && end)
+		{
+			auto group = std::make_pair(*beg, *end);
+			m_scene->AddGroup(std::move(group));
+		}
+
+		++groupidx;
+	}
+
+	m_scene->MakeRegionsFromGroups();
+
+	// read regions (if groups is not defined)
+	std::size_t regionidx = 0;
+	while(true)
+	{
+		std::ostringstream ostrRegion;
+		ostrRegion << "lines2d.regions." << regionidx;
+
+		auto regionprop = prop.get_child_optional(ostrRegion.str());
+		if(!regionprop)
+			break;
+
+		if(regionidx==0 && m_scene->GetRegions().size())
+		{
+			std::cerr << "Warning: A vertex group is already defined, ignoring regions." << std::endl;
+			break;
+		}
+
+		std::size_t regionvertidx = 0;
+		std::vector<typename LinesScene::t_vec> region;
+		while(true)
+		{
+			std::ostringstream ostrVert;
+			ostrVert << regionvertidx;
+
+			auto vertprop = regionprop->get_child_optional(ostrVert.str());
+			if(!vertprop)
+				break;
+
+			auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
+			auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
+
+			if(!vertx || !verty)
+				break;
+
+			region.emplace_back(tl2::create<LinesScene::t_vec>({ *vertx, *verty }));
+			++regionvertidx;
+		}
+
+		//std::reverse(region.begin(), region.end());
+		m_scene->AddRegion(std::move(region));
+		++regionidx;
+	}
+
+	if(vertidx > 0)
+	{
+		m_view->UpdateAll();
+		m_scene->UpdateAll();
+
+		SetCurrentFile(file);
+		m_recent.AddRecentFile(file);
+
+		m_sett.setValue("recent_dir", QFileInfo(file).path());
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning", "File contains no data.");
+		return false;
+	}
+
+	return true;
+}
+
+
+/**
+ * File -> Open
+ */
+void LinesWnd::OpenFile()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getOpenFileName(this,
+		"Open Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		OpenFile(file);
+	}
+}
+
+
+/**
+ * save file
+ */
+bool LinesWnd::SaveFile(const QString& file)
+{
+	std::ofstream ofstr(file.toStdString());
+	if(!ofstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for saving.");
+		return false;
+	}
+
+	ptree::ptree prop{};
+
+	std::size_t vertidx = 0;
+	for(const Vertex* vertex : m_scene->GetVertexElems())
+	{
+		QPointF vertexpos = vertex->scenePos();
+
+		std::ostringstream ostrX, ostrY;
+		ostrX << "lines2d.vertices." << vertidx << ".<xmlattr>.x";
+		ostrY << "lines2d.vertices." << vertidx << ".<xmlattr>.y";
+
+		prop.put<t_real>(ostrX.str(), vertexpos.x());
+		prop.put<t_real>(ostrY.str(), vertexpos.y());
+
+		++vertidx;
+	}
+
+	ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
+
+	SetCurrentFile(file);
+	m_recent.AddRecentFile(file);
+	m_sett.setValue("recent_dir", QFileInfo(file).path());
+
+	return true;
+}
+
+
+/**
+ * File -> Save
+ */
+void LinesWnd::SaveFile()
+{
+	if(m_recent.GetCurFile() == "")
+		SaveFileAs();
+	else
+		SaveFile(m_recent.GetCurFile());
+}
+
+
+/**
+ * File -> Save As
+ */
+void LinesWnd::SaveFileAs()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getSaveFileName(this,
+		"Save Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		SaveFile(file);
+	}
+}
+
+
+/**
+ * remember current file and set window title
+ */
+void LinesWnd::SetCurrentFile(const QString &file)
+{
+	m_recent.SetCurFile(file);
+
+	/*static const QString title(PROG_TITLE);
+	if(m_recent.GetCurFile() == "")
+		this->setWindowTitle(title);
+	else
+		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());*/
+}
+
+
+
+/**
  * update the text on the status line
  */
 void LinesWnd::SetStatusMessage(const QString& msg)
@@ -1482,12 +1597,14 @@ void LinesWnd::UpdateInfos()
 
 void LinesWnd::closeEvent(QCloseEvent *e)
 {
-	// ------------------------------------------------------------------------
 	// save settings
 	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
 	m_sett.setValue("wnd_geo", geo);
 	m_sett.setValue("wnd_state", state);
-	// ------------------------------------------------------------------------
+
+	// save recent files
+	m_recent.TrimEntries();
+	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
 
 	QMainWindow::closeEvent(e);
 }

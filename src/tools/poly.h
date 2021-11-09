@@ -34,6 +34,7 @@
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsItem>
+#include <QtWidgets/QMenu>
 #include <QtCore/QSettings>
 
 #include <memory>
@@ -45,12 +46,13 @@
 #include "vertex.h"
 #include "about.h"
 #include "Settings.h"
+#include "src/gui/Recent.h"
 
 #define GeoSettingsDlg SettingsDlg
 
 
 class PolyView : public QGraphicsView
-{Q_OBJECT
+{ Q_OBJECT
 public:
 	using t_vec = ::t_vec2;
 	using t_mat = ::t_mat22;
@@ -111,7 +113,7 @@ signals:
 
 
 class PolyWnd : public QMainWindow
-{
+{ Q_OBJECT
 public:
 	using QMainWindow::QMainWindow;
 
@@ -120,11 +122,22 @@ public:
 
 	void SetStatusMessage(const QString& msg);
 
-private:
+protected:
 	virtual void closeEvent(QCloseEvent *) override;
+	void SetCurrentFile(const QString &file);
 
 private:
 	QSettings m_sett{"geo_tools", "polygon"};
+
+	// recently opened files
+	QMenu *m_menuOpenRecent{ nullptr };
+	RecentFiles m_recent{};
+	// function to call for the recent file menu items
+	std::function<bool(const QString& filename)> m_open_func
+		= [this](const QString& filename) -> bool
+	{
+		return this->OpenFile(filename);
+	};
 
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
@@ -132,6 +145,21 @@ private:
 	std::shared_ptr<QGraphicsScene> m_scene{};
 	std::shared_ptr<PolyView> m_view{};
 	std::shared_ptr<QLabel> m_statusLabel{};
+
+protected slots:
+	// File -> New
+	void NewFile();
+
+	// File -> Open
+	void OpenFile();
+	bool OpenFile(const QString& filename);
+
+	// File -> Save
+	void SaveFile();
+	bool SaveFile(const QString& filename);
+
+	// File -> Save As
+	void SaveFileAs();
 };
 
 

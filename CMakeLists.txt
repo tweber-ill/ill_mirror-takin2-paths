@@ -346,6 +346,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi.h
@@ -359,6 +360,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
@@ -371,6 +373,7 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/tools/Settings.cpp src/tools/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
+		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h

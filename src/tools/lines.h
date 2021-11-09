@@ -36,6 +36,7 @@
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsItem>
+#include <QtWidgets/QMenu>
 
 #include <memory>
 #include <vector>
@@ -48,6 +49,7 @@
 #include "info.h"
 #include "about.h"
 #include "Settings.h"
+#include "src/gui/Recent.h"
 
 #define GeoSettingsDlg SettingsDlg
 
@@ -229,11 +231,22 @@ public:
 
 	void SetStatusMessage(const QString& msg);
 
-private:
+protected:
 	virtual void closeEvent(QCloseEvent *) override;
+	void SetCurrentFile(const QString &file);
 
 private:
 	QSettings m_sett{"geo_tools", "lines"};
+
+	// recently opened files
+	QMenu *m_menuOpenRecent{ nullptr };
+	RecentFiles m_recent{};
+        // function to call for the recent file menu items
+	std::function<bool(const QString& filename)> m_open_func
+		= [this](const QString& filename) -> bool
+	{
+		return this->OpenFile(filename);
+	};
 
 	std::shared_ptr<GeoInfoDlg> m_dlgInfo{};
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
@@ -243,7 +256,21 @@ private:
 	std::shared_ptr<LinesView> m_view{};
 	std::shared_ptr<QLabel> m_statusLabel{};
 
-public slots:
+protected slots:
+        // File -> New
+        void NewFile();
+
+        // File -> Open
+        void OpenFile();
+        bool OpenFile(const QString& filename);
+
+        // File -> Save
+        void SaveFile();
+        bool SaveFile(const QString& filename);
+
+        // File -> Save As
+        void SaveFileAs();
+
 	void UpdateInfos();
 };
 

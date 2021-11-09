@@ -51,6 +51,8 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/helper.h"
 
 
+#define MAX_RECENT_FILES 16
+
 
 // ----------------------------------------------------------------------------
 
@@ -404,28 +406,11 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	m_view{new PolyView{m_scene.get(), this}},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
-	// ------------------------------------------------------------------------
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
 
-	if(m_sett.contains("wnd_geo"))
-	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
-		this->restoreGeometry(arr);
-	}
-	else
-	{
-		resize(1024, 768);
-	}
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
-	}
-
 	m_view->SetSortVertices(
 		m_sett.value("sort_vertices", m_view->GetSortVertices()).toBool());
-	// ------------------------------------------------------------------------
 
 
 	m_view->setRenderHints(QPainter::Antialiasing);
@@ -442,92 +427,27 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	// menu actions
 	QAction *actionNew = new QAction{QIcon::fromTheme("document-new"), "New", this};
-	connect(actionNew, &QAction::triggered, [this]() { m_view->ClearVertices(); });
+	connect(actionNew, &QAction::triggered, this, &PolyWnd::NewFile);
 
 	QAction *actionLoad = new QAction{QIcon::fromTheme("document-open"), "Open...", this};
-	connect(actionLoad, &QAction::triggered, [this]()
-	{
-		if(QString file = QFileDialog::getOpenFileName(this, "Load Data", "",
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ifstream ifstr(file.toStdString());
-			if(!ifstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for loading.");
-				return;
-			}
+	connect(actionLoad, &QAction::triggered, this,
+		static_cast<void (PolyWnd::*)()>(&PolyWnd::OpenFile));
 
-			m_view->ClearVertices();
-
-			ptree::ptree prop{};
-			ptree::read_xml(ifstr, prop);
-
-			std::size_t vertidx = 0;
-			while(true)
-			{
-				std::ostringstream ostrVert;
-				ostrVert << "vis2d.vertices." << vertidx;
-
-				auto vertprop = prop.get_child_optional(ostrVert.str());
-				if(!vertprop)
-					break;
-
-				auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
-				auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
-
-				if(!vertx || !verty)
-					break;
-
-				m_view->AddVertex(QPointF{*vertx, *verty});
-
-				++vertidx;
-			}
-
-			if(vertidx > 0)
-				m_view->UpdateAll();
-			else
-				QMessageBox::warning(this, "Warning", "File contains no data.");
-		}
-	});
+	QAction *actionSave = new QAction{QIcon::fromTheme("document-save"), "Save", this};
+	connect(actionSave, &QAction::triggered, this,
+		static_cast<void (PolyWnd::*)()>(&PolyWnd::SaveFile));
 
 	QAction *actionSaveAs = new QAction{QIcon::fromTheme("document-save-as"), "Save as...", this};
-	connect(actionSaveAs, &QAction::triggered, [this]()
-	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Save Data", "",
-			"XML Files (*.xml);;All Files (* *.*)"); file!="")
-		{
-			std::ofstream ofstr(file.toStdString());
-			if(!ofstr)
-			{
-				QMessageBox::critical(this, "Error", "File could not be opened for saving.");
-				return;
-			}
-
-			ptree::ptree prop{};
-
-			std::size_t vertidx = 0;
-			for(const Vertex* vertex : m_view->GetVertexElems())
-			{
-				QPointF vertexpos = vertex->scenePos();
-
-				std::ostringstream ostrX, ostrY;
-				ostrX << "vis2d.vertices." << vertidx << ".<xmlattr>.x";
-				ostrY << "vis2d.vertices." << vertidx << ".<xmlattr>.y";
-
-				prop.put<t_real>(ostrX.str(), vertexpos.x());
-				prop.put<t_real>(ostrY.str(), vertexpos.y());
-
-				++vertidx;
-			}
-
-			ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
-		}
-	});
+	connect(actionSaveAs, &QAction::triggered, this,
+		static_cast<void (PolyWnd::*)()>(&PolyWnd::SaveFileAs));
 
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		if(QString file = QFileDialog::getSaveFileName(this, "Export SVG", "",
+		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+		if(QString file = QFileDialog::getSaveFileName(this,
+			"Export SVG", dirLast,
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -643,7 +563,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	// shortcuts
 	actionNew->setShortcut(QKeySequence::New);
 	actionLoad->setShortcut(QKeySequence::Open);
-	//actionSave->setShortcut(QKeySequence::Save);
+	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
@@ -657,9 +577,23 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	QMenu *menuCalc = new QMenu{"Calculate", this};
 	QMenu *menuHelp = new QMenu("Help", this);
 
+
+	// recent files
+	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
+	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
+
+	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
+	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetOpenFunc(&m_open_func);
+
+
+	// menu items
 	menuFile->addAction(actionNew);
 	menuFile->addSeparator();
 	menuFile->addAction(actionLoad);
+	menuFile->addMenu(m_menuOpenRecent);
+	menuFile->addSeparator();
+	menuFile->addAction(actionSave);
 	menuFile->addAction(actionSaveAs);
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
@@ -694,6 +628,30 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	setMenuBar(menuBar);
 
 
+	// ------------------------------------------------------------------------
+	// restore settings
+	if(m_sett.contains("wnd_geo"))
+	{
+		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		this->restoreGeometry(arr);
+	}
+	else
+	{
+		resize(1024, 768);
+	}
+
+	if(m_sett.contains("wnd_state"))
+	{
+		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
+		this->restoreState(arr);
+	}
+
+	// recent files
+	if(m_sett.contains("recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	// ------------------------------------------------------------------------
+
+
 	// connections
 	connect(m_view.get(), &PolyView::SignalMouseCoordinates, [this](double x, double y) -> void
 	{
@@ -707,6 +665,171 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 }
 
 
+/**
+ * File -> New
+ */
+void PolyWnd::NewFile()
+{
+	SetCurrentFile("");
+	m_view->ClearVertices();
+}
+
+
+/**
+ * open file
+ */
+bool PolyWnd::OpenFile(const QString& file)
+{
+	std::ifstream ifstr(file.toStdString());
+	if(!ifstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for loading.");
+		return false;
+	}
+
+	m_view->ClearVertices();
+
+	ptree::ptree prop{};
+	ptree::read_xml(ifstr, prop);
+
+	std::size_t vertidx = 0;
+	while(true)
+	{
+		std::ostringstream ostrVert;
+		ostrVert << "vis2d.vertices." << vertidx;
+
+		auto vertprop = prop.get_child_optional(ostrVert.str());
+		if(!vertprop)
+			break;
+
+		auto vertx = vertprop->get_optional<t_real>("<xmlattr>.x");
+		auto verty = vertprop->get_optional<t_real>("<xmlattr>.y");
+
+		if(!vertx || !verty)
+			break;
+
+		m_view->AddVertex(QPointF{*vertx, *verty});
+
+		++vertidx;
+	}
+
+	if(vertidx > 0)
+	{
+		m_view->UpdateAll();
+
+		SetCurrentFile(file);
+		m_recent.AddRecentFile(file);
+
+		m_sett.setValue("recent_dir", QFileInfo(file).path());
+	}
+	else
+	{
+		QMessageBox::warning(this, "Warning", "File contains no data.");
+		return false;
+	}
+
+	return true;
+}
+
+
+/**
+ * File -> Open
+ */
+void PolyWnd::OpenFile()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getOpenFileName(this,
+		"Load Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		OpenFile(file);
+	}
+}
+
+
+/**
+ * save file
+ */
+bool PolyWnd::SaveFile(const QString& file)
+{
+	std::ofstream ofstr(file.toStdString());
+	if(!ofstr)
+	{
+		QMessageBox::critical(this, "Error", "File could not be opened for saving.");
+		return false;
+	}
+
+	ptree::ptree prop{};
+
+	std::size_t vertidx = 0;
+	for(const Vertex* vertex : m_view->GetVertexElems())
+	{
+		QPointF vertexpos = vertex->scenePos();
+
+		std::ostringstream ostrX, ostrY;
+		ostrX << "vis2d.vertices." << vertidx << ".<xmlattr>.x";
+		ostrY << "vis2d.vertices." << vertidx << ".<xmlattr>.y";
+
+		prop.put<t_real>(ostrX.str(), vertexpos.x());
+		prop.put<t_real>(ostrY.str(), vertexpos.y());
+
+		++vertidx;
+	}
+
+	ptree::write_xml(ofstr, prop, ptree::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
+
+	SetCurrentFile(file);
+	m_recent.AddRecentFile(file);
+	m_sett.setValue("recent_dir", QFileInfo(file).path());
+
+	return true;
+}
+
+
+/**
+ * File -> Save
+ */
+void PolyWnd::SaveFile()
+{
+	if(m_recent.GetCurFile() == "")
+		SaveFileAs();
+	else
+		SaveFile(m_recent.GetCurFile());
+}
+
+
+/**
+ * File -> Save As
+ */
+void PolyWnd::SaveFileAs()
+{
+	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+
+	if(QString file = QFileDialog::getSaveFileName(this,
+		"Save Data", dirLast,
+		"XML Files (*.xml);;All Files (* *.*)"); file!="")
+	{
+		SaveFile(file);
+	}
+}
+
+
+/**
+ * remember current file and set window title
+ */
+void PolyWnd::SetCurrentFile(const QString &file)
+{
+	m_recent.SetCurFile(file);
+
+	/*static const QString title(PROG_TITLE);
+	if(m_recent.GetCurFile() == "")
+		this->setWindowTitle(title);
+	else
+		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());*/
+}
+
+
 void PolyWnd::SetStatusMessage(const QString& msg)
 {
 	m_statusLabel->setText(msg);
@@ -715,13 +838,15 @@ void PolyWnd::SetStatusMessage(const QString& msg)
 
 void PolyWnd::closeEvent(QCloseEvent *e)
 {
-	// ------------------------------------------------------------------------
 	// save settings
 	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
 	m_sett.setValue("wnd_geo", geo);
 	m_sett.setValue("wnd_state", state);
 	m_sett.setValue("sort_vertices", m_view->GetSortVertices());
-	// ------------------------------------------------------------------------
+
+	// save recent files
+	m_recent.TrimEntries();
+	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
 
 	QMainWindow::closeEvent(e);
 }

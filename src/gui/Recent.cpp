@@ -71,11 +71,20 @@ void RecentFiles::RebuildRecentFiles()
 		// remove recent file entries which do not exist anymore
 		if(!QFile::exists(filename))
 		{
+			// current iterator position
+			std::ptrdiff_t positer = iter - m_recentFiles.rbegin();
+
 			// get corresponding forward iterator
 			auto iter_fwd = (iter+1).base();
-			++iter;
-			m_recentFiles.erase(iter_fwd);
-			continue;
+			iter_fwd = m_recentFiles.erase(iter_fwd);
+
+			// restore iterator position
+			iter = m_recentFiles.rbegin() + positer;
+
+			if(iter != m_recentFiles.rend())
+				continue;
+			else
+				break;
 		}
 
 		auto *acFile = new QAction(

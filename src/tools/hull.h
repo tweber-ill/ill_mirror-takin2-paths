@@ -41,7 +41,7 @@
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QPlainTextEdit>
 #include <QtWidgets/QCheckBox>
-#include <QtSvg/QSvgGenerator>
+#include <QtWidgets/QMenu>
 
 #include <memory>
 #include <unordered_set>
@@ -50,6 +50,7 @@
 #include "vertex.h"
 #include "about.h"
 #include "Settings.h"
+#include "src/gui/Recent.h"
 
 #define GeoSettingsDlg SettingsDlg
 
@@ -80,7 +81,7 @@ enum class SpanCalculationMethod
 
 
 class HullScene : public QGraphicsScene
-{
+{ Q_OBJECT
 public:
 	using t_vec = ::t_vec2;
 	using t_vec_dyn = ::t_vec;
@@ -141,7 +142,7 @@ private:
 
 
 class HullView : public QGraphicsView
-{Q_OBJECT
+{ Q_OBJECT
 public:
 	HullView(HullScene *scene=nullptr, QWidget *parent=nullptr);
 	virtual ~HullView();
@@ -173,7 +174,7 @@ signals:
  * convex hull calculation dialog
  */
 class HullDlg : public QDialog
-{
+{ Q_OBJECT
 public:
 	using t_vec = ::t_vec;
 	using t_mat = ::t_mat;
@@ -220,7 +221,7 @@ private:
  * main window
  */
 class HullWnd : public QMainWindow
-{
+{ Q_OBJECT
 public:
 	using QMainWindow::QMainWindow;
 
@@ -231,9 +232,35 @@ public:
 
 protected:
 	virtual void closeEvent(QCloseEvent *) override;
+	void SetCurrentFile(const QString &file);
+
+protected slots:
+	// File -> New
+	void NewFile();
+
+	// File -> Open
+	void OpenFile();
+	bool OpenFile(const QString& filename);
+
+	// File -> Save
+	void SaveFile();
+	bool SaveFile(const QString& filename);
+
+	// File -> Save As
+	void SaveFileAs();
 
 private:
 	QSettings m_sett{"geo_tools", "hull"};
+
+	// recently opened files
+	QMenu *m_menuOpenRecent{ nullptr };
+	RecentFiles m_recent{};
+	// function to call for the recent file menu items
+	std::function<bool(const QString& filename)> m_open_func
+		= [this](const QString& filename) -> bool
+	{
+		return this->OpenFile(filename);
+	};
 
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
