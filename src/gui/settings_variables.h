@@ -50,6 +50,9 @@ extern std::string g_apppath;
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;
 
+// maximum number of recent files
+extern unsigned int g_maxnum_recents;
+
 
 // number precisions
 extern int g_prec, g_prec_gui;
@@ -136,7 +139,7 @@ struct SettingsVariable
 };
 
 
-constexpr std::array<SettingsVariable, 22> g_settingsvariables
+constexpr std::array<SettingsVariable, 23> g_settingsvariables
 {{
 	// epsilons and precisions
 	{.description = "Calculation epsilon", .key = "settings/eps", .value = &g_eps,},
@@ -150,6 +153,8 @@ constexpr std::array<SettingsVariable, 22> g_settingsvariables
 
 	// threading options
 	{.description = "Maximum number of threads", .key = "settings/maxnum_threads", .value = &g_maxnum_threads},
+	// file options
+	{.description = "Maximum number of recent files", .key = "settings/maxnum_recents", .value = &g_maxnum_recents},
 
 	// angle options
 	{.description = "Sample rotation offset", .key = "settings/a3_offs", .value = &g_a3_offs, .is_angle = true},

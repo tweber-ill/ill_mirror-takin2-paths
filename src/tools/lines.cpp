@@ -66,9 +66,6 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 
-#define MAX_RECENT_FILES 16
-
-
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
 	ClearRegions();
@@ -1190,7 +1187,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
 	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
-	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetMaxRecentFiles(g_maxnum_recents);
 	m_recent.SetOpenFunc(&m_open_func);
 
 

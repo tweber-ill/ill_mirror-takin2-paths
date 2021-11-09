@@ -51,9 +51,6 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/helper.h"
 
 
-#define MAX_RECENT_FILES 16
-
-
 // ----------------------------------------------------------------------------
 
 PolyView::PolyView(QGraphicsScene *scene, QWidget *parent) : QGraphicsView(scene, parent),
@@ -583,7 +580,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
 	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
-	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetMaxRecentFiles(g_maxnum_recents);
 	m_recent.SetOpenFunc(&m_open_func);
 
 
@@ -671,6 +668,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 void PolyWnd::NewFile()
 {
 	SetCurrentFile("");
+
 	m_view->ClearVertices();
 }
 

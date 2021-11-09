@@ -44,7 +44,6 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
 
-#define MAX_RECENT_FILES 16
 #define PROG_TITLE "Triple-Axis Path Calculator"
 
 
@@ -1183,7 +1182,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
 	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
-	m_recent.SetMaxRecentFiles(MAX_RECENT_FILES);
+	m_recent.SetMaxRecentFiles(g_maxnum_recents);
 	m_recent.SetOpenFunc(&m_open_func);
 
 	actionSettings->setMenuRole(QAction::PreferencesRole);

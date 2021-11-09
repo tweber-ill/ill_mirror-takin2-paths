@@ -42,6 +42,9 @@ std::string g_apppath = ".";
 // maximum number of threads
 unsigned int g_maxnum_threads = 4;
 
+// maximum number of recent files
+unsigned int g_maxnum_recents = 16;
+
 
 // epsilons and precisions
 int g_prec = 6;
