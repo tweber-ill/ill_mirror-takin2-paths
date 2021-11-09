@@ -230,9 +230,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
 
-	QAction *acQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
-	acQuit->setShortcut(QKeySequence::Quit);
-	acQuit->setMenuRole(QAction::QuitRole);
+	QAction *acQuit = new QAction(QIcon::fromTheme("window-close"), "Close", menuFile);
+	acQuit->setShortcut(QKeySequence::Close);
+	//acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
 
 

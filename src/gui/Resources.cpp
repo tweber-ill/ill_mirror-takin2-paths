@@ -33,8 +33,7 @@
  */
 void Resources::AddPath(const std::string& pathname)
 {
-	fs::path path{pathname};
-	m_paths.push_back(path);
+	m_paths.push_back(pathname);
 }
 
 

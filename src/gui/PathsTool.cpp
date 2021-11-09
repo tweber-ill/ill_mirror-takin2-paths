@@ -1937,6 +1937,9 @@ void PathsTool::CalculatePathMesh()
 				return; \
 			}
 
+		// invalidate the current mesh
+		ValidatePathMesh(false);
+
 		const auto& instr = m_instrspace.GetInstrument();
 
 		// get the angular limits from the instrument model
@@ -2010,8 +2013,9 @@ void PathsTool::CalculatePathMesh()
 
 		CHECK_STOP
 
-		SetTmpStatus("Path mesh calculated.");
+		// validate the new path mesh
 		ValidatePathMesh(true);
+		SetTmpStatus("Path mesh calculated.");
 	});
 
 	// block till the calculations are finished
