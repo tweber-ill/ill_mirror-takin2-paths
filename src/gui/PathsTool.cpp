@@ -1974,6 +1974,7 @@ void PathsTool::CalculatePathMesh()
 			g_a2_delta, g_a4_delta,
 			starta2, enda2, starta4, enda4))
 		{
+			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Configuration space calculation failed.");
 			return;
 		}
@@ -1983,6 +1984,7 @@ void PathsTool::CalculatePathMesh()
 		SetTmpStatus("Calculating wall positions index tree.", 0);
 		if(!m_pathsbuilder.CalculateWallsIndexTree())
 		{
+			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Wall positions index tree calculation failed.");
 			return;
 		}
@@ -1992,6 +1994,7 @@ void PathsTool::CalculatePathMesh()
 		SetTmpStatus("Calculating obstacle contour lines.", 0);
 		if(!m_pathsbuilder.CalculateWallContours(true, false))
 		{
+			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Obstacle contour lines calculation failed.");
 			return;
 		}
@@ -2001,6 +2004,7 @@ void PathsTool::CalculatePathMesh()
 		SetTmpStatus("Calculating line segments.", 0);
 		if(!m_pathsbuilder.CalculateLineSegments(g_use_region_function!=0))
 		{
+			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Line segment calculation failed.");
 			return;
 		}
@@ -2016,6 +2020,7 @@ void PathsTool::CalculatePathMesh()
 
 		if(!m_pathsbuilder.CalculateVoronoi(false, backend, g_use_region_function!=0))
 		{
+			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Voronoi regions calculation failed.");
 			return;
 		}
