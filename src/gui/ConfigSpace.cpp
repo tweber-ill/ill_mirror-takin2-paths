@@ -34,6 +34,8 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QThread>
 
+#include <QtGui/QClipboard>
+
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
@@ -200,6 +202,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu
 	// ------------------------------------------------------------------------
 	QMenu *menuFile = new QMenu("File", this);
+	QMenu *menuEdit = new QMenu("Edit", this);
 	QMenu *menuView = new QMenu("View", this);
 	QMenu *menuMeshOptions = new QMenu("Mesh Options", this);
 	QMenu *menuPathOptions = new QMenu("Path Options", this);
@@ -208,6 +211,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// file
 	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
+	acSavePDF->setShortcut(QKeySequence::Save);
 	menuFile->addAction(acSavePDF);
 
 	QAction *acSaveLines = new QAction("Save Contour Lines...", menuFile);
@@ -232,8 +236,13 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	QAction *acQuit = new QAction(QIcon::fromTheme("window-close"), "Close", menuFile);
 	acQuit->setShortcut(QKeySequence::Close);
-	//acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
+
+
+	// edit
+	QAction *acCopy = new QAction("Copy Figure", menuEdit);
+	acCopy->setShortcut(QKeySequence::Copy);
+	menuEdit->addAction(acCopy);
 
 
 	// path mesh options
@@ -343,6 +352,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu bar
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuEdit);
 	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuMeshOptions);
 	menuBar->addMenu(menuPathOptions);
@@ -632,6 +642,10 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
 	connect(acSaveGraph, &QAction::triggered, this, saveGraph);
 	connect(acQuit, &QAction::triggered, this, &ConfigSpaceDlg::accept);
+
+
+	// edit
+	connect(acCopy, &QAction::triggered, this, &ConfigSpaceDlg::CopyFigure);
 
 
 	// calculate
@@ -1201,10 +1215,30 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 }
 
 
+/**
+ * save the configuration space figure to a PDF file
+ */
 bool ConfigSpaceDlg::SaveFigure(const QString& filename)
 {
 	if(!m_plot)
 		return false;
 
 	return m_plot->savePdf(filename);
+}
+
+
+/**
+ * copy the configuration space figure to the clipboard
+ */
+bool ConfigSpaceDlg::CopyFigure()
+{
+	QClipboard *clp = QGuiApplication::clipboard();
+	if(!m_plot || !clp)
+		return false;
+
+	QPixmap pix = m_plot->toPixmap();
+	QImage img = pix.toImage();
+	clp->setImage(img);
+
+	return true;
 }

@@ -146,6 +146,7 @@ protected slots:
 
 public slots:
 	bool SaveFigure(const QString& file);
+	bool CopyFigure();
 };
 
 

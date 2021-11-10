@@ -31,6 +31,7 @@
 
 #include "XtalConfigSpace.h"
 
+#include <QtGui/QClipboard>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
@@ -162,17 +163,22 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// menu
 	// ------------------------------------------------------------------------
 	QMenu *menuFile = new QMenu("File", this);
+	QMenu *menuEdit = new QMenu("Edit", this);
 	QMenu *menuView = new QMenu("View", this);
 
 	QAction *acSavePDF = new QAction("Save Figure...", menuFile);
+	acSavePDF->setShortcut(QKeySequence::Save);
 	menuFile->addAction(acSavePDF);
 	menuFile->addSeparator();
 
 	QAction *acQuit = new QAction(QIcon::fromTheme("window-close"), "Close", menuFile);
 	acQuit->setShortcut(QKeySequence::Close);
-	//acQuit->setMenuRole(QAction::QuitRole);
 	menuFile->addAction(acQuit);
 
+	QAction *acCopy = new QAction("Copy Figure", menuEdit);
+	acCopy->setShortcut(QKeySequence::Copy);
+	menuEdit->addAction(acCopy);
+	
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);
@@ -183,6 +189,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
+	menuBar->addMenu(menuEdit);
 	menuBar->addMenu(menuView);
 	grid->setMenuBar(menuBar);
 	// ------------------------------------------------------------------------
@@ -202,6 +209,18 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 		if(this->m_plot->savePdf(filename))
 			this->m_sett->setValue("xtalconfigspace/cur_dir", QFileInfo(filename).path());
+	};
+
+	// copy figure to clipboard
+	auto copyFigure = [this]()
+	{
+		QClipboard *clp = QGuiApplication::clipboard();
+		if(!m_plot || !clp)
+			return;
+
+		QPixmap pix = m_plot->toPixmap();
+		QImage img = pix.toImage();
+		clp->setImage(img);
 	};
 	// ------------------------------------------------------------------------
 
@@ -271,6 +290,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	});
 
 	connect(acSavePDF, &QAction::triggered, this, savePDF);
+	connect(acCopy, &QAction::triggered, this, copyFigure);
 	connect(btnSave, &QPushButton::clicked, savePDF);
 	connect(btnCalc, &QPushButton::clicked, this, &XtalConfigSpaceDlg::Calculate);
 	connect(btnClose, &QPushButton::clicked, this, &XtalConfigSpaceDlg::accept);
