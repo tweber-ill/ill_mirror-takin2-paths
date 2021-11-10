@@ -152,18 +152,50 @@ static constexpr void get_settings_loop(
 
 
 /**
- * restore the current settings value from its default value
+ * save the current settings value as its default value
  */
 template<std::size_t idx>
-static void restore_default_value()
+static void save_default_value(
+	std::unordered_map<std::string, SettingsVariable::t_variant>& map)
 {
 	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
 	constexpr auto* value = std::get<var.value.index()>(var.value);
-	//using t_value = std::decay_t<decltype(*value)>;
 
-	constexpr const auto* def_value = std::get<var.default_value.index()>(var.default_value);
-	if(def_value)
-		*value = *def_value;
+	map.insert_or_assign(var.key, *value);
+}
+
+
+/**
+ * save the current settings values as their default values
+ */
+template<std::size_t ...seq>
+static constexpr void save_default_values_loop(
+	const std::index_sequence<seq...>&,
+	std::unordered_map<std::string, SettingsVariable::t_variant>& map)
+{
+	// a sequence of function calls
+	( (save_default_value<seq>(map)), ... );
+}
+
+
+/**
+ * restore the current settings value from its default value
+ */
+template<std::size_t idx>
+static void restore_default_value(
+	const std::unordered_map<std::string, SettingsVariable::t_variant>& map)
+{
+	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
+	constexpr auto* value = std::get<var.value.index()>(var.value);
+	using t_value = std::decay_t<decltype(*value)>;
+
+	// does the defaults map have this key?
+	if(auto iter = map.find(std::string{var.key}); iter!=map.end())
+	{
+		// does the settings variable variant hold this type?
+		if(std::holds_alternative<t_value>(iter->second))
+			*value = std::get<t_value>(iter->second);
+	}
 }
 
 
@@ -172,10 +204,11 @@ static void restore_default_value()
  */
 template<std::size_t ...seq>
 static constexpr void restore_default_values_loop(
-	const std::index_sequence<seq...>&)
+	const std::index_sequence<seq...>&,
+	const std::unordered_map<std::string, SettingsVariable::t_variant>& map)
 {
 	// a sequence of function calls
-	( (restore_default_value<seq>()), ... );
+	( (restore_default_value<seq>(map)), ... );
 }
 
 
@@ -224,6 +257,15 @@ static constexpr void apply_settings_loop(
 	// a sequence of function calls
 	( (apply_settings_item<seq>(table, sett)), ... );
 }
+
+
+
+// ----------------------------------------------------------------------------
+// settings dialog
+// ----------------------------------------------------------------------------
+
+// default setting values
+std::unordered_map<std::string, SettingsVariable::t_variant> SettingsDlg::s_defaults = {};
 
 
 SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
@@ -466,6 +508,14 @@ void SettingsDlg::PopulateSettingsTable()
  */
 void SettingsDlg::ReadSettings(QSettings* sett)
 {
+	// save the initial values as default settings
+	static bool first_run = true;
+	if(first_run)
+	{
+		SaveDefaultSettings();
+		first_run = false;
+	}
+
 	if(!sett)
 		return;
 
@@ -510,12 +560,22 @@ void SettingsDlg::ApplySettings()
 
 
 /**
+ * save the current setting values as default values
+ */
+void SettingsDlg::SaveDefaultSettings()
+{
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	save_default_values_loop(seq, s_defaults);
+}
+
+
+/**
  * 'Restore Defaults' was clicked, restore original settings
  */
 void SettingsDlg::RestoreDefaultSettings()
 {
 	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
-	restore_default_values_loop(seq);
+	restore_default_values_loop(seq, s_defaults);
 
 	// re-populte the settings table
 	PopulateSettingsTable();
@@ -568,3 +628,4 @@ void SettingsDlg::accept()
 
 	QDialog::accept();
 }
+// ----------------------------------------------------------------------------

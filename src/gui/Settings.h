@@ -34,8 +34,12 @@
 #include <QtWidgets/QCheckBox>
 
 #include <string>
+#include <variant>
+#include <unordered_map>
+
 #include "tlibs2/libs/qt/gl.h"
 #include "src/core/types.h"
+#include "settings_common.h"
 
 
 /**
@@ -61,6 +65,7 @@ public:
 	const SettingsDlg& operator=(const SettingsDlg&) = delete;
 
 	static void ReadSettings(QSettings* sett);
+	static void SaveDefaultSettings();
 
 
 protected:
@@ -81,6 +86,9 @@ private:
 	QLineEdit *m_editFont{nullptr};
 	QCheckBox *m_checkMenubar{nullptr};
 	QCheckBox *m_checkDialogs{nullptr};
+
+	// default setting values
+	static std::unordered_map<std::string, SettingsVariable::t_variant> s_defaults;
 
 
 signals:

@@ -45,12 +45,13 @@ enum class SettingsVariableEditor
 
 struct SettingsVariable
 {
+	using t_variant = std::variant<t_real, int, unsigned int>;
+	using t_variant_ptr = std::variant<t_real*, int*, unsigned int*>;
+
 	const char* description{};
 	const char* key{};
 
-	std::variant<t_real*, int*, unsigned int*> value{};
-	std::variant<t_real*, int*, unsigned int*> default_value{};
-
+	t_variant_ptr value{};
 	bool is_angle{false};
 
 	SettingsVariableEditor editor{SettingsVariableEditor::NONE};
