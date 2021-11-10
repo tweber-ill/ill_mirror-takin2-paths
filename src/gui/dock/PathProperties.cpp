@@ -281,7 +281,7 @@ void PathPropertiesWidget::PathMeshCalculation(CalculationState state, t_real pr
 		}
 
 		case CalculationState::FAILED:
-		case CalculationState::SUCCESS:
+		case CalculationState::SUCCEEDED:
 		{
 			m_btnCalcMesh->setText("Calculate Path Mesh");
 			m_btnCalcMesh->setEnabled(true);

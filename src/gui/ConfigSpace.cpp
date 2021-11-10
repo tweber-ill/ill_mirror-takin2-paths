@@ -1212,8 +1212,8 @@ bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progres
 
 	RedrawVoronoiPlot();
 
-	if(state == CalculationState::SUCCESS ||
-		state == CalculationState::STEP_SUCCESS ||
+	if(state == CalculationState::SUCCEEDED ||
+		state == CalculationState::STEP_SUCCEEDED ||
 		state == CalculationState::FAILED)
 	{
 		m_progress->reset();

@@ -125,8 +125,8 @@ enum class CalculationState
 
 	FAILED,
 
-	STEP_SUCCESS,
-	SUCCESS,
+	STEP_SUCCEEDED,
+	SUCCEEDED,
 };
 
 

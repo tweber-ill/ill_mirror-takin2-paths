@@ -113,7 +113,7 @@ void PathsBuilder::AddConsoleProgressHandler()
 			statedescr = " -- START";
 		else if(state == CalculationState::FAILED)
 			statedescr = " -- FAIL";
-		else if(state == CalculationState::SUCCESS)
+		else if(state == CalculationState::SUCCEEDED)
 			statedescr = " -- SUCCESS";
 
 		std::cout << std::fixed << "["
@@ -242,7 +242,7 @@ void PathsBuilder::StartPathMeshWorkflow()
  */
 void PathsBuilder::FinishPathMeshWorkflow(bool success)
 {
-	CalculationState state = success ? CalculationState::SUCCESS : CalculationState::FAILED;
+	CalculationState state = success ? CalculationState::SUCCEEDED : CalculationState::FAILED;
 	(*m_sigProgress)(state, 1, "Workflow has finished.");
 }
 
@@ -385,7 +385,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	}
 
 	pool.join();
-	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, ostrmsg.str());
+	(*m_sigProgress)(CalculationState::STEP_SUCCEEDED, 1, ostrmsg.str());
 
 	//std::cout << "pixels total: " << img_h*img_w << ", calculated: " << num_pixels << std::endl;
 	return num_pixels == img_h*img_w;
@@ -461,7 +461,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 		m_wallcontours = std::move(splitcontours);
 	}
 
-	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCEEDED, 1, message);
 	return true;
 }
 
@@ -597,7 +597,7 @@ bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 		}
 	}
 
-	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCEEDED, 1, message);
 	return true;
 }
 
@@ -653,7 +653,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	}
 #endif
 
-	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCEEDED, 1, message);
 	return true;
 }
 
