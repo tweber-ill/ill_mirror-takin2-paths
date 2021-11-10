@@ -69,6 +69,8 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 
 		// find the license file
 		std::string license_file = g_res.FindResource("LICENSE");
+		if(license_file == "")
+			license_file = g_res.FindResource("LICENSE.txt");
 		auto [license_ok, license_text] = tl2::load_file<std::string>(license_file);
 
 		if(license_file == "" || !license_ok)
@@ -127,7 +129,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 
 				ostr << "<a name=\"" << libname << "\"/>\n";
 				ostr << "<h2>License for \"" << libname << "\"</h2>\n";
-	
+
 				ostr << "<p><pre>\n";
 				ostr << license_text;
 				ostr << "</pre></p>\n";
@@ -160,7 +162,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 
 	//QSpacerItem *spacer_end = new QSpacerItem(1, 4, QSizePolicy::Minimum, QSizePolicy::Fixed);
 	//grid_main->addItem(spacer_end, y_main++,0,1,1);
-	
+
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);
 	grid_main->addWidget(buttons, y_main++, 0, 1, 1);

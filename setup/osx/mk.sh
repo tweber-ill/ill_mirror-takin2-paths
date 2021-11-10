@@ -167,8 +167,8 @@ if [ $create_appdir -ne 0 ]; then
 	# resources
 	cp -rv res/* "${APPDIRNAME}/Contents/Resources/"
 	cp -v "${APPICON_ICNS}" "${APPDIRNAME}/Contents/Resources/"
-	cp -v AUTHORS "${APPDIRNAME}/Contents/Resources/"
-	cp -v LICENSE "${APPDIRNAME}/Contents/Resources/"
+	cp -v AUTHORS "${APPDIRNAME}/Contents/Resources/AUTHORS.txt"
+	cp -v LICENSE "${APPDIRNAME}/Contents/Resources/LICENSE.txt"
 	cp -rv 3rdparty_licenses "${APPDIRNAME}/Contents/Resources/"
 
 	# libraries
