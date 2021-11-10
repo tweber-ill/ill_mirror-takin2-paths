@@ -66,6 +66,9 @@ public:
 protected:
 	virtual void accept() override;
 
+	void PopulateSettingsTable();
+	void RestoreDefaultSettings();
+
 	void ApplySettings();
 	static void ApplyGuiSettings();
 

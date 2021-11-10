@@ -124,12 +124,23 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	// restore settings
 	if(m_sett)
 	{
+		// restore dialog geometry
 		if(m_sett->contains("geobrowser/geo"))
 			restoreGeometry(m_sett->value("geobrowser/geo").toByteArray());
 		else
 			resize(600, 400);
+
+		// restore splitter position
 		if(m_sett->contains("geobrowser/splitter"))
 			m_splitter->restoreState(m_sett->value("geobrowser/splitter").toByteArray());
+
+		// restore settings table column widths
+		if(m_sett->contains("geobrowser/settings_col0_width"))
+			m_geosettings->setColumnWidth(0, m_sett->value("geobrowser/settings_col0_width").toInt());
+		if(m_sett->contains("geobrowser/settings_col1_width"))
+			m_geosettings->setColumnWidth(1, m_sett->value("geobrowser/settings_col1_width").toInt());
+		if(m_sett->contains("geobrowser/settings_col2_width"))
+			m_geosettings->setColumnWidth(2, m_sett->value("geobrowser/settings_col2_width").toInt());
 	}
 
 
@@ -378,8 +389,17 @@ void GeometriesBrowser::accept()
 {
 	if(m_sett)
 	{
+		// save dialog geometry
 		m_sett->setValue("geobrowser/geo", saveGeometry());
 		m_sett->setValue("geobrowser/splitter", m_splitter->saveState());
+
+		// save settings table column widths
+		if(m_geosettings)
+		{
+			m_sett->setValue("geobrowser/settings_col0_width", m_geosettings->columnWidth(0));
+			m_sett->setValue("geobrowser/settings_col1_width", m_geosettings->columnWidth(1));
+			m_sett->setValue("geobrowser/settings_col2_width", m_geosettings->columnWidth(2));
+		}
 	}
 
 	QDialog::accept();

@@ -152,6 +152,34 @@ static constexpr void get_settings_loop(
 
 
 /**
+ * restore the current settings value from its default value
+ */
+template<std::size_t idx>
+static void restore_default_value()
+{
+	constexpr const SettingsVariable& var = std::get<idx>(g_settingsvariables);
+	constexpr auto* value = std::get<var.value.index()>(var.value);
+	//using t_value = std::decay_t<decltype(*value)>;
+
+	constexpr const auto* def_value = std::get<var.default_value.index()>(var.default_value);
+	if(def_value)
+		*value = *def_value;
+}
+
+
+/**
+ * restore the current settings values from their default values
+ */
+template<std::size_t ...seq>
+static constexpr void restore_default_values_loop(
+	const std::index_sequence<seq...>&)
+{
+	// a sequence of function calls
+	( (restore_default_value<seq>()), ... );
+}
+
+
+/**
  * reads a settings item from the table and saves it to the
  * corresponding global variable and to the QSettings object
  */
@@ -203,11 +231,27 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 {
 	setWindowTitle("Settings");
 
-	// restore dialog geometry
-	if(m_sett && m_sett->contains("settings/geo"))
-		restoreGeometry(m_sett->value("settings/geo").toByteArray());
-	else
-		resize(512, 425);
+	// table column widths
+	int col0_w = 200;
+	int col1_w = 100;
+	int col2_w = 150;
+
+	if(m_sett)
+	{
+		// restore dialog geometry
+		if(m_sett->contains("settings/geo"))
+			restoreGeometry(m_sett->value("settings/geo").toByteArray());
+		else
+			resize(512, 425);
+
+		// restore table column widths
+		if(m_sett->contains("settings/col0_width"))
+			col0_w = m_sett->value("settings/col0_width").toInt();
+		if(m_sett->contains("settings/col1_width"))
+			col1_w = m_sett->value("settings/col1_width").toInt();
+		if(m_sett->contains("settings/col2_width"))
+			col2_w = m_sett->value("settings/col2_width").toInt();
+	}
 
 	// general settings
 	QWidget *panelGeneral = new QWidget(this);
@@ -228,27 +272,16 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_table->verticalHeader()->setDefaultSectionSize(32);
 	m_table->verticalHeader()->setVisible(false);
 	m_table->setColumnCount(3);
-	m_table->setColumnWidth(0, 200);
-	m_table->setColumnWidth(1, 100);
-	m_table->setColumnWidth(2, 150);
-	m_table->setHorizontalHeaderItem(0, new QTableWidgetItem{"Key"});
+	m_table->setColumnWidth(0, col0_w);
+	m_table->setColumnWidth(1, col1_w);
+	m_table->setColumnWidth(2, col2_w);
+	m_table->setHorizontalHeaderItem(0, new QTableWidgetItem{"Setting"});
 	m_table->setHorizontalHeaderItem(1, new QTableWidgetItem{"Type"});
 	m_table->setHorizontalHeaderItem(2, new QTableWidgetItem{"Value"});
 
-
 	// table contents
-	m_table->setRowCount((int)g_settingsvariables.size());
+	PopulateSettingsTable();
 
-	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
-	add_table_item_loop(seq, m_table);
-
-	// set value field editable
-	for(int row=0; row<m_table->rowCount(); ++row)
-	{
-		m_table->item(row, 0)->setFlags(m_table->item(row, 0)->flags() & ~Qt::ItemIsEditable);
-		m_table->item(row, 1)->setFlags(m_table->item(row, 1)->flags() & ~Qt::ItemIsEditable);
-		m_table->item(row, 2)->setFlags(m_table->item(row, 2)->flags() | Qt::ItemIsEditable);
-	}
 
 	// search field
 	QLabel *labelSearch = new QLabel("Search:", panelGeneral);
@@ -331,8 +364,11 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	grid->addWidget(tab, y++,0,1,1);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
-	buttons->setStandardButtons(QDialogButtonBox::Ok |
-		QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
+	buttons->setStandardButtons(
+		QDialogButtonBox::Ok |
+		QDialogButtonBox::Apply |
+		QDialogButtonBox::RestoreDefaults |
+		QDialogButtonBox::Cancel);
 	grid->addWidget(buttons, y++,0,1,1);
 
 
@@ -368,6 +404,8 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		// apply button was pressed
 		if(btn == static_cast<QAbstractButton*>(buttons->button(QDialogButtonBox::Apply)))
 			ApplySettings();
+		else if(btn == static_cast<QAbstractButton*>(buttons->button(QDialogButtonBox::RestoreDefaults)))
+			RestoreDefaultSettings();
 	});
 
 	// search items
@@ -399,6 +437,27 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 
 SettingsDlg::~SettingsDlg()
 {
+}
+
+
+/**
+ * populate the settings table using the global settings items
+ */
+void SettingsDlg::PopulateSettingsTable()
+{
+	m_table->clearContents();
+	m_table->setRowCount((int)g_settingsvariables.size());
+
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	add_table_item_loop(seq, m_table);
+
+	// set value field editable
+	for(int row=0; row<m_table->rowCount(); ++row)
+	{
+		m_table->item(row, 0)->setFlags(m_table->item(row, 0)->flags() & ~Qt::ItemIsEditable);
+		m_table->item(row, 1)->setFlags(m_table->item(row, 1)->flags() & ~Qt::ItemIsEditable);
+		m_table->item(row, 2)->setFlags(m_table->item(row, 2)->flags() | Qt::ItemIsEditable);
+	}
 }
 
 
@@ -450,6 +509,19 @@ void SettingsDlg::ApplySettings()
 }
 
 
+/**
+ * 'Restore Defaults' was clicked, restore original settings
+ */
+void SettingsDlg::RestoreDefaultSettings()
+{
+	auto seq = std::make_index_sequence<g_settingsvariables.size()>();
+	restore_default_values_loop(seq);
+
+	// re-populte the settings table
+	PopulateSettingsTable();
+}
+
+
 void SettingsDlg::ApplyGuiSettings()
 {
 	// set gui theme
@@ -481,6 +553,18 @@ void SettingsDlg::accept()
 	ApplySettings();
 
 	if(m_sett)
+	{
+		// save dialog geometry
 		m_sett->setValue("settings/geo", saveGeometry());
+
+		// save table column widths
+		if(m_table)
+		{
+			m_sett->setValue("settings/col0_width", m_table->columnWidth(0));
+			m_sett->setValue("settings/col1_width", m_table->columnWidth(1));
+			m_sett->setValue("settings/col2_width", m_table->columnWidth(2));
+		}
+	}
+
 	QDialog::accept();
 }

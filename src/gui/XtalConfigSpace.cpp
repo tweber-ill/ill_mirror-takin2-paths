@@ -178,7 +178,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QAction *acCopy = new QAction("Copy Figure", menuEdit);
 	acCopy->setShortcut(QKeySequence::Copy);
 	menuEdit->addAction(acCopy);
-	
+
 	QAction *acEnableZoom = new QAction("Enable Zoom", menuView);
 	acEnableZoom->setCheckable(true);
 	acEnableZoom->setChecked(!m_moveInstr);

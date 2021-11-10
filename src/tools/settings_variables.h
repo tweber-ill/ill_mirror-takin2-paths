@@ -82,20 +82,21 @@ constexpr std::array<SettingsVariable, 4> g_settingsvariables
 	{
 		.description = "Number precision",
 		.key = "settings/prec",
-		.value = &g_prec
+		.value = &g_prec,
 	},
 
 	// threading options
 	{
 		.description = "Maximum number of threads",
 		.key = "settings/maxnum_threads",
-		.value = &g_maxnum_threads},
+		.value = &g_maxnum_threads,
+	},
 
 	// file options
 	{
 		.description = "Maximum number of recent files",
 		.key = "settings/maxnum_recents",
-		.value = &g_maxnum_recents
+		.value = &g_maxnum_recents,
 	},
 }};
 // ----------------------------------------------------------------------------

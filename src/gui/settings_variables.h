@@ -149,41 +149,41 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 	{
 		.description = "Voronoi edge epsilon",
 		.key = "settings/eps_voronoi_edge",
-		.value = &g_eps_voronoiedge
+		.value = &g_eps_voronoiedge,
 	},
 	{
 		.description = "Drawing epsilon",
 		.key = "settings/eps_gui",
-		.value = &g_eps_gui
+		.value = &g_eps_gui,
 	},
 	{
 		.description = "Number precision",
 		.key = "settings/prec",
-		.value = &g_prec
+		.value = &g_prec,
 	},
 	{
 		.description = "GUI number precision",
 		.key = "settings/prec_gui",
-		.value = &g_prec_gui
+		.value = &g_prec_gui,
 	},
 
 	{
 		.description = "Line subdivision length",
 		.key = "settings/line_subdiv_len",
-		.value = &g_line_subdiv_len
+		.value = &g_line_subdiv_len,
 	},
 
 	// threading options
 	{
 		.description = "Maximum number of threads",
 		.key = "settings/maxnum_threads",
-		.value = &g_maxnum_threads
+		.value = &g_maxnum_threads,
 	},
 	// file options
 	{
 		.description = "Maximum number of recent files",
 		.key = "settings/maxnum_recents",
-		.value = &g_maxnum_recents
+		.value = &g_maxnum_recents,
 	},
 
 	// angle options
@@ -197,13 +197,13 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 		.description = "Monochromator scattering angle delta",
 		.key = "settings/a2_delta",
 		.value = &g_a2_delta,
-		.is_angle = true
+		.is_angle = true,
 	},
 	{
 		.description = "Sample scattering angle delta",
 		.key = "settings/a4_delta",
 		.value = &g_a4_delta,
-		.is_angle = true
+		.is_angle = true,
 	},
 
 	// mesh options
@@ -219,7 +219,7 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 		.key = "settings/voronoi_backend",
 		.value = &g_voronoi_backend,
 		.editor = SettingsVariableEditor::COMBOBOX,
-		.editor_config = "BOOST/Polygon;;CGAL/Segment Delaunay Graph",
+		.editor_config = "BOOST/Polygon;;CGAL/S.D.Graph",
 	},
 	{
 		.description = "Use region function",
@@ -245,14 +245,14 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 	{
 		.description = "Path tracker FPS",
 		.key = "settings/pathtracker_fps",
-		.value = &g_pathtracker_fps
+		.value = &g_pathtracker_fps,
 	},
 
 	// renderer options
 	{
 		.description = "Renderer FPS",
 		.key = "settings/renderer_fps",
-		.value = &g_timer_fps
+		.value = &g_timer_fps,
 	},
 	{
 		.description = "Light follows cursor",

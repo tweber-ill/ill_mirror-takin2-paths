@@ -47,7 +47,10 @@ struct SettingsVariable
 {
 	const char* description{};
 	const char* key{};
+
 	std::variant<t_real*, int*, unsigned int*> value{};
+	std::variant<t_real*, int*, unsigned int*> default_value{};
+
 	bool is_angle{false};
 
 	SettingsVariableEditor editor{SettingsVariableEditor::NONE};
