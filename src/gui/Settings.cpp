@@ -42,6 +42,7 @@
 
 #include "settings_variables.h"
 #include "tlibs2/libs/maths.h"
+#include "tlibs2/libs/str.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
 
@@ -78,6 +79,19 @@ static void add_table_item(QTableWidget *table)
 		combo->addItem("Yes");
 
 		combo->setCurrentIndex(finalval==0 ? 0 : 1);
+		table->setCellWidget((int)idx, 2, combo);
+	}
+	if(var.editor == SettingsVariableEditor::COMBOBOX)
+	{
+		std::vector<std::string> config_tokens;
+		tl2::get_tokens_seq<std::string, std::string>(
+			var.editor_config, ";;", config_tokens, true);
+
+		QComboBox *combo = new QComboBox(table);
+		for(const std::string& config_token : config_tokens)
+			combo->addItem(config_token.c_str());
+
+		combo->setCurrentIndex((int)finalval);
 		table->setCellWidget((int)idx, 2, combo);
 	}
 }
@@ -154,7 +168,8 @@ static void apply_settings_item(QTableWidget *table, QSettings *sett)
 		finalval = finalval / 180.*tl2::pi<t_real>;
 
 	// alternatively use the value from the editor widget if available
-	if(var.editor == SettingsVariableEditor::YESNO)
+	if(var.editor == SettingsVariableEditor::YESNO ||
+		var.editor == SettingsVariableEditor::COMBOBOX)
 	{
 		QComboBox *combo = static_cast<QComboBox*>(
 			table->cellWidget((int)idx, 2));

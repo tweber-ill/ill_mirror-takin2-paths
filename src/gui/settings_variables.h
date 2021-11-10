@@ -212,12 +212,14 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 		.key = "settings/poly_inters_method",
 		.value = &g_poly_intersection_method,
 		.editor = SettingsVariableEditor::COMBOBOX,
+		.editor_config = "Sweep;;Half-plane Test",
 	},
 	{
 		.description = "Voronoi calculation backend",
 		.key = "settings/voronoi_backend",
 		.value = &g_voronoi_backend,
 		.editor = SettingsVariableEditor::COMBOBOX,
+		.editor_config = "BOOST/Polygon;;CGAL/Segment Delaunay Graph",
 	},
 	{
 		.description = "Use region function",
@@ -232,6 +234,7 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 		.key = "settings/path_finding_strategy",
 		.value = &g_pathstrategy,
 		.editor = SettingsVariableEditor::COMBOBOX,
+		.editor_config = "Shortest Path;;Avoid Walls",
 	},
 	{
 		.description = "Verify generated path",

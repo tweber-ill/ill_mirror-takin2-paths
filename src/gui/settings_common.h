@@ -49,7 +49,9 @@ struct SettingsVariable
 	const char* key{};
 	std::variant<t_real*, int*, unsigned int*> value{};
 	bool is_angle{false};
+
 	SettingsVariableEditor editor{SettingsVariableEditor::NONE};
+	const char* editor_config{};
 };
 // ----------------------------------------------------------------------------
 
