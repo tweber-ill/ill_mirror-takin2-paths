@@ -40,6 +40,7 @@
 #include <future>
 #include <functional>
 
+#include "src/core/types.h"
 #include "src/core/PathsBuilder.h"
 #include "src/core/InstrumentSpace.h"
 #include "src/core/TasCalculator.h"
@@ -64,6 +65,7 @@
 
 
 // ----------------------------------------------------------------------------
+
 class PathsTool : public QMainWindow
 { Q_OBJECT
 private:
@@ -138,6 +140,9 @@ private:
 
 	// tas calculations
 	TasCalculator m_tascalc{};
+
+	// progress of active calculation
+	t_real m_calculationprogress{};
 
 
 public:
@@ -268,8 +273,11 @@ protected slots:
 	// propagate (changed) global settings to each object
 	void InitSettings();
 
+
 signals:
-	// signal, when a new path has been calculated
+	// signal when a path mesh is being calculated
+	void PathMeshCalculation(CalculationState state, t_real progress);
+	// signal when a new path has been calculated
 	void PathAvailable(std::size_t numVertices);
 	// signal if a path mesh is valid or invalid
 	void PathMeshValid(bool valid);

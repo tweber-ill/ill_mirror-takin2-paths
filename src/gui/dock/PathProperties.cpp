@@ -61,7 +61,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_spinFinish[1]->setValue(90.);
 
 	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
-	QPushButton *btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
+	m_btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
 	m_btnCalcPath = new QPushButton("Calculate Path", this);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
 	m_sliderPath->setToolTip("Path tracking.");
@@ -96,7 +96,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutPath->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutPath->addWidget(btnCalcMesh, y++, 0, 1, 3);
+		layoutPath->addWidget(m_btnCalcMesh, y++, 0, 1, 3);
 		layoutPath->addWidget(m_btnCalcPath, y++, 0, 1, 3);
 		layoutPath->addWidget(m_sliderPath, y, 0, 1, 2);
 		layoutPath->addWidget(m_btnGo, y++, 2, 1, 1);
@@ -141,7 +141,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		});
 
 	// calculate path mesh
-	connect(btnCalcMesh, &QPushButton::clicked,
+	connect(m_btnCalcMesh, &QPushButton::clicked,
 		[this]() -> void
 		{
 			emit CalculatePathMesh();
@@ -255,6 +255,42 @@ void PathPropertiesWidget::SetTarget(t_real a2, t_real a4)
 
 	this->blockSignals(false);
 	emit TargetChanged(a2, a4);
+}
+
+
+/**
+ * a path mesh calculation has been started or is finishing
+ */
+void PathPropertiesWidget::PathMeshCalculation(CalculationState state, t_real progress)
+{
+	switch(state)
+	{
+		case CalculationState::STARTED:
+		{
+			PathMeshValid(false);
+			m_btnCalcMesh->setEnabled(false);
+			m_btnCalcMesh->setText("STAND BY");
+			break;
+		}
+
+		case CalculationState::RUNNING:
+		{
+			QString txt = QString("RUNNING: %1%").arg(int(progress*100.));
+			m_btnCalcMesh->setText(txt);
+			break;
+		}
+
+		case CalculationState::FAILED:
+		case CalculationState::SUCCESS:
+		{
+			m_btnCalcMesh->setText("Calculate Path Mesh");
+			m_btnCalcMesh->setEnabled(true);
+			break;
+		}
+
+		default:
+			break;
+	}
 }
 
 

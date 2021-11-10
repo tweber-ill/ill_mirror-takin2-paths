@@ -105,12 +105,20 @@ t_real PathsBuilder::GetPathLength(const t_vec2& _vec) const
 void PathsBuilder::AddConsoleProgressHandler()
 {
 	auto handler = []
-		(bool /*start*/, bool /*end*/, t_real progress,
+		(CalculationState state, t_real progress,
 		const std::string& msg) -> bool
 	{
+		std::string statedescr{};
+		if(state == CalculationState::STARTED)
+			statedescr = " -- START";
+		else if(state == CalculationState::FAILED)
+			statedescr = " -- FAIL";
+		else if(state == CalculationState::SUCCESS)
+			statedescr = " -- SUCCESS";
+
 		std::cout << std::fixed << "["
 			<< std::setw(3) << (int)(progress * 100.)
-			<< "%] " << msg << std::endl;
+			<< "%" << statedescr << "] " << msg << std::endl;
 		return true;
 	};
 
@@ -221,6 +229,25 @@ PathsBuilder::GetWallContours(bool full) const
 
 
 /**
+ * indicate that a new workflow starts
+ */
+void PathsBuilder::StartPathMeshWorkflow()
+{
+	(*m_sigProgress)(CalculationState::STARTED, 1, "Workflow starting.");
+}
+
+
+/**
+ * indicate that the current workflow has ended
+ */
+void PathsBuilder::FinishPathMeshWorkflow(bool success)
+{
+	CalculationState state = success ? CalculationState::SUCCESS : CalculationState::FAILED;
+	(*m_sigProgress)(state, 1, "Workflow has finished.");
+}
+
+
+/**
  * calculate the obstacle regions in the angular configuration space
  * the monochromator a2/a3 variables can alternatively refer to the analyser a5/a6 in case kf is not fixed
  */
@@ -239,7 +266,7 @@ bool PathsBuilder::CalculateConfigSpace(
 
 	std::ostringstream ostrmsg;
 	ostrmsg << "Calculating configuration space in " << m_maxnum_threads << " threads...";
-	(*m_sigProgress)(true, false, 0, ostrmsg.str());
+	(*m_sigProgress)(CalculationState::STEP_STARTED, 0, ostrmsg.str());
 
 	const t_real *sensesCCW = nullptr;
 	std::size_t mono_idx = 0;
@@ -346,7 +373,7 @@ bool PathsBuilder::CalculateConfigSpace(
 		// prevent sending too many progress signals
 		if(signal_skip && (taskidx % signal_skip == 0))
 		{
-			if(!(*m_sigProgress)(false, false, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
+			if(!(*m_sigProgress)(CalculationState::RUNNING, t_real(taskidx) / t_real(num_tasks), ostrmsg.str()))
 			{
 				pool.stop();
 				break;
@@ -358,7 +385,7 @@ bool PathsBuilder::CalculateConfigSpace(
 	}
 
 	pool.join();
-	(*m_sigProgress)(false, true, 1, ostrmsg.str());
+	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, ostrmsg.str());
 
 	//std::cout << "pixels total: " << img_h*img_w << ", calculated: " << num_pixels << std::endl;
 	return num_pixels == img_h*img_w;
@@ -381,12 +408,12 @@ bool PathsBuilder::CalculateWallsIndexTree()
 bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 {
 	std::string message{"Calculating obstacle contours..."};
-	(*m_sigProgress)(true, false, 0, message);
+	(*m_sigProgress)(CalculationState::STEP_STARTED, 0, message);
 
 	m_wallcontours = geo::trace_boundary<t_contourvec, decltype(m_img)>(m_img);
 	m_fullwallcontours = m_wallcontours;
 
-	(*m_sigProgress)(false, false, 0.33, message);
+	(*m_sigProgress)(CalculationState::RUNNING, 0.33, message);
 
 	if(simplify)
 	{
@@ -404,7 +431,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 		}
 	}
 
-	(*m_sigProgress)(false, false, 0.66, message);
+	(*m_sigProgress)(CalculationState::RUNNING, 0.66, message);
 
 	if(convex_split)
 	{
@@ -434,7 +461,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 		m_wallcontours = std::move(splitcontours);
 	}
 
-	(*m_sigProgress)(false, true, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
 	return true;
 }
 
@@ -445,7 +472,7 @@ bool PathsBuilder::CalculateWallContours(bool simplify, bool convex_split)
 bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 {
 	std::string message{"Calculating obstacle line segments..."};
-	(*m_sigProgress)(true, false, 0, message);
+	(*m_sigProgress)(CalculationState::STEP_STARTED, 0, message);
 
 	m_lines.clear();
 	m_linegroups.clear();
@@ -570,7 +597,7 @@ bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 		}
 	}
 
-	(*m_sigProgress)(false, true, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
 	return true;
 }
 
@@ -582,7 +609,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	bool use_region_function)
 {
 	std::string message{"Calculating Voronoi diagram..."};
-	(*m_sigProgress)(true, false, 0, message);
+	(*m_sigProgress)(CalculationState::STEP_STARTED, 0, message);
 
 	// is the vector in a forbidden region?
 	std::function<bool(const t_vec2&)> region_func = [this](const t_vec2& vec) -> bool
@@ -626,7 +653,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	}
 #endif
 
-	(*m_sigProgress)(false, true, 1, message);
+	(*m_sigProgress)(CalculationState::STEP_SUCCESS, 1, message);
 	return true;
 }
 

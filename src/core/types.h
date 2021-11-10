@@ -115,4 +115,19 @@ using t_vec2_int = tl2::vec<int, t_arr2>;
 using t_mat22 = tl2::mat<t_real, t_arr4>;
 
 
+// type indicating the state of an ongoing calculation
+enum class CalculationState
+{
+	STEP_STARTED,
+	STARTED,
+
+	RUNNING,
+
+	FAILED,
+
+	STEP_SUCCESS,
+	SUCCESS,
+};
+
+
 #endif

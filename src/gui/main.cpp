@@ -117,6 +117,7 @@ int main(int argc, char** argv)
 		qRegisterMetaType<t_vec>("t_vec");
 		qRegisterMetaType<t_mat>("t_mat");
 		qRegisterMetaType<std::string>("std::string");
+		qRegisterMetaType<CalculationState>("CalculationState");
 
 		// create main window
 		auto mainwnd = std::make_unique<PathsTool>(nullptr);

@@ -822,6 +822,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(!m_pathsbuilder || !m_pathsbuilder->GetInstrumentSpace())
 		return;
 
+	m_pathsbuilder->StartPathMeshWorkflow();
 	const auto& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
 
 	bool kf_fixed = true;
@@ -867,6 +868,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 		m_starta2, m_enda2, m_starta4, m_enda4))
 	{
 		m_status->setText("Error: Configuration space calculation failed.");
+		m_pathsbuilder->FinishPathMeshWorkflow(false);
 		return;
 	}
 
@@ -874,6 +876,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(!m_pathsbuilder->CalculateWallsIndexTree())
 	{
 		m_status->setText("Error: Wall positions index tree calculation failed.");
+		m_pathsbuilder->FinishPathMeshWorkflow(false);
 		return;
 	}
 
@@ -881,6 +884,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour, m_splitcontour))
 	{
 		m_status->setText("Error: Obstacle contour lines calculation failed.");
+		m_pathsbuilder->FinishPathMeshWorkflow(false);
 		return;
 	}
 
@@ -888,6 +892,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	if(!m_pathsbuilder->CalculateLineSegments(m_use_region_function))
 	{
 		m_status->setText("Error: Line segment calculation failed.");
+		m_pathsbuilder->FinishPathMeshWorkflow(false);
 		return;
 	}
 
@@ -898,6 +903,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 			m_use_region_function))
 		{
 			m_status->setText("Error: Voronoi regions calculation failed.");
+			m_pathsbuilder->FinishPathMeshWorkflow(false);
 			return;
 		}
 	}
@@ -905,6 +911,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	m_status->setText("Calculation finished.");
 	RedrawVoronoiPlot();
 
+	m_pathsbuilder->FinishPathMeshWorkflow(true);
 	// signal the availability of a path mesh
 	emit PathMeshAvailable();
 }
@@ -954,11 +961,11 @@ void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 
 	m_pathsbuilder = builder;
 	m_pathsbuilderslot = m_pathsbuilder->AddProgressSlot(
-		[this](bool start, bool end, t_real progress, const std::string& message) -> bool
+		[this](CalculationState state, t_real progress, const std::string& message) -> bool
 		{
 			if(this->thread() == QThread::currentThread())
 			{
-				return this->PathsBuilderProgress(start, end, progress, message);
+				return this->PathsBuilderProgress(state, progress, message);
 			}
 			else
 			{
@@ -966,8 +973,7 @@ void ConfigSpaceDlg::SetPathsBuilder(PathsBuilder* builder)
 				bool ok = true;
 				QMetaObject::invokeMethod(this, "PathsBuilderProgress", Qt::QueuedConnection,
 					//Q_RETURN_ARG(bool, ok),
-					Q_ARG(bool, start),
-					Q_ARG(bool, end),
+					Q_ARG(CalculationState, state),
 					Q_ARG(t_real, progress),
 					Q_ARG(const std::string&, message)
 				);
@@ -1182,14 +1188,15 @@ void ConfigSpaceDlg::RedrawPathPlot()
 /**
  * display a progress dialog
  */
-bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message)
+bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progress, const std::string& message)
 {
 	static const int max_progress = 1000;
 
 	if(!m_progress)
 		m_progress = std::make_unique<QProgressDialog>(this);
 
-	if(start)
+	if(state == CalculationState::STARTED ||
+		state == CalculationState::STEP_STARTED)
 	{
 		m_progress->setWindowModality(Qt::WindowModal);
 		m_progress->setLabelText(message.c_str());
@@ -1205,7 +1212,9 @@ bool ConfigSpaceDlg::PathsBuilderProgress(bool start, bool end, t_real progress,
 
 	RedrawVoronoiPlot();
 
-	if(end)
+	if(state == CalculationState::SUCCESS ||
+		state == CalculationState::STEP_SUCCESS ||
+		state == CalculationState::FAILED)
 	{
 		m_progress->reset();
 		//m_progress.reset();

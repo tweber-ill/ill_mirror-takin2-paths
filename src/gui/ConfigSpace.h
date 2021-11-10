@@ -141,7 +141,7 @@ signals:
 
 
 protected slots:
-	bool PathsBuilderProgress(bool start, bool end, t_real progress, const std::string& message);
+	bool PathsBuilderProgress(CalculationState state, t_real progress, const std::string& message);
 
 
 public slots:

@@ -64,6 +64,7 @@ private:
 	// path target (a2, a4) coordinates
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 	QSlider *m_sliderPath = nullptr;
+	QPushButton *m_btnCalcMesh = nullptr;
 	QPushButton *m_btnCalcPath = nullptr;
 	QToolButton *m_btnGo = nullptr;
 
@@ -77,8 +78,9 @@ protected:
 
 public slots:
 	void SetTarget(t_real a2, t_real a4);
-	void PathAvailable(std::size_t numVertices);
 	void PathMeshValid(bool valid);
+	void PathMeshCalculation(CalculationState state, t_real progress);
+	void PathAvailable(std::size_t numVertices);
 
 
 signals:

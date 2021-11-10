@@ -1127,6 +1127,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(pathwidget, &PathPropertiesWidget::CalculatePath,
 		this, &PathsTool::CalculatePath);
 
+	// a path mesh is being calculated
+	connect(this, &PathsTool::PathMeshCalculation,
+		pathwidget, &PathPropertiesWidget::PathMeshCalculation);
+
 	// a new path has been calculated
 	connect(this, &PathsTool::PathAvailable,
 		pathwidget, &PathPropertiesWidget::PathAvailable);
@@ -1586,7 +1590,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 
 	// --------------------------------------------------------------------
-	// restory window size, position, and state
+	// restore window size, position, and state
 	// --------------------------------------------------------------------
 	if(m_sett.contains("geo"))
 		restoreGeometry(m_sett.value("geo").toByteArray());
@@ -1615,8 +1619,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathsbuilder.SetTasCalculator(&this->m_tascalc);
 
 	m_pathsbuilder.AddProgressSlot(
-		[this](bool /*start*/, bool /*end*/, t_real progress, const std::string& /*message*/)
+		[this](CalculationState state, t_real progress, const std::string& /*message*/)
 		{
+			m_calculationprogress = progress;
+			emit this->PathMeshCalculation(state, m_calculationprogress);
+
 			//std::cout << "Progress: " << int(progress*100.) << " \%." << std::endl;
 			if(!m_progress)
 				return true;
@@ -1925,6 +1932,10 @@ void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectPro
 void PathsTool::CalculatePathMesh()
 {
 	m_stop_requested = false;
+	m_pathsbuilder.StartPathMeshWorkflow();
+
+	// invalidate the current mesh
+	ValidatePathMesh(false);
 
 	// start calculation in a background thread
 	m_futCalc = std::async(std::launch::async, [this]()
@@ -1934,11 +1945,9 @@ void PathsTool::CalculatePathMesh()
 			if(this->m_stop_requested) \
 			{ \
 				SetTmpStatus("Calculation aborted."); \
+				m_pathsbuilder.FinishPathMeshWorkflow(false); \
 				return; \
 			}
-
-		// invalidate the current mesh
-		ValidatePathMesh(false);
 
 		const auto& instr = m_instrspace.GetInstrument();
 
@@ -2015,6 +2024,8 @@ void PathsTool::CalculatePathMesh()
 
 		// validate the new path mesh
 		ValidatePathMesh(true);
+		m_pathsbuilder.FinishPathMeshWorkflow(true);
+
 		SetTmpStatus("Path mesh calculated.");
 	});
 

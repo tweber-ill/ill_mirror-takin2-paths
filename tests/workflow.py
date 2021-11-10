@@ -115,6 +115,8 @@ a2_end = m.pi + angle_padding*a2_delta
 a4_begin = -m.pi - angle_padding*a4_delta
 a4_end = m.pi + angle_padding*a4_delta
 
+builder.StartPathMeshWorkflow()
+
 if not builder.CalculateConfigSpace(
 	a2_delta, a4_delta,
 	a2_begin, a2_end,
@@ -130,6 +132,7 @@ if not builder.CalculateLineSegments(False):
 if not builder.CalculateVoronoi(False, tas.VoronoiBackend_BOOST, True):
 	error("Voronoi diagram could not be calculated.")
 
+builder.FinishPathMeshWorkflow(True)
 print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
 
