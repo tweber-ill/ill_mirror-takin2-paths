@@ -227,7 +227,10 @@ public:
 	using QMainWindow::QMainWindow;
 
 	LinesWnd(QWidget* pParent = nullptr);
-	~LinesWnd();
+	virtual ~LinesWnd();
+
+	LinesWnd(LinesWnd&) = delete;
+	const LinesWnd& operator=(const LinesWnd&) const = delete;
 
 	void SetStatusMessage(const QString& msg);
 

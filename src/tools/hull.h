@@ -226,7 +226,10 @@ public:
 	using QMainWindow::QMainWindow;
 
 	HullWnd(QWidget* pParent = nullptr);
-	~HullWnd();
+	virtual ~HullWnd();
+
+	HullWnd(HullWnd&) = delete;
+	const HullWnd& operator=(const HullWnd&) const = delete;
 
 	void SetStatusMessage(const QString& msg);
 

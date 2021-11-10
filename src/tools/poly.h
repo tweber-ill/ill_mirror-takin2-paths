@@ -118,7 +118,10 @@ public:
 	using QMainWindow::QMainWindow;
 
 	PolyWnd(QWidget* pParent = nullptr);
-	~PolyWnd();
+	virtual ~PolyWnd();
+
+	PolyWnd(PolyWnd&) = delete;
+	const PolyWnd& operator=(const PolyWnd&) const = delete;
 
 	void SetStatusMessage(const QString& msg);
 
