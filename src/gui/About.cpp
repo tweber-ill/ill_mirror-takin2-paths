@@ -107,7 +107,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labDate1 = new QLabel("Date: ", this);
 	labDate1->setFont(fontLabel1);
 	grid->addWidget(labDate1, y,0,1,1);
-	QLabel *labDate2 = new QLabel("February 2021 - October 2021.", this);
+	QLabel *labDate2 = new QLabel("February 2021 - November 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
 	QLabel *labLic1 = new QLabel("License: ", this);

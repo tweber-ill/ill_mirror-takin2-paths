@@ -25,7 +25,7 @@
     <key>NSSupportsAutomaticGraphicsSwitching</key> <string>True</string>
     <key>NSHumanReadableCopyright</key>             <string>Copyright (C) 2021 by Tobias Weber (ILL, Grenoble, France). Copyleft: GPLv3.</string>
 
-    <key>LSMinimumSystemVersion</key>               <string>10.15</string>
+    <key>LSMinimumSystemVersion</key>               <string>11.0</string>
     <key>LSApplicationCategoryType</key>            <string>public.app-category.education</string>
   </dict>
 </plist>

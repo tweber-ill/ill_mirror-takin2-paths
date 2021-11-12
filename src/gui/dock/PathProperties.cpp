@@ -131,35 +131,31 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	}
 
 	// go to target angles
-	connect(btnGotoFinish, &QPushButton::clicked,
-		[this]() -> void
-		{
-			t_real a2 = m_spinFinish[0]->value();
-			t_real a4 = m_spinFinish[1]->value();
+	connect(btnGotoFinish, &QPushButton::clicked, [this]()
+	{
+		t_real a2 = m_spinFinish[0]->value();
+		t_real a4 = m_spinFinish[1]->value();
 
-			emit GotoAngles(a2, a4);
-		});
+		emit GotoAngles(a2, a4);
+	});
 
 	// calculate path mesh
-	connect(m_btnCalcMesh, &QPushButton::clicked,
-		[this]() -> void
-		{
-			emit CalculatePathMesh();
-		});
+	connect(m_btnCalcMesh, &QPushButton::clicked, [this]()
+	{
+		emit CalculatePathMesh();
+	});
 
 	// calculate path
-	connect(m_btnCalcPath, &QPushButton::clicked,
-		[this]() -> void
-		{
-			emit CalculatePath();
-		});
+	connect(m_btnCalcPath, &QPushButton::clicked, [this]()
+	{
+		emit CalculatePath();
+	});
 
 	// path tracking slider value has changed
-	connect(m_sliderPath, &QSlider::valueChanged,
-		[this](int value) -> void
-		{
-			emit TrackPath((std::size_t)value);
-		});
+	connect(m_sliderPath, &QSlider::valueChanged, [this](int value)
+	{
+		emit TrackPath((std::size_t)value);
+	});
 
 	// path tracking timer
 	connect(&m_pathTrackTimer, &QTimer::timeout,
@@ -167,23 +163,25 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			&PathPropertiesWidget::TrackerTick));
 
 	// start path tracking
-	connect(m_btnGo, &QPushButton::clicked,
-		[this]() -> void
+	connect(m_btnGo, &QPushButton::clicked, [this]()
+	{
+		// start the timer if it's not already running
+		if(!m_pathTrackTimer.isActive())
 		{
-			// start the timer if it's not already running
-			if(!m_pathTrackTimer.isActive())
-			{
-				m_pathTrackTimer.start(
-					std::chrono::milliseconds(1000 / g_pathtracker_fps));
-				SetGoButtonText(false);
-			}
-			// otherwise stop it
-			else
-			{
-				m_pathTrackTimer.stop();
-				SetGoButtonText(true);
-			}
-		});
+			SetGoButtonText(false);
+			m_sliderPath->setValue(0);
+
+			m_pathTrackTimer.start(
+				std::chrono::milliseconds(1000 / g_pathtracker_fps));
+		}
+		// otherwise stop it
+		else
+		{
+			m_pathTrackTimer.stop();
+
+			SetGoButtonText(true);
+		}
+	});
 }
 
 
@@ -224,8 +222,12 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
  */
 void PathPropertiesWidget::TrackerTick()
 {
+	if(!m_sliderPath)
+		return;
+
 	int val = m_sliderPath->value();
 	int max = m_sliderPath->maximum();
+
 	if(val >= max)
 	{
 		m_pathTrackTimer.stop();
