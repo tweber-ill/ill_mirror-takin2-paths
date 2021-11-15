@@ -2,7 +2,7 @@
  * TAS path tool, main window
  * @author Tobias Weber <tweber@ill.fr>
  * @date February-November 2021
- * @note code forked on 15-nov-2021 from my private "qm" project: https://github.com/t-weber/qm
+ * @note some code forked on 15-nov-2021 from my private "qm" project: https://github.com/t-weber/qm
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------
