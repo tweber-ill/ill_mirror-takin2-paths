@@ -820,8 +820,8 @@ t_vec3_gl PathsRenderer::GetCamPosition() const
 
 void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
 {
-	m_phi = rot[0];
-	m_theta = rot[1];
+	m_phi_saved = m_phi = rot[0];
+	m_theta_saved = m_theta = rot[1];
 
 	UpdateCam();
 }

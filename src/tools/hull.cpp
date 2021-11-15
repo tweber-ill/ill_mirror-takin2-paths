@@ -1202,7 +1202,7 @@ void HullWnd::SetCurrentFile(const QString &file)
 	if(m_recent.GetCurFile() == "")
 		this->setWindowTitle(title);
 	else
-		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());*/
+		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());*/
 }
 
 

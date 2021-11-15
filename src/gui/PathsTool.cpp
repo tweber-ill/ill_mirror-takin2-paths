@@ -172,7 +172,7 @@ void PathsTool::SaveFileAs()
 		return;
 
 	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+	if(!files.size() || files[0]=="")
 		return;
 
 	if(SaveFile(files[0]))
@@ -197,7 +197,7 @@ void PathsTool::SaveScreenshot()
 		return;
 
 	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+	if(!files.size() || files[0]=="")
 		return;
 
 	bool ok = false;
@@ -230,7 +230,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 		return false;
 
 	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+	if(!files.size() || files[0]=="")
 		return false;
 
 	switch(fmt)
@@ -509,7 +509,7 @@ void PathsTool::SetCurrentFile(const QString &file)
 	if(m_recent.GetCurFile() == "")
 		this->setWindowTitle(title);
 	else
-		this->setWindowTitle(title + " -- " + m_recent.GetCurFile());
+		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());
 }
 
 

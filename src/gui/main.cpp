@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 		auto app = std::make_unique<QApplication>(argc, argv);
 		app->setOrganizationName("tw");
 		app->setApplicationName("taspaths");
-		app->setApplicationDisplayName("TAS-Paths");
+		//app->setApplicationDisplayName("TAS-Paths");
 		app->setApplicationVersion(TASPATHS_VERSION);
 
 		// application path
