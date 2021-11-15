@@ -164,6 +164,8 @@ protected:
 	virtual void showEvent(QShowEvent *) override;
 	virtual void hideEvent(QHideEvent *) override;
 	virtual void closeEvent(QCloseEvent *) override;
+	virtual void dragEnterEvent(QDragEnterEvent *) override;
+	virtual void dropEvent(QDropEvent *) override;
 
 	// File -> Export Path
 	bool ExportPath(PathsExporterFormat fmt);

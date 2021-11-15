@@ -1,7 +1,8 @@
 /**
  * TAS path tool, main window
  * @author Tobias Weber <tweber@ill.fr>
- * @date feb-2021
+ * @date February-November 2021
+ * @note code forked on 15-nov-2021 from my private "qm" project: https://github.com/t-weber/qm
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------
@@ -72,6 +73,7 @@ void PathsTool::UpdateUB()
 void PathsTool::showEvent(QShowEvent *evt)
 {
 	m_renderer->EnableTimer(true);
+
 	QMainWindow::showEvent(evt);
 }
 
@@ -82,6 +84,7 @@ void PathsTool::showEvent(QShowEvent *evt)
 void PathsTool::hideEvent(QHideEvent *evt)
 {
 	m_renderer->EnableTimer(false);
+
 	QMainWindow::hideEvent(evt);
 }
 
@@ -100,6 +103,46 @@ void PathsTool::closeEvent(QCloseEvent *evt)
 
 	QMainWindow::closeEvent(evt);
 }
+
+
+/**
+ * accept a file dropped onto the main window
+ * @see https://doc.qt.io/qt-5/dnd.html
+ */
+void PathsTool::dragEnterEvent(QDragEnterEvent *evt)
+{
+	// accept urls
+	if(evt->mimeData()->hasUrls())
+		evt->accept();
+
+	QMainWindow::dragEnterEvent(evt);
+}
+
+
+/**
+ * accept a file dropped onto the main window
+ * @see https://doc.qt.io/qt-5/dnd.html
+ */
+void PathsTool::dropEvent(QDropEvent *evt)
+{
+	// get mime data dropped on the main window
+	if(const QMimeData* dat = evt->mimeData(); dat && dat->hasUrls())
+	{
+		// get the list of urls dropped on the main window
+		if(QList<QUrl> urls = dat->urls(); urls.size() > 0)
+		{
+			// use the first url for the file name
+			QString filename = urls.begin()->path();
+
+			// load the dropped file
+			if(QFile::exists(filename))
+				OpenFile(filename);
+		}
+	}
+
+	QMainWindow::dropEvent(evt);
+}
+
 
 
 /**
@@ -507,9 +550,15 @@ void PathsTool::SetCurrentFile(const QString &file)
 	m_recent.SetCurFile(file);
 
 	if(m_recent.GetCurFile() == "")
+	{
+		this->setWindowFilePath("");
 		this->setWindowTitle(title);
+	}
 	else
+	{
+		this->setWindowFilePath(m_recent.GetCurFile());
 		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());
+	}
 }
 
 
@@ -852,7 +901,7 @@ void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E,
 
 
 /**
- * create UI
+ * constructor, create UI
  */
 PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
@@ -1651,6 +1700,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	UpdateUB();
 	// --------------------------------------------------------------------
+
+	setAcceptDrops(true);
 }
 
 

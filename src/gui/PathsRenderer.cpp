@@ -2,6 +2,7 @@
  * paths rendering widget
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
+ * @note initially forked from my tlibs2 library: https://code.ill.fr/scientific-software/takin/tlibs2/-/blob/master/libs/qt/glplot.cpp
  * @license GPLv3, see 'LICENSE' file
  *
  * References:
@@ -10,7 +11,6 @@
  *   - https://doc.qt.io/qt-5/qtgui-openglwindow-example.html
  *   - http://doc.qt.io/qt-5/qopengltexture.html
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
- *   - initially forked from tlibs2/libs/qt/glplot.cpp
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
