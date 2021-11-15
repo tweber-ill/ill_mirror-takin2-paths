@@ -819,18 +819,13 @@ void PolyWnd::SaveFileAs()
 void PolyWnd::SetCurrentFile(const QString &file)
 {
 	m_recent.SetCurFile(file);
+	this->setWindowFilePath(m_recent.GetCurFile());
 
-	//static const QString title(PROG_TITLE);
+	/*static const QString title(PROG_TITLE);
 	if(m_recent.GetCurFile() == "")
-	{
-		this->setWindowFilePath("");
-		//this->setWindowTitle(title);
-	}
+		this->setWindowTitle(title);
 	else
-	{
-		this->setWindowFilePath(m_recent.GetCurFile());
-		//this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());*/
-	}
+		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());*/
 }
 
 

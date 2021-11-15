@@ -549,16 +549,12 @@ void PathsTool::SetCurrentFile(const QString &file)
 	static const QString title(PROG_TITLE);
 	m_recent.SetCurFile(file);
 
+	this->setWindowFilePath(m_recent.GetCurFile());
+
 	if(m_recent.GetCurFile() == "")
-	{
-		this->setWindowFilePath("");
 		this->setWindowTitle(title);
-	}
 	else
-	{
-		this->setWindowFilePath(m_recent.GetCurFile());
 		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());
-	}
 }
 
 
