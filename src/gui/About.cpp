@@ -158,7 +158,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	buttons->setStandardButtons(QDialogButtonBox::Ok);
 	grid->addWidget(buttons, y++,0,1,2);
 
-	connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	connect(buttons, &QDialogButtonBox::accepted, this, &AboutDlg::accept);
 }
 
 

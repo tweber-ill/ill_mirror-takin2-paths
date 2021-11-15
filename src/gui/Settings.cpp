@@ -439,8 +439,8 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 		this->activateWindow();
 	});
 
-	connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+	connect(buttons, &QDialogButtonBox::accepted, this, &SettingsDlg::accept);
+	connect(buttons, &QDialogButtonBox::rejected, this, &SettingsDlg::reject);
 	connect(buttons, &QDialogButtonBox::clicked, [this, buttons](QAbstractButton* btn)
 	{
 		// apply button was pressed

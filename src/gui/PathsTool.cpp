@@ -1233,6 +1233,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 				this, &PathsTool::InitSettings);
 		}
 
+		// sequence to show the dialog,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
 		m_dlgSettings->show();
 		m_dlgSettings->raise();
 		m_dlgSettings->activateWindow();

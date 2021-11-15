@@ -123,6 +123,9 @@ int main(int argc, char** argv)
 		auto mainwnd = std::make_unique<PathsTool>(nullptr);
 		if(argc > 1)
 			mainwnd->SetInitialInstrumentFile(argv[1]);
+
+		// sequence to show the window,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
 		mainwnd->show();
 		mainwnd->raise();
 		mainwnd->activateWindow();
