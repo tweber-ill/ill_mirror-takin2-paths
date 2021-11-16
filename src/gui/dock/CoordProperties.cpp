@@ -75,14 +75,16 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	m_checkKfFixed->setChecked(true);
 
 	QPushButton *btnGoto = new QPushButton("Jump to Coordinates", this);
-	QPushButton *btnTarget = new QPushButton("Set Target Angles", this);
+	QPushButton *btnTarget = new QPushButton("Set Coordinates as Target Angles", this);
+	btnGoto->setToolTip("Set the current instrument position to the given crystal coordinates.");
+	btnTarget->setToolTip("Set the given crystal coordinates as the target position for pathfinding.");
 
 	const char* labels[] = {
-		"Momentum (h):", 
-		"Momentum (k):", 
-		"Momentum (l):", 
-		"Initial k (ki):", 
-		"Final k (kf):", 
+		"Momentum (h):",
+		"Momentum (k):",
+		"Momentum (l):",
+		"Initial k (ki):",
+		"Final k (kf):",
 		"Energy (E):"
 	};
 

@@ -68,6 +68,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
 	m_btnCalcMesh = new QPushButton(CALC_MESH_TITLE, this);
 	m_btnCalcPath = new QPushButton(CALC_PATH_TITLE, this);
+	btnGotoFinish->setToolTip("Set the current instrument position to the given target angles.");
+	m_btnCalcMesh->setToolTip("Calculate the mesh of possible paths used for pathfinding.");
+	m_btnCalcPath->setToolTip("Calculate the actual path from the current to the target instrument position.");
 	//m_btnCalcMesh->setShortcut(Qt::ALT | Qt::Key_M);
 	//m_btnCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);

@@ -51,6 +51,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_spinAnaD = new QDoubleSpinBox(this);
 
 	QPushButton *btnTarget = new QPushButton("Set Current Angles as Target", this);
+	btnTarget->setToolTip("Set the current instrument position as the target position for pathfinding.");
 
 	m_checkScatteringSense[0] = new QCheckBox(this);
 	m_checkScatteringSense[1] = new QCheckBox(this);
@@ -59,6 +60,9 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_checkScatteringSense[0]->setText("Monochromator ccw");
 	m_checkScatteringSense[1]->setText("Sample ccw");
 	m_checkScatteringSense[2]->setText("Analyser ccw");
+	m_checkScatteringSense[0]->setToolTip("Move the monochromator scattering angle in the counterclockwise direction.");
+	m_checkScatteringSense[1]->setToolTip("Move the sample scattering angle in the counterclockwise direction.");
+	m_checkScatteringSense[2]->setToolTip("Move the analyser scattering angle in the counterclockwise direction.");
 
 	m_checkScatteringSense[0]->setChecked(true);
 	m_checkScatteringSense[1]->setChecked(false);
