@@ -34,9 +34,14 @@
 #include <QtWidgets/QPushButton>
 
 
+
 // --------------------------------------------------------------------------------
 // properties widget
 // --------------------------------------------------------------------------------
+#define CALC_MESH_TITLE "Calculate Path &Mesh"
+#define CALC_PATH_TITLE "Calculate &Path"
+
+
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
@@ -61,8 +66,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_spinFinish[1]->setValue(90.);
 
 	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
-	m_btnCalcMesh = new QPushButton("Calculate Path Mesh", this);
-	m_btnCalcPath = new QPushButton("Calculate Path", this);
+	m_btnCalcMesh = new QPushButton(CALC_MESH_TITLE, this);
+	m_btnCalcPath = new QPushButton(CALC_PATH_TITLE, this);
+	//m_btnCalcMesh->setShortcut(Qt::ALT | Qt::Key_M);
+	//m_btnCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
 	m_sliderPath->setToolTip("Path tracking.");
 	m_btnGo = new QToolButton(this);
@@ -285,7 +292,7 @@ void PathPropertiesWidget::PathMeshCalculation(CalculationState state, t_real pr
 		case CalculationState::FAILED:
 		case CalculationState::SUCCEEDED:
 		{
-			m_btnCalcMesh->setText("Calculate Path Mesh");
+			m_btnCalcMesh->setText(CALC_MESH_TITLE);
 			m_btnCalcMesh->setEnabled(true);
 			break;
 		}

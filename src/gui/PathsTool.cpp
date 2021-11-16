@@ -1219,14 +1219,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuExportPath->addAction(acExportNomad);
 	menuExportPath->addAction(acExportNicos);
 
-	// shortcuts
-	actionNew->setShortcut(QKeySequence::New);
-	actionOpen->setShortcut(QKeySequence::Open);
-	actionSave->setShortcut(QKeySequence::Save);
-	actionSaveAs->setShortcut(QKeySequence::SaveAs);
-	actionSettings->setShortcut(QKeySequence::Preferences);
-	actionQuit->setShortcut(QKeySequence::Quit);
-
+	// recent files menu
 	m_menuOpenRecent = new QMenu("Open Recent", menuFile);
 	m_menuOpenRecent->setIcon(QIcon::fromTheme("document-open-recent"));
 
@@ -1537,6 +1530,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionBug);
 	menuHelp->addAction(actionAbout);
+
+
+	// shortcuts
+	actionNew->setShortcut(QKeySequence::New);
+	actionOpen->setShortcut(QKeySequence::Open);
+	actionSave->setShortcut(QKeySequence::Save);
+	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	actionSettings->setShortcut(QKeySequence::Preferences);
+	actionQuit->setShortcut(QKeySequence::Quit);
+	actionGeoBrowser->setShortcut(Qt::CTRL | Qt::Key_B);
+	actionConfigSpace->setShortcut(Qt::CTRL | Qt::Key_A);
 
 
 	// menu bar

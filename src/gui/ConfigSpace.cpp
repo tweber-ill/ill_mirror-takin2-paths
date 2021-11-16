@@ -349,6 +349,12 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	menuView->addAction(acResetZoom);
 
 
+	// shortcuts
+	acMoveTarget->setShortcut(Qt::CTRL | Qt::Key_T);
+	acCalcMesh->setShortcut(Qt::ALT | Qt::Key_M);
+	acCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
+
+
 	// menu bar
 	auto* menuBar = new QMenuBar(this);
 	menuBar->addMenu(menuFile);
@@ -1190,6 +1196,18 @@ void ConfigSpaceDlg::RedrawPathPlot()
  */
 bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progress, const std::string& message)
 {
+	if(isHidden())
+	{
+		// don't show the progress dialog if the config space dialog is hidden
+		if(m_progress)
+		{
+			m_progress->reset();
+			m_progress.reset();
+		}
+
+		return true;
+	}
+
 	static const int max_progress = 1000;
 
 	if(!m_progress)
