@@ -74,8 +74,8 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 	using t_real = typename t_vec::value_type;
 	using t_real_qhull = coordT;
 
-	std::vector<t_vec> voronoi;						// voronoi vertices
-	std::vector<std::vector<t_vec>> triags;			// delaunay triangles
+	std::vector<t_vec> voronoi;			// voronoi vertices
+	std::vector<std::vector<t_vec>> triags;		// delaunay triangles
 	std::vector<std::set<std::size_t>> neighbours;	// neighbour triangle indices
 
 	try
@@ -206,6 +206,7 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 
 /**
  * @returns [triangle index, shared index 1, shared index 2, non-shared index]
+ * @see (FUH 2020), ch. 6.2, pp. 269-282
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::optional<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>>
@@ -243,7 +244,8 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * does delaunay triangle conflict with point pt
+ * does delaunay triangle conflict with point pt?
+ * @see (FUH 2020), ch. 6.2, pp. 269-282
  */
 template<class t_vec> requires tl2::is_vec<t_vec>
 bool is_conflicting_triag(const std::vector<t_vec>& triag, const t_vec& pt)
@@ -260,6 +262,10 @@ bool is_conflicting_triag(const std::vector<t_vec>& triag, const t_vec& pt)
 }
 
 
+/**
+ * flip an edge in the iterative method
+ * @see (FUH 2020), ch. 6.2, pp. 269-282
+ */
 template<class t_vec, class t_real = typename t_vec::value_type>
 void flip_edge(std::vector<std::vector<t_vec>>& triags,
 	std::size_t triagidx, std::size_t nonsharedidx, t_real eps = 1e-5)
@@ -314,8 +320,8 @@ requires tl2::is_vec<t_vec>
 {
 	using namespace tl2_ops;
 
-	std::vector<t_vec> voronoi;						// voronoi vertices
-	std::vector<std::vector<t_vec>> triags;			// delaunay triangles
+	std::vector<t_vec> voronoi;			// voronoi vertices
+	std::vector<std::vector<t_vec>> triags;		// delaunay triangles
 	std::vector<std::set<std::size_t>> neighbours;	// neighbour triangle indices
 
 	if(verts.size() < 3)
@@ -457,8 +463,8 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 
 	const int dim = 2;
 
-	std::vector<t_vec> voronoi;						// voronoi vertices
-	std::vector<std::vector<t_vec>> triags;			// delaunay triangles
+	std::vector<t_vec> voronoi;			// voronoi vertices
+	std::vector<std::vector<t_vec>> triags;		// delaunay triangles
 	std::vector<std::set<std::size_t>> neighbours;	// neighbour triangle indices
 
 	try
@@ -621,4 +627,5 @@ std::vector<t_edge> get_edges(
 }
 
 }
+
 #endif
