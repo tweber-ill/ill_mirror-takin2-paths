@@ -45,8 +45,6 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
 
-#define PROG_TITLE "Triple-Axis Path Calculator"
-
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	#define EXEC_EXTENSION ".exe"
@@ -546,7 +544,7 @@ bool PathsTool::SaveCombinedScreenshot(const QString& filename)
  */
 void PathsTool::SetCurrentFile(const QString &file)
 {
-	static const QString title(PROG_TITLE);
+	static const QString title(TASPATHS_TITLE);
 	m_recent.SetCurFile(file);
 
 	this->setWindowFilePath(m_recent.GetCurFile());
@@ -901,7 +899,7 @@ void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E,
  */
 PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
-	setWindowTitle(PROG_TITLE);
+	setWindowTitle(TASPATHS_TITLE);
 
 	if(std::string icon_file = g_res.FindResource("res/taspaths.svg"); !icon_file.empty())
 	{
@@ -1453,7 +1451,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
 	QAction *actionLicenses = new QAction("Licenses...", menuHelp);
 	QAction *actionBug = new QAction("Report Bug...", menuHelp);
-	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About TAS-Paths...", menuHelp);
+	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About " TASPATHS_TITLE "...", menuHelp);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
 	actionAbout->setMenuRole(QAction::AboutRole);

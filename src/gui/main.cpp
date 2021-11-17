@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 		auto app = std::make_unique<QApplication>(argc, argv);
 		app->setOrganizationName("tw");
 		app->setApplicationName("taspaths");
-		//app->setApplicationDisplayName("TAS-Paths");
+		//app->setApplicationDisplayName(TASPATHS_TITLE);
 		app->setApplicationVersion(TASPATHS_VERSION);
 
 		// application path
@@ -107,10 +107,10 @@ int main(int argc, char** argv)
 		g_res.AddPath((apppath / ".." / "Resources").string());
 		g_res.AddPath(g_apppath);
 		g_res.AddPath((apppath / "..").string());
-		g_res.AddPath(fs::path("/usr/local/share/TASPaths/res").string());
-		g_res.AddPath(fs::path("/usr/share/TASPaths/res").string());
-		g_res.AddPath(fs::path("/usr/local/share/TASPaths").string());
-		g_res.AddPath(fs::path("/usr/share/TASPaths").string());
+		g_res.AddPath(fs::path("/usr/local/share/taspaths/res").string());
+		g_res.AddPath(fs::path("/usr/share/taspaths/res").string());
+		g_res.AddPath(fs::path("/usr/local/share/taspaths").string());
+		g_res.AddPath(fs::path("/usr/share/taspaths").string());
 
 		// make type definitions known as qt meta objects
 		qRegisterMetaType<t_real>("t_real");

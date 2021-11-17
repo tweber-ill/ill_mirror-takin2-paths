@@ -41,7 +41,7 @@
 AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	: QDialog{parent}, m_sett{sett}
 {
-	setWindowTitle("About");
+	setWindowTitle("About " TASPATHS_TITLE);
 	setSizeGripEnabled(true);
 
 	// restore dialog geometry
@@ -54,15 +54,24 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 
 	int y = 0;
 
-	QLabel *labTitle = new QLabel("Takin / TAS-Paths", this);
+	QLabel *labTitle = new QLabel(TASPATHS_TITLE, this);
 	QFont fontTitle = labTitle->font();
 	fontTitle.setPointSize(fontTitle.pointSize()*1.5);
 	fontTitle.setWeight(QFont::Bold);
 	labTitle->setFont(fontTitle);
 	grid->addWidget(labTitle, y++,0,1,2);
 
-	QSpacerItem *spacer0 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	grid->addItem(spacer0, y++,0,1,2);
+	QLabel *labSubtitle = new QLabel("Pathfinding software for triple-axis spectrometers.", this);
+	QFont fontSubtitle = labSubtitle->font();
+	fontSubtitle.setWeight(QFont::Bold);
+	labSubtitle->setFont(fontSubtitle);
+	grid->addWidget(labSubtitle, y++,0,1,2);
+
+	QSpacerItem *spacer1 = new QSpacerItem(1, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacer1, y++,0,1,2);
+
+	QSpacerItem *spacer2 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	grid->addItem(spacer2, y++,0,1,2);
 
 	QLabel *labSubtitle1 = new QLabel("DOI: ", this);
 	QFont fontLabel1 = labSubtitle1->font();
@@ -94,8 +103,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labVersion2 = new QLabel(TASPATHS_VERSION ".", this);
 	grid->addWidget(labVersion2, y++,1,1,1);
 
-	QSpacerItem *spacer1 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
-	grid->addItem(spacer1, y++,0,1,2);
+	QSpacerItem *spacer3 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacer3, y++,0,1,2);
 
 	QLabel *labAuthor1 = new QLabel("Author: ", this);
 	fontLabel1.setWeight(QFont::Bold);
@@ -117,8 +126,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labLic2 = new QLabel("GNU GPL Version 3.", this);
 	grid->addWidget(labLic2, y++,1,1,1);
 
-	QSpacerItem *spacer2 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
-	grid->addItem(spacer2, y++,0,1,2);
+	QSpacerItem *spacer4 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacer4, y++,0,1,2);
 
 	QLabel *labBuildDate1 = new QLabel("Build Timestamp: ", this);
 	labBuildDate1->setFont(fontLabel1);
@@ -151,8 +160,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labBoostLib = new QLabel(boostlib2, this);
 	grid->addWidget(labBoostLib, y++,1,1,1);
 
-	QSpacerItem *spacer3 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	grid->addItem(spacer3, y++,0,1,2);
+	QSpacerItem *spacer5 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	grid->addItem(spacer5, y++,0,1,2);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);

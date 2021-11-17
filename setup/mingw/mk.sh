@@ -26,8 +26,7 @@
 
 use_lapacke=0
 
-APPNAME="TASPaths"
-APPDIRNAME="${APPNAME}"
+APPDIRNAME="taspaths"
 
 APPICON="res/taspaths.svg"
 APPICON_ICO="${APPICON%\.svg}.ico"

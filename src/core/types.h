@@ -29,9 +29,11 @@
 
 #include "tlibs2/libs/maths.h"
 
-/**
- * version number of this software
- */
+
+// program title
+#define TASPATHS_TITLE "TAS-Paths"
+
+// version number of this software
 #define TASPATHS_VERSION "1.2.5"
 
 

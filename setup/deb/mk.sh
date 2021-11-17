@@ -29,7 +29,7 @@ create_deb=1
 
 
 # defines
-APPNAME="TASPaths"
+APPNAME="taspaths"
 APPDIRNAME="${APPNAME}"
 APPDEBNAME="${APPNAME}.deb"
 
@@ -50,7 +50,7 @@ if [ $create_appdir -ne 0 ]; then
 	echo -e "Package: ${APPNAME}\nVersion: 1.2.5" > ${APPDIRNAME}/DEBIAN/control
 	echo -e "Architecture: $(dpkg --print-architecture)" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Section: base\nPriority: optional" >> ${APPDIRNAME}/DEBIAN/control
-	echo -e "Description: TAS path-finding tool" >> ${APPDIRNAME}/DEBIAN/control
+	echo -e "Description: TAS pathfinding software" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Maintainer: tweber@ill.fr" >> ${APPDIRNAME}/DEBIAN/control
 	echo -e "Depends:"\
 		"libstdc++6 (>=10.0.0),"\

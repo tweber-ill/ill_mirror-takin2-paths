@@ -32,7 +32,9 @@
 *.dmg
 *.deb
 TASPaths.app/**
+taspaths.app/**
 TASPaths/**
+taspaths/**
 
 # Temporary files
 tmp/**
