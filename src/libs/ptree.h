@@ -5,6 +5,10 @@
  * @note Forked on 20-mar-2021 from my privately developed "misc" project (https://github.com/t-weber/misc).
  * @license GPLv3, see 'LICENSE' file
  *
+ * References:
+ *  * https://www.boost.org/doc/libs/1_77_0/doc/html/property_tree.html
+ *  * https://www.boost.org/doc/libs/1_77_0/doc/html/string_algo.html
+ *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
  * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),

@@ -312,7 +312,10 @@ requires tl2::is_vec<t_vec>
 }
 
 
-template<class t_vec, class t_line=std::pair<t_vec, t_vec>, 
+/**
+ * get the slope and y axis offset of a line
+ */
+template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
 std::pair<t_real, t_real> get_line_slope_offs(const t_line& line)
@@ -330,6 +333,9 @@ std::pair<t_real, t_real> get_line_slope_offs(const t_line& line)
 }
 
 
+/**
+ * get the y coordinate component of a line
+ */
 template<class t_vec, class t_line=std::pair<t_vec, t_vec>,
 	class t_real=typename t_vec::value_type>
 requires tl2::is_vec<t_vec>
@@ -356,6 +362,9 @@ bool is_line_equal(const t_line& line1, const t_line& line2,
 }
 
 
+/**
+ * do two lines intersect?
+ */
 template<class t_line, class t_vec=typename std::tuple_element<0, t_line>::type,
 	class t_real = typename t_vec::value_type>
 std::tuple<bool, t_vec>
@@ -371,6 +380,9 @@ requires tl2::is_vec<t_vec>
 }
 
 
+/**
+ * check if the given point is inside hull
+ */
 template<class t_vec> requires tl2::is_vec<t_vec>
 bool pt_inside_hull(const std::vector<t_vec>& hull, const t_vec& pt)
 {
@@ -615,6 +627,9 @@ std::optional<std::size_t> get_containing_triag(
 }
 
 
+/**
+ * remove duplicate points
+ */
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::vector<t_vec> _remove_duplicates(
 	const std::vector<t_vec>& _verts,
@@ -623,7 +638,6 @@ requires tl2::is_vec<t_vec>
 {
 	std::vector<t_vec> verts = _verts;
 
-	// remove duplicate points
 	verts.erase(std::unique(verts.begin(), verts.end(),
 		[eps](const t_vec& vec1, const t_vec& vec2) -> bool
 		{ return tl2::equals<t_vec>(vec1, vec2, eps); }
@@ -633,6 +647,9 @@ requires tl2::is_vec<t_vec>
 }
 
 
+/**
+ * sort vertices by their x and y coordinate components
+ */
 template<class t_vec, class t_real = typename t_vec::value_type>
 std::vector<t_vec> _sort_vertices(
 	const std::vector<t_vec>& _verts,
@@ -667,6 +684,9 @@ requires tl2::is_vec<t_vec>
 }
 
 
+/**
+ * sort vertices by angle
+ */
 template<class t_vec,
 	class t_real = typename t_vec::value_type,
 	class t_vec_real = tl2::vec<t_real, std::vector>>
@@ -813,6 +833,9 @@ t_cont<t_vec> intersect_circle_circle(
 // @see (FUH 2020), ch. 2.3.2, pp. 69-80
 // ----------------------------------------------------------------------------
 
+/**
+ * inefficient check for intersections by testing every line segment against each other
+ */
 template<class t_vec, class t_line = std::pair<t_vec, t_vec>, class t_real = typename t_vec::value_type>
 std::vector<std::tuple<std::size_t, std::size_t, t_vec>>
 intersect_ineff(const std::vector<t_line>& lines, t_real eps = 1e-6)
@@ -840,6 +863,9 @@ requires tl2::is_vec<t_vec>
 }
 
 
+/**
+ * check if line 1 is below line 2
+ */
 template<class t_vec, class t_line = std::pair<t_vec, t_vec>>
 requires tl2::is_vec<t_vec>
 bool cmp_line(const t_line& line1, const t_line& line2,
@@ -1269,7 +1295,7 @@ bool collide_circle_circle(
 
 
 /**
- * check for a collision of a circle and a polygon
+ * check for a collision between a circle and a polygon
  */
 template<class t_vec, template<class...> class t_cont=std::vector>
 bool collide_circle_poly(

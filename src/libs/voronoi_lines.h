@@ -661,7 +661,7 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro(const std::vector<t_line>& lines, 
+calc_voro(const std::vector<t_line>& lines,
 	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
 	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
@@ -675,7 +675,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	// internal scale for int-conversion
 	const t_real scale = std::sqrt(std::numeric_limits<t_int>::max());
 
-	
+
 	// length of infinite edges
 	t_real infline_len = 1.;
 	for(const t_line& line : lines)
@@ -843,7 +843,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				}
 			}
 
-			if(regions->IsVertexInRegion(lines, 
+			if(regions->IsVertexInRegion(lines,
 				vertices, vert0idx, vert1idx, eps))
 				continue;
 		}
@@ -1063,7 +1063,7 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro_ovd(const std::vector<t_line>& lines, 
+calc_voro_ovd(const std::vector<t_line>& lines,
 	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
 	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)

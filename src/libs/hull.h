@@ -448,7 +448,7 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * calculation of convex hull
+ * calculation of convex hull by contour polygon
  * @see (FUH 2020), ch. 3.1.5, pp. 125-128
  */
 template<class t_vec, class t_real = typename t_vec::value_type>
