@@ -6,8 +6,12 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References for the algorithms:
- *   - (Klein 2005) "Algorithmische Geometrie" (2005), ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
- *   - (FUH 2020) "Algorithmische Geometrie" (2020), Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
+ *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005), 
+ *                  ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
+ *   - (FUH 2020) R. Klein, C. Icking, "Algorithmische Geometrie" (2020),
+ *                Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
+ *   - (Berg 2008) M. de Berg, O. Cheong, M. van Kreveld, M. Overmars, "Computational Geometry" (2008),
+ *                 ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)

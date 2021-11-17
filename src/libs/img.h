@@ -6,7 +6,7 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References for the GIL image library:
- *   - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
+ *  - https://www.boost.org/doc/libs/1_69_0/libs/gil/doc/html/tutorial.html
  *
  * References for the spatial index tree:
  *  - https://www.boost.org/doc/libs/1_76_0/libs/geometry/doc/html/index.html

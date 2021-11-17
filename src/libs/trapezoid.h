@@ -6,7 +6,8 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * Reference for the algorithms:
- *   - (Berg 2008) "Computational Geometry" (2008), ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
+ *   - (Berg 2008) M. de Berg, O. Cheong, M. van Kreveld, M. Overmars, "Computational Geometry" (2008),
+ *                 ISBN: 978-3-642-09681-5 (http://dx.doi.org/10.1007/978-3-540-77974-2).
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
