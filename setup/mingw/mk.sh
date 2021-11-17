@@ -67,7 +67,7 @@ mkdir -p ${APPDIRNAME}
 mkdir -p ${APPDIRNAME}/res
 
 
-# 
+#
 # create a png icon with the specified size out of an svg
 #
 svg_to_png() {
