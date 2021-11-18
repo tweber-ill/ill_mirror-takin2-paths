@@ -11,7 +11,7 @@
     <key>CFBundleSupportedPlatforms</key>           <array> <string>MacOSX</string> </array>
     <key>CFBundleDevelopmentRegion</key>            <string>en</string>
 
-    <key>CFBundleName</key>                         <string>TASPaths</string>
+    <key>CFBundleName</key>                         <string>TAS-Paths</string>
     <key>CFBundleDisplayName</key>                  <string>TAS-Paths</string>
     <key>CFBundleIdentifier</key>                   <string>eu.ill.cs.takin.taspaths</string>
     <key>CFBundleExecutable</key>                   <string>taspaths</string>

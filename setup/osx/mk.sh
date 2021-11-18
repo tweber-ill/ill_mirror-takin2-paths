@@ -30,7 +30,7 @@ create_dmg=1
 strip_binaries=1
 clean_frameworks=1
 
-APPNAME="TASPaths"
+APPNAME="TAS-Paths"
 APPDIRNAME="${APPNAME}.app"
 APPDMGNAME="${APPNAME}.dmg"
 TMPFILE="${APPNAME}_tmp.dmg"
