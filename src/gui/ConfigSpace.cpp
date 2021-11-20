@@ -350,9 +350,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 
 	// shortcuts
-	acMoveTarget->setShortcut(Qt::CTRL | Qt::Key_T);
-	acCalcMesh->setShortcut(Qt::ALT | Qt::Key_M);
-	acCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
+	acMoveTarget->setShortcut(int(Qt::CTRL) | int(Qt::Key_T));
+	acCalcMesh->setShortcut(int(Qt::ALT) | int(Qt::Key_M));
+	acCalcPath->setShortcut(int(Qt::ALT) | int(Qt::Key_P));
 
 
 	// menu bar

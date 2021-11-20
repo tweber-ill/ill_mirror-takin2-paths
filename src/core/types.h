@@ -57,7 +57,7 @@ public:
 
 
 public:
-	constexpr t_arr() noexcept
+	constexpr t_arr() noexcept : std::array<T, N>{}
 	{
 		for(std::size_t i=0; i<this->size(); ++i)
 			this->operator[](i) = T{};
@@ -84,19 +84,33 @@ public:
 
 
 	/**
+	 * move constructor
+	 */
+	constexpr t_arr(t_arr&& other) noexcept
+	{
+		this->operator=(std::forward<t_arr&&>(other));
+	}
+
+
+	/**
 	 * assignment
 	 */
 	constexpr t_arr& operator=(const t_arr& other) noexcept
 	{
-		static_cast<std::array<T, N>*>(this)->operator=(other);
+		//static_cast<std::array<T, N>*>(this)->operator=(other);
+		std::array<T, N>::operator=(other);
 		return *this;
 	}
 
 
 	/**
-	 * move constructor
+	 * movement
 	 */
-	//t_arr(t_arr&& other) noexcept : std::array<T, N>(std::forward<t_arr&&>(other)) {}
+	constexpr t_arr& operator=(t_arr&& other) noexcept
+	{
+		std::array<T, N>::operator=(std::forward<std::array<T,N>&&>(other));
+		return *this;
+	}
 };
 
 

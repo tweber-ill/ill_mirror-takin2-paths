@@ -6,7 +6,7 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References for the algorithms:
- *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005), 
+ *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005),
  *                  ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
  *   - (FUH 2020) R. Klein, C. Icking, "Algorithmische Geometrie" (2020),
  *                Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
@@ -1095,11 +1095,11 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 	namespace intr = boost::intrusive;
 	using t_node = IntersTreeNode<t_vec, t_line>;
 	using t_treealgos = intr::avltree_algorithms<BinTreeNodeTraits<t_node>>;
-	t_node status;
+	t_node status{};
 	t_treealgos::init_header(&status);
 
 	// results
-	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections;
+	std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersections{};
 	intersections.reserve(lines.size() * lines.size() / 2);
 
 	t_real curX = 0.;

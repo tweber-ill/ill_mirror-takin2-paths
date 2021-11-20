@@ -1537,8 +1537,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
-	actionGeoBrowser->setShortcut(Qt::CTRL | Qt::Key_B);
-	actionConfigSpace->setShortcut(Qt::CTRL | Qt::Key_A);
+	actionGeoBrowser->setShortcut(int(Qt::CTRL) | int(Qt::Key_B));
+	actionConfigSpace->setShortcut(int(Qt::CTRL) | int(Qt::Key_A));
 
 
 	// menu bar

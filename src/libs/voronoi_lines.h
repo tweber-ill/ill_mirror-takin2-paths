@@ -695,8 +695,8 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	{
 		using coordinate_type = t_real;
 		using vertex_type = poly::voronoi_vertex<coordinate_type>;
-		using edge_type = poly::voronoi_edge<coordinate_type>;
-		using cell_type = poly::voronoi_cell<coordinate_type>;
+		using edge_type [[maybe_unused]] = poly::voronoi_edge<coordinate_type>;
+		using cell_type [[maybe_unused]] = poly::voronoi_cell<coordinate_type>;
 
 		struct vertex_equality_predicate_type
 		{
