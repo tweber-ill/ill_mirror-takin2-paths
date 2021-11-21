@@ -25,7 +25,9 @@
 
 #include "About.h"
 #include "src/core/types.h"
+#include "settings_variables.h"
 
+#include <QtGui/QIcon>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QSpacerItem>
@@ -54,13 +56,36 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 
 	int y = 0;
 
+	// icon and title
 	QLabel *labTitle = new QLabel(TASPATHS_TITLE, this);
 	QFont fontTitle = labTitle->font();
 	fontTitle.setPointSize(fontTitle.pointSize()*1.5);
 	fontTitle.setWeight(QFont::Bold);
 	labTitle->setFont(fontTitle);
-	grid->addWidget(labTitle, y++,0,1,2);
 
+	QWidget *titleWidget = new QWidget(this);
+	QGridLayout *titleGrid = new QGridLayout(titleWidget);
+	titleGrid->setSpacing(4);
+	titleGrid->setContentsMargins(0, 0, 0, 0);
+	titleWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+	QLabel *labelIcon = new QLabel(titleWidget);
+	std::string icon_file = g_res.FindResource("res/taspaths.svg");
+	QIcon icon{icon_file.c_str()};
+	QPixmap pixmap = icon.pixmap(48, 48);
+	labelIcon->setPixmap(pixmap);
+	labelIcon->setFrameShape(QFrame::StyledPanel);
+	labelIcon->setFrameShadow(QFrame::Raised);
+	labelIcon->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+	QSpacerItem *spacer = new QSpacerItem(16, 1, QSizePolicy::Fixed, QSizePolicy::Fixed);
+	titleGrid->addWidget(labelIcon, 0, 0, 1, 1, Qt::AlignVCenter);
+	titleGrid->addItem(spacer, 0, 1, 1, 1);
+	titleGrid->addWidget(labTitle, 0, 2, 1, 1, Qt::AlignVCenter);
+
+	grid->addWidget(titleWidget, y++, 0, 1, 2);
+
+	// subtitle
 	QLabel *labSubtitle = new QLabel("Pathfinding software for triple-axis spectrometers.", this);
 	QFont fontSubtitle = labSubtitle->font();
 	fontSubtitle.setWeight(QFont::Bold);
