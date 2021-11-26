@@ -4,7 +4,13 @@ Pathfinding software for triple-axis spectrometers.
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4625649.svg)](https://doi.org/10.5281/zenodo.4625649)
 
 
-## Demonstration Videos
+## Online Resources
+
+### Website
+The software's website can be found under [www.ill.eu/tas-paths](http://www.ill.eu/tas-paths).
+
+### Demonstration Videos
+Basic tutorial videos are available here:
 - [Basic pathfinding workflow](https://youtu.be/iFnPrxYqipk).
 - [Visualising the instrument's angular configuration space](https://youtu.be/WPUCVzMDKDc).
 
