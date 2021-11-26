@@ -1447,10 +1447,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionDevDoc = nullptr;
 	if(show_dev_doc)
 		actionDevDoc = new QAction(QIcon::fromTheme("help-contents"), "Developer Documentation...", menuHelp);
-	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
-	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
+	QAction *actionWebsite = new QAction(QIcon::fromTheme("applications-internet"), TASPATHS_TITLE " Website...", menuHelp);
 	QAction *actionLicenses = new QAction("Licenses...", menuHelp);
 	QAction *actionBug = new QAction("Report Bug...", menuHelp);
+	QAction *actionAboutQt = new QAction(QIcon::fromTheme("help-about"), "About Qt Libraries...", menuHelp);
+	QAction *actionAboutGl = new QAction(QIcon::fromTheme("help-about"), "About Renderer...", menuHelp);
 	QAction *actionAbout = new QAction(QIcon::fromTheme("help-about"), "About " TASPATHS_TITLE "...", menuHelp);
 
 	actionAboutQt->setMenuRole(QAction::AboutQtRole);
@@ -1464,12 +1465,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			std::string dev_docfile_abs = fs::absolute(dev_docfile).string();
 			QUrl url(("file://" + dev_docfile_abs).c_str(), QUrl::StrictMode);
 			if(!QDesktopServices::openUrl(url))
-			{
-				QMessageBox::critical(this, "Error",
-					"Cannot open developer documentation.");
-			}
+				QMessageBox::critical(this, "Error", "Could not open developer documentation.");
 		});
 	}
+
+	// show website
+	connect(actionWebsite, &QAction::triggered, this, [this]()
+	{
+		QUrl url("http://www.ill.eu/tas-paths");
+		if(!QDesktopServices::openUrl(url))
+			QMessageBox::critical(this, "Error", "Could not open website.");
+	});
 
 	connect(actionAboutQt, &QAction::triggered, this, []() { qApp->aboutQt(); });
 
@@ -1510,21 +1516,21 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	});
 
 	// go to bug report url
-	connect(actionBug, &QAction::triggered, this, []()
+	connect(actionBug, &QAction::triggered, this, [this]()
 	{
 		QUrl url("https://code.ill.fr/scientific-software/takin/paths/-/issues");
-		QDesktopServices::openUrl(url);
+		if(!QDesktopServices::openUrl(url))
+			QMessageBox::critical(this, "Error", "Could not open bug report website.");
 	});
 
+	menuHelp->addAction(actionWebsite);
 	if(actionDevDoc)
-	{
 		menuHelp->addAction(actionDevDoc);
-		menuHelp->addSeparator();
-	}
-	menuHelp->addAction(actionAboutQt);
-	menuHelp->addAction(actionAboutGl);
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionLicenses);
+	menuHelp->addSeparator();
+	menuHelp->addAction(actionAboutQt);
+	menuHelp->addAction(actionAboutGl);
 	menuHelp->addSeparator();
 	menuHelp->addAction(actionBug);
 	menuHelp->addAction(actionAbout);
@@ -1972,7 +1978,8 @@ void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectPro
 	else
 	{
 		QMessageBox::warning(this, "Warning",
-			QString("Properties of object \"") + objname.c_str() + QString("\" cannot be changed."));
+			QString("Properties of object \"") + objname.c_str() +
+				QString("\" cannot be changed."));
 	}
 }
 
