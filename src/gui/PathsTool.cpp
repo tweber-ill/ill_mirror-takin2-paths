@@ -1202,8 +1202,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionSave = new QAction(QIcon::fromTheme("document-save"), "Save", menuFile);
 	QAction *actionSaveAs = new QAction(QIcon::fromTheme("document-save-as"), "Save As...", menuFile);
 	QAction *actionScreenshot = new QAction(QIcon::fromTheme("image-x-generic"), "Save Screenshot...", menuFile);
-	QAction *actionGarbage = new QAction(QIcon::fromTheme("user-trash-full"), "Collect Garbage", menuFile);
-	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", menuFile);
 	QAction *actionQuit = new QAction(QIcon::fromTheme("application-exit"), "Quit", menuFile);
 
 	// export menu
@@ -1225,7 +1223,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_recent.SetMaxRecentFiles(g_maxnum_recents);
 	m_recent.SetOpenFunc(&m_open_func);
 
-	actionSettings->setMenuRole(QAction::PreferencesRole);
 	actionQuit->setMenuRole(QAction::QuitRole);
 
 	// connections
@@ -1235,46 +1232,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
 	connect(actionScreenshot, &QAction::triggered, this, [this]() { this->SaveScreenshot(); });
 	connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
-
-	// collect garbage
-	connect(actionGarbage, &QAction::triggered, this, [this]()
-	{
-		// remove any open dialogs
-		if(this->m_dlgSettings)
-			this->m_dlgSettings.reset();
-
-		if(this->m_dlgGeoBrowser)
-			this->m_dlgGeoBrowser.reset();
-
-		if(this->m_dlgConfigSpace)
-			this->m_dlgConfigSpace.reset();
-
-		if(this->m_dlgXtalConfigSpace)
-			this->m_dlgXtalConfigSpace.reset();
-
-		if(this->m_dlgAbout)
-			this->m_dlgAbout.reset();
-
-		if(this->m_dlgLicenses)
-			this->m_dlgLicenses.reset();
-	});
-
-	// show settings dialog
-	connect(actionSettings, &QAction::triggered, this, [this]()
-	{
-		if(!this->m_dlgSettings)
-		{
-			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
-			connect(&*this->m_dlgSettings, &SettingsDlg::SettingsHaveChanged,
-				this, &PathsTool::InitSettings);
-		}
-
-		// sequence to show the dialog,
-		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
-		m_dlgSettings->show();
-		m_dlgSettings->raise();
-		m_dlgSettings->activateWindow();
-	});
 
 	connect(acExportRaw, &QAction::triggered, [this]() -> void
 	{
@@ -1303,10 +1260,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuFile->addAction(actionScreenshot);
 	menuFile->addMenu(menuExportPath);
 	menuFile->addSeparator();
-	menuFile->addAction(actionGarbage);
-	menuFile->addAction(actionSettings);
-	menuFile->addSeparator();
 	menuFile->addAction(actionQuit);
+
 
 
 	// view menu
@@ -1390,6 +1345,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuCalc->addAction(actionXtalConfigSpace);
 
 
+
 	// tools menu
 	QMenu *menuTools = new QMenu("Tools", m_menubar);
 
@@ -1433,6 +1389,61 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			create_process(polypath.string());
 		});
 	}
+
+
+
+	// settings menu
+	QMenu *menuSettings = new QMenu("Settings", m_menubar);
+
+	QAction *actionGarbage = new QAction(QIcon::fromTheme("user-trash-full"), "Collect Garbage", menuSettings);
+	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Preferences...", menuSettings);
+
+	actionSettings->setMenuRole(QAction::PreferencesRole);
+
+	// collect garbage
+	connect(actionGarbage, &QAction::triggered, this, [this]()
+	{
+		// remove any open dialogs
+		if(this->m_dlgSettings)
+			this->m_dlgSettings.reset();
+
+		if(this->m_dlgGeoBrowser)
+			this->m_dlgGeoBrowser.reset();
+
+		if(this->m_dlgConfigSpace)
+			this->m_dlgConfigSpace.reset();
+
+		if(this->m_dlgXtalConfigSpace)
+			this->m_dlgXtalConfigSpace.reset();
+
+		if(this->m_dlgAbout)
+			this->m_dlgAbout.reset();
+
+		if(this->m_dlgLicenses)
+			this->m_dlgLicenses.reset();
+	});
+
+	// show settings dialog
+	connect(actionSettings, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_dlgSettings)
+		{
+			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
+			connect(&*this->m_dlgSettings, &SettingsDlg::SettingsHaveChanged,
+				this, &PathsTool::InitSettings);
+		}
+
+		// sequence to show the dialog,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
+		m_dlgSettings->show();
+		m_dlgSettings->raise();
+		m_dlgSettings->activateWindow();
+	});
+
+	menuSettings->addAction(actionSettings);
+	menuSettings->addSeparator();
+	menuSettings->addAction(actionGarbage);
+
 
 
 	// help menu
@@ -1554,6 +1565,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_menubar->addMenu(menuCalc);
 	if(num_tools)
 		m_menubar->addMenu(menuTools);
+	m_menubar->addMenu(menuSettings);
 	m_menubar->addMenu(menuHelp);
 	//m_menubar->setNativeMenuBar(false);
 	setMenuBar(m_menubar);
