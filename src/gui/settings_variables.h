@@ -125,6 +125,15 @@ extern int g_use_native_menubar;
 
 // use native dialogs?
 extern int g_use_native_dialogs;
+
+// use gui animations
+extern int g_use_animations;
+
+// allow tabbed dock widgets?
+extern int g_tabbed_docks;
+
+// allow nested dock widgets?
+extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 
 

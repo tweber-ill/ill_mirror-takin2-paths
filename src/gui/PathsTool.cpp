@@ -964,8 +964,6 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// dock widgets
 	// --------------------------------------------------------------------
-	setDockOptions(QMainWindow::AllowNestedDocks | QMainWindow::AllowTabbedDocks | QMainWindow::VerticalTabs);
-
 	m_tasProperties = std::make_shared<TASPropertiesDockWidget>(this);
 	m_xtalProperties = std::make_shared<XtalPropertiesDockWidget>(this);
 	m_xtalInfos = std::make_shared<XtalInfoDockWidget>(this);
@@ -973,6 +971,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 	m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
+	for(QDockWidget* dockwidget : std::initializer_list<QDockWidget*>{{
+		m_tasProperties.get(), m_xtalProperties.get(), m_xtalInfos.get(),
+		m_coordProperties.get(), m_pathProperties.get(), m_camProperties.get() }})
+	{
+		dockwidget->setFeatures(
+			QDockWidget::DockWidgetClosable | 
+			QDockWidget::DockWidgetMovable | 
+			QDockWidget::DockWidgetFloatable /*|
+			QDockWidget::DockWidgetVerticalTitleBar*/);
+		dockwidget->setAllowedAreas(Qt::AllDockWidgetAreas);
+	}
+	
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());
@@ -1738,6 +1748,15 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
 	//m_pathsbuilder.SetUseRegionFunction(g_use_region_function != 0);
+
+	QMainWindow::DockOptions dockoptions{};
+	if(g_tabbed_docks)
+		dockoptions |= QMainWindow::AllowTabbedDocks | QMainWindow::VerticalTabs;
+	if(g_nested_docks)
+		dockoptions |= QMainWindow::AllowNestedDocks;
+	setDockOptions(dockoptions);
+
+	setAnimated(g_use_animations != 0);
 
 	if(m_renderer)
 	{

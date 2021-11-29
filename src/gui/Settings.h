@@ -86,6 +86,9 @@ private:
 	QLineEdit *m_editFont{nullptr};
 	QCheckBox *m_checkMenubar{nullptr};
 	QCheckBox *m_checkDialogs{nullptr};
+	QCheckBox *m_checkAnimations{nullptr};
+	QCheckBox *m_checkTabbedDocks{nullptr};
+	QCheckBox *m_checkNestedDocks{nullptr};
 
 	// default setting values
 	static std::unordered_map<std::string, SettingsVariable::t_variant> s_defaults;

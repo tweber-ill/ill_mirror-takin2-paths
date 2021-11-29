@@ -107,4 +107,13 @@ int g_use_native_menubar = 0;
 
 // use native dialogs?
 int g_use_native_dialogs = 1;
+
+// use gui animations?
+int g_use_animations = 0;
+
+// allow tabbed dock widgets?
+int g_tabbed_docks = 0;
+
+// allow nested dock widgets?
+int g_nested_docks = 0;
 // ----------------------------------------------------------------------------

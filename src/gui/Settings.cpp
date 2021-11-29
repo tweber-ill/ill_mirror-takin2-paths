@@ -371,14 +371,30 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_editFont->setText(g_font);
 
 	// native menubar
-	m_checkMenubar = new QCheckBox("Use native menubar", panelGui);
+	m_checkMenubar = new QCheckBox("Use native menubar.", panelGui);
 	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
 	m_checkMenubar->setChecked(g_use_native_menubar!=0);
 
 	// native dialogs
-	m_checkDialogs = new QCheckBox("Use native dialogs", panelGui);
+	m_checkDialogs = new QCheckBox("Use native dialogs.", panelGui);
 	get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
 	m_checkDialogs->setChecked(g_use_native_dialogs!=0);
+
+	// gui animations
+	m_checkAnimations = new QCheckBox("Use animations.", panelGui);
+	get_setting<decltype(g_use_animations)>(sett, "settings/animations", &g_use_animations);
+	m_checkAnimations->setChecked(g_use_animations!=0);
+	
+	// tabbed docks
+	m_checkTabbedDocks = new QCheckBox("Allow tabbed dock widgets.", panelGui);
+	get_setting<decltype(g_tabbed_docks)>(sett, "settings/tabbed_docks", &g_tabbed_docks);
+	m_checkTabbedDocks->setChecked(g_tabbed_docks!=0);
+
+	// nested docks
+	m_checkNestedDocks = new QCheckBox("Allow nested dock widgets.", panelGui);
+	get_setting<decltype(g_nested_docks)>(sett, "settings/nested_docks", &g_nested_docks);
+	m_checkNestedDocks->setChecked(g_nested_docks!=0);
+	
 
 	// add widgets to layout
 	gridGui->addWidget(labelTheme, yGui,0,1,1);
@@ -388,6 +404,9 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	gridGui->addWidget(btnFont, yGui++,2,1,1);
 	gridGui->addWidget(m_checkMenubar, yGui++,0,1,3);
 	gridGui->addWidget(m_checkDialogs, yGui++,0,1,3);
+	gridGui->addWidget(m_checkAnimations, yGui++,0,1,3);
+	gridGui->addWidget(m_checkTabbedDocks, yGui++,0,1,3);
+	gridGui->addWidget(m_checkNestedDocks, yGui++,0,1,3);
 
 	QSpacerItem *spacer_end = new QSpacerItem(1, 1,
 		QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -526,6 +545,9 @@ void SettingsDlg::ReadSettings(QSettings* sett)
 	get_setting<decltype(g_font)>(sett, "settings/font", &g_font);
 	get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
 	get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
+	get_setting<decltype(g_use_animations)>(sett, "settings/animations", &g_use_animations);
+	get_setting<decltype(g_tabbed_docks)>(sett, "settings/tabbed_docks", &g_tabbed_docks);
+	get_setting<decltype(g_nested_docks)>(sett, "settings/nested_docks", &g_nested_docks);
 
 	ApplyGuiSettings();
 }
@@ -544,6 +566,9 @@ void SettingsDlg::ApplySettings()
 	g_font = m_editFont->text();
 	g_use_native_menubar = m_checkMenubar->isChecked();
 	g_use_native_dialogs = m_checkDialogs->isChecked();
+	g_use_animations = m_checkAnimations->isChecked();
+	g_tabbed_docks = m_checkTabbedDocks->isChecked();
+	g_nested_docks = m_checkNestedDocks->isChecked();
 
 	// write out the settings
 	if(m_sett)
@@ -552,6 +577,9 @@ void SettingsDlg::ApplySettings()
 		m_sett->setValue("settings/font", g_font);
 		m_sett->setValue("settings/native_menubar", g_use_native_menubar);
 		m_sett->setValue("settings/native_dialogs", g_use_native_dialogs);
+		m_sett->setValue("settings/animations", g_use_animations);
+		m_sett->setValue("settings/tabbed_docks", g_tabbed_docks);
+		m_sett->setValue("settings/nested_docks", g_nested_docks);
 	}
 
 	ApplyGuiSettings();
