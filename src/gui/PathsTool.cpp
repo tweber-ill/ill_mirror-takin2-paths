@@ -971,18 +971,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_pathProperties = std::make_shared<PathPropertiesDockWidget>(this);
 	m_camProperties = std::make_shared<CamPropertiesDockWidget>(this);
 
-	for(QDockWidget* dockwidget : std::initializer_list<QDockWidget*>{{
+	for(QDockWidget* dockwidget : std::initializer_list<QDockWidget*>{
 		m_tasProperties.get(), m_xtalProperties.get(), m_xtalInfos.get(),
-		m_coordProperties.get(), m_pathProperties.get(), m_camProperties.get() }})
+		m_coordProperties.get(), m_pathProperties.get(), m_camProperties.get() })
 	{
 		dockwidget->setFeatures(
-			QDockWidget::DockWidgetClosable | 
-			QDockWidget::DockWidgetMovable | 
+			QDockWidget::DockWidgetClosable |
+			QDockWidget::DockWidgetMovable |
 			QDockWidget::DockWidgetFloatable /*|
 			QDockWidget::DockWidgetVerticalTitleBar*/);
 		dockwidget->setAllowedAreas(Qt::AllDockWidgetAreas);
 	}
-	
+
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());

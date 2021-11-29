@@ -384,7 +384,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_checkAnimations = new QCheckBox("Use animations.", panelGui);
 	get_setting<decltype(g_use_animations)>(sett, "settings/animations", &g_use_animations);
 	m_checkAnimations->setChecked(g_use_animations!=0);
-	
+
 	// tabbed docks
 	m_checkTabbedDocks = new QCheckBox("Allow tabbed dock widgets.", panelGui);
 	get_setting<decltype(g_tabbed_docks)>(sett, "settings/tabbed_docks", &g_tabbed_docks);
@@ -394,7 +394,7 @@ SettingsDlg::SettingsDlg(QWidget* parent, QSettings *sett)
 	m_checkNestedDocks = new QCheckBox("Allow nested dock widgets.", panelGui);
 	get_setting<decltype(g_nested_docks)>(sett, "settings/nested_docks", &g_nested_docks);
 	m_checkNestedDocks->setChecked(g_nested_docks!=0);
-	
+
 
 	// add widgets to layout
 	gridGui->addWidget(labelTheme, yGui,0,1,1);
