@@ -235,17 +235,20 @@ void PathPropertiesWidget::TrackerTick()
 	if(!m_sliderPath)
 		return;
 
-	int val = m_sliderPath->value();
 	int max = m_sliderPath->maximum();
+	int val = m_sliderPath->value();
 
-	if(val >= max)
+	// advance path
+	int next_val = std::min(val+1, max);
+	m_sliderPath->setValue(next_val);
+
+	// end of tracking reached?
+	if(next_val >= max)
 	{
+		m_sliderPath->setValue(max);
+
 		m_pathTrackTimer.stop();
 		SetGoButtonText(true);
-	}
-	else
-	{
-		m_sliderPath->setValue(val+1);
 	}
 }
 

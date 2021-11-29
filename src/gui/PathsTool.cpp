@@ -561,7 +561,8 @@ void PathsTool::SetCurrentFile(const QString &file)
  */
 void PathsTool::ValidatePathMesh(bool valid)
 {
-	emit PathMeshValid(valid);
+	m_pathmeshvalid = valid;
+	emit PathMeshValid(m_pathmeshvalid);
 }
 
 
@@ -1311,6 +1312,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionConfigSpace = new QAction("Angular Configuration Space...", menuCalc);
 	QAction *actionXtalConfigSpace = new QAction("Crystal Configuration Space...", menuCalc);
 
+	// show angular configuration space dialog
 	connect(actionConfigSpace, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgConfigSpace)
@@ -1318,11 +1320,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			this->m_dlgConfigSpace = std::make_shared<ConfigSpaceDlg>(this, &m_sett);
 			this->m_dlgConfigSpace->SetPathsBuilder(&this->m_pathsbuilder);
 
+			// goto signal
 			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::GotoAngles,
 				this, &PathsTool::GotoAngles);
 
+			// path mesh available signal
 			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::PathMeshAvailable,
 				[this]() { this->ValidatePathMesh(true); } );
+
+			// path available signal
+			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::PathAvailable,
+				this, &PathsTool::ExternalPathAvailable);
 		}
 
 		m_dlgConfigSpace->show();
@@ -1330,6 +1338,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		m_dlgConfigSpace->activateWindow();
 	});
 
+	// show crystal configuration space dialog
 	connect(actionXtalConfigSpace, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgXtalConfigSpace)
@@ -2011,6 +2020,31 @@ void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectPro
 		QMessageBox::warning(this, "Warning",
 			QString("Properties of object \"") + objname.c_str() +
 				QString("\" cannot be changed."));
+	}
+}
+
+
+/**
+ * path available, e.g. from configuration space dialog
+ */
+void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
+{
+	if(!m_pathmeshvalid)
+		return;
+
+	SetTmpStatus("Received external path.");
+
+	if(!path.ok)
+	{
+		m_pathvertices.clear();
+		SetTmpStatus("Path not ok.");
+	}
+	else
+	{
+		// get the vertices on the path
+		m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
+		emit PathAvailable(m_pathvertices.size());
+		SetTmpStatus("Path calculated.");
 	}
 }
 

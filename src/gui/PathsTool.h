@@ -127,6 +127,7 @@ private:
 	// instrument configuration and paths builder
 	InstrumentSpace m_instrspace{};
 	PathsBuilder m_pathsbuilder{};
+	bool m_pathmeshvalid{false};
 
 	// calculated path vertices
 	std::vector<t_vec2> m_pathvertices{};
@@ -224,6 +225,9 @@ protected slots:
 	void GotoAngles(std::optional<t_real> a1,
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5, bool only_set_target);
+
+	// path available, e.g. from configuration space dialog
+	void ExternalPathAvailable(const InstrumentPath& path);
 
 	// calculation of the meshes and paths
 	void CalculatePathMesh();

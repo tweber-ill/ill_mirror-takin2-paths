@@ -87,7 +87,7 @@ private:
 	QSettings *m_sett{nullptr};
 	std::unique_ptr<QProgressDialog> m_progress{};
 
-	// start and target positions
+	// angular ranges
 	t_real m_starta2 = 0.;
 	t_real m_enda2 = tl2::pi<t_real>;
 	t_real m_starta4 = -tl2::pi<t_real>;
@@ -100,7 +100,7 @@ private:
 	QCPCurve* m_pathcurve = nullptr;
 	std::vector<t_vec2> m_pathvertices{};
 
-	// current instrument position
+	// current (start) instrument position
 	t_real m_curMonoScatteringAngle{};
 	t_real m_curSampleScatteringAngle{};
 	QCPGraph *m_instrposplot{};
@@ -128,6 +128,7 @@ private:
 	// path options
 	PathStrategy m_pathstrategy{PathStrategy::SHORTEST};
 	bool m_autocalcpath = true;
+	bool m_syncpath = true;
 	bool m_movetarget = false;
 	bool m_moveInstr = true;
 
@@ -138,6 +139,7 @@ signals:
 		std::optional<t_real> a5, bool move_target);
 
 	void PathMeshAvailable();
+	void PathAvailable(const InstrumentPath& path);
 
 
 protected slots:

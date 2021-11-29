@@ -305,6 +305,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	acAutocalcPath->setChecked(m_autocalcpath);
 	menuPathOptions->addAction(acAutocalcPath);
 
+	QAction *acSyncPath = new QAction("Sync Path with Main View", menuView);
+	acSyncPath->setCheckable(true);
+	acSyncPath->setChecked(m_syncpath);
+	menuPathOptions->addAction(acSyncPath);
+
 	// ------------------------------------------------------------------------
 	// path-finding strategies
 	QMenu *menuPathStrategy = new QMenu("Path Finding Strategy", this);
@@ -470,7 +475,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// connections
 	// ------------------------------------------------------------------------
 
-	// mouse
+	// mouse button down
 	connect(m_plot.get(), &QCustomPlot::mousePress,
 	[this](QMouseEvent* evt)
 	{
@@ -498,6 +503,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			this->EmitGotoAngles(std::nullopt, std::nullopt, a4, a1);
 	});
 
+	// mouse move
 	connect(m_plot.get(), &QCustomPlot::mouseMove,
 	[this](QMouseEvent* evt)
 	{
@@ -552,31 +558,31 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 
 	// path mesh options
-	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
+	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)
 	{ m_simplifycontour = simplify; });
 
-	connect(acGroupLines, &QAction::toggled, [this](bool group)->void
+	connect(acGroupLines, &QAction::toggled, [this](bool group)
 	{ m_grouplines = group; });
 
-	connect(acSplitContour, &QAction::toggled, [this](bool split)->void
+	connect(acSplitContour, &QAction::toggled, [this](bool split)
 	{ m_splitcontour = split; });
 
-	connect(acCalcVoro, &QAction::toggled, [this](bool calc)->void
+	connect(acCalcVoro, &QAction::toggled, [this](bool calc)
 	{ m_calcvoronoi = calc; });
 
-	connect(acUseRegionFunc, &QAction::toggled, [this](bool b)->void
+	connect(acUseRegionFunc, &QAction::toggled, [this](bool b)
 	{ m_use_region_function = b; });
 
-	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)->void
+	connect(acSubdivPath, &QAction::toggled, [this](bool subdiv)
 	{ m_subdivide_path = subdiv; });
 
-	connect(acBackendBoost, &QAction::toggled, [this](bool checked)->void
+	connect(acBackendBoost, &QAction::toggled, [this](bool checked)
 	{
 		if(checked)
 			m_voronoibackend = VoronoiBackend::BOOST;
 	});
 
-	connect(acBackendCgal, &QAction::toggled, [this](bool checked)->void
+	connect(acBackendCgal, &QAction::toggled, [this](bool checked)
 	{
 		if(checked)
 			m_voronoibackend = VoronoiBackend::CGAL;
@@ -585,7 +591,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 
 	// path options
-	connect(acStrategyShortest, &QAction::toggled, [this](bool checked)->void
+	connect(acStrategyShortest, &QAction::toggled, [this](bool checked)
 	{
 		if(checked)
 		{
@@ -595,7 +601,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		}
 	});
 
-	connect(acStrategyPenaliseWalls, &QAction::toggled, [this](bool checked)->void
+	connect(acStrategyPenaliseWalls, &QAction::toggled, [this](bool checked)
 	{
 		if(checked)
 		{
@@ -605,21 +611,24 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		}
 	});
 
-	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)->void
+	connect(acSimplifyContour, &QAction::toggled, [this](bool simplify)
 	{ m_simplifycontour = simplify; });
 
-	connect(acAutocalcPath, &QAction::toggled, [this](bool calc)->void
+	connect(acAutocalcPath, &QAction::toggled, [this](bool calc)
 	{ m_autocalcpath = calc; });
 
-	connect(acMoveTarget, &QAction::toggled, [this](bool b)->void
+	connect(acSyncPath, &QAction::toggled, [this](bool sync)
+	{ m_syncpath = sync; });
+
+	connect(acMoveTarget, &QAction::toggled, [this](bool b)
 	{ m_movetarget = b; });
 
 
 	// view
-	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)->void
+	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)
 	{ this->SetInstrumentMovable(!enableZoom); });
 
-	connect(acResetZoom, &QAction::triggered, [this]()->void
+	connect(acResetZoom, &QAction::triggered, [this]()
 	{
 		m_plot->rescaleAxes();
 		m_plot->replot();
@@ -955,6 +964,9 @@ void ConfigSpaceDlg::CalculatePath()
 	}
 
 	RedrawPathPlot();
+
+	if(m_syncpath)
+		emit PathAvailable(path);
 }
 
 
