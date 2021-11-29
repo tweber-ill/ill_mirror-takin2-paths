@@ -632,20 +632,31 @@ void PathsTool::GotoCoordinates(
 	// set instrument angles
 	else
 	{
+		auto& instr = m_instrspace.GetInstrument();
+
+		// send one update signal at the end
+		// and not after each angle change
+		instr.SetBlockUpdates(true);
+		BOOST_SCOPE_EXIT(&instr)
+		{
+			instr.SetBlockUpdates(false);
+			instr.EmitUpdate();
+		} BOOST_SCOPE_EXIT_END
+
 		// set scattering angles
-		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleOut(
+		instr.GetMonochromator().SetAxisAngleOut(
 			t_real{2} * angles.monoXtalAngle);
-		m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(
+		instr.GetSample().SetAxisAngleOut(
 			angles.sampleScatteringAngle);
-		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(
+		instr.GetAnalyser().SetAxisAngleOut(
 			t_real{2} * angles.anaXtalAngle);
 
 		// set crystal angles
-		m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(
+		instr.GetMonochromator().SetAxisAngleInternal(
 			angles.monoXtalAngle);
-		m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(
+		instr.GetSample().SetAxisAngleInternal(
 			angles.sampleXtalAngle);
-		m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(
+		instr.GetAnalyser().SetAxisAngleInternal(
 			angles.anaXtalAngle);
 
 		m_tascalc.SetKfix(kf);
