@@ -63,6 +63,10 @@ public:
 		std::optional<t_real> a3, std::optional<t_real> a4,
 		std::optional<t_real> a5);
 
+	// block path calculations, e.g. during path tracking
+	void SetBlockCalc(bool b) { m_block_calc = b; }
+	bool GetBlockCalc() const { return m_block_calc; }
+
 
 protected:
 	virtual void accept() override;
@@ -131,6 +135,9 @@ private:
 	bool m_syncpath = true;
 	bool m_movetarget = false;
 	bool m_moveInstr = true;
+
+	// block path calculation
+	bool m_block_calc = false;
 
 
 signals:

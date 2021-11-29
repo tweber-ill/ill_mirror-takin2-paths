@@ -229,6 +229,18 @@ void Instrument::DragObject(bool drag_start, const std::string& obj,
 
 
 /**
+ * emit an update signal
+ */
+void Instrument::EmitUpdate()
+{
+	if(m_block_updates)
+		return;
+
+	(*m_sigUpdate)(*this);
+}
+
+
+/**
  * get the properties of an object in the instrument
  */
 std::vector<ObjectProperty> Instrument::GetProperties(const std::string& objname) const

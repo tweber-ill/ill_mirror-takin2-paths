@@ -67,9 +67,12 @@ public:
 	// connection to update signal
 	template<class t_slot>
 	void AddUpdateSlot(const t_slot& slot)
-		{ m_sigUpdate->connect(slot); }
+	{ m_sigUpdate->connect(slot); }
 
-	void EmitUpdate() { (*m_sigUpdate)(*this); }
+	// send an update signal
+	void EmitUpdate();
+	void SetBlockUpdates(bool b) { m_block_updates = b; }
+	bool GetBlockUpdates() const { return m_block_updates; }
 
 	std::vector<ObjectProperty> GetProperties(const std::string& obj) const;
 	std::tuple<bool, std::shared_ptr<Geometry>> SetProperties(
@@ -80,6 +83,9 @@ private:
 	Axis m_mono{"monochromator", nullptr, &m_sample, this};
 	Axis m_sample{"sample", &m_mono, &m_ana, this};
 	Axis m_ana{"analyser", &m_sample, nullptr, this};
+
+	// block the update signal
+	bool m_block_updates = false;
 
 	// TODO: allow instrument editing
 	bool m_allow_editing = false;

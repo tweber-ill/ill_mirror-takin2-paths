@@ -33,6 +33,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtGui/QDesktopServices>
 
+#include <boost/scope_exit.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 namespace pt = boost::property_tree;
@@ -384,12 +385,6 @@ bool PathsTool::OpenFile(const QString &file)
 			m_renderer->LoadInstrument(m_instrspace);
 
 
-		// is ki or kf fixed?
-		bool kf_fixed = true;
-		if(!std::get<1>(m_tascalc.GetKfix()))
-			kf_fixed = false;
-
-
 		// update slot for instrument space (e.g. walls) changes
 		m_instrspace.AddUpdateSlot(
 			[this](const InstrumentSpace& instrspace)
@@ -403,8 +398,13 @@ bool PathsTool::OpenFile(const QString &file)
 
 		// update slot for instrument movements
 		m_instrspace.GetInstrument().AddUpdateSlot(
-			[this, kf_fixed](const Instrument& instr)
+			[this](const Instrument& instr)
 			{
+				// is ki or kf fixed?
+				bool kf_fixed = true;
+				if(!std::get<1>(m_tascalc.GetKfix()))
+					kf_fixed = false;
+
 				// old angles
 				t_real oldA6 = m_tasProperties->GetWidget()->GetAnaScatteringAngle()/t_real{180}*tl2::pi<t_real>;
 				t_real oldA2 = m_tasProperties->GetWidget()->GetMonoScatteringAngle()/t_real{180}*tl2::pi<t_real>;
@@ -445,8 +445,10 @@ bool PathsTool::OpenFile(const QString &file)
 					ValidatePathMesh(false);
 
 				if(this->m_dlgConfigSpace)
+				{
 					this->m_dlgConfigSpace->UpdateInstrument(
 						instr, m_tascalc.GetScatteringSenses());
+				}
 
 				if(this->m_renderer)
 				{
@@ -571,7 +573,12 @@ void PathsTool::ValidatePathMesh(bool valid)
  */
 void PathsTool::SetKfConstMode(bool kf_const)
 {
-	m_tascalc.SetKfix(kf_const);
+	bool old_kf_const = std::get<1>(m_tascalc.GetKfix());
+	if(old_kf_const != kf_const)
+	{
+		m_tascalc.SetKfix(kf_const);
+		ValidatePathMesh(false);
+	}
 }
 
 
@@ -680,36 +687,47 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 	// set instrument angles
 	else
 	{
+		auto& instr = m_instrspace.GetInstrument();
+
+		// send one update signal at the end
+		// and not after each angle change
+		instr.SetBlockUpdates(true);
+		BOOST_SCOPE_EXIT(&instr)
+		{
+			instr.SetBlockUpdates(false);
+			instr.EmitUpdate();
+		} BOOST_SCOPE_EXIT_END
+
 		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
 
 		// set mono angle
 		if(a1)
 		{
 			*a1 *= sensesCCW[0];
-			m_instrspace.GetInstrument().GetMonochromator(). SetAxisAngleOut(t_real{2} * *a1);
-			m_instrspace.GetInstrument().GetMonochromator().SetAxisAngleInternal(*a1);
+			instr.GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
+			instr.GetMonochromator().SetAxisAngleInternal(*a1);
 		}
 
 		// set sample crystal angle
 		if(a3)
 		{
 			*a3 *= sensesCCW[1];
-			m_instrspace.GetInstrument().GetSample().SetAxisAngleInternal(*a3);
+			instr.GetSample().SetAxisAngleInternal(*a3);
 		}
 
 		// set sample scattering angle
 		if(a4)
 		{
 			*a4 *= sensesCCW[1];
-			m_instrspace.GetInstrument().GetSample().SetAxisAngleOut(*a4);
+			instr.GetSample().SetAxisAngleOut(*a4);
 		}
 
 		// set ana angle
 		if(a5)
 		{
 			*a5 *= sensesCCW[2];
-			m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
-			m_instrspace.GetInstrument().GetAnalyser().SetAxisAngleInternal(*a5);
+			instr.GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+			instr.GetAnalyser().SetAxisAngleInternal(*a5);
 		}
 	}
 }
@@ -1169,7 +1187,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			m_targetSampleScatteringAngle = a4;
 
 			if(this->m_dlgConfigSpace)
+			{
 				this->m_dlgConfigSpace->UpdateTarget(a2, a4, sensesCCW);
+			}
 		});
 
 
@@ -2216,6 +2236,15 @@ void PathsTool::CalculatePath()
  */
 void PathsTool::TrackPath(std::size_t idx)
 {
+	// block path recalculation during tracking
+	if(m_dlgConfigSpace)
+		m_dlgConfigSpace->SetBlockCalc(true);
+	BOOST_SCOPE_EXIT(&m_dlgConfigSpace)
+	{
+		m_dlgConfigSpace->SetBlockCalc(false);
+	} BOOST_SCOPE_EXIT_END
+
+
 	if(idx >= m_pathvertices.size())
 		return;
 

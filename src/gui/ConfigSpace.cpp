@@ -126,7 +126,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		instrbrush.setStyle(Qt::SolidPattern);
 		m_instrposplot->setBrush(instrbrush);
 
-		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
+		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 12);
 		scatterstyle.setPen(instrpen);
 		scatterstyle.setBrush(instrbrush);
 		m_instrposplot->setScatterStyle(scatterstyle);
@@ -147,7 +147,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		instrbrush.setStyle(Qt::SolidPattern);
 		m_targetposplot->setBrush(instrbrush);
 
-		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 8);
+		QCPScatterStyle scatterstyle(QCPScatterStyle::ssCircle, 12);
 		scatterstyle.setPen(instrpen);
 		scatterstyle.setBrush(instrbrush);
 		m_targetposplot->setScatterStyle(scatterstyle);
@@ -836,6 +836,8 @@ void ConfigSpaceDlg::CalculatePathMesh()
 {
 	if(!m_pathsbuilder || !m_pathsbuilder->GetInstrumentSpace())
 		return;
+	if(m_block_calc)
+		return;
 
 	m_pathsbuilder->StartPathMeshWorkflow();
 	const auto& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
@@ -937,6 +939,9 @@ void ConfigSpaceDlg::CalculatePathMesh()
  */
 void ConfigSpaceDlg::CalculatePath()
 {
+	if(m_block_calc)
+		return;
+
 	m_pathvertices.clear();
 
 	if(!m_pathsbuilder)
