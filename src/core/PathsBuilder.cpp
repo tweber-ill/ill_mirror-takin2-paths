@@ -621,7 +621,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	std::string message{"Calculating Voronoi diagram..."};
 	(*m_sigProgress)(CalculationState::STEP_STARTED, 0, message);
 
-	// is the vector in a forbidden region?
+	// is the vertex in a forbidden region?
 	std::function<bool(const t_vec2&)> region_func = [this](const t_vec2& vec) -> bool
 	{
 		if(vec[0] < 0 || vec[1] < 0)
@@ -640,6 +640,13 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 		return false;
 	};
 
+	// validation function that checks if (voronoi) vertices are far enough from any wall
+	std::function<bool(const t_vec2&)> validation_func = [this](const t_vec2& vec) -> bool
+	{
+		t_real dist_to_walls = GetDistToNearestWall(vec);
+		return dist_to_walls >= m_min_angular_dist_to_walls;
+	};
+
 	geo::VoronoiLinesRegions<t_vec2, t_line> regions{};
 	regions.SetGroupLines(group_lines);
 	regions.SetRemoveVoronoiVertices(true);
@@ -647,6 +654,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	regions.SetPointsOutsideRegions(&m_points_outside_regions);
 	regions.SetInvertedRegions(&m_inverted_regions);
 	regions.SetRegionFunc(use_region_function ? &region_func : nullptr);
+	regions.SetValidateFunc(&validation_func);
 
 	if(backend == VoronoiBackend::BOOST)
 	{
@@ -662,6 +670,12 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 				m_lines, m_eps, m_voroedge_eps, &regions);
 	}
 #endif
+	else
+	{
+		// invalid backend selected
+		(*m_sigProgress)(CalculationState::FAILED, 1, message);
+		return false;
+	}
 
 	(*m_sigProgress)(CalculationState::STEP_SUCCEEDED, 1, message);
 	return true;
@@ -851,6 +865,7 @@ InstrumentPath PathsBuilder::FindPath(
 			return path;
 	}
 
+
 	// convert angles to degrees
 	a2_i *= 180. / tl2::pi<t_real>;
 	a4_i *= 180. / tl2::pi<t_real>;
@@ -964,22 +979,9 @@ InstrumentPath PathsBuilder::FindPath(
 		const t_vec2& vertex1 = voro_vertices[idx1];
 		const t_vec2& vertex2 = voro_vertices[idx2];
 
-		// get the wall vertices that are closest to the current voronoi vertices
-		auto nearest_vertices1 = m_wallsindextree.Query(vertex1, 1);
-		auto nearest_vertices2 = m_wallsindextree.Query(vertex2, 1);
-
-		if(nearest_vertices1.size()<1 || nearest_vertices2.size()<1)
-			return weight;
-
-		// get angular coordinates
-		t_vec2 vertex1_angle = this->PixelToAngle(vertex1);
-		t_vec2 vertex2_angle = this->PixelToAngle(vertex2);
-		t_vec2 nearest_vertex1_angle = this->PixelToAngle(nearest_vertices1[0]);
-		t_vec2 nearest_vertex2_angle = this->PixelToAngle(nearest_vertices2[0]);
-
-		// get minimum angular distances
-		t_real dist1 = GetPathLength(nearest_vertex1_angle - vertex1_angle);
-		t_real dist2 = GetPathLength(nearest_vertex2_angle - vertex2_angle);
+		// get the distances to the wall vertices that are closest to the current voronoi vertices
+		t_real dist1 = GetDistToNearestWall(vertex1);
+		t_real dist2 = GetDistToNearestWall(vertex2);
 		t_real min_dist = std::min(dist1, dist2);
 
 		// modify edge weights using the minimum distance to the next wall
@@ -1057,6 +1059,7 @@ InstrumentPath PathsBuilder::FindPath(
 		const t_vec2& vert1 = voro_vertices[idx1];
 		const t_vec2& vert2 = voro_vertices[idx2];
 
+
 		// if the voronoi vertices belong to a linear bisector,
 		// find the closest point by projecting 'vec' onto it
 		t_real param_lin = -1;
@@ -1065,15 +1068,89 @@ InstrumentPath PathsBuilder::FindPath(
 		{
 			t_vec2 dir = vert2 - vert1;
 			t_real dir_len = tl2::norm<t_vec2>(dir);
+
+			// the query point lies on the voronoi vertex
+			if(dir_len < m_eps_angular)
+				return std::make_tuple(0, 0, true);
+
 			dir /= dir_len;
 
-			auto [ptProj, _dist_lin, paramProj] =
+			auto [_ptProj, _dist_lin, paramProj] =
 				tl2::project_line<t_vec2, t_real>(
 					vec, vert1, dir, true);
 
 			param_lin = paramProj / dir_len;
 			dist_lin = _dist_lin;
+
+
+			// look for another parameter if the projected vertex is too close to a wall
+			t_real new_param_lin = param_lin;
+			bool new_param_found = false;
+			const t_real delta_param = 0.025;
+
+			// initial distance to walls
+			//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
+			t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
+
+			// direction for parameter search
+			const t_real param_range[2] = { -1., 1. };
+			bool increase_param = true;
+
+			if(new_param_lin < param_range[0])
+				increase_param = true;
+			else if(new_param_lin > param_range[1])
+				increase_param = false;
+			else
+			{
+				// find direction for parameter search which decreases the distance to the walls
+				t_vec2 vertex_2 = vert1 + dir*(new_param_lin + delta_param)*dir_len;
+				t_real dist_to_walls_2 = GetDistToNearestWall(vertex_2);
+
+				increase_param = (dist_to_walls_2 > dist_to_walls_1);
+			}
+
+			while(dist_to_walls_1 < m_min_angular_dist_to_walls)
+			{
+				if(increase_param)
+					new_param_lin += delta_param;
+				else
+					new_param_lin -= delta_param;
+
+				// vertex is far enough from any wall?
+				t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+				t_real dist_to_walls = GetDistToNearestWall(new_vertex);
+
+				// found a better position?
+				if(dist_to_walls > dist_to_walls_1)
+				{
+					new_param_found = true;
+
+					// out of critical distance?
+					if(dist_to_walls >= m_min_angular_dist_to_walls)
+						break;
+				}
+
+				// not yet in target range?
+				if((increase_param && new_param_lin < param_range[0]) ||
+					(!increase_param && new_param_lin > param_range[1]))
+					continue;
+
+				// end of parameter search?
+				if(new_param_lin > param_range[1] || new_param_lin < param_range[0])
+					break;
+			}
+
+			// a new parameter farther from the walls has been found
+			if(new_param_found)
+			{
+				new_param_lin = tl2::clamp<t_real>(new_param_lin, param_range[0], param_range[1]);
+				t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+
+				param_lin = new_param_lin;
+				dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
+			}
 		}
+
 
 		// if the voronoi vertices belong to a quadratic bisector,
 		// find the closest vertex along its segment
@@ -1096,6 +1173,12 @@ InstrumentPath PathsBuilder::FindPath(
 				t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
 				if(dist2 < min_dist2)
 				{
+					t_real dist_to_walls = GetDistToNearestWall(path_vertex);
+
+					// reject vertex if the minimum distance to the walls is undercut
+					if(dist_to_walls < m_min_angular_dist_to_walls)
+						continue;
+
 					min_dist2 = dist2;
 					min_idx = vertidx;
 				}
@@ -1108,6 +1191,7 @@ InstrumentPath PathsBuilder::FindPath(
 				param_quadr = 1. - param_quadr;
 		}
 
+
 		if(dist_lin < dist_quadr)
 			return std::make_tuple(param_lin, dist_lin, true);
 		else
@@ -1115,6 +1199,7 @@ InstrumentPath PathsBuilder::FindPath(
 	};
 
 
+	// find the retractionn points from the start/end point towards the path mesh
 	if(path.voronoi_indices.size() >= 2)
 	{
 		// find closest start point
@@ -1157,6 +1242,7 @@ InstrumentPath PathsBuilder::FindPath(
 		path.param_i = tl2::clamp<t_real>(path.param_i, 0., 1.);
 		path.is_linear_i = is_linear_bisector_begin;
 
+
 		// find closest end point
 		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
 		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
@@ -1196,12 +1282,35 @@ InstrumentPath PathsBuilder::FindPath(
 		path.is_linear_f = is_linear_bisector_end;
 	}
 
+
 	return path;
 }
 
 
 /**
+ * get the angular distance of a vertex to the nearest wall
+ */
+t_real PathsBuilder::GetDistToNearestWall(const t_vec2& vertex, bool deg) const
+{
+	// get the wall vertices that are closest to the given vertex
+	if(auto nearest_walls = m_wallsindextree.Query(vertex, 1); nearest_walls.size() >= 1)
+	{
+		// get angular distance to wall
+		t_vec2 angle = PixelToAngle(vertex, deg, false);
+		t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
+		t_real dist = GetPathLength(nearest_wall_angle - angle);
+
+		return dist;
+	}
+
+	// no wall found
+	return std::numeric_limits<t_real>::max();
+}
+
+
+/**
  * get individual vertices on an instrument path
+ * (in angular coordinates)
  */
 std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	const InstrumentPath& path, bool subdivide_lines, bool deg) const
@@ -1449,7 +1558,8 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 				}
 			}
 
-			if(minimum_found && !DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
+			if(minimum_found &&
+				!DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
 			{
 				// a shortcut was found
 				path_vertices.erase(path_vertices.begin()+min_idx+1, path_vertices.begin()+start_idx);
@@ -1499,17 +1609,11 @@ bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert
 
 		// look for the closest wall
 		t_vec2 pix = tl2::create<t_vec2>({t_real(x), t_real(y)});
-		if(auto nearest_walls = m_wallsindextree.Query(pix, 1); nearest_walls.size() >= 1)
-		{
-			// get angular distance to wall
-			t_vec2 angle = PixelToAngle(pix, false, false);
-			t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
-			t_real dist = GetPathLength(nearest_wall_angle - angle);
+		t_real dist_to_walls = GetDistToNearestWall(pix);
 
-			// reject path if the minimum distance to the walls is undercut
-			if(dist < m_min_angular_dist_to_walls)
-				return true;
-		}
+		// reject path if the minimum distance to the walls is undercut
+		if(dist_to_walls < m_min_angular_dist_to_walls)
+			return true;
 
 		last_x = x;
 		last_y = y;

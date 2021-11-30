@@ -6,7 +6,7 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References for the algorithms:
- *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005), 
+ *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005),
  *                  ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
  *   - (FUH 2020) R. Klein, C. Icking, "Algorithmische Geometrie" (2020),
  *                Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).
@@ -262,6 +262,19 @@ public:
 	}
 
 
+	/**
+	 * call the external validation function on the vertex
+	 * TODO: move this into its own option struct (and out of VoronoiLinesRegions)
+	 */
+	bool ValidateVertex(const t_vec& vert) const
+	{
+		if(!validate_func)
+			return true;
+
+		return (*validate_func)(vert);
+	}
+
+
 	// ------------------------------------------------------------------------
 	// getters & setters
 	// ------------------------------------------------------------------------
@@ -277,6 +290,9 @@ public:
 	void SetPointsOutsideRegions(const std::vector<t_vec>* p) { points_outside_regions = p; }
 	void SetInvertedRegions(const std::vector<bool>* r) { inverted_regions = r; }
 	void SetRegionFunc(const std::function<bool(const t_vec& vert)>* f) { region_func = f; }
+
+	// TODO: move this into its own option struct (and out of VoronoiLinesRegions)
+	void SetValidateFunc(const std::function<bool(const t_vec& vert)>* f) { validate_func = f; }
 	// ------------------------------------------------------------------------
 
 
@@ -293,6 +309,10 @@ private:
 
 	// alternate callback function for defining regions
 	const std::function<bool(const t_vec& vert)>* region_func = nullptr;
+
+	// external vertex validation function
+	// TODO: move this into its own option struct (and out of VoronoiLinesRegions)
+	const std::function<bool(const t_vec& vert)>* validate_func = nullptr;
 };
 
 
@@ -822,35 +842,51 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto* vert1 = edge.vertex1();
 		auto vert0idx = get_vertex_idx(vert0);
 		auto vert1idx = get_vertex_idx(vert1);
-		bool valid_vertices = vert0idx && vert1idx;
 
 		// line groups defined?
-		if(regions && regions->GetLineGroups()->size())
+		if(regions)
 		{
-			// get index of the segment
-			auto seg1idx = get_segment_idx(edge, false);
-			auto seg2idx = get_segment_idx(edge, true);
+			bool vert_1_invalid = false;
+			bool vert_2_invalid = false;
 
-			if(seg1idx && seg2idx)
-			{
-				// get the group index of the segments
-				auto region1 = get_group_idx(*seg1idx);
-				auto region2 = get_group_idx(*seg2idx);
+			// remove vertices that don't satisfy the external validation function
+			if(vert0idx && !regions->ValidateVertex(vertices[*vert0idx]))
+				vert_1_invalid = true;
+			if(vert1idx && !regions->ValidateVertex(vertices[*vert1idx]))
+				vert_2_invalid = true;
 
-				if(regions->GetGroupLines())
-				{
-					// are the generating line segments part of the same group?
-					// if so, ignore this voronoi edge and skip to next one
-					if(region1 && region2 && *region1 == *region2)
-						continue;
-				}
-			}
-
-			if(regions->IsVertexInRegion(lines,
-				vertices, vert0idx, vert1idx, eps))
+			if(vert_1_invalid && vert_2_invalid)
 				continue;
+
+			// remove vertices inside regions
+			if(regions->GetLineGroups()->size())
+			{
+				// get index of the segment
+				auto seg1idx = get_segment_idx(edge, false);
+				auto seg2idx = get_segment_idx(edge, true);
+
+				if(seg1idx && seg2idx)
+				{
+					// get the group index of the segments
+					auto region1 = get_group_idx(*seg1idx);
+					auto region2 = get_group_idx(*seg2idx);
+
+					if(regions->GetGroupLines())
+					{
+						// are the generating line segments part of the same group?
+						// if so, ignore this voronoi edge and skip to next one
+						if(region1 && region2 && *region1 == *region2)
+							continue;
+					}
+				}
+
+				if(regions->IsVertexInRegion(lines,
+					vertices, vert0idx, vert1idx, eps))
+					continue;
+			}
 		}
 
+		bool valid_vertices = vert0idx && vert1idx;
 		if(valid_vertices)
 		{
 			// add edge to graph
@@ -1268,7 +1304,7 @@ template<class t_vec,
 	class t_graph = AdjacencyMatrix<typename t_vec::value_type>,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
-calc_voro_cgal(const std::vector<t_line>& lines, 
+calc_voro_cgal(const std::vector<t_line>& lines,
 	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
 	typename t_vec::value_type para_edge_eps = 1e-2,
 	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
@@ -1440,11 +1476,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(regions && regions->GetLineGroups()->size())
+				if(regions)
 				{
-					if(regions->IsVertexInRegion(lines, 
-						vertices, vert0idx, vert1idx, eps))
+					bool vert_1_invalid = false;
+					bool vert_2_invalid = false;
+
+					// remove vertices that don't satisfy the external validation function
+					if(vert0idx && !regions->ValidateVertex(vertices[*vert0idx]))
+						vert_1_invalid = true;
+					if(vert1idx && !regions->ValidateVertex(vertices[*vert1idx]))
+						vert_2_invalid = true;
+
+					if(vert_1_invalid && vert_2_invalid)
 						continue;
+
+					// remove vertices inside regions
+					if(regions->GetLineGroups()->size())
+					{
+						if(regions->IsVertexInRegion(lines,
+							vertices, vert0idx, vert1idx, eps))
+							continue;
+					}
 				}
 
 				if(valid_vertices)
@@ -1498,11 +1550,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(regions && regions->GetLineGroups()->size())
+				if(regions)
 				{
-					if(regions->IsVertexInRegion(lines,
-						vertices, vert0idx, vert1idx, eps))
+					bool vert_1_invalid = false;
+					bool vert_2_invalid = false;
+
+					// remove vertices that don't satisfy the external validation function
+					if(vert0idx && !regions->ValidateVertex(vertices[*vert0idx]))
+						vert_1_invalid = true;
+					if(vert1idx && !regions->ValidateVertex(vertices[*vert1idx]))
+						vert_2_invalid = true;
+
+					if(vert_1_invalid && vert_2_invalid)
 						continue;
+
+					// remove vertices inside regions
+					if(regions->GetLineGroups()->size())
+					{
+						if(regions->IsVertexInRegion(lines,
+							vertices, vert0idx, vert1idx, eps))
+							continue;
+					}
 				}
 
 				// add graph edges
@@ -1543,11 +1611,27 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 				bool valid_vertices = vert0idx && vert1idx;
 
 				// line groups defined?
-				if(regions && regions->GetLineGroups()->size())
+				if(regions)
 				{
-					if(regions->IsVertexInRegion(lines,
-						vertices, vert0idx, vert1idx, eps))
+					bool vert_1_invalid = false;
+					bool vert_2_invalid = false;
+
+					// remove vertices that don't satisfy the external validation function
+					if(vert0idx && !regions->ValidateVertex(vertices[*vert0idx]))
+						vert_1_invalid = true;
+					if(vert1idx && !regions->ValidateVertex(vertices[*vert1idx]))
+						vert_2_invalid = true;
+
+					if(vert_1_invalid && vert_2_invalid)
 						continue;
+
+					// remove vertices inside regions
+					if(regions->GetLineGroups()->size())
+					{
+						if(regions->IsVertexInRegion(lines,
+							vertices, vert0idx, vert1idx, eps))
+							continue;
+					}
 				}
 
 				// add graph edges

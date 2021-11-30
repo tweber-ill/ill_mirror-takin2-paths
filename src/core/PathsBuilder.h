@@ -49,7 +49,7 @@ struct InstrumentPath
 	// path mesh ok?
 	bool ok = false;
 
-	// initial and final vertices on path
+	// initial and final vertices on path (in pixel coordinates)
 	t_vec2 vec_i;
 	t_vec2 vec_f;
 
@@ -121,6 +121,9 @@ protected:
 
 	// check if a direct path between the two vertices leads to a collision
 	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
+
+	// get the angular distance of a vertex to the nearest wall
+	t_real GetDistToNearestWall(const t_vec2& vertex, bool deg = false) const;
 
 
 public:
@@ -292,7 +295,7 @@ private:
 	t_real m_monoScatteringRange[2]{0, tl2::pi<t_real>};
 	t_real m_sampleScatteringRange[2]{0, tl2::pi<t_real>};
 
-	// index tree for wall positions
+	// index tree for wall positions (in pixel coordinates)
 	geo::ClosestPixelTreeResults<t_contourvec> m_wallsindextree{};
 
 	// wall contours in configuration space
