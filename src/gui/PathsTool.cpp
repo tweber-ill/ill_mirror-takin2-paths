@@ -1,5 +1,5 @@
 /**
- * TAS path tool, main window
+ * TAS-Paths -- main window
  * @author Tobias Weber <tweber@ill.fr>
  * @date February-November 2021
  * @note some code forked on 15-nov-2021 from my private "qm" project: https://github.com/t-weber/qm

@@ -126,6 +126,12 @@ protected:
 	t_real GetDistToNearestWall(const t_vec2& vertex, bool deg = false) const;
 
 
+	// find the closest point on a path segment
+	std::tuple<t_real, t_real, bool>
+	FindClosestPointOnSegment(std::size_t idx1, std::size_t idx2,
+		const t_vec2& vec) const;
+
+
 public:
 	PathsBuilder();
 	~PathsBuilder();

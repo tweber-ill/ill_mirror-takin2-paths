@@ -1,7 +1,7 @@
 /**
- * TAS path tool, main window
+ * TAS-Paths -- main window
  * @author Tobias Weber <tweber@ill.fr>
- * @date feb-2021
+ * @date February-November 2021
  * @license GPLv3, see 'LICENSE' file
  *
  * ----------------------------------------------------------------------------

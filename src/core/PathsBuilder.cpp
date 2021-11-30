@@ -785,6 +785,166 @@ bool PathsBuilder::SaveToLinesTool(const std::string& filename)
 
 
 /**
+ * find the closest point on a path segment
+ * @returns [param, distance, linear?]
+ */
+std::tuple<t_real, t_real, bool>
+PathsBuilder::FindClosestPointOnSegment(
+	std::size_t idx1, std::size_t idx2, const t_vec2& vec) const
+{
+	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
+	const auto& lin_edges = m_voro_results.GetLinearEdges();
+	const auto& para_edges = m_voro_results.GetParabolicEdges();
+
+	auto lin_result = lin_edges.find({idx1, idx2});
+	auto para_result = para_edges.find({idx1, idx2});
+
+	// voronoi vertices at the bisector endpoints
+	const t_vec2& vert1 = voro_vertices[idx1];
+	const t_vec2& vert2 = voro_vertices[idx2];
+
+
+	// if the voronoi vertices belong to a linear bisector,
+	// find the closest point by projecting 'vec' onto it
+	t_real param_lin = -1;
+	t_real dist_lin = std::numeric_limits<t_real>::max();
+	if(lin_result != lin_edges.end())
+	{
+		t_vec2 dir = vert2 - vert1;
+		t_real dir_len = tl2::norm<t_vec2>(dir);
+
+		// the query point lies on the voronoi vertex
+		if(dir_len < m_eps_angular)
+			return std::make_tuple(0, 0, true);
+
+		dir /= dir_len;
+
+		auto [_ptProj, _dist_lin, paramProj] =
+			tl2::project_line<t_vec2, t_real>(
+				vec, vert1, dir, true);
+
+		param_lin = paramProj / dir_len;
+		dist_lin = _dist_lin;
+
+
+		// look for another parameter if the projected vertex is too close to a wall
+		t_real new_param_lin = param_lin;
+		bool new_param_found = false;
+		const t_real delta_param = 0.025;
+
+		// initial distance to walls
+		//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
+		t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
+
+		// direction for parameter search
+		const t_real param_range[2] = { -1., 1. };
+		bool increase_param = true;
+
+		if(new_param_lin < param_range[0])
+			increase_param = true;
+		else if(new_param_lin > param_range[1])
+			increase_param = false;
+		else
+		{
+			// find direction for parameter search which decreases the distance to the walls
+			t_vec2 vertex_2 = vert1 + dir*(new_param_lin + delta_param)*dir_len;
+			t_real dist_to_walls_2 = GetDistToNearestWall(vertex_2);
+
+			increase_param = (dist_to_walls_2 > dist_to_walls_1);
+		}
+
+		while(dist_to_walls_1 < m_min_angular_dist_to_walls)
+		{
+			if(increase_param)
+				new_param_lin += delta_param;
+			else
+				new_param_lin -= delta_param;
+
+			// vertex is far enough from any wall?
+			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+			t_real dist_to_walls = GetDistToNearestWall(new_vertex);
+
+			// found a better position?
+			if(dist_to_walls > dist_to_walls_1)
+			{
+				new_param_found = true;
+
+				// out of critical distance?
+				if(dist_to_walls >= m_min_angular_dist_to_walls)
+					break;
+			}
+
+			// not yet in target range?
+			if((increase_param && new_param_lin < param_range[0]) ||
+				(!increase_param && new_param_lin > param_range[1]))
+				continue;
+
+			// end of parameter search?
+			if(new_param_lin > param_range[1] || new_param_lin < param_range[0])
+				break;
+		}
+
+		// a new parameter farther from the walls has been found
+		if(new_param_found)
+		{
+			new_param_lin = tl2::clamp<t_real>(new_param_lin, param_range[0], param_range[1]);
+			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+
+			param_lin = new_param_lin;
+			dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
+		}
+	}
+
+
+	// if the voronoi vertices belong to a quadratic bisector,
+	// find the closest vertex along its segment
+	t_real param_quadr = -1;
+	t_real dist_quadr = std::numeric_limits<t_real>::max();
+	if(para_result != para_edges.end())
+	{
+		// get correct iteration order of the bisector,
+		// which is stored in an unordered fashion
+		bool inverted_iter_order = false;
+		const auto& path_vertices = para_result->second;
+		if(path_vertices.size() && tl2::equals<t_vec2>(path_vertices[0], vert2, m_eps))
+			inverted_iter_order = true;
+
+		t_real min_dist2 = std::numeric_limits<t_real>::max();
+		std::size_t min_idx = 0;
+		for(std::size_t vertidx=0; vertidx<path_vertices.size(); ++vertidx)	
+		{
+			const auto& path_vertex = path_vertices[vertidx];
+			t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
+			if(dist2 < min_dist2)
+			{
+				t_real dist_to_walls = GetDistToNearestWall(path_vertex);
+
+				// reject vertex if the minimum distance to the walls is undercut
+				if(dist_to_walls < m_min_angular_dist_to_walls)
+					continue;
+
+				min_dist2 = dist2;
+				min_idx = vertidx;
+			}
+		}
+
+		// use the vertex index as curve parameter
+		param_quadr = t_real(min_idx)/t_real(path_vertices.size()-1);
+		dist_quadr = std::sqrt(min_dist2);
+		if(inverted_iter_order)
+			param_quadr = 1. - param_quadr;
+	}
+
+
+	if(dist_lin < dist_quadr)
+		return std::make_tuple(param_lin, dist_lin, true);
+	else
+		return std::make_tuple(param_quadr, dist_quadr, false);
+}
+
+
+
+/**
  * find a path from an initial (a2, a4) to a final (a2, a4)
  * the monochromator a2/a3 variables can alternatively refer to the analyser a5/a6 in case kf is not fixed
  */
@@ -1050,163 +1210,7 @@ InstrumentPath PathsBuilder::FindPath(
 #endif
 
 
-	// find closest point on a path segment
-	auto closest_point = [this]
-	(std::size_t idx1, std::size_t idx2, const t_vec2& vec)
-		-> std::tuple<t_real, t_real, bool>
-	{
-		const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
-		const auto& lin_edges = m_voro_results.GetLinearEdges();
-		const auto& para_edges = m_voro_results.GetParabolicEdges();
-
-		auto lin_result = lin_edges.find({idx1, idx2});
-		auto para_result = para_edges.find({idx1, idx2});
-
-		// voronoi vertices at the bisector endpoints
-		const t_vec2& vert1 = voro_vertices[idx1];
-		const t_vec2& vert2 = voro_vertices[idx2];
-
-
-		// if the voronoi vertices belong to a linear bisector,
-		// find the closest point by projecting 'vec' onto it
-		t_real param_lin = -1;
-		t_real dist_lin = std::numeric_limits<t_real>::max();
-		if(lin_result != lin_edges.end())
-		{
-			t_vec2 dir = vert2 - vert1;
-			t_real dir_len = tl2::norm<t_vec2>(dir);
-
-			// the query point lies on the voronoi vertex
-			if(dir_len < m_eps_angular)
-				return std::make_tuple(0, 0, true);
-
-			dir /= dir_len;
-
-			auto [_ptProj, _dist_lin, paramProj] =
-				tl2::project_line<t_vec2, t_real>(
-					vec, vert1, dir, true);
-
-			param_lin = paramProj / dir_len;
-			dist_lin = _dist_lin;
-
-
-			// look for another parameter if the projected vertex is too close to a wall
-			t_real new_param_lin = param_lin;
-			bool new_param_found = false;
-			const t_real delta_param = 0.025;
-
-			// initial distance to walls
-			//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
-			t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
-
-			// direction for parameter search
-			const t_real param_range[2] = { -1., 1. };
-			bool increase_param = true;
-
-			if(new_param_lin < param_range[0])
-				increase_param = true;
-			else if(new_param_lin > param_range[1])
-				increase_param = false;
-			else
-			{
-				// find direction for parameter search which decreases the distance to the walls
-				t_vec2 vertex_2 = vert1 + dir*(new_param_lin + delta_param)*dir_len;
-				t_real dist_to_walls_2 = GetDistToNearestWall(vertex_2);
-
-				increase_param = (dist_to_walls_2 > dist_to_walls_1);
-			}
-
-			while(dist_to_walls_1 < m_min_angular_dist_to_walls)
-			{
-				if(increase_param)
-					new_param_lin += delta_param;
-				else
-					new_param_lin -= delta_param;
-
-				// vertex is far enough from any wall?
-				t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
-				t_real dist_to_walls = GetDistToNearestWall(new_vertex);
-
-				// found a better position?
-				if(dist_to_walls > dist_to_walls_1)
-				{
-					new_param_found = true;
-
-					// out of critical distance?
-					if(dist_to_walls >= m_min_angular_dist_to_walls)
-						break;
-				}
-
-				// not yet in target range?
-				if((increase_param && new_param_lin < param_range[0]) ||
-					(!increase_param && new_param_lin > param_range[1]))
-					continue;
-
-				// end of parameter search?
-				if(new_param_lin > param_range[1] || new_param_lin < param_range[0])
-					break;
-			}
-
-			// a new parameter farther from the walls has been found
-			if(new_param_found)
-			{
-				new_param_lin = tl2::clamp<t_real>(new_param_lin, param_range[0], param_range[1]);
-				t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
-
-				param_lin = new_param_lin;
-				dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
-			}
-		}
-
-
-		// if the voronoi vertices belong to a quadratic bisector,
-		// find the closest vertex along its segment
-		t_real param_quadr = -1;
-		t_real dist_quadr = std::numeric_limits<t_real>::max();
-		if(para_result != para_edges.end())
-		{
-			// get correct iteration order of the bisector,
-			// which is stored in an unordered fashion
-			bool inverted_iter_order = false;
-			const auto& path_vertices = para_result->second;
-			if(path_vertices.size() && tl2::equals<t_vec2>(path_vertices[0], vert2, m_eps))
-				inverted_iter_order = true;
-
-			t_real min_dist2 = std::numeric_limits<t_real>::max();
-			std::size_t min_idx = 0;
-			for(std::size_t vertidx=0; vertidx<path_vertices.size(); ++vertidx)
-			{
-				const auto& path_vertex = path_vertices[vertidx];
-				t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
-				if(dist2 < min_dist2)
-				{
-					t_real dist_to_walls = GetDistToNearestWall(path_vertex);
-
-					// reject vertex if the minimum distance to the walls is undercut
-					if(dist_to_walls < m_min_angular_dist_to_walls)
-						continue;
-
-					min_dist2 = dist2;
-					min_idx = vertidx;
-				}
-			}
-
-			// use the vertex index as curve parameter
-			param_quadr = t_real(min_idx)/t_real(path_vertices.size()-1);
-			dist_quadr = std::sqrt(min_dist2);
-			if(inverted_iter_order)
-				param_quadr = 1. - param_quadr;
-		}
-
-
-		if(dist_lin < dist_quadr)
-			return std::make_tuple(param_lin, dist_lin, true);
-		else
-			return std::make_tuple(param_quadr, dist_quadr, false);
-	};
-
-
-	// find the retractionn points from the start/end point towards the path mesh
+	// find the retraction points from the start/end point towards the path mesh
 	if(path.voronoi_indices.size() >= 2)
 	{
 		// find closest start point
@@ -1215,7 +1219,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 		std::size_t min_dist_idx_begin = vert_idx2_begin;
 		auto [min_param_i, min_dist_begin, is_linear_bisector_begin] =
-			closest_point(vert_idx1_begin, vert_idx2_begin, path.vec_i);
+			FindClosestPointOnSegment(vert_idx1_begin, vert_idx2_begin, path.vec_i);
 
 		// check if any neighbour path before first vertex is even closer
 		for(std::size_t neighbour_idx :
@@ -1225,7 +1229,7 @@ InstrumentPath PathsBuilder::FindPath(
 				continue;
 
 			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
-				closest_point(neighbour_idx, vert_idx1_begin, path.vec_i);
+				FindClosestPointOnSegment(neighbour_idx, vert_idx1_begin, path.vec_i);
 
 			// choose a new position on the adjacent edge if it's either
 			// closer or if the former parameters had been out of bounds
@@ -1255,7 +1259,7 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
 		std::size_t min_dist_idx_end = vert_idx1_end;
 		auto [min_param_f, min_dist_end, is_linear_bisector_end] =
-			closest_point(vert_idx1_end, vert_idx2_end, path.vec_f);
+			FindClosestPointOnSegment(vert_idx1_end, vert_idx2_end, path.vec_f);
 
 		// check if any neighbour path before first vertex is even closer
 		for(std::size_t neighbour_idx : voro_graph.GetNeighbours(vert_idx2_end))
@@ -1264,7 +1268,7 @@ InstrumentPath PathsBuilder::FindPath(
 				continue;
 
 			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
-				closest_point(vert_idx2_end, neighbour_idx, path.vec_f);
+				FindClosestPointOnSegment(vert_idx2_end, neighbour_idx, path.vec_f);
 
 			// choose a new position on the adjacent edge if it's either
 			// closer or if the former parameters had been out of bounds
@@ -1288,7 +1292,6 @@ InstrumentPath PathsBuilder::FindPath(
 		path.param_f = tl2::clamp<t_real>(path.param_f, 0., 1.);
 		path.is_linear_f = is_linear_bisector_end;
 	}
-
 
 	return path;
 }
