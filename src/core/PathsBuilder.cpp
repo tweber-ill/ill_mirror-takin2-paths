@@ -1268,7 +1268,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	// add starting point
 	add_curve_vertex(path.vec_i);
 
-	// iterate voronoi vertices
+	// iterate voronoi vertices and create path vertices
 	for(std::size_t idx=1; idx<path.voronoi_indices.size(); ++idx)
 	{
 		std::size_t voro_idx = path.voronoi_indices[idx];
@@ -1370,20 +1370,9 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	path_vertices = geo::simplify_path<t_vec2>(path_vertices);
 
 
-	// interpolate points on path line segments
-	if(subdivide_lines)
-	{
-		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
-		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
-	}
-
-
 	// try to find direct-path shortcuts around "loops" in the path
 	if(m_directpath)
 	{
-		bool path_was_modified = false;
-
-
 		// test if a shortcut between the first and any other vertex on the path is possible
 		if(path_vertices.size() > 2)
 		{
@@ -1422,7 +1411,6 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 			{
 				// a shortcut was found
 				path_vertices.erase(path_vertices.begin()+start_idx+1, path_vertices.begin()+min_idx);
-				path_was_modified = true;
 			}
 		}
 
@@ -1465,17 +1453,16 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 			{
 				// a shortcut was found
 				path_vertices.erase(path_vertices.begin()+min_idx+1, path_vertices.begin()+start_idx);
-				path_was_modified = true;
 			}
 		}
+	}
 
 
-		// subdivide again in case vertices have been removed
-		if(subdivide_lines && path_was_modified)
-		{
-			path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
-			path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
-		}
+	// interpolate points on path line segments
+	if(subdivide_lines)
+	{
+		path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
+		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
 	}
 
 
