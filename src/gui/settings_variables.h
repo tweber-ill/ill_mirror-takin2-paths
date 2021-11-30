@@ -261,7 +261,7 @@ constexpr std::array<SettingsVariable, 26> g_settingsvariables
 		.editor_config = "Shortest Path;;Avoid Walls",
 	},
 	{
-		.description = "Try direct path",
+		.description = "Try using direct path segments",
 		.key = "settings/try_direct_path",
 		.value = &g_try_direct_path,
 		.editor = SettingsVariableEditor::YESNO,

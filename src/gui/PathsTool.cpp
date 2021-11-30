@@ -2261,7 +2261,8 @@ void PathsTool::TrackPath(std::size_t idx)
 		m_dlgConfigSpace->SetBlockCalc(true);
 	BOOST_SCOPE_EXIT(&m_dlgConfigSpace)
 	{
-		m_dlgConfigSpace->SetBlockCalc(false);
+		if(m_dlgConfigSpace)
+			m_dlgConfigSpace->SetBlockCalc(false);
 	} BOOST_SCOPE_EXIT_END
 
 
