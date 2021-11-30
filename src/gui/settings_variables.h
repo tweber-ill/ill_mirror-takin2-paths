@@ -96,6 +96,9 @@ extern int g_try_direct_path;
 // verify the generated path?
 extern int g_verifypath;
 
+// minimum distance to keep from the walls
+extern t_real g_min_dist_to_walls;
+
 
 // path tracker fps
 extern unsigned int g_pathtracker_fps;
@@ -144,7 +147,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 24> g_settingsvariables
+constexpr std::array<SettingsVariable, 25> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -265,6 +268,13 @@ constexpr std::array<SettingsVariable, 24> g_settingsvariables
 		.key = "settings/pathtracker_fps",
 		.value = &g_pathtracker_fps,
 	},
+	{
+		.description = "Minimum angular distance to walls",
+		.key = "settings/min_dist_to_walls",
+		.value = &g_min_dist_to_walls,
+		.is_angle = true
+	},
+
 
 	// renderer options
 	{

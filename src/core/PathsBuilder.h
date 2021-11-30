@@ -218,6 +218,9 @@ public:
 	t_real GetSubdivisionLength() const { return m_subdiv_len; }
 	void SetSubdivisionLength(t_real len) { m_subdiv_len = len; }
 
+	t_real GetMinDistToWalls() const { return m_min_angular_dist_to_walls; }
+	void SetMinDistToWalls(t_real dist) { m_min_angular_dist_to_walls = dist; }
+
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
@@ -313,8 +316,8 @@ private:
 	t_real m_eps_angular = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
 
-	t_real m_min_angular_dist = 5. / t_real(180.) * tl2::pi<t_real>;
-	t_real m_max_directpath_len = 15. / t_real(180.) * tl2::pi<t_real>;
+	// minimum distance to keep from the walls (e.g. for direct path calculation)
+	t_real m_min_angular_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;
 
 	// minimum distance to consider "staircase artefacts"
 	t_real m_simplify_mindist = 3.;

@@ -79,6 +79,10 @@ int g_pathstrategy = 0;
 int g_try_direct_path = 1;
 int g_verifypath = 1;
 
+// minimum distance to keep from the walls
+t_real g_min_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;
+
+
 
 // path-tracker and renderer FPS
 unsigned int g_pathtracker_fps = 30;

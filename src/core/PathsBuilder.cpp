@@ -1378,38 +1378,50 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	}
 
 
-	// try to find direct-path shortcuts
+	// try to find direct-path shortcuts around "loops" in the path
 	if(m_directpath)
 	{
 		bool path_was_modified = false;
 
+
 		// test if a shortcut between the first and any other vertex on the path is possible
 		if(path_vertices.size() > 2)
 		{
-			const t_vec2& start_vert = *path_vertices.begin();
-			std::size_t last_good_vert = 0;
-			std::size_t max_vert = path_vertices.size();
-			//std::size_t max_vert = path_vertices.size() / 4;
-			for(std::size_t i=last_good_vert+2; i<max_vert; ++i)
+			const std::size_t start_idx = 0;
+			std::size_t min_idx = start_idx;
+			t_real min_dist_to_start = std::numeric_limits<t_real>::max();
+			bool distance_falling = false;
+			bool minimum_found = false;
+
+			for(std::size_t idx = start_idx+1; idx<path_vertices.size(); ++idx)
 			{
-				const t_vec2& vert = path_vertices[i];
+				t_real dist = GetPathLength(path_vertices[idx] - path_vertices[start_idx]);
 
-				t_real len = GetPathLength(vert - start_vert);
-				if(deg)
-					len = len / t_real(180.) * tl2::pi<t_real>;
-				if(len > m_max_directpath_len)
-					break;
+				if(dist < min_dist_to_start)
+				{
+					// lengths become smaller
+					min_idx = idx;
+					min_dist_to_start = dist;
 
-				if(DoesDirectPathCollide(start_vert, vert, deg))
-					break;
-
-				last_good_vert = i;
+					// ignore first index
+					if(idx > start_idx + 1)
+						distance_falling = true;
+				}
+				else
+				{
+					// distance was falling, but is rising again -> minimum found
+					if(distance_falling)
+					{
+						minimum_found = true;
+						break;
+					}
+				}
 			}
 
-			// a shortcut was found
-			if(last_good_vert >= 2)
+			if(minimum_found && !DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
 			{
-				path_vertices.erase(path_vertices.begin()+1, path_vertices.begin()+last_good_vert);
+				// a shortcut was found
+				path_vertices.erase(path_vertices.begin()+start_idx+1, path_vertices.begin()+min_idx);
 				path_was_modified = true;
 			}
 		}
@@ -1418,30 +1430,41 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		// test if a shortcut between the last and any other vertex on the path is possible
 		if(path_vertices.size() > 2)
 		{
-			const t_vec2& end_vert = *path_vertices.rbegin();
-			std::size_t last_good_vert = path_vertices.size()-1;
-			std::size_t min_vert = 0;
-			//std::size_t min_vert = path_vertices.size() - path_vertices.size() / 4;
-			for(std::ptrdiff_t i=last_good_vert-2; i>=(std::ptrdiff_t)min_vert; --i)
+			const std::size_t start_idx = path_vertices.size() - 1;
+			std::size_t min_idx = start_idx;
+			t_real min_dist_to_start = std::numeric_limits<t_real>::max();
+			bool distance_falling = false;
+			bool minimum_found = false;
+
+			for(std::ptrdiff_t idx = (std::ptrdiff_t)start_idx-1; idx>=0; --idx)
 			{
-				const t_vec2& vert = path_vertices[i];
+				t_real dist = GetPathLength(path_vertices[idx] - path_vertices[start_idx]);
 
-				t_real len = GetPathLength(end_vert - vert);
-				if(deg)
-					len = len / t_real(180.) * tl2::pi<t_real>;
-				if(len > m_max_directpath_len)
-					break;
+				if(dist < min_dist_to_start)
+				{
+					// lengths become smaller
+					min_idx = idx;
+					min_dist_to_start = dist;
 
-				if(DoesDirectPathCollide(end_vert, vert, deg))
-					break;
-
-				last_good_vert = i;
+					// ignore first index
+					if(idx < (std::ptrdiff_t)start_idx - 1)
+						distance_falling = true;
+				}
+				else
+				{
+					// distance was falling, but is rising again -> minimum found
+					if(distance_falling)
+					{
+						minimum_found = true;
+						break;
+					}
+				}
 			}
 
-			// a shortcut was found
-			if(last_good_vert <= path_vertices.size()-3)
+			if(minimum_found && !DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
 			{
-				path_vertices.erase(path_vertices.begin()+last_good_vert+1, path_vertices.end()-1);
+				// a shortcut was found
+				path_vertices.erase(path_vertices.begin()+min_idx+1, path_vertices.begin()+start_idx);
 				path_was_modified = true;
 			}
 		}
@@ -1496,7 +1519,8 @@ bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert
 			t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
 			t_real dist = GetPathLength(nearest_wall_angle - angle);
 
-			if(dist < m_min_angular_dist)
+			// reject path if the minimum distance to the walls is undercut
+			if(dist < m_min_angular_dist_to_walls)
 				return true;
 		}
 

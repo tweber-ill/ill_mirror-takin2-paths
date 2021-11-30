@@ -1788,6 +1788,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
 	m_pathsbuilder.SetTryDirectPath(g_try_direct_path != 0);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
+	m_pathsbuilder.SetMinDistToWalls(g_min_dist_to_walls);
 	//m_pathsbuilder.SetUseRegionFunction(g_use_region_function != 0);
 
 	QMainWindow::DockOptions dockoptions{};
