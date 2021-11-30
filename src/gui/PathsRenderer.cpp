@@ -130,10 +130,10 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	m_objs[lowerFloor].m_mat(2,3) = -0.01;
 
 	// instrument
-	const auto& instr = instrspace.GetInstrument();
-	const auto& mono = instr.GetMonochromator();
-	const auto& sample = instr.GetSample();
-	const auto& ana = instr.GetAnalyser();
+	const Instrument& instr = instrspace.GetInstrument();
+	const Axis& mono = instr.GetMonochromator();
+	const Axis& sample = instr.GetSample();
+	const Axis& ana = instr.GetAnalyser();
 
 	for(const Axis* axis : { &mono, &sample, &ana })
 	{

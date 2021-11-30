@@ -73,6 +73,9 @@ int g_voronoi_backend = 0;
 // use region calculation function
 int g_use_region_function = 1;
 
+// use bisector verification function
+int g_remove_bisectors_below_min_wall_dist = 1;
+
 
 // path-finding options
 int g_pathstrategy = 0;

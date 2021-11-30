@@ -93,13 +93,15 @@ t_real PathsBuilder::GetPathLength(const t_vec2& _vec) const
 			kf_fixed = false;
 	}
 
+	const Instrument& instr = m_instrspace->GetInstrument();
+
 	// monochromator 2theta angular speed (alternatively analyser speed if kf is not fixed)
 	t_real a2_speed = kf_fixed
-		? m_instrspace->GetInstrument().GetMonochromator().GetAxisAngleOutSpeed()
-		: m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOutSpeed();
+		? instr.GetMonochromator().GetAxisAngleOutSpeed()
+		: instr.GetAnalyser().GetAxisAngleOutSpeed();
 
 	// sample 2theta angular speed
-	t_real a4_speed = m_instrspace->GetInstrument().GetSample().GetAxisAngleOutSpeed();
+	t_real a4_speed = instr.GetSample().GetAxisAngleOutSpeed();
 
 	t_vec2 vec = _vec;
 	vec[0] /= a4_speed;
@@ -293,10 +295,12 @@ bool PathsBuilder::CalculateConfigSpace(
 		}
 	}
 
+	const Instrument& instr = m_instrspace->GetInstrument();
+
 	// analyser angle (alternatively monochromator angle if kf is not fixed)
 	t_real a6 = kf_fixed
-		? m_instrspace->GetInstrument().GetAnalyser().GetAxisAngleOut()	      // a6 or
-		: m_instrspace->GetInstrument().GetMonochromator().GetAxisAngleOut(); // a2
+		? instr.GetAnalyser().GetAxisAngleOut()	      // a6 or
+		: instr.GetMonochromator().GetAxisAngleOut(); // a2
 
 	// include scattering senses
 	if(sensesCCW)
@@ -338,15 +342,17 @@ bool PathsBuilder::CalculateConfigSpace(
 				t_real a2 = angle[1];
 				t_real a3 = a4 * 0.5;
 
+				Instrument& instr = instrspace_cpy.GetInstrument();
+
 				// set scattering angles (a2 and a6 are flipped in case kf is not fixed)
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(kf_fixed ? a2 : a6);
-				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
-				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(kf_fixed ? a6 : a2);
+				instr.GetMonochromator().SetAxisAngleOut(kf_fixed ? a2 : a6);
+				instr.GetSample().SetAxisAngleOut(a4);
+				instr.GetAnalyser().SetAxisAngleOut(kf_fixed ? a6 : a2);
 
 				// set crystal angles (a1 and a5 are flipped in case kf is not fixed)
-				instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(kf_fixed ? 0.5*a2 : 0.5*a6);
-				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
-				instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(kf_fixed ? 0.5*a6 : 0.5*a2);
+				instr.GetMonochromator().SetAxisAngleInternal(kf_fixed ? 0.5*a2 : 0.5*a6);
+				instr.GetSample().SetAxisAngleInternal(a3);
+				instr.GetAnalyser().SetAxisAngleInternal(kf_fixed ? 0.5*a6 : 0.5*a2);
 
 				// set image value
 				bool angle_ok = instrspace_cpy.CheckAngularLimits();
@@ -654,7 +660,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 	regions.SetPointsOutsideRegions(&m_points_outside_regions);
 	regions.SetInvertedRegions(&m_inverted_regions);
 	regions.SetRegionFunc(use_region_function ? &region_func : nullptr);
-	regions.SetValidateFunc(&validation_func);
+	regions.SetValidateFunc(m_remove_bisectors_below_min_wall_dist ? &validation_func : nullptr);
 
 	if(backend == VoronoiBackend::BOOST)
 	{
@@ -811,6 +817,7 @@ InstrumentPath PathsBuilder::FindPath(
 		}
 
 		InstrumentSpace instrspace_cpy = *this->m_instrspace;
+		Instrument& instr = instrspace_cpy.GetInstrument();
 
 		// set instrument angles to start point
 		t_real a2 = a2_i;
@@ -823,15 +830,15 @@ InstrumentPath PathsBuilder::FindPath(
 
 		if(kf_fixed)
 		{
-			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
-			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+			instr.GetMonochromator().SetAxisAngleOut(a2);
+			instr.GetMonochromator().SetAxisAngleInternal(0.5 * a2);
 		}
 		else
 		{
-			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
-			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+			instr.GetAnalyser().SetAxisAngleOut(a2);
+			instr.GetAnalyser().SetAxisAngleInternal(0.5 * a2);
 		}
-		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+		instr.GetSample().SetAxisAngleOut(a4);
 
 		bool in_angular_limits = instrspace_cpy.CheckAngularLimits();
 		bool colliding = instrspace_cpy.CheckCollision2D();
@@ -849,15 +856,15 @@ InstrumentPath PathsBuilder::FindPath(
 
 		if(kf_fixed)
 		{
-			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
-			instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+			instr.GetMonochromator().SetAxisAngleOut(a2);
+			instr.GetMonochromator().SetAxisAngleInternal(0.5 * a2);
 		}
 		else
 		{
-			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
-			instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+			instr.GetAnalyser().SetAxisAngleOut(a2);
+			instr.GetAnalyser().SetAxisAngleInternal(0.5 * a2);
 		}
-		instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+		instr.GetSample().SetAxisAngleOut(a4);
 
 		in_angular_limits = instrspace_cpy.CheckAngularLimits();
 		colliding = instrspace_cpy.CheckCollision2D();
@@ -1344,29 +1351,31 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		// check the generated vertex for collisions
 		if(this->m_verifypath)
 		{
-				const t_vec2 _angle = PixelToAngle(vertex, false, true);
-				t_real a4 = _angle[0];
-				t_real a2 = _angle[1];
+			const t_vec2 _angle = PixelToAngle(vertex, false, true);
+			t_real a4 = _angle[0];
+			t_real a2 = _angle[1];
 
-				// set scattering angles
-				if(kf_fixed)
-					instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleOut(a2);
-				else
-					instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleOut(a2);
-				instrspace_cpy.GetInstrument().GetSample().SetAxisAngleOut(a4);
+			Instrument& instr = instrspace_cpy.GetInstrument();
 
-				// set crystal angles
-				if(kf_fixed)
-					instrspace_cpy.GetInstrument().GetMonochromator().SetAxisAngleInternal(0.5 * a2);
-				else
-					instrspace_cpy.GetInstrument().GetAnalyser().SetAxisAngleInternal(0.5 * a2);
-				//instrspace_cpy.GetInstrument().GetSample().SetAxisAngleInternal(a3);
+			// set scattering angles
+			if(kf_fixed)
+				instr.GetMonochromator().SetAxisAngleOut(a2);
+			else
+				instr.GetAnalyser().SetAxisAngleOut(a2);
+			instr.GetSample().SetAxisAngleOut(a4);
 
-				bool angle_ok = instrspace_cpy.CheckAngularLimits();
-				bool colliding = instrspace_cpy.CheckCollision2D();
+			// set crystal angles
+			if(kf_fixed)
+				instr.GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+			else
+				instr.GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+			//instr.GetSample().SetAxisAngleInternal(a3);
 
-				if(!angle_ok || colliding)
-					insert_vertex = false;
+			bool angle_ok = instrspace_cpy.CheckAngularLimits();
+			bool colliding = instrspace_cpy.CheckCollision2D();
+
+			if(!angle_ok || colliding)
+				insert_vertex = false;
 		}
 
 		if(insert_vertex)

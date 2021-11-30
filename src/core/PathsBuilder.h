@@ -224,6 +224,9 @@ public:
 	t_real GetMinDistToWalls() const { return m_min_angular_dist_to_walls; }
 	void SetMinDistToWalls(t_real dist) { m_min_angular_dist_to_walls = dist; }
 
+	void SetRemoveBisectorsBelowMinWallDist(bool b) { m_remove_bisectors_below_min_wall_dist = b; }
+	bool GetRemoveBisectorsBelowMinWallDist() const { return m_remove_bisectors_below_min_wall_dist; }
+
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
@@ -321,6 +324,9 @@ private:
 
 	// minimum distance to keep from the walls (e.g. for direct path calculation)
 	t_real m_min_angular_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;
+
+	// remove bisectors that are below the minimum distance given above
+	bool m_remove_bisectors_below_min_wall_dist = true;
 
 	// minimum distance to consider "staircase artefacts"
 	t_real m_simplify_mindist = 3.;

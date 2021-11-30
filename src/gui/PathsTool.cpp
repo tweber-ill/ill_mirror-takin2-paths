@@ -400,6 +400,12 @@ bool PathsTool::OpenFile(const QString &file)
 		m_instrspace.GetInstrument().AddUpdateSlot(
 			[this](const Instrument& instr)
 			{
+				if(&instr != &m_instrspace.GetInstrument())
+				{
+					std::cerr << "Error: Received update from unknown instrument." << std::endl;
+					return;
+				}
+
 				// is ki or kf fixed?
 				bool kf_fixed = true;
 				if(!std::get<1>(m_tascalc.GetKfix()))
@@ -410,9 +416,9 @@ bool PathsTool::OpenFile(const QString &file)
 				t_real oldA2 = m_tasProperties->GetWidget()->GetMonoScatteringAngle()/t_real{180}*tl2::pi<t_real>;
 
 				// get scattering angles
-				t_real monoScAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleOut();
-				t_real sampleScAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleOut();
-				t_real anaScAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleOut();
+				t_real monoScAngle = instr.GetMonochromator().GetAxisAngleOut();
+				t_real sampleScAngle = instr.GetSample().GetAxisAngleOut();
+				t_real anaScAngle = instr.GetAnalyser().GetAxisAngleOut();
 
 				// set scattering angles
 				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
@@ -420,9 +426,9 @@ bool PathsTool::OpenFile(const QString &file)
 				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
 
 				// get crystal rocking angles
-				t_real monoXtalAngle = m_instrspace.GetInstrument().GetMonochromator().GetAxisAngleInternal();
-				t_real sampleXtalAngle = m_instrspace.GetInstrument().GetSample().GetAxisAngleInternal();
-				t_real anaXtalAngle = m_instrspace.GetInstrument().GetAnalyser().GetAxisAngleInternal();
+				t_real monoXtalAngle = instr.GetMonochromator().GetAxisAngleInternal();
+				t_real sampleXtalAngle = instr.GetSample().GetAxisAngleInternal();
+				t_real anaXtalAngle = instr.GetAnalyser().GetAxisAngleInternal();
 
 				// set crystal rocking angles
 				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
@@ -632,7 +638,7 @@ void PathsTool::GotoCoordinates(
 	// set instrument angles
 	else
 	{
-		auto& instr = m_instrspace.GetInstrument();
+		Instrument& instr = m_instrspace.GetInstrument();
 
 		// send one update signal at the end
 		// and not after each angle change
@@ -698,7 +704,7 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 	// set instrument angles
 	else
 	{
-		auto& instr = m_instrspace.GetInstrument();
+		Instrument& instr = m_instrspace.GetInstrument();
 
 		// send one update signal at the end
 		// and not after each angle change
@@ -1789,6 +1795,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetTryDirectPath(g_try_direct_path != 0);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
 	m_pathsbuilder.SetMinDistToWalls(g_min_dist_to_walls);
+	m_pathsbuilder.SetRemoveBisectorsBelowMinWallDist(g_remove_bisectors_below_min_wall_dist != 0);
 	//m_pathsbuilder.SetUseRegionFunction(g_use_region_function != 0);
 
 	QMainWindow::DockOptions dockoptions{};
@@ -2105,7 +2112,7 @@ void PathsTool::CalculatePathMesh()
 				return; \
 			}
 
-		const auto& instr = m_instrspace.GetInstrument();
+		const Instrument& instr = m_instrspace.GetInstrument();
 
 		// get the angular limits from the instrument model
 		t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();

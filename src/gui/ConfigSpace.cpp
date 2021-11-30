@@ -840,7 +840,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 		return;
 
 	m_pathsbuilder->StartPathMeshWorkflow();
-	const auto& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
+	const Instrument& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
 
 	bool kf_fixed = true;
 	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())

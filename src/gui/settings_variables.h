@@ -85,6 +85,9 @@ extern int g_voronoi_backend;
 // use region calculation function
 extern int g_use_region_function;
 
+// use bisector verification function
+extern int g_remove_bisectors_below_min_wall_dist;
+
 
 // which path finding strategy to use?
 // 0: shortest path, 1: avoid walls
@@ -147,7 +150,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 25> g_settingsvariables
+constexpr std::array<SettingsVariable, 26> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -240,6 +243,12 @@ constexpr std::array<SettingsVariable, 25> g_settingsvariables
 		.description = "Use region function",
 		.key = "settings/use_region_function",
 		.value = &g_use_region_function,
+		.editor = SettingsVariableEditor::YESNO,
+	},
+	{
+		.description = "Remove bisectors close to walls",
+		.key = "settings/remove_bisectors_below_min_wall_dist",
+		.value = &g_remove_bisectors_below_min_wall_dist,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 

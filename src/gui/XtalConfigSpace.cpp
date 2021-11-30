@@ -357,7 +357,7 @@ void XtalConfigSpaceDlg::UpdatePlotRanges()
 	if(m_colourMap)
 	{
 		m_colourMap->data()->setRange(
-			QCPRange{vec1start, vec1end}, 
+			QCPRange{vec1start, vec1end},
 			QCPRange{vec2start, vec2end});
 	}
 }
@@ -484,6 +484,7 @@ void XtalConfigSpaceDlg::Calculate()
 		auto task = [this, img_w, img_row, vec1start, vec1end, yparam, E]()
 		{
 			InstrumentSpace instrspace_cpy = *this->m_instrspace;
+			Instrument& instr = instrspace_cpy.GetInstrument();
 
 			for(std::size_t img_col=0; img_col<img_w; ++img_col)
 			{
@@ -496,20 +497,14 @@ void XtalConfigSpaceDlg::Calculate()
 				if(angles.mono_ok && angles.ana_ok && angles.sample_ok)
 				{
 					// set scattering angles
-					instrspace_cpy.GetInstrument().GetMonochromator().
-						SetAxisAngleOut(angles.monoXtalAngle * t_real{2});
-					instrspace_cpy.GetInstrument().GetSample().
-						SetAxisAngleOut(angles.sampleScatteringAngle);
-					instrspace_cpy.GetInstrument().GetAnalyser().
-						SetAxisAngleOut(angles.anaXtalAngle * t_real{2});
+					instr.GetMonochromator().SetAxisAngleOut(angles.monoXtalAngle * t_real{2});
+					instr.GetSample().SetAxisAngleOut(angles.sampleScatteringAngle);
+					instr.GetAnalyser().SetAxisAngleOut(angles.anaXtalAngle * t_real{2});
 
 					// set crystal angles
-					instrspace_cpy.GetInstrument().GetMonochromator().
-						SetAxisAngleInternal(angles.monoXtalAngle);
-					instrspace_cpy.GetInstrument().GetSample().
-						SetAxisAngleInternal(angles.sampleXtalAngle);
-					instrspace_cpy.GetInstrument().GetAnalyser().
-						SetAxisAngleInternal(angles.anaXtalAngle);
+					instr.GetMonochromator().SetAxisAngleInternal(angles.monoXtalAngle);
+					instr.GetSample().SetAxisAngleInternal(angles.sampleXtalAngle);
+					instr.GetAnalyser().SetAxisAngleInternal(angles.anaXtalAngle);
 				}
 				else
 				{
