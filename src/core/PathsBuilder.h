@@ -119,6 +119,10 @@ protected:
 	// get path length, taking into account the motor speeds
 	t_real GetPathLength(const t_vec2& vec) const;
 
+	// check if a direct path between the two vertices leads to a collision
+	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
+
+
 public:
 	PathsBuilder();
 	~PathsBuilder();
@@ -217,6 +221,9 @@ public:
 	unsigned int GetMaxNumThreads() const { return m_maxnum_threads; }
 	void SetMaxNumThreads(unsigned int n) { m_maxnum_threads = n; }
 
+	bool GetTryDirectPath() const { return m_directpath; }
+	void SetTryDirectPath(bool directpath) { m_directpath = directpath; }
+
 	bool GetVerifyPath() const { return m_verifypath; }
 	void SetVerifyPath(bool verify) { m_verifypath = verify; }
 
@@ -306,6 +313,9 @@ private:
 	t_real m_eps_angular = 1e-3;
 	t_real m_voroedge_eps = 1e-2;
 
+	t_real m_min_angular_dist = 5. / t_real(180.) * tl2::pi<t_real>;
+	t_real m_max_directpath_len = 15. / t_real(180.) * tl2::pi<t_real>;
+
 	// minimum distance to consider "staircase artefacts"
 	t_real m_simplify_mindist = 3.;
 
@@ -313,6 +323,9 @@ private:
 
 	// line segment length for subdivisions
 	t_real m_subdiv_len = 0.1;
+
+	// try to find a direct path if possible
+	bool m_directpath = true;
 
 	// check the generated path for collisions
 	bool m_verifypath = true;

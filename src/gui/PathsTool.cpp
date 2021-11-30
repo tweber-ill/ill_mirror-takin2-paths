@@ -1786,6 +1786,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetAngularEpsilon(g_eps_angular);
 	m_pathsbuilder.SetVoronoiEdgeEpsilon(g_eps_voronoiedge);
 	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
+	m_pathsbuilder.SetTryDirectPath(g_try_direct_path != 0);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
 	//m_pathsbuilder.SetUseRegionFunction(g_use_region_function != 0);
 

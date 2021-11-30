@@ -39,15 +39,25 @@ using t_task = std::packaged_task<void()>;
 using t_taskptr = std::shared_ptr<t_task>;
 
 
+// pixel values for various configuration space conditions
+#define PIXEL_VALUE_FORBIDDEN_ANGLE  0xf0
+#define PIXEL_VALUE_COLLISION        0xff
+#define PIXEL_VALUE_NOCOLLISION      0x00
+
+
+/**
+ * constructor
+ */
 PathsBuilder::PathsBuilder()
 	: m_sigProgress{std::make_shared<t_sig_progress>()}
-{
-}
+{ }
 
 
+/**
+ * destructor
+ */
 PathsBuilder::~PathsBuilder()
-{
-}
+{ }
 
 
 void PathsBuilder::Clear()
@@ -343,12 +353,12 @@ bool PathsBuilder::CalculateConfigSpace(
 
 				if(!angle_ok)
 				{
-					m_img.SetPixel(img_col, img_row, 0xf0);
+					m_img.SetPixel(img_col, img_row, PIXEL_VALUE_FORBIDDEN_ANGLE);
 				}
 				else
 				{
 					bool colliding = instrspace_cpy.CheckCollision2D();
-					m_img.SetPixel(img_col, img_row, colliding ? 0xff : 0x00);
+					m_img.SetPixel(img_col, img_row, colliding ? PIXEL_VALUE_COLLISION : PIXEL_VALUE_NOCOLLISION);
 				}
 
 				++num_pixels;
@@ -493,7 +503,7 @@ bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 			{
 				for(std::size_t x=x_start; x<m_img.GetWidth(); ++x)
 				{
-					if(m_img.GetPixel(x, y) == 0)
+					if(m_img.GetPixel(x, y) == PIXEL_VALUE_NOCOLLISION)
 					{
 						point_outside_regions =
 							tl2::create<t_vec2>({
@@ -591,8 +601,8 @@ bool PathsBuilder::CalculateLineSegments(bool use_region_function)
 
 				// normal regions encircle forbidden coordinate points
 				// inverted regions encircle allowed coordinate points
-				//m_inverted_regions.push_back(pix_incontour == 0);
-				m_inverted_regions.push_back(pix_outcontour != 0);
+				//m_inverted_regions.push_back(pix_incontour == PIXEL_VALUE_NOCOLLISION);
+				m_inverted_regions.push_back(pix_outcontour != PIXEL_VALUE_NOCOLLISION);
 			}
 		}
 	}
@@ -624,7 +634,7 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 			return true;
 
 		// an occupied pixel signifies a forbidden region
-		if(m_img.GetPixel(x, y) != 0)
+		if(m_img.GetPixel(x, y) != PIXEL_VALUE_NOCOLLISION)
 			return true;
 
 		return false;
@@ -1367,7 +1377,134 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
 	}
 
+
+	// try to find direct-path shortcuts
+	if(m_directpath)
+	{
+		bool path_was_modified = false;
+
+		// test if a shortcut between the first and any other vertex on the path is possible
+		if(path_vertices.size() > 2)
+		{
+			const t_vec2& start_vert = *path_vertices.begin();
+			std::size_t last_good_vert = 0;
+			std::size_t max_vert = path_vertices.size();
+			//std::size_t max_vert = path_vertices.size() / 4;
+			for(std::size_t i=last_good_vert+2; i<max_vert; ++i)
+			{
+				const t_vec2& vert = path_vertices[i];
+
+				t_real len = GetPathLength(vert - start_vert);
+				if(deg)
+					len = len / t_real(180.) * tl2::pi<t_real>;
+				if(len > m_max_directpath_len)
+					break;
+
+				if(DoesDirectPathCollide(start_vert, vert, deg))
+					break;
+
+				last_good_vert = i;
+			}
+
+			// a shortcut was found
+			if(last_good_vert >= 2)
+			{
+				path_vertices.erase(path_vertices.begin()+1, path_vertices.begin()+last_good_vert);
+				path_was_modified = true;
+			}
+		}
+
+
+		// test if a shortcut between the last and any other vertex on the path is possible
+		if(path_vertices.size() > 2)
+		{
+			const t_vec2& end_vert = *path_vertices.rbegin();
+			std::size_t last_good_vert = path_vertices.size()-1;
+			std::size_t min_vert = 0;
+			//std::size_t min_vert = path_vertices.size() - path_vertices.size() / 4;
+			for(std::ptrdiff_t i=last_good_vert-2; i>=(std::ptrdiff_t)min_vert; --i)
+			{
+				const t_vec2& vert = path_vertices[i];
+
+				t_real len = GetPathLength(end_vert - vert);
+				if(deg)
+					len = len / t_real(180.) * tl2::pi<t_real>;
+				if(len > m_max_directpath_len)
+					break;
+
+				if(DoesDirectPathCollide(end_vert, vert, deg))
+					break;
+
+				last_good_vert = i;
+			}
+
+			// a shortcut was found
+			if(last_good_vert <= path_vertices.size()-3)
+			{
+				path_vertices.erase(path_vertices.begin()+last_good_vert+1, path_vertices.end()-1);
+				path_was_modified = true;
+			}
+		}
+
+
+		// subdivide again in case vertices have been removed
+		if(subdivide_lines && path_was_modified)
+		{
+			path_vertices = geo::subdivide_lines<t_vec2>(path_vertices, m_subdiv_len);
+			path_vertices = geo::remove_close_vertices<t_vec2>(path_vertices, m_subdiv_len);
+		}
+	}
+
+
 	return path_vertices;
+}
+
+
+/**
+ * check if a direct path between the two vertices leads to a collision
+ */
+bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg) const
+{
+	t_vec2 pix1 = AngleToPixel(vert1, deg, false);
+	t_vec2 pix2 = AngleToPixel(vert2, deg, false);
+
+	t_int last_x = -1;
+	t_int last_y = -1;
+
+	for(t_real t=0.; t<=1.; t+=m_eps_angular)
+	{
+		t_int x = (t_int)std::lerp(pix1[0], pix2[0], t);
+		t_int y = (t_int)std::lerp(pix1[1], pix2[1], t);
+
+		// don't check the same pixel again
+		if(last_x == x && last_y == y)
+			continue;
+
+		if(x<0 || x>=(t_int)m_img.GetWidth() || y<0 || y>=(t_int)m_img.GetHeight())
+			return true;
+
+		// TODO: test if collision happens inside epsilon-circles, not just for the pixels
+		if(m_img.GetPixel(x, y) != PIXEL_VALUE_NOCOLLISION)
+			return true;
+
+		// look for the closest wall
+		t_vec2 pix = tl2::create<t_vec2>({t_real(x), t_real(y)});
+		if(auto nearest_walls = m_wallsindextree.Query(pix, 1); nearest_walls.size() >= 1)
+		{
+			// get angular distance to wall
+			t_vec2 angle = PixelToAngle(pix, false, false);
+			t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
+			t_real dist = GetPathLength(nearest_wall_angle - angle);
+
+			if(dist < m_min_angular_dist)
+				return true;
+		}
+
+		last_x = x;
+		last_y = y;
+	}
+
+	return false;
 }
 
 

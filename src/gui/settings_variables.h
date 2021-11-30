@@ -90,6 +90,9 @@ extern int g_use_region_function;
 // 0: shortest path, 1: avoid walls
 extern int g_pathstrategy;
 
+// choose a direct path if possible
+extern int g_try_direct_path;
+
 // verify the generated path?
 extern int g_verifypath;
 
@@ -141,7 +144,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 23> g_settingsvariables
+constexpr std::array<SettingsVariable, 24> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -244,6 +247,12 @@ constexpr std::array<SettingsVariable, 23> g_settingsvariables
 		.value = &g_pathstrategy,
 		.editor = SettingsVariableEditor::COMBOBOX,
 		.editor_config = "Shortest Path;;Avoid Walls",
+	},
+	{
+		.description = "Try direct path",
+		.key = "settings/try_direct_path",
+		.value = &g_try_direct_path,
+		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
 		.description = "Verify generated path",

@@ -76,6 +76,7 @@ int g_use_region_function = 1;
 
 // path-finding options
 int g_pathstrategy = 0;
+int g_try_direct_path = 1;
 int g_verifypath = 1;
 
 
