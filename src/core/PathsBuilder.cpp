@@ -28,6 +28,7 @@
 #include <iostream>
 #include <thread>
 #include <future>
+#include <unordered_set>
 #include <cmath>
 #include <cstdint>
 
@@ -1221,12 +1222,29 @@ InstrumentPath PathsBuilder::FindPath(
 		auto [min_param_i, min_dist_begin, is_linear_bisector_begin] =
 			FindClosestPointOnSegment(vert_idx1_begin, vert_idx2_begin, path.vec_i);
 
+
 		// check if any neighbour path before first vertex is even closer
-		for(std::size_t neighbour_idx :
-			voro_graph.GetNeighbours(vert_idx1_begin))
+		std::vector<std::size_t> neighbour_indices =
+			voro_graph.GetNeighbours(vert_idx1_begin);
+		std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
+		std::unordered_set<std::size_t> seen_neighbours;
+		seen_neighbours.insert(vert_idx2_begin);
+
+		for(std::size_t idx_neighbour=0; idx_neighbour<neighbour_indices.size(); ++idx_neighbour)
 		{
-			if(neighbour_idx == vert_idx2_begin)
+			std::size_t neighbour_idx = neighbour_indices[idx_neighbour];
+			if(seen_neighbours.find(neighbour_idx) != seen_neighbours.end())
 				continue;
+			seen_neighbours.insert(neighbour_idx);
+
+			// add newly discovered neighbours
+			// only consider first-order nearest neighbours
+			if(idx_neighbour < nearest_neighbours_end_idx)
+			{
+				for(std::size_t new_neighbour_idx :
+					voro_graph.GetNeighbours(neighbour_idx))
+					neighbour_indices.push_back(new_neighbour_idx);
+			}
 
 			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
 				FindClosestPointOnSegment(neighbour_idx, vert_idx1_begin, path.vec_i);
@@ -1261,11 +1279,29 @@ InstrumentPath PathsBuilder::FindPath(
 		auto [min_param_f, min_dist_end, is_linear_bisector_end] =
 			FindClosestPointOnSegment(vert_idx1_end, vert_idx2_end, path.vec_f);
 
-		// check if any neighbour path before first vertex is even closer
-		for(std::size_t neighbour_idx : voro_graph.GetNeighbours(vert_idx2_end))
+
+		// check if any neighbour path after second vertex is even closer
+		neighbour_indices =
+			voro_graph.GetNeighbours(vert_idx2_end);
+		nearest_neighbours_end_idx = neighbour_indices.size();
+		seen_neighbours.clear();
+		seen_neighbours.insert(vert_idx1_end);
+
+		for(std::size_t idx_neighbour=0; idx_neighbour<neighbour_indices.size(); ++idx_neighbour)
 		{
-			if(neighbour_idx == vert_idx1_end)
+			std::size_t neighbour_idx = neighbour_indices[idx_neighbour];
+			if(seen_neighbours.find(neighbour_idx) != seen_neighbours.end())
 				continue;
+			seen_neighbours.insert(neighbour_idx);
+
+			// add newly discovered neighbours
+			// only consider first-order nearest neighbours
+			if(idx_neighbour < nearest_neighbours_end_idx)
+			{
+				for(std::size_t new_neighbour_idx :
+					voro_graph.GetNeighbours(neighbour_idx))
+					neighbour_indices.push_back(new_neighbour_idx);
+			}
 
 			auto [neighbour_param, neighbour_dist, neighbour_is_linear_bisector] =
 				FindClosestPointOnSegment(vert_idx2_end, neighbour_idx, path.vec_f);

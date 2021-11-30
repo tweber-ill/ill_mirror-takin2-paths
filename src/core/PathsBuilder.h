@@ -26,6 +26,7 @@
 #ifndef __GEO_PATHS_BUILDER_H__
 #define __GEO_PATHS_BUILDER_H__
 
+#include <vector>
 #include <memory>
 #include <iostream>
 
