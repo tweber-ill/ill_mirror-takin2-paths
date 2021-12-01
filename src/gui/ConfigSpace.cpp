@@ -993,8 +993,11 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	RedrawVoronoiPlot();
 
 	m_pathsbuilder->FinishPathMeshWorkflow(true);
-	// signal the availability of a path mesh
+	// signal the availability of a new path mesh
 	emit PathMeshAvailable();
+
+	if(m_autocalcpath)
+		CalculatePath();
 }
 
 
@@ -1309,16 +1312,18 @@ bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progres
 	m_progress->setValue(int(progress*max_progress));
 	bool ok = !m_progress->wasCanceled();
 
-	RedrawVoronoiPlot();
-
 	if(state == CalculationState::SUCCEEDED ||
 		state == CalculationState::STEP_SUCCEEDED ||
 		state == CalculationState::FAILED)
 	{
 		m_progress->reset();
 		//m_progress.reset();
+
+		if(m_autocalcpath)
+			CalculatePath();
 	}
 
+	RedrawVoronoiPlot();
 	return ok;
 }
 

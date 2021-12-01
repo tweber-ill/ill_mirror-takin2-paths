@@ -888,8 +888,11 @@ void PathsTool::UpdateStatusLabel()
 	ostr.precision(g_prec_gui);
 	ostr << std::fixed << std::showpos
 		<< "Cursor: (" << m_mouseX << ", " << m_mouseY << ") m";
-	if(m_curObj != "")
-		ostr << ", object: " << m_curObj;
+
+	// show object name
+	//if(m_curObj != "")
+	//	ostr << ", object: " << m_curObj;
+
 	ostr << ".";
 	m_labelStatus->setText(ostr.str().c_str());
 }
