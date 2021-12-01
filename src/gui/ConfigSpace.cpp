@@ -166,6 +166,8 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 
 	// radio buttons
 	QGroupBox *radioGroup = new QGroupBox(this);
+	radioGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+
 	QHBoxLayout *radioLayout = new QHBoxLayout(radioGroup);
 	QRadioButton *radioInstrPos = new QRadioButton("Move Instrument Position", radioGroup);
 	QRadioButton *radioTargetPos = new QRadioButton("Move Target Position", radioGroup);
