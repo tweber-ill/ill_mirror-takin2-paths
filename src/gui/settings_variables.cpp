@@ -74,13 +74,17 @@ int g_voronoi_backend = 0;
 int g_use_region_function = 1;
 
 // use bisector verification function
-int g_remove_bisectors_below_min_wall_dist = 1;
+int g_remove_bisectors_below_min_wall_dist = 0;
 
 
 // path-finding options
 int g_pathstrategy = 0;
 int g_try_direct_path = 1;
 int g_verifypath = 1;
+
+// maximum angular search radius for direct paths
+t_real g_directpath_search_radius = 20. / t_real(180.) * tl2::pi<t_real>;
+
 
 // minimum distance to keep from the walls
 t_real g_min_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;

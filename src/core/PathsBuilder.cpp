@@ -1412,7 +1412,8 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 		const t_vec2 angle = PixelToAngle(vertex, deg);
 		bool insert_vertex = true;
 
-		// check the generated vertex for collisions
+		// check the generated vertex for collisions, and
+		// remove it in that case
 		if(this->m_verifypath)
 		{
 			const t_vec2 _angle = PixelToAngle(vertex, false, true);
@@ -1421,29 +1422,37 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 
 			Instrument& instr = instrspace_cpy.GetInstrument();
 
-			// set scattering angles
+			// set scattering and crystal angles
 			if(kf_fixed)
+			{
 				instr.GetMonochromator().SetAxisAngleOut(a2);
-			else
-				instr.GetAnalyser().SetAxisAngleOut(a2);
-			instr.GetSample().SetAxisAngleOut(a4);
-
-			// set crystal angles
-			if(kf_fixed)
 				instr.GetMonochromator().SetAxisAngleInternal(0.5 * a2);
+			}
 			else
+			{
+				instr.GetAnalyser().SetAxisAngleOut(a2);
 				instr.GetAnalyser().SetAxisAngleInternal(0.5 * a2);
+			}
+
+			instr.GetSample().SetAxisAngleOut(a4);
 			//instr.GetSample().SetAxisAngleInternal(a3);
 
 			bool angle_ok = instrspace_cpy.CheckAngularLimits();
 			bool colliding = instrspace_cpy.CheckCollision2D();
 
 			if(!angle_ok || colliding)
+			{
 				insert_vertex = false;
+
+				//std::cout << "Collision at a2/6 = " << a2/tl2::pi<t_real>*180.
+				//	<< " and a4 = " << a4/tl2::pi<t_real>*180. << std::endl;
+			}
 		}
 
 		if(insert_vertex)
+		{
 			path_vertices.emplace_back(std::move(angle));
+		}
 	};
 
 
@@ -1559,88 +1568,10 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	if(m_directpath)
 	{
 		// test if a shortcut between the first and any other vertex on the path is possible
-		if(path_vertices.size() > 2)
-		{
-			const std::size_t start_idx = 0;
-			std::size_t min_idx = start_idx;
-			t_real min_dist_to_start = std::numeric_limits<t_real>::max();
-			bool distance_falling = false;
-			bool minimum_found = false;
-
-			for(std::size_t idx = start_idx+1; idx<path_vertices.size(); ++idx)
-			{
-				t_real dist = GetPathLength(path_vertices[idx] - path_vertices[start_idx]);
-
-				if(dist < min_dist_to_start)
-				{
-					// lengths become smaller
-					min_idx = idx;
-					min_dist_to_start = dist;
-
-					// ignore first index
-					if(idx > start_idx + 1)
-						distance_falling = true;
-				}
-				else
-				{
-					// distance was falling, but is rising again -> minimum found
-					if(distance_falling)
-					{
-						minimum_found = true;
-						break;
-					}
-				}
-			}
-
-			if(minimum_found && !DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
-			{
-				// a shortcut was found
-				path_vertices.erase(path_vertices.begin()+start_idx+1, path_vertices.begin()+min_idx);
-			}
-		}
-
+		RemovePathLoops(path_vertices, deg, false);
 
 		// test if a shortcut between the last and any other vertex on the path is possible
-		if(path_vertices.size() > 2)
-		{
-			const std::size_t start_idx = path_vertices.size() - 1;
-			std::size_t min_idx = start_idx;
-			t_real min_dist_to_start = std::numeric_limits<t_real>::max();
-			bool distance_falling = false;
-			bool minimum_found = false;
-
-			for(std::ptrdiff_t idx = (std::ptrdiff_t)start_idx-1; idx>=0; --idx)
-			{
-				t_real dist = GetPathLength(path_vertices[idx] - path_vertices[start_idx]);
-
-				if(dist < min_dist_to_start)
-				{
-					// lengths become smaller
-					min_idx = idx;
-					min_dist_to_start = dist;
-
-					// ignore first index
-					if(idx < (std::ptrdiff_t)start_idx - 1)
-						distance_falling = true;
-				}
-				else
-				{
-					// distance was falling, but is rising again -> minimum found
-					if(distance_falling)
-					{
-						minimum_found = true;
-						break;
-					}
-				}
-			}
-
-			if(minimum_found &&
-				!DoesDirectPathCollide(path_vertices[start_idx], path_vertices[min_idx], deg))
-			{
-				// a shortcut was found
-				path_vertices.erase(path_vertices.begin()+min_idx+1, path_vertices.begin()+start_idx);
-			}
-		}
+		RemovePathLoops(path_vertices, deg, true);
 	}
 
 
@@ -1652,7 +1583,124 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	}
 
 
+	// final verification (this only works with path subdivision also active)
+	if(m_verifypath)
+	{
+		for(const t_vec2& pos : path_vertices)
+		{
+			if(DoesPositionCollide(pos, deg))
+				return {};
+		}
+	}
+
 	return path_vertices;
+}
+
+
+/**
+ * find and remove loops near the retraction points in the path
+ */
+void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg, bool reverse) const
+{
+	std::size_t N = path_vertices.size();
+	if(N <= 2)
+		return;
+
+	// maximum angular search radius
+	t_real max_radius = m_directpath_search_radius;
+	if(deg)
+		max_radius = max_radius / tl2::pi<t_real> * t_real(180);
+
+	const std::size_t first_pt_idx = reverse ? N - 1 : 0;
+	const std::size_t second_pt_idx = reverse ? first_pt_idx-1 : first_pt_idx+1;
+
+	t_real min_dist_to_start = GetPathLength(path_vertices[second_pt_idx] - path_vertices[first_pt_idx]);
+	std::size_t min_idx = second_pt_idx;
+	bool distance_falling = false;
+	bool minimum_found = false;
+
+	std::size_t iter_idx = second_pt_idx;
+
+	// find first local minimum after first local maximum
+	// TODO: use peak finder for this
+	while(true)
+	{
+		t_real dist = GetPathLength(path_vertices[iter_idx] - path_vertices[first_pt_idx]);
+
+		if(dist < min_dist_to_start)
+		{
+			// lengths become smaller
+			min_idx = iter_idx;
+			min_dist_to_start = dist;
+			distance_falling = true;
+		}
+		else
+		{
+			// distance was falling, but is rising again -> minimum found
+			if(distance_falling)
+			{
+				//std::cout << "minimum index: " << min_idx << ", distance: " << min_dist_to_start << std::endl;
+
+				// within search radius?
+				if(dist <= max_radius)
+					minimum_found = true;
+
+				break;
+			}
+			// initially rising distance
+			else
+			{
+				min_dist_to_start = dist;
+			}
+		}
+
+		if(reverse)
+		{
+			if(iter_idx == 0)
+				break;
+			--iter_idx;
+		}
+		else
+		{
+			if(iter_idx >= N-1)
+				break;
+			++iter_idx;
+		}
+	}
+
+	if(minimum_found && !DoesDirectPathCollide(path_vertices[first_pt_idx], path_vertices[min_idx], deg))
+	{
+		std::size_t range_start = first_pt_idx;
+		std::size_t range_end = min_idx;
+
+		if(reverse)
+			std::swap(range_start, range_end);
+
+		// a shortcut was found
+		if(range_start+1 < range_end)
+			path_vertices.erase(path_vertices.begin()+range_start+1, path_vertices.begin()+range_end);
+	}
+}
+
+
+/**
+ * check if a position leads to a collision
+ */
+bool PathsBuilder::DoesPositionCollide(const t_vec2& pos, bool deg) const
+{
+	t_vec2 pix = AngleToPixel(pos, deg, false);
+
+	t_int x = (t_int)pix[0];
+	t_int y = (t_int)pix[1];
+
+	if(x<0 || x>=(t_int)m_img.GetWidth() || y<0 || y>=(t_int)m_img.GetHeight())
+		return true;
+
+	// TODO: test if collision happens inside epsilon-circles, not just for the pixels
+	if(m_img.GetPixel(x, y) != PIXEL_VALUE_NOCOLLISION)
+		return true;
+
+	return false;
 }
 
 

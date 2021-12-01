@@ -96,6 +96,9 @@ extern int g_pathstrategy;
 // choose a direct path if possible
 extern int g_try_direct_path;
 
+// maximum angular search radius for direct paths
+extern t_real g_directpath_search_radius;
+
 // verify the generated path?
 extern int g_verifypath;
 
@@ -150,7 +153,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 26> g_settingsvariables
+constexpr std::array<SettingsVariable, 27> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -246,7 +249,7 @@ constexpr std::array<SettingsVariable, 26> g_settingsvariables
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Remove bisectors close to walls",
+		.description = "Remove bisectors close to walls (careful!)",
 		.key = "settings/remove_bisectors_below_min_wall_dist",
 		.value = &g_remove_bisectors_below_min_wall_dist,
 		.editor = SettingsVariableEditor::YESNO,
@@ -265,6 +268,12 @@ constexpr std::array<SettingsVariable, 26> g_settingsvariables
 		.key = "settings/try_direct_path",
 		.value = &g_try_direct_path,
 		.editor = SettingsVariableEditor::YESNO,
+	},
+	{
+		.description = "Angular search radius for direct path",
+		.key = "settings/direct_path_search_radius",
+		.value = &g_directpath_search_radius,
+		.is_angle = true,
 	},
 	{
 		.description = "Verify generated path",

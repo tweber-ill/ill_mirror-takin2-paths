@@ -1793,6 +1793,7 @@ void PathsTool::InitSettings()
 	m_pathsbuilder.SetVoronoiEdgeEpsilon(g_eps_voronoiedge);
 	m_pathsbuilder.SetSubdivisionLength(g_line_subdiv_len);
 	m_pathsbuilder.SetTryDirectPath(g_try_direct_path != 0);
+	m_pathsbuilder.SetMaxDirectPathRadius(g_directpath_search_radius);
 	m_pathsbuilder.SetVerifyPath(g_verifypath != 0);
 	m_pathsbuilder.SetMinDistToWalls(g_min_dist_to_walls);
 	m_pathsbuilder.SetRemoveBisectorsBelowMinWallDist(g_remove_bisectors_below_min_wall_dist != 0);
@@ -2245,8 +2246,14 @@ void PathsTool::CalculatePath()
 	// get the vertices on the path
 	SetTmpStatus("Retrieving path vertices.");
 	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
-	emit PathAvailable(m_pathvertices.size());
+	if(!m_pathvertices.size())
+	{
+		QMessageBox::critical(this, "Error", "No valid path could be found.");
+		SetTmpStatus("Error: No valid path could be found.");
+		return;
+	}
 
+	emit PathAvailable(m_pathvertices.size());
 	SetTmpStatus("Path calculated.");
 }
 

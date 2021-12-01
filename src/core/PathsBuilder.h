@@ -120,6 +120,9 @@ protected:
 	// get path length, taking into account the motor speeds
 	t_real GetPathLength(const t_vec2& vec) const;
 
+	// check if a position leads to a collision
+	bool DoesPositionCollide(const t_vec2& pos, bool deg = false) const;
+
 	// check if a direct path between the two vertices leads to a collision
 	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
 
@@ -135,6 +138,9 @@ protected:
 	std::tuple<t_real, std::size_t, int>
 	FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 		const t_vec& vert, bool reversed_order = false) const;
+
+	// find and remove loops near the retraction points in the path
+	void RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg = false, bool reverse = false) const;
 
 
 public:
@@ -244,6 +250,9 @@ public:
 	bool GetTryDirectPath() const { return m_directpath; }
 	void SetTryDirectPath(bool directpath) { m_directpath = directpath; }
 
+	t_real GetMaxDirectPathRadius() const { return m_directpath_search_radius; }
+	void SetMaxDirectPathRadius(t_real dist) { m_directpath_search_radius = dist; }
+
 	bool GetVerifyPath() const { return m_verifypath; }
 	void SetVerifyPath(bool verify) { m_verifypath = verify; }
 
@@ -349,6 +358,9 @@ private:
 
 	// try to find a direct path if possible
 	bool m_directpath = true;
+
+	// radius inside with to search for direct paths
+	t_real m_directpath_search_radius = 20. / t_real(180.) * tl2::pi<t_real>;
 
 	// check the generated path for collisions
 	bool m_verifypath = true;
