@@ -126,11 +126,15 @@ protected:
 	// get the angular distance of a vertex to the nearest wall
 	t_real GetDistToNearestWall(const t_vec2& vertex, bool deg = false) const;
 
-
 	// find the closest point on a path segment
-	std::tuple<t_real, t_real, bool>
+	std::tuple<t_real, t_real, int>
 	FindClosestPointOnSegment(std::size_t idx1, std::size_t idx2,
 		const t_vec2& vec) const;
+
+	// find a neighbour bisector which is closer to the given vertex than the given one
+	std::tuple<t_real, std::size_t, int>
+	FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
+		const t_vec& vert, bool reversed_order = false) const;
 
 
 public:

@@ -39,8 +39,11 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QGroupBox>
 #include <QtWidgets/QFileDialog>
 
 #if QT_VERSION >= 0x060000
@@ -161,6 +164,17 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_status->setFrameStyle(QFrame::Sunken);
 	m_status->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
+	// radio buttons
+	QGroupBox *radioGroup = new QGroupBox(this);
+	QHBoxLayout *radioLayout = new QHBoxLayout(radioGroup);
+	QRadioButton *radioInstrPos = new QRadioButton("Move Instrument Position", radioGroup);
+	QRadioButton *radioTargetPos = new QRadioButton("Move Target Position", radioGroup);
+	QRadioButton *radioEnableZoom = new QRadioButton("Enable Zoom", radioGroup);
+	radioLayout->addWidget(radioInstrPos);
+	radioLayout->addWidget(radioTargetPos);
+	radioLayout->addWidget(radioEnableZoom);
+	radioInstrPos->setChecked(true);
+
 	// spin boxes
 	m_spinDelta2ThS = new QDoubleSpinBox(this);
 	m_spinDelta2ThM = new QDoubleSpinBox(this);
@@ -190,6 +204,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	grid->setContentsMargins(12, 12, 12, 12);
 	int y = 0;
 	grid->addWidget(m_plot.get(), y++, 0, 1, 5);
+	grid->addWidget(radioGroup, y++, 0, 1, 5);
 	grid->addWidget(m_spinDelta2ThS, y, 0, 1, 1);
 	grid->addWidget(m_spinDelta2ThM, y, 1, 1, 1);
 	grid->addWidget(btnCalc, y, 2, 1, 1);
@@ -620,13 +635,57 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	connect(acSyncPath, &QAction::toggled, [this](bool sync)
 	{ m_syncpath = sync; });
 
-	connect(acMoveTarget, &QAction::toggled, [this](bool b)
-	{ m_movetarget = b; });
+	connect(acMoveTarget, &QAction::toggled, [this, radioInstrPos, radioTargetPos, acEnableZoom](bool b)
+	{
+		m_movetarget = b;
+
+		// also update radio button settings
+		if(m_movetarget)
+			radioTargetPos->setChecked(true);
+		else
+			radioInstrPos->setChecked(true);
+
+		// disable the zoom if this was checked
+		acEnableZoom->setChecked(false);
+	});
+
+
+	connect(radioInstrPos, &QRadioButton::toggled, [acMoveTarget, acEnableZoom](bool b)
+	{
+		if(b)
+		{
+			acMoveTarget->setChecked(false);
+			acEnableZoom->setChecked(false);
+		}
+	});
+
+	connect(radioTargetPos, &QRadioButton::toggled, [acMoveTarget, acEnableZoom](bool b)
+	{
+		if(b)
+		{
+			acMoveTarget->setChecked(true);
+			acEnableZoom->setChecked(false);
+		}
+	});
+
+	connect(radioEnableZoom, &QRadioButton::toggled, [acEnableZoom](bool b)
+	{
+		if(b)
+		{
+			acEnableZoom->setChecked(true);
+		}
+	});
 
 
 	// view
-	connect(acEnableZoom, &QAction::toggled, [this](bool enableZoom)
-	{ this->SetInstrumentMovable(!enableZoom); });
+	connect(acEnableZoom, &QAction::toggled, [this, radioEnableZoom](bool enableZoom)
+	{
+		this->SetInstrumentMovable(!enableZoom);
+
+		// also update radio button settings
+		if(enableZoom)
+			radioEnableZoom->setChecked(true);
+	});
 
 	connect(acResetZoom, &QAction::triggered, [this]()
 	{
