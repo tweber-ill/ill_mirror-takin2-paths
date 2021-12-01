@@ -168,10 +168,13 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QGroupBox *radioGroup = new QGroupBox(this);
 	radioGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-	QHBoxLayout *radioLayout = new QHBoxLayout(radioGroup);
 	QRadioButton *radioInstrPos = new QRadioButton("Move Instrument Position", radioGroup);
 	QRadioButton *radioTargetPos = new QRadioButton("Move Target Position", radioGroup);
 	QRadioButton *radioEnableZoom = new QRadioButton("Enable Zoom", radioGroup);
+
+	QHBoxLayout *radioLayout = new QHBoxLayout(radioGroup);
+	radioLayout->setSpacing(4);
+	radioLayout->setContentsMargins(4, 4, 4, 4);
 	radioLayout->addWidget(radioInstrPos);
 	radioLayout->addWidget(radioTargetPos);
 	radioLayout->addWidget(radioEnableZoom);
