@@ -629,9 +629,17 @@ void PathsTool::GotoCoordinates(
 		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
 		t_real a2_abs = angles.monoXtalAngle * 2. * sensesCCW[0];
 		t_real a4_abs = angles.sampleScatteringAngle * sensesCCW[1];
+		t_real a6_abs = angles.anaXtalAngle * 2. * sensesCCW[2];
+
+		// is kf or ki fixed?
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
+
+		t_real _a2_or_a6 = kf_fixed ? a2_abs : a6_abs;
 
 		pathwidget->SetTarget(
-			a2_abs / tl2::pi<t_real> * 180.,
+			_a2_or_a6 / tl2::pi<t_real> * 180.,
 			a4_abs / tl2::pi<t_real> * 180.);
 	}
 
@@ -693,11 +701,11 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 			kf_fixed = false;
 
 		// move either monochromator or analyser depending if kf=fixed
-		t_real _a2 = kf_fixed ? *a1 * 2. : *a5 * 2.;
+		t_real _a2_or_a6 = kf_fixed ? *a1 * 2. : *a5 * 2.;
 		t_real _a4 = *a4;
 
 		pathwidget->SetTarget(
-			_a2 / tl2::pi<t_real> * 180.,
+			_a2_or_a6 / tl2::pi<t_real> * 180.,
 			_a4 / tl2::pi<t_real> * 180.);
 	}
 
@@ -1200,7 +1208,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			//std::cout << "target angles: " << a2 << ", " << a4 << std::endl;
 			const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
 
-			a2 = a2 / 180. * tl2::pi<t_real> * sensesCCW[0];
+			bool kf_fixed = true;
+			if(!std::get<1>(m_tascalc.GetKfix()))
+				kf_fixed = false;
+
+			t_real sense_mono_or_ana = kf_fixed ? sensesCCW[0] : sensesCCW[2];
+			a2 = a2 / 180. * tl2::pi<t_real> * sense_mono_or_ana;
 			a4 = a4 / 180. * tl2::pi<t_real> * sensesCCW[1];
 
 			m_targetMonoScatteringAngle = a2;
@@ -2222,9 +2235,15 @@ void PathsTool::CalculatePath()
 	// adjust scattering senses
 	const t_real* sensesCCW = m_tascalc.GetScatteringSenses();
 
-	curMonoScatteringAngle *= sensesCCW[0];
+	bool kf_fixed = true;
+	if(!std::get<1>(m_tascalc.GetKfix()))
+		kf_fixed = false;
+
+	t_real sense_mono_or_ana = kf_fixed ? sensesCCW[0] : sensesCCW[2];
+
+	curMonoScatteringAngle *= sense_mono_or_ana;
 	curSampleScatteringAngle *= sensesCCW[1];
-	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * sensesCCW[0];
+	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * sense_mono_or_ana;
 	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * sensesCCW[1];
 
 	// path options

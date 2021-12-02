@@ -495,45 +495,14 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// connections
 	// ------------------------------------------------------------------------
 
-	// mouse button down
-	connect(m_plot.get(), &QCustomPlot::mousePress,
-	[this](QMouseEvent* evt)
+	// mouse event handler
+	auto mouse_event = [this](QMouseEvent* evt, bool mouse_move)
 	{
-		if(!this->m_plot || !m_moveInstr)
+		if(!this->m_plot || !evt)
 			return;
 
 		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(evt->pos().x());
 		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(evt->pos().y());
-
-		std::optional<t_real> a1 = _a2 * t_real(0.5) / t_real(180) * tl2::pi<t_real>;
-		std::optional<t_real> a4 = _a4 / t_real(180) * tl2::pi<t_real>;
-
-		bool kf_fixed = true;
-		if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
-		{
-			// move monochromator if kf=fixed and analyser otherwise
-			if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
-				kf_fixed = false;
-		}
-
-		// move instrument
-		if(kf_fixed)
-			this->EmitGotoAngles(a1, std::nullopt, a4, std::nullopt);
-		else
-			this->EmitGotoAngles(std::nullopt, std::nullopt, a4, a1);
-	});
-
-	// mouse move
-	connect(m_plot.get(), &QCustomPlot::mouseMove,
-	[this](QMouseEvent* evt)
-	{
-		if(!this->m_plot)
-			return;
-
-		const int x = evt->pos().x();
-		const int y = evt->pos().y();
-		const t_real _a4 = this->m_plot->xAxis->pixelToCoord(x);
-		const t_real _a2 = this->m_plot->yAxis->pixelToCoord(y);
 
 		bool kf_fixed = true;
 		if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
@@ -555,26 +524,37 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 				this->EmitGotoAngles(std::nullopt, std::nullopt, a4, a1);
 		}
 
-		// set status
-		std::ostringstream ostr;
-		ostr.precision(g_prec_gui);
-
-		// show angular coordinates
-		ostr << "2θ_S = " << _a4 << " deg";
-		if(kf_fixed)
-			ostr << ", 2θ_M = " << _a2 << " deg.";
-		else
-			ostr << ", 2θ_A = " << _a2 << " deg.";
-
-		// show pixel coordinates
-		if(m_pathsbuilder)
+		if(mouse_move && m_status)
 		{
-			t_vec2 pix = m_pathsbuilder->AngleToPixel(_a4, _a2);
-			ostr <<" Pixel: (" << (int)pix[0] << ", " << (int)pix[1] << ").";
-		}
+			// set status
+			std::ostringstream ostr;
+			ostr.precision(g_prec_gui);
 
-		m_status->setText(ostr.str().c_str());
-	});
+			// show angular coordinates
+			ostr << "2θ_S = " << _a4 << " deg";
+			if(kf_fixed)
+				ostr << ", 2θ_M = " << _a2 << " deg.";
+			else
+				ostr << ", 2θ_A = " << _a2 << " deg.";
+
+			// show pixel coordinates
+			if(m_pathsbuilder)
+			{
+				t_vec2 pix = m_pathsbuilder->AngleToPixel(_a4, _a2);
+				ostr <<" Pixel: (" << (int)pix[0] << ", " << (int)pix[1] << ").";
+			}
+
+			m_status->setText(ostr.str().c_str());
+		}
+	};
+
+	// mouse button down
+	connect(m_plot.get(), &QCustomPlot::mousePress,
+		[mouse_event](QMouseEvent* evt) { mouse_event(evt, false); });
+
+	// mouse move
+	connect(m_plot.get(), &QCustomPlot::mouseMove,
+		[mouse_event](QMouseEvent* evt) { mouse_event(evt, true); });
 
 
 	// path mesh options

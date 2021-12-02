@@ -112,6 +112,10 @@ t_real PathsBuilder::GetPathLength(const t_vec2& _vec) const
 }
 
 
+
+// ------------------------------------------------------------------------
+// progress status handler
+// ------------------------------------------------------------------------
 /**
  * show progress messages on the console
  */
@@ -137,6 +141,8 @@ void PathsBuilder::AddConsoleProgressHandler()
 
 	AddProgressSlot(handler);
 }
+// ------------------------------------------------------------------------
+
 
 
 /**
@@ -240,6 +246,11 @@ PathsBuilder::GetWallContours(bool full) const
 	return m_wallcontours;
 }
 
+
+
+// ------------------------------------------------------------------------
+// path mesh calculation workflow
+// ------------------------------------------------------------------------
 
 /**
  * indicate that a new workflow starts
@@ -690,297 +701,41 @@ bool PathsBuilder::CalculateVoronoi(bool group_lines, VoronoiBackend backend,
 
 
 /**
- * save the contour line segments to the lines tool
+ * get a line segment group
+ * helper function for the scripting interface
  */
-bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
+std::vector<std::array<t_real, 4>>
+PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
 {
-	ostr << "<lines2d>\n";
-	std::vector<std::pair<std::size_t, std::size_t>> group_indices;
-	group_indices.reserve(m_linegroups.size());
+	std::vector<std::array<t_real, 4>> lines;
 
-	// contour vertices
-	std::size_t vertctr = 0;
-	ostr << "<vertices>\n";
-	for(std::size_t contouridx = 0; contouridx < m_linegroups.size(); ++contouridx)
+	if(groupidx >= GetNumberOfLineSegmentRegions())
+		return lines;
+	auto[startidx, endidx] = m_linegroups[groupidx];
+
+	lines.reserve(endidx - startidx);
+
+	for(std::size_t lineidx=startidx; lineidx<endidx; ++lineidx)
 	{
-		const auto& contour = m_linegroups[contouridx];
-		ostr << "\t<!-- contour " << contouridx << " -->\n";
+		const t_line& line = m_lines[lineidx];
 
-		std::size_t group_begin = vertctr;
+		t_vec2 pt1 = PixelToAngle(std::get<0>(line), true, false);
+		t_vec2 pt2 = PixelToAngle(std::get<1>(line), true, false);
 
-		for(std::size_t lineidx=std::get<0>(contour); lineidx<std::get<1>(contour); ++lineidx)
-		{
-			const t_line& line = m_lines[lineidx];
-
-			ostr << "\t<" << vertctr;
-			ostr << " x=\"" << std::get<0>(line)[0] << "\"";
-			ostr << " y=\"" << std::get<0>(line)[1] << "\"";
-			ostr << "/>\n";
-			++vertctr;
-
-			ostr << "\t<" << vertctr;
-			ostr << " x=\"" << std::get<1>(line)[0] << "\"";
-			ostr << " y=\"" << std::get<1>(line)[1] << "\"";
-			ostr << "/>\n\n";
-			++vertctr;
-		}
-
-		std::size_t group_end = vertctr;
-		group_indices.emplace_back(std::make_pair(group_begin, group_end));
+		std::array<t_real, 4> arr{{ pt1[0], pt1[1], pt2[0], pt2[1] }};
+		lines.emplace_back(std::move(arr));
 	}
-	ostr << "</vertices>\n";
 
-	// contour groups
-	ostr << "\n<groups>\n";
-	for(std::size_t groupidx = 0; groupidx < group_indices.size(); ++groupidx)
-	{
-		const auto& group = group_indices[groupidx];
-		ostr << "\t<!-- contour " << groupidx << " -->\n";
-		ostr << "\t<" << groupidx << ">\n";
-
-		ostr << "\t\t<begin>" << std::get<0>(group) << "</begin>\n";
-		ostr << "\t\t<end>" << std::get<1>(group) << "</end>\n";
-
-		ostr << "\t</" << groupidx << ">\n\n";
-	}
-	ostr << "</groups>\n";
-
-	// alternatively: contour regions (obsolete)
-	/*ostr << "\n<regions>\n";
-	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
-	{
-		const auto& contour = m_wallcontours[contouridx];
-		ostr << "\t<!-- contour " << contouridx << " -->\n";
-		ostr << "\t<" << contouridx << ">\n";
-
-		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
-		{
-			const t_contourvec& vec = contour[vertidx];
-
-			ostr << "\t\t<" << vertidx;
-			ostr << " x=\"" << vec[0] << "\"";
-			ostr << " y=\"" << vec[1] << "\"";
-			ostr << "/>\n";
-		}
-
-		ostr << "\t</" << contouridx << ">\n\n";
-	}
-	ostr << "</regions>\n";*/
-
-	ostr << "</lines2d>" << std::endl;
-	return true;
+	return lines;
 }
 
-
-/**
- * save the contour line segments to the lines tool
- */
-bool PathsBuilder::SaveToLinesTool(const std::string& filename)
-{
-	std::ofstream ofstr(filename);
-	if(!ofstr)
-		return false;
-
-	return SaveToLinesTool(ofstr);
-}
+// ------------------------------------------------------------------------
 
 
-/**
- * find the closest point on a path segment
- * @returns [param, distance, 0:quadratic, 1:linear, -1:neither]
- */
-std::tuple<t_real, t_real, int>
-PathsBuilder::FindClosestPointOnSegment(
-	std::size_t idx1, std::size_t idx2, const t_vec2& vec) const
-{
-	// voronoi vertices at the bisector endpoints
-	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
-	const t_vec2& vert1 = voro_vertices[idx1];
-	const t_vec2& vert2 = voro_vertices[idx2];
 
-
-	// if the voronoi vertices belong to a linear bisector,
-	// find the closest point by projecting 'vec' onto it
-	t_real param_lin = -1;
-	t_real dist_lin = std::numeric_limits<t_real>::max();
-
-	const auto& lin_edges = m_voro_results.GetLinearEdges();
-	auto lin_result = lin_edges.find({idx1, idx2});
-	bool has_lin = false;
-
-	if(lin_result != lin_edges.end())
-	{
-		t_vec2 dir = vert2 - vert1;
-		t_real dir_len = tl2::norm<t_vec2>(dir);
-
-		// the query point lies on the voronoi vertex
-		if(dir_len < m_eps_angular)
-			return std::make_tuple(0, 0, true);
-
-		dir /= dir_len;
-
-		auto [_ptProj, _dist_lin, paramProj] =
-			tl2::project_line<t_vec2, t_real>(
-				vec, vert1, dir, true);
-
-		param_lin = paramProj / dir_len;
-		dist_lin = _dist_lin;
-		has_lin = true;
-
-
-		// look for another parameter if the projected vertex is too close to a wall
-		t_real new_param_lin = param_lin;
-		bool new_param_found = false;
-		const t_real delta_param = 0.025;
-
-		// initial distance to walls
-		//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
-		t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
-
-		// direction for parameter search
-		const t_real param_range[2] = { -1., 1. };
-		bool increase_param = true;
-
-		if(new_param_lin < param_range[0])
-			increase_param = true;
-		else if(new_param_lin > param_range[1])
-			increase_param = false;
-		else
-		{
-			// find direction for parameter search which decreases the distance to the walls
-			t_vec2 vertex_2 = vert1 + dir*(new_param_lin + delta_param)*dir_len;
-			t_real dist_to_walls_2 = GetDistToNearestWall(vertex_2);
-
-			increase_param = (dist_to_walls_2 > dist_to_walls_1);
-		}
-
-		while(dist_to_walls_1 < m_min_angular_dist_to_walls)
-		{
-			if(increase_param)
-				new_param_lin += delta_param;
-			else
-				new_param_lin -= delta_param;
-
-			// vertex is far enough from any wall?
-			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
-			t_real dist_to_walls = GetDistToNearestWall(new_vertex);
-
-			// found a better position?
-			if(dist_to_walls > dist_to_walls_1)
-			{
-				new_param_found = true;
-
-				// out of critical distance?
-				if(dist_to_walls >= m_min_angular_dist_to_walls)
-					break;
-			}
-
-			// not yet in target range?
-			if((increase_param && new_param_lin < param_range[0]) ||
-				(!increase_param && new_param_lin > param_range[1]))
-				continue;
-
-			// end of parameter search?
-			if(new_param_lin > param_range[1] || new_param_lin < param_range[0])
-				break;
-		}
-
-		// a new parameter farther from the walls has been found
-		if(new_param_found)
-		{
-			new_param_lin = tl2::clamp<t_real>(new_param_lin, param_range[0], param_range[1]);
-			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
-
-			param_lin = new_param_lin;
-			dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
-		}
-	}
-
-
-	// if the voronoi vertices belong to a quadratic bisector,
-	// find the closest vertex along its segment
-	t_real param_quadr = -1;
-	t_real dist_quadr = std::numeric_limits<t_real>::max();
-
-	const auto& para_edges = m_voro_results.GetParabolicEdges();
-	auto para_result = para_edges.find({idx1, idx2});
-	bool has_quadr = false;
-
-	if(para_result != para_edges.end())
-	{
-		// get correct iteration order of the bisector,
-		// which is stored in an unordered fashion
-		bool inverted_iter_order = false;
-		const auto& path_vertices = para_result->second;
-		if(path_vertices.size() && tl2::equals<t_vec2>(path_vertices[0], vert2, m_eps))
-			inverted_iter_order = true;
-
-		t_real min_dist2 = std::numeric_limits<t_real>::max();
-		std::size_t min_idx = 0;
-		for(std::size_t vertidx=0; vertidx<path_vertices.size(); ++vertidx)
-		{
-			const auto& path_vertex = path_vertices[vertidx];
-			t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
-			if(dist2 < min_dist2)
-			{
-				// reject vertex if the minimum distance to the walls is undercut
-				t_real dist_to_walls = GetDistToNearestWall(path_vertex);
-				if(dist_to_walls < m_min_angular_dist_to_walls)
-					continue;
-
-				min_dist2 = dist2;
-				min_idx = vertidx;
-			}
-		}
-
-		// use the vertex index as curve parameter
-		param_quadr = t_real(min_idx)/t_real(path_vertices.size()-1);
-		dist_quadr = std::sqrt(min_dist2);
-		if(inverted_iter_order)
-			param_quadr = 1. - param_quadr;
-		has_quadr = true;
-	}
-
-
-	// only a linear bisector segment was found
-	if(has_lin && !has_quadr)
-	{
-		return std::make_tuple(param_lin, dist_lin, 1);
-	}
-	// only a quadratic bisector segment was found
-	else if(has_quadr && !has_lin)
-	{
-		return std::make_tuple(param_quadr, dist_quadr, 0);
-	}
-	// neither bisector segment was found
-	else if(!has_lin && !has_quadr)
-	{
-		return std::make_tuple(param_quadr, dist_quadr, -1);
-	}
-	// both bisector segment types were found
-	else
-	{
-		// firstly prefer the one with the parameters in the [0..1] range
-		if((param_quadr < 0. || param_quadr > 1.) && (param_lin >= 0. && param_lin <= 1.))
-			return std::make_tuple(param_lin, dist_lin, 1);
-		else if((param_lin < 0. || param_lin > 1.) && (param_quadr >= 0. && param_quadr <= 1.))
-			return std::make_tuple(param_quadr, dist_quadr, 0);
-
-		// secondly prefer the one which is closest
-		if(dist_lin < dist_quadr)
-		{
-			//std::cout << "linear bisector segment: dist=" << dist_lin << ", param=" << param_lin << std::endl;
-			return std::make_tuple(param_lin, dist_lin, 1);
-		}
-		else
-		{
-			//std::cout << "quadratic bisector segment: dist=" << dist_quadr << ", param=" << param_quadr << std::endl;
-			return std::make_tuple(param_quadr, dist_quadr, 0);
-		}
-	}
-}
-
-
+// ------------------------------------------------------------------------
+// path calculation
+// ------------------------------------------------------------------------
 
 /**
  * find a path from an initial (a2, a4) to a final (a2, a4)
@@ -1285,107 +1040,13 @@ InstrumentPath PathsBuilder::FindPath(
 
 
 /**
- * find a neighbour bisector which is closer to the given vertex than the given one
- * @returns [param, min_dist_idx, bisector_type]
- */
-std::tuple<t_real, std::size_t, int>
-PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
-	const t_vec& vert, bool reversed_order) const
-{
-	const auto& voro_graph = m_voro_results.GetVoronoiGraph();
-
-	std::size_t idx1 = vert_idx_1;
-	std::size_t idx2 = vert_idx_2;
-	if(reversed_order)
-		std::swap(idx1, idx2);
-	std::size_t min_dist_idx = vert_idx_2;
-	auto [min_param, min_dist, bisector_type] =
-		FindClosestPointOnSegment(idx1, idx2, vert);
-
-	// check if any neighbour path before first vertex is even closer
-	std::vector<std::size_t> neighbour_indices =
-		voro_graph.GetNeighbours(vert_idx_1);
-	std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
-	std::unordered_set<std::size_t> seen_neighbours;
-	seen_neighbours.insert(vert_idx_2);
-
-	for(std::size_t idx_neighbour=0; idx_neighbour<neighbour_indices.size(); ++idx_neighbour)
-	{
-		std::size_t neighbour_idx = neighbour_indices[idx_neighbour];
-		if(seen_neighbours.find(neighbour_idx) != seen_neighbours.end())
-			continue;
-		seen_neighbours.insert(neighbour_idx);
-
-		// add newly discovered neighbours
-		// only consider first-order nearest neighbours
-		if(idx_neighbour < nearest_neighbours_end_idx)
-		{
-			for(std::size_t new_neighbour_idx :
-				voro_graph.GetNeighbours(neighbour_idx))
-				neighbour_indices.push_back(new_neighbour_idx);
-		}
-
-		idx1 = neighbour_idx;
-		idx2 = vert_idx_1;
-		if(reversed_order)
-			std::swap(idx1, idx2);
-
-		auto [neighbour_param, neighbour_dist, neighbour_bisector_type] =
-			FindClosestPointOnSegment(idx1, idx2, vert);
-
-		if(neighbour_bisector_type != -1)
-		{
-			bool old_parameters_in_range = (min_param >= 0. && min_param <= 1.);
-			bool new_parameters_in_range = (neighbour_param >= 0. && neighbour_param <= 1.);
-			bool neighbour_closer = (neighbour_dist < min_dist);
-
-			// choose a new position on the adjacent edge if it's either
-			// closer or if the former parameters had been out of bounds
-			// and are now within [0, 1]
-			if((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
-				(new_parameters_in_range && neighbour_closer))
-			{
-				min_dist = neighbour_dist;
-				min_param = neighbour_param;
-				min_dist_idx = neighbour_idx;
-				bisector_type = neighbour_bisector_type;
-			}
-		}
-	}
-
-	min_param = tl2::clamp<t_real>(min_param, 0., 1.);
-	return std::make_tuple(min_param, min_dist_idx, bisector_type);
-}
-
-
-/**
- * get the angular distance of a vertex to the nearest wall
- */
-t_real PathsBuilder::GetDistToNearestWall(const t_vec2& vertex, bool deg) const
-{
-	// get the wall vertices that are closest to the given vertex
-	if(auto nearest_walls = m_wallsindextree.Query(vertex, 1); nearest_walls.size() >= 1)
-	{
-		// get angular distance to wall
-		t_vec2 angle = PixelToAngle(vertex, deg, false);
-		t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
-		t_real dist = GetPathLength(nearest_wall_angle - angle);
-
-		return dist;
-	}
-
-	// no wall found
-	return std::numeric_limits<t_real>::max();
-}
-
-
-/**
  * get individual vertices on an instrument path
  * (in angular coordinates)
  */
 std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	const InstrumentPath& path, bool subdivide_lines, bool deg) const
 {
+	// path vertices in angular coordinates (deg or rad)
 	std::vector<t_vec2> path_vertices;
 
 	if(!path.ok)
@@ -1598,7 +1259,427 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 
 
 /**
+ * get individual vertices on an instrument path
+ * helper function for the scripting interface
+ */
+std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
+	const InstrumentPath& path, bool subdivide_lines, bool deg) const
+{
+	std::vector<t_vec2> vertices = GetPathVertices(path, subdivide_lines, deg);
+
+	std::vector<std::pair<t_real, t_real>> pairs;
+	pairs.reserve(vertices.size());
+
+	for(const t_vec2& vec : vertices)
+		pairs.emplace_back(std::make_pair(vec[0], vec[1]));
+
+	return pairs;
+}
+
+// ------------------------------------------------------------------------
+
+
+
+// ------------------------------------------------------------------------
+// exporting of data
+// ------------------------------------------------------------------------
+
+/**
+ * save the contour line segments to the lines tool
+ */
+bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
+{
+	ostr << "<lines2d>\n";
+	std::vector<std::pair<std::size_t, std::size_t>> group_indices;
+	group_indices.reserve(m_linegroups.size());
+
+	// contour vertices
+	std::size_t vertctr = 0;
+	ostr << "<vertices>\n";
+	for(std::size_t contouridx = 0; contouridx < m_linegroups.size(); ++contouridx)
+	{
+		const auto& contour = m_linegroups[contouridx];
+		ostr << "\t<!-- contour " << contouridx << " -->\n";
+
+		std::size_t group_begin = vertctr;
+
+		for(std::size_t lineidx=std::get<0>(contour); lineidx<std::get<1>(contour); ++lineidx)
+		{
+			const t_line& line = m_lines[lineidx];
+
+			ostr << "\t<" << vertctr;
+			ostr << " x=\"" << std::get<0>(line)[0] << "\"";
+			ostr << " y=\"" << std::get<0>(line)[1] << "\"";
+			ostr << "/>\n";
+			++vertctr;
+
+			ostr << "\t<" << vertctr;
+			ostr << " x=\"" << std::get<1>(line)[0] << "\"";
+			ostr << " y=\"" << std::get<1>(line)[1] << "\"";
+			ostr << "/>\n\n";
+			++vertctr;
+		}
+
+		std::size_t group_end = vertctr;
+		group_indices.emplace_back(std::make_pair(group_begin, group_end));
+	}
+	ostr << "</vertices>\n";
+
+	// contour groups
+	ostr << "\n<groups>\n";
+	for(std::size_t groupidx = 0; groupidx < group_indices.size(); ++groupidx)
+	{
+		const auto& group = group_indices[groupidx];
+		ostr << "\t<!-- contour " << groupidx << " -->\n";
+		ostr << "\t<" << groupidx << ">\n";
+
+		ostr << "\t\t<begin>" << std::get<0>(group) << "</begin>\n";
+		ostr << "\t\t<end>" << std::get<1>(group) << "</end>\n";
+
+		ostr << "\t</" << groupidx << ">\n\n";
+	}
+	ostr << "</groups>\n";
+
+	// alternatively: contour regions (obsolete)
+	/*ostr << "\n<regions>\n";
+	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
+	{
+		const auto& contour = m_wallcontours[contouridx];
+		ostr << "\t<!-- contour " << contouridx << " -->\n";
+		ostr << "\t<" << contouridx << ">\n";
+
+		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
+		{
+			const t_contourvec& vec = contour[vertidx];
+
+			ostr << "\t\t<" << vertidx;
+			ostr << " x=\"" << vec[0] << "\"";
+			ostr << " y=\"" << vec[1] << "\"";
+			ostr << "/>\n";
+		}
+
+		ostr << "\t</" << contouridx << ">\n\n";
+	}
+	ostr << "</regions>\n";*/
+
+	ostr << "</lines2d>" << std::endl;
+	return true;
+}
+
+
+/**
+ * save the contour line segments to the lines tool
+ */
+bool PathsBuilder::SaveToLinesTool(const std::string& filename)
+{
+	std::ofstream ofstr(filename);
+	if(!ofstr)
+		return false;
+
+	return SaveToLinesTool(ofstr);
+}
+
+// ------------------------------------------------------------------------
+
+
+
+/**
+ * find the closest point on a path segment
+ * @arg vec starting position, in pixel coordinates
+ * @returns [param, distance, 0:quadratic, 1:linear, -1:neither]
+ */
+std::tuple<t_real, t_real, int>
+PathsBuilder::FindClosestPointOnSegment(
+	std::size_t idx1, std::size_t idx2, const t_vec2& vec) const
+{
+	// voronoi vertices at the bisector endpoints
+	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
+	const t_vec2& vert1 = voro_vertices[idx1];
+	const t_vec2& vert2 = voro_vertices[idx2];
+
+
+	// if the voronoi vertices belong to a linear bisector,
+	// find the closest point by projecting 'vec' onto it
+	t_real param_lin = -1;
+	t_real dist_lin = std::numeric_limits<t_real>::max();
+
+	const auto& lin_edges = m_voro_results.GetLinearEdges();
+	auto lin_result = lin_edges.find({idx1, idx2});
+	bool has_lin = false;
+
+	if(lin_result != lin_edges.end())
+	{
+		t_vec2 dir = vert2 - vert1;
+		t_real dir_len = tl2::norm<t_vec2>(dir);
+
+		// the query point lies on the voronoi vertex
+		if(dir_len < m_eps_angular)
+			return std::make_tuple(0, 0, true);
+
+		dir /= dir_len;
+
+		auto [_ptProj, _dist_lin, paramProj] =
+			tl2::project_line<t_vec2, t_real>(
+				vec, vert1, dir, true);
+
+		param_lin = paramProj / dir_len;
+		dist_lin = _dist_lin;
+		has_lin = true;
+
+
+		// look for another parameter if the projected vertex is too close to a wall
+		t_real new_param_lin = param_lin;
+		bool new_param_found = false;
+		const t_real delta_param = 0.025;
+
+		// initial distance to walls
+		//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
+		t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
+
+		// direction for parameter search
+		const t_real param_range[2] = { -1., 1. };
+		bool increase_param = true;
+
+		if(new_param_lin < param_range[0])
+			increase_param = true;
+		else if(new_param_lin > param_range[1])
+			increase_param = false;
+		else
+		{
+			// find direction for parameter search which decreases the distance to the walls
+			t_vec2 vertex_2 = vert1 + dir*(new_param_lin + delta_param)*dir_len;
+			t_real dist_to_walls_2 = GetDistToNearestWall(vertex_2);
+
+			increase_param = (dist_to_walls_2 > dist_to_walls_1);
+		}
+
+		while(dist_to_walls_1 < m_min_angular_dist_to_walls)
+		{
+			if(increase_param)
+				new_param_lin += delta_param;
+			else
+				new_param_lin -= delta_param;
+
+			// vertex is far enough from any wall?
+			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+			t_real dist_to_walls = GetDistToNearestWall(new_vertex);
+
+			// found a better position?
+			if(dist_to_walls > dist_to_walls_1)
+			{
+				new_param_found = true;
+
+				// out of critical distance?
+				if(dist_to_walls >= m_min_angular_dist_to_walls)
+					break;
+			}
+
+			// not yet in target range?
+			if((increase_param && new_param_lin < param_range[0]) ||
+				(!increase_param && new_param_lin > param_range[1]))
+				continue;
+
+			// end of parameter search?
+			if(new_param_lin > param_range[1] || new_param_lin < param_range[0])
+				break;
+		}
+
+		// a new parameter farther from the walls has been found
+		if(new_param_found)
+		{
+			new_param_lin = tl2::clamp<t_real>(new_param_lin, param_range[0], param_range[1]);
+			t_vec2 new_vertex = vert1 + dir*new_param_lin*dir_len;
+
+			param_lin = new_param_lin;
+			dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
+		}
+	}
+
+
+	// if the voronoi vertices belong to a quadratic bisector,
+	// find the closest vertex along its segment
+	t_real param_quadr = -1;
+	t_real dist_quadr = std::numeric_limits<t_real>::max();
+
+	const auto& para_edges = m_voro_results.GetParabolicEdges();
+	auto para_result = para_edges.find({idx1, idx2});
+	bool has_quadr = false;
+
+	if(para_result != para_edges.end())
+	{
+		// get correct iteration order of the bisector,
+		// which is stored in an unordered fashion
+		bool inverted_iter_order = false;
+		const auto& path_vertices = para_result->second;
+		if(path_vertices.size() && tl2::equals<t_vec2>(path_vertices[0], vert2, m_eps))
+			inverted_iter_order = true;
+
+		t_real min_dist2 = std::numeric_limits<t_real>::max();
+		std::size_t min_idx = 0;
+		for(std::size_t vertidx=0; vertidx<path_vertices.size(); ++vertidx)
+		{
+			const auto& path_vertex = path_vertices[vertidx];
+			t_real dist2 = tl2::inner<t_vec2>(path_vertex-vec, path_vertex-vec);
+			if(dist2 < min_dist2)
+			{
+				// reject vertex if the minimum distance to the walls is undercut
+				t_real dist_to_walls = GetDistToNearestWall(path_vertex);
+				if(dist_to_walls < m_min_angular_dist_to_walls)
+					continue;
+
+				min_dist2 = dist2;
+				min_idx = vertidx;
+			}
+		}
+
+		// use the vertex index as curve parameter
+		param_quadr = t_real(min_idx)/t_real(path_vertices.size()-1);
+		dist_quadr = std::sqrt(min_dist2);
+		if(inverted_iter_order)
+			param_quadr = 1. - param_quadr;
+		has_quadr = true;
+	}
+
+
+	// only a linear bisector segment was found
+	if(has_lin && !has_quadr)
+	{
+		return std::make_tuple(param_lin, dist_lin, 1);
+	}
+	// only a quadratic bisector segment was found
+	else if(has_quadr && !has_lin)
+	{
+		return std::make_tuple(param_quadr, dist_quadr, 0);
+	}
+	// neither bisector segment was found
+	else if(!has_lin && !has_quadr)
+	{
+		return std::make_tuple(param_quadr, dist_quadr, -1);
+	}
+	// both bisector segment types were found
+	else
+	{
+		// firstly prefer the one with the parameters in the [0..1] range
+		if((param_quadr < 0. || param_quadr > 1.) && (param_lin >= 0. && param_lin <= 1.))
+			return std::make_tuple(param_lin, dist_lin, 1);
+		else if((param_lin < 0. || param_lin > 1.) && (param_quadr >= 0. && param_quadr <= 1.))
+			return std::make_tuple(param_quadr, dist_quadr, 0);
+
+		// secondly prefer the one which is closest
+		if(dist_lin < dist_quadr)
+		{
+			//std::cout << "linear bisector segment: dist=" << dist_lin << ", param=" << param_lin << std::endl;
+			return std::make_tuple(param_lin, dist_lin, 1);
+		}
+		else
+		{
+			//std::cout << "quadratic bisector segment: dist=" << dist_quadr << ", param=" << param_quadr << std::endl;
+			return std::make_tuple(param_quadr, dist_quadr, 0);
+		}
+	}
+}
+
+
+/**
+ * find a neighbour bisector which is closer to the given vertex than the given one
+ * @arg vert given vertex in pixel coordinates
+ * @returns [param, min_dist_idx, bisector_type]
+ */
+std::tuple<t_real, std::size_t, int>
+PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
+	const t_vec& vert, bool reversed_order) const
+{
+	const auto& voro_graph = m_voro_results.GetVoronoiGraph();
+
+	std::size_t idx1 = vert_idx_1;
+	std::size_t idx2 = vert_idx_2;
+	if(reversed_order)
+		std::swap(idx1, idx2);
+	std::size_t min_dist_idx = vert_idx_2;
+	auto [min_param, min_dist, bisector_type] =
+		FindClosestPointOnSegment(idx1, idx2, vert);
+
+	// check if any neighbour path before first vertex is even closer
+	std::vector<std::size_t> neighbour_indices =
+		voro_graph.GetNeighbours(vert_idx_1);
+	std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
+	std::unordered_set<std::size_t> seen_neighbours;
+	seen_neighbours.insert(vert_idx_2);
+
+	for(std::size_t idx_neighbour=0; idx_neighbour<neighbour_indices.size(); ++idx_neighbour)
+	{
+		std::size_t neighbour_idx = neighbour_indices[idx_neighbour];
+		if(seen_neighbours.find(neighbour_idx) != seen_neighbours.end())
+			continue;
+		seen_neighbours.insert(neighbour_idx);
+
+		// add newly discovered neighbours
+		// only consider first-order nearest neighbours
+		if(idx_neighbour < nearest_neighbours_end_idx)
+		{
+			for(std::size_t new_neighbour_idx :
+				voro_graph.GetNeighbours(neighbour_idx))
+				neighbour_indices.push_back(new_neighbour_idx);
+		}
+
+		idx1 = neighbour_idx;
+		idx2 = vert_idx_1;
+		if(reversed_order)
+			std::swap(idx1, idx2);
+
+		auto [neighbour_param, neighbour_dist, neighbour_bisector_type] =
+			FindClosestPointOnSegment(idx1, idx2, vert);
+
+		if(neighbour_bisector_type != -1)
+		{
+			bool old_parameters_in_range = (min_param >= 0. && min_param <= 1.);
+			bool new_parameters_in_range = (neighbour_param >= 0. && neighbour_param <= 1.);
+			bool neighbour_closer = (neighbour_dist < min_dist);
+
+			// choose a new position on the adjacent edge if it's either
+			// closer or if the former parameters had been out of bounds
+			// and are now within [0, 1]
+			if((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
+				(new_parameters_in_range && neighbour_closer))
+			{
+				min_dist = neighbour_dist;
+				min_param = neighbour_param;
+				min_dist_idx = neighbour_idx;
+				bisector_type = neighbour_bisector_type;
+			}
+		}
+	}
+
+	min_param = tl2::clamp<t_real>(min_param, 0., 1.);
+	return std::make_tuple(min_param, min_dist_idx, bisector_type);
+}
+
+
+/**
+ * get the angular distance of a vertex to the nearest wall
+ * @arg vertex in pixel coordinates
+ */
+t_real PathsBuilder::GetDistToNearestWall(const t_vec2& vertex) const
+{
+	// get the wall vertices that are closest to the given vertex
+	if(auto nearest_walls = m_wallsindextree.Query(vertex, 1); nearest_walls.size() >= 1)
+	{
+		// get angular distance to wall
+		t_vec2 angle = PixelToAngle(vertex, false, false);
+		t_vec2 nearest_wall_angle = PixelToAngle(nearest_walls[0], false, false);
+		t_real dist = GetPathLength(nearest_wall_angle - angle);
+
+		return dist;
+	}
+
+	// no wall found
+	return std::numeric_limits<t_real>::max();
+}
+
+
+/**
  * find and remove loops near the retraction points in the path
+ * @arg path_vertices in deg or rad
  */
 void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg, bool reverse) const
 {
@@ -1706,6 +1787,8 @@ bool PathsBuilder::DoesPositionCollide(const t_vec2& pos, bool deg) const
 
 /**
  * check if a direct path between the two vertices leads to a collision
+ * @arg vert1 starting angular position of the path, in deg or rad
+ * @arg vert2 ending angular position of the path, in deg or rad
  */
 bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg) const
 {
@@ -1744,53 +1827,4 @@ bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert
 	}
 
 	return false;
-}
-
-
-/**
- * get individual vertices on an instrument path
- * helper function for the scripting interface
- */
-std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
-	const InstrumentPath& path, bool subdivide_lines, bool deg) const
-{
-	std::vector<t_vec2> vertices = GetPathVertices(path, subdivide_lines, deg);
-
-	std::vector<std::pair<t_real, t_real>> pairs;
-	pairs.reserve(vertices.size());
-
-	for(const t_vec2& vec : vertices)
-		pairs.emplace_back(std::make_pair(vec[0], vec[1]));
-
-	return pairs;
-}
-
-
-/**
- * get a line segment group
- * helper function for the scripting interface
- */
-std::vector<std::array<t_real, 4>>
-PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
-{
-	std::vector<std::array<t_real, 4>> lines;
-
-	if(groupidx >= GetNumberOfLineSegmentRegions())
-		return lines;
-	auto[startidx, endidx] = m_linegroups[groupidx];
-
-	lines.reserve(endidx - startidx);
-
-	for(std::size_t lineidx=startidx; lineidx<endidx; ++lineidx)
-	{
-		const t_line& line = m_lines[lineidx];
-
-		t_vec2 pt1 = PixelToAngle(std::get<0>(line), true, false);
-		t_vec2 pt2 = PixelToAngle(std::get<1>(line), true, false);
-
-		std::array<t_real, 4> arr{{ pt1[0], pt1[1], pt2[0], pt2[1] }};
-		lines.emplace_back(std::move(arr));
-	}
-
-	return lines;
 }

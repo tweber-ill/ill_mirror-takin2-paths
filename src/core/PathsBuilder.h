@@ -127,7 +127,7 @@ protected:
 	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
 
 	// get the angular distance of a vertex to the nearest wall
-	t_real GetDistToNearestWall(const t_vec2& vertex, bool deg = false) const;
+	t_real GetDistToNearestWall(const t_vec2& vertex) const;
 
 	// find the closest point on a path segment
 	std::tuple<t_real, t_real, int>

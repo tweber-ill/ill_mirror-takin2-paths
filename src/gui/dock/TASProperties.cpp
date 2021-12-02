@@ -397,8 +397,8 @@ bool TASPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 
 	// old scattering senses
 	bool scM = m_checkScatteringSense[0]->isChecked();
-	bool scS = m_checkScatteringSense[0]->isChecked();
-	bool scA = m_checkScatteringSense[0]->isChecked();
+	bool scS = m_checkScatteringSense[1]->isChecked();
+	bool scA = m_checkScatteringSense[2]->isChecked();
 
 	// old d spacings
 	t_real dM = m_spinMonoD->value();

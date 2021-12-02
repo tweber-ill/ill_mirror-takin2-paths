@@ -79,6 +79,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	SetGoButtonText(true);
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
+	// TODO: change the label "monochromator" to "analyser" for ki=const mode
 	const char* labels[] = {"Monochromator:", "Sample:"};
 
 	auto *groupFinish = new QGroupBox("Target Scattering Angles", this);
