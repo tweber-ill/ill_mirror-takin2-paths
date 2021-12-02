@@ -1046,14 +1046,16 @@ std::vector<std::tuple<std::size_t, std::size_t, t_vec>> intersect_sweep(
 		{
 			.x = std::get<0>(line)[0],
 			.ty = SweepEventType::LEFT_VERTEX,
-			.line_idx = line_idx
+			.line_idx = line_idx,
+			.intersection = std::nullopt,
 		};
 
 		SweepEvent evtRight
 		{
 			.x = std::get<1>(line)[0],
 			.ty = SweepEventType::RIGHT_VERTEX,
-			.line_idx = line_idx
+			.line_idx = line_idx,
+			.intersection = std::nullopt,
 		};
 
 		// wrong order of vertices?
