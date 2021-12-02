@@ -2094,14 +2094,29 @@ void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
 	if(!path.ok)
 	{
 		m_pathvertices.clear();
-		SetTmpStatus("Path not ok.");
+		SetTmpStatus("Invalid path.");
 	}
 	else
 	{
 		// get the vertices on the path
 		m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
 		emit PathAvailable(m_pathvertices.size());
-		SetTmpStatus("Path calculated.");
+
+		std::ostringstream ostrMsg;
+		ostrMsg.precision(g_prec_gui);
+		ostrMsg << "Path calculated";
+
+		if(g_verifypath && m_pathvertices.size())
+		{
+			auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
+			t_real min_dist = *std::min_element(distances.begin(), distances.end());
+			min_dist = min_dist / tl2::pi<t_real>*t_real(180);
+
+			ostrMsg << ", min. wall dist.: " << min_dist << "°";
+		}
+		ostrMsg << ".";
+
+		SetTmpStatus(ostrMsg.str());
 	}
 }
 
@@ -2276,7 +2291,22 @@ void PathsTool::CalculatePath()
 	}
 
 	emit PathAvailable(m_pathvertices.size());
-	SetTmpStatus("Path calculated.");
+
+	std::ostringstream ostrMsg;
+	ostrMsg.precision(g_prec_gui);
+	ostrMsg << "Path calculated";
+
+	if(g_verifypath && m_pathvertices.size())
+	{
+		auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
+		t_real min_dist = *std::min_element(distances.begin(), distances.end());
+		min_dist = min_dist / tl2::pi<t_real>*t_real(180);
+
+		ostrMsg << ", min. wall dist.: " << min_dist << "°";
+	}
+	ostrMsg << ".";
+
+	SetTmpStatus(ostrMsg.str());
 }
 
 

@@ -120,13 +120,13 @@ protected:
 	// get path length, taking into account the motor speeds
 	t_real GetPathLength(const t_vec2& vec) const;
 
-	// check if a position leads to a collision
+	// check if a position (in angular coordinates) leads to a collision
 	bool DoesPositionCollide(const t_vec2& pos, bool deg = false) const;
 
 	// check if a direct path between the two vertices leads to a collision
 	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
 
-	// get the angular distance of a vertex to the nearest wall
+	// get the angular distance of a vertex to the nearest wall from pixel coordinates
 	t_real GetDistToNearestWall(const t_vec2& vertex) const;
 
 	// find the closest point on a path segment
@@ -216,6 +216,9 @@ public:
 	// get individual vertices on an instrument path
 	std::vector<t_vec2> GetPathVertices(const InstrumentPath& path,
 		bool subdivide_lines = false, bool deg = false) const;
+
+	// get the distances to the nearest walls for each point of a given path
+	std::vector<t_real> GetDistancesToNearestWall(const std::vector<t_vec2>& path, bool deg = false) const;
 
 	// get individual vertices on an instrument path -- for scripting interface
 	std::vector<std::pair<t_real, t_real>>

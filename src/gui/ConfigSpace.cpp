@@ -185,14 +185,14 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_spinDelta2ThM = new QDoubleSpinBox(this);
 
 	m_spinDelta2ThS->setPrefix("Δθ_S = ");
-	m_spinDelta2ThS->setSuffix(" deg");
+	m_spinDelta2ThS->setSuffix("°");
 	m_spinDelta2ThS->setValue(g_a4_delta / tl2::pi<t_real>*180.);
 	m_spinDelta2ThS->setMinimum(0.001);
 	m_spinDelta2ThS->setMaximum(180.);
 	m_spinDelta2ThS->setSingleStep(0.1);
 
 	m_spinDelta2ThM->setPrefix("Δθ_M = ");
-	m_spinDelta2ThM->setSuffix(" deg");
+	m_spinDelta2ThM->setSuffix("°");
 	m_spinDelta2ThM->setValue(g_a2_delta / tl2::pi<t_real>*180.);
 	m_spinDelta2ThM->setMinimum(0.001);
 	m_spinDelta2ThM->setMaximum(180.);
@@ -531,11 +531,11 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 			ostr.precision(g_prec_gui);
 
 			// show angular coordinates
-			ostr << "2θ_S = " << _a4 << " deg";
+			ostr << "2θ_S = " << _a4 << "°";
 			if(kf_fixed)
-				ostr << ", 2θ_M = " << _a2 << " deg.";
+				ostr << ", 2θ_M = " << _a2 << "°.";
 			else
-				ostr << ", 2θ_A = " << _a2 << " deg.";
+				ostr << ", 2θ_A = " << _a2 << "°.";
 
 			// show pixel coordinates
 			if(m_pathsbuilder)

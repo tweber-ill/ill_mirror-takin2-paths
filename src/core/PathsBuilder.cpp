@@ -1259,6 +1259,28 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 
 
 /**
+ * get the angular distances to the nearest walls for each point of a given path
+ * @arg path in angular coordinates (deg or rad)
+ * @return vector of angular distances in rad
+ */
+std::vector<t_real> PathsBuilder::GetDistancesToNearestWall(const std::vector<t_vec2>& path, bool deg) const
+{
+	std::vector<t_real> dists{};
+	dists.reserve(path.size());
+
+	for(const t_vec2& pos : path)
+	{
+		t_vec2 pix = AngleToPixel(pos, deg, false);
+		t_real dist = GetDistToNearestWall(pix);
+
+		dists.push_back(dist);
+	}
+
+	return dists;
+}
+
+
+/**
  * get individual vertices on an instrument path
  * helper function for the scripting interface
  */
@@ -1658,6 +1680,7 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 /**
  * get the angular distance of a vertex to the nearest wall
  * @arg vertex in pixel coordinates
+ * @return angular distance in rad
  */
 t_real PathsBuilder::GetDistToNearestWall(const t_vec2& vertex) const
 {
