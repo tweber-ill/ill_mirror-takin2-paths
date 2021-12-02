@@ -1384,6 +1384,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			// path available signal
 			this->connect(this->m_dlgConfigSpace.get(), &ConfigSpaceDlg::PathAvailable,
 				this, &PathsTool::ExternalPathAvailable);
+
+			// set instrument and target positions
+			this->m_dlgConfigSpace->UpdateInstrument(
+				m_instrspace.GetInstrument(),
+				m_tascalc.GetScatteringSenses());
+			this->m_dlgConfigSpace->UpdateTarget(
+				m_targetMonoScatteringAngle,
+				m_targetSampleScatteringAngle,
+				m_tascalc.GetScatteringSenses());
 		}
 
 		m_dlgConfigSpace->show();
