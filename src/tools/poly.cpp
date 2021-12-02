@@ -461,7 +461,8 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
-			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(this, &m_sett);
+			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(
+				this, &m_sett, true);
 
 		m_dlgSettings->show();
 		m_dlgSettings->raise();

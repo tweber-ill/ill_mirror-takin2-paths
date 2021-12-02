@@ -199,13 +199,15 @@ if [ $create_appdir -ne 0 ]; then
 	cp -rv /usr/local/opt/qt@5/plugins/platforms "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	cp -rv /usr/local/opt/qt@5/plugins/styles "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	#cp -rv /usr/local/opt/qt@5/plugins/renderers "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
-	#cp -rv /usr/local/opt/qt@5/plugins/imageformats "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
-	#cp -rv /usr/local/opt/qt@5/plugins/iconengines "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
+	cp -rv /usr/local/opt/qt@5/plugins/imageformats "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
+	cp -rv /usr/local/opt/qt@5/plugins/iconengines "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	#cp -rv /usr/local/opt/qt@5/plugins/printsupport "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 	#cp -rv /usr/local/opt/qt@5/plugins/platformthemes "${APPDIRNAME}/Contents/Libraries/Qt_Plugins/"
 
 	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/platforms/libqoffscreen.dylib
 	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/platforms/libqwebgl.dylib
+
+	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/imageformats/libq[^s][^v][^g]*.dylib
 	echo -e "--------------------------------------------------------------------------------"
 
 

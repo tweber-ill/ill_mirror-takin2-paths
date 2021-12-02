@@ -51,7 +51,9 @@ public:
 	/**
 	 * constructor
 	 */
-	SettingsDlg(QWidget* parent = nullptr, QSettings *sett = nullptr);
+	SettingsDlg(QWidget* parent = nullptr,
+		QSettings *sett = nullptr,
+		bool hide_optional_settings = false);
 
 	/**
 	 * destructor
@@ -80,6 +82,7 @@ protected:
 
 private:
 	QSettings *m_sett{nullptr};
+	bool m_hide_optional_settings{false};
 	QTableWidget *m_table{nullptr};
 
 	QComboBox *m_comboTheme{nullptr};

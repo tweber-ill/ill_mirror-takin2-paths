@@ -70,7 +70,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	titleWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
 	QLabel *labelIcon = new QLabel(titleWidget);
-	std::string icon_file = g_res.FindResource("res/taspaths.svg");
+	std::string icon_file = g_res.FindResource("taspaths.svg");
 	QIcon icon{icon_file.c_str()};
 	QPixmap pixmap = icon.pixmap(48, 48);
 	labelIcon->setPixmap(pixmap);
@@ -78,12 +78,15 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	labelIcon->setFrameShadow(QFrame::Raised);
 	labelIcon->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-	QSpacerItem *spacer = new QSpacerItem(16, 1, QSizePolicy::Fixed, QSizePolicy::Fixed);
+	QSpacerItem *spacerIconTitle = new QSpacerItem(16, 1, QSizePolicy::Fixed, QSizePolicy::Fixed);
 	titleGrid->addWidget(labelIcon, 0, 0, 1, 1, Qt::AlignVCenter);
-	titleGrid->addItem(spacer, 0, 1, 1, 1);
+	titleGrid->addItem(spacerIconTitle, 0, 1, 1, 1);
 	titleGrid->addWidget(labTitle, 0, 2, 1, 1, Qt::AlignVCenter);
 
 	grid->addWidget(titleWidget, y++, 0, 1, 2);
+
+	QSpacerItem *spacerTitleSubtitle = new QSpacerItem(1, 4, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacerTitleSubtitle, y++,0,1,2);
 
 	// subtitle
 	QLabel *labSubtitle = new QLabel("Pathfinding software for triple-axis spectrometers.", this);
@@ -92,23 +95,23 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	labSubtitle->setFont(fontSubtitle);
 	grid->addWidget(labSubtitle, y++,0,1,2);
 
-	QSpacerItem *spacer1 = new QSpacerItem(1, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-	grid->addItem(spacer1, y++,0,1,2);
+	QSpacerItem *spacerBelowSubtitle = new QSpacerItem(1, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacerBelowSubtitle, y++,0,1,2);
 
-	QSpacerItem *spacer2 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	grid->addItem(spacer2, y++,0,1,2);
+	QSpacerItem *spacerBelowSubtitle2 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	grid->addItem(spacerBelowSubtitle2, y++,0,1,2);
 
-	QLabel *labSubtitle1 = new QLabel("DOI: ", this);
-	QFont fontLabel1 = labSubtitle1->font();
+	QLabel *labDOI1 = new QLabel("DOI: ", this);
+	QFont fontLabel1 = labDOI1->font();
 	fontLabel1.setWeight(QFont::Bold);
-	labSubtitle1->setFont(fontLabel1);
-	grid->addWidget(labSubtitle1, y,0,1,1);
-	QLabel *labSubtitle2 = new QLabel(
+	labDOI1->setFont(fontLabel1);
+	grid->addWidget(labDOI1, y,0,1,1);
+	QLabel *labDOI2 = new QLabel(
 		"<a href=\"https://doi.org/10.5281/zenodo.4625649\">"
 		"10.5281/zenodo.4625649</a>.",
 		this);
-	labSubtitle2->setOpenExternalLinks(1);
-	grid->addWidget(labSubtitle2, y++,1,1,1);
+	labDOI2->setOpenExternalLinks(1);
+	grid->addWidget(labDOI2, y++,1,1,1);
 
 	QLabel *labUrl1 = new QLabel("Repositories: ", this);
 	fontLabel1.setWeight(QFont::Bold);
@@ -128,8 +131,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labVersion2 = new QLabel(TASPATHS_VERSION ".", this);
 	grid->addWidget(labVersion2, y++,1,1,1);
 
-	QSpacerItem *spacer3 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
-	grid->addItem(spacer3, y++,0,1,2);
+	QSpacerItem *spacerAfterVersion = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacerAfterVersion, y++,0,1,2);
 
 	QLabel *labAuthor1 = new QLabel("Author: ", this);
 	fontLabel1.setWeight(QFont::Bold);
@@ -141,7 +144,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labDate1 = new QLabel("Date: ", this);
 	labDate1->setFont(fontLabel1);
 	grid->addWidget(labDate1, y,0,1,1);
-	QLabel *labDate2 = new QLabel("February 2021 - November 2021.", this);
+	QLabel *labDate2 = new QLabel("February 2021 - December 2021.", this);
 	grid->addWidget(labDate2, y++,1,1,1);
 
 	QLabel *labLic1 = new QLabel("License: ", this);
@@ -151,8 +154,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labLic2 = new QLabel("GNU GPL Version 3.", this);
 	grid->addWidget(labLic2, y++,1,1,1);
 
-	QSpacerItem *spacer4 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
-	grid->addItem(spacer4, y++,0,1,2);
+	QSpacerItem *spacerBeforeTimestamp = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
+	grid->addItem(spacerBeforeTimestamp, y++,0,1,2);
 
 	QLabel *labBuildDate1 = new QLabel("Build Timestamp: ", this);
 	labBuildDate1->setFont(fontLabel1);
@@ -185,8 +188,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QLabel *labBoostLib = new QLabel(boostlib2, this);
 	grid->addWidget(labBoostLib, y++,1,1,1);
 
-	QSpacerItem *spacer5 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	grid->addItem(spacer5, y++,0,1,2);
+	QSpacerItem *spacerBeforeButtons = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	grid->addItem(spacerBeforeButtons, y++,0,1,2);
 
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);

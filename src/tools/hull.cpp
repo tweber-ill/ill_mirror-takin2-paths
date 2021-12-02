@@ -691,7 +691,8 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
-			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(this, &m_sett);
+			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(
+				this, &m_sett, true);
 
 		m_dlgSettings->show();
 		m_dlgSettings->raise();
@@ -1295,8 +1296,8 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	// grid
 	int y = 0;
 	auto pTabGrid = new QGridLayout(this);
-	pTabGrid->setSpacing(2);
-	pTabGrid->setContentsMargins(4,4,4,4);
+	pTabGrid->setSpacing(4);
+	pTabGrid->setContentsMargins(12, 12, 12, 12);
 	pTabGrid->addWidget(splitter, y++,0,1,9);
 	pTabGrid->addWidget(tabBtnAdd, y,0,1,1);
 	pTabGrid->addWidget(tabBtnDel, y,1,1,1);

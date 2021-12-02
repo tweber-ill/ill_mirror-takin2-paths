@@ -1,5 +1,8 @@
 /**
- * calculate obstacles' voronoi edge paths
+ * the paths builder comprises two steps:
+ * - it calculates the path mesh (i.e. the roadmap) of possible instrument paths
+ * - it calculates a specific path on the path mesh
+ *
  * @author Tobias Weber <tweber@ill.fr>
  * @date jun-2021
  * @license GPLv3, see 'LICENSE' file

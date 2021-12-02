@@ -63,15 +63,15 @@ GeoAboutDlg::GeoAboutDlg(QWidget* parent, QSettings *sett)
 	QSpacerItem *spacer0 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
 	grid->addItem(spacer0, y++,0,1,2);
 
-	QLabel *labSubtitle1 = new QLabel("DOI: ", this);
-	QFont fontLabel1 = labSubtitle1->font();
+	QLabel *labDOI1 = new QLabel("DOI: ", this);
+	QFont fontLabel1 = labDOI1->font();
 	fontLabel1.setWeight(QFont::Bold);
-	labSubtitle1->setFont(fontLabel1);
-	grid->addWidget(labSubtitle1, y,0,1,1);
-	QLabel *labSubtitle2 = new QLabel("<a href=\"https://doi.org/10.5281/zenodo.4297475\">"
+	labDOI1->setFont(fontLabel1);
+	grid->addWidget(labDOI1, y,0,1,1);
+	QLabel *labDOI2 = new QLabel("<a href=\"https://doi.org/10.5281/zenodo.4297475\">"
 		"10.5281/zenodo.4297475</a>.", this);
-	labSubtitle2->setOpenExternalLinks(1);
-	grid->addWidget(labSubtitle2, y++,1,1,1);
+	labDOI2->setOpenExternalLinks(1);
+	grid->addWidget(labDOI2, y++,1,1,1);
 
 	QSpacerItem *spacer1 = new QSpacerItem(1, 8, QSizePolicy::Minimum, QSizePolicy::Fixed);
 	grid->addItem(spacer1, y++,0,1,2);

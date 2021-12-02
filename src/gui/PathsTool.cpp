@@ -948,7 +948,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 {
 	setWindowTitle(TASPATHS_TITLE);
 
-	if(std::string icon_file = g_res.FindResource("res/taspaths.svg"); !icon_file.empty())
+	if(std::string icon_file = g_res.FindResource("taspaths.svg"); !icon_file.empty())
 	{
 		QIcon icon{icon_file.c_str()};
 		setWindowIcon(icon);
@@ -1000,7 +1000,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	auto pGrid = new QGridLayout(plotpanel);
 	pGrid->setSpacing(4);
-	pGrid->setContentsMargins(4,4,4,4);
+	pGrid->setContentsMargins(4, 4, 4, 4);
 
 	pGrid->addWidget(m_renderer.get(), 0,0,1,4);
 
