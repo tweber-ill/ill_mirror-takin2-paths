@@ -29,8 +29,8 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef __PATHS_WIDGET_H__
-#define __PATHS_WIDGET_H__
+#ifndef __PATHS_RENDERER_H__
+#define __PATHS_RENDERER_H__
 
 #include <unordered_map>
 
@@ -42,6 +42,7 @@
 #include "tlibs2/libs/qt/gl.h"
 
 #include "src/core/InstrumentSpace.h"
+
 
 using t_real_gl = tl2::t_real_gl;
 using t_vec2_gl = tl2::t_vec2_gl;

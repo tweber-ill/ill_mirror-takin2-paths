@@ -24,6 +24,7 @@
  */
 
 #include "TasCalculator.h"
+#include "tlibs2/libs/phys.h"
 
 
 void TasCalculator::SetMonochromatorD(t_real d)

@@ -34,6 +34,9 @@
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QPushButton>
 
+#include "tlibs2/libs/maths.h"
+#include "tlibs2/libs/phys.h"
+
 
 // --------------------------------------------------------------------------------
 // properties widget

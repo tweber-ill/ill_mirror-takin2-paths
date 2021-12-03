@@ -46,6 +46,10 @@
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 
+#include "tlibs2/libs/maths.h"
+#include "tlibs2/libs/phys.h"
+
+
 using t_task = std::packaged_task<void()>;
 using t_taskptr = std::shared_ptr<t_task>;
 

@@ -40,12 +40,11 @@
 #include <future>
 #include <functional>
 
+#include "tlibs2/libs/maths.h"
 #include "src/core/types.h"
 #include "src/core/PathsBuilder.h"
 #include "src/core/InstrumentSpace.h"
 #include "src/core/TasCalculator.h"
-
-#include "tlibs2/libs/maths.h"
 
 #include "PathsRenderer.h"
 #include "ConfigSpace.h"
