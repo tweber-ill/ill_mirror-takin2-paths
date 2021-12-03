@@ -21,7 +21,7 @@ Steps to try out the pathfinding functionality:
 - Open the configuration space dialog using the "Calculation" -> "Angular Configuration Space..." menu item.
 - Click the "Calculate Mesh" button in the configuration space dialog to compute the roadmap corresponding to the current instrument and wall configuration.
 - Click the "Move Instrument Position" and "Move Target Position" radio buttons and click in the configuration space plot to set and move the start and target positions, respectively. 
-- A path from the start to the target positionis calculated. It can be directly traced by clicking the "Go" button in the main window's "Path Properties" dock window.
+- A path from the start to the target position is calculated. It can be directly traced by clicking the "Go" button in the main window's "Path Properties" dock window.
 
 
 ## Building
