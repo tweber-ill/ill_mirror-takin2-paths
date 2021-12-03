@@ -15,6 +15,15 @@ Basic tutorial videos are available here:
 - [Visualising the instrument's angular configuration space](https://youtu.be/WPUCVzMDKDc).
 
 
+## Pathfinding
+Steps to try out the pathfinding functionality:
+- Move existing or add new walls or obstacles to the scene.
+- Open the configuration space dialog using the "Calculation" -> "Angular Configuration Space..." menu item.
+- Click the "Calculate Mesh" button in the configuration space dialog to compute the roadmap corresponding to the current instrument and wall configuration.
+- Click the "Move Instrument Position" and "Move Target Position" radio buttons and click in the configuration space plot to set and move the start and target positions, respectively. 
+- A path from the start to the target positionis calculated. It can be directly traced by clicking the "Go" button in the main window's "Path Properties" dock window.
+
+
 ## Building
 - Install development versions of at least the following external libraries: [*Boost*](https://www.boost.org/), [*Qt*](https://www.qt.io/), and optionally [*Lapack(e)*](https://www.netlib.org/lapack/).
 - Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
