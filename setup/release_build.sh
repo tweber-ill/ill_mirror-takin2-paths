@@ -70,9 +70,9 @@ if ! ${cmake_tool} --build . --parallel 4; then
 fi
 
 strip -v taspaths
-strip -v taspaths_lines
-strip -v taspaths_hull
-strip -v taspaths_poly
+strip -v taspaths-lines
+strip -v taspaths-hull
+strip -v taspaths-poly
 strip -v libqcustomplot_local.so
 
 popd
