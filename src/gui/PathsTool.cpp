@@ -1430,9 +1430,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// tools menu
 	QMenu *menuTools = new QMenu("Tools", m_menubar);
 
-	fs::path hullpath = fs::path(g_apppath) / fs::path("taspaths_hull" EXEC_EXTENSION);
-	fs::path linespath = fs::path(g_apppath) / fs::path("taspaths_lines" EXEC_EXTENSION);
-	fs::path polypath = fs::path(g_apppath) / fs::path("taspaths_poly" EXEC_EXTENSION);
+	fs::path hullpath = fs::path(g_apppath) / fs::path("taspaths-hull" EXEC_EXTENSION);
+	fs::path linespath = fs::path(g_apppath) / fs::path("taspaths-lines" EXEC_EXTENSION);
+	fs::path polypath = fs::path(g_apppath) / fs::path("taspaths-poly" EXEC_EXTENSION);
 
 	std::size_t num_tools = 0;
 	if(fs::exists(linespath))

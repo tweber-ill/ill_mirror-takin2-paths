@@ -160,9 +160,9 @@ if [ $create_appdir -ne 0 ]; then
 	# program files
 	cp -v setup/osx/Info.plist "${APPDIRNAME}/Contents/"
 	cp -v build/taspaths "${APPDIRNAME}/Contents/MacOS/"
-	cp -v build/taspaths_lines "${APPDIRNAME}/Contents/MacOS/"
-	cp -v build/taspaths_hull "${APPDIRNAME}/Contents/MacOS/"
-	cp -v build/taspaths_poly "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/taspaths-lines "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/taspaths-hull "${APPDIRNAME}/Contents/MacOS/"
+	cp -v build/taspaths-poly "${APPDIRNAME}/Contents/MacOS/"
 
 	# resources
 	cp -rv res/* "${APPDIRNAME}/Contents/Resources/"

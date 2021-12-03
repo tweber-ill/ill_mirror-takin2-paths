@@ -341,7 +341,7 @@ add_executable(taspaths
 
 
 if(BUILD_TEST_TOOLS)
-	add_executable(taspaths_hull
+	add_executable(taspaths-hull
 		src/tools/hull_main.cpp
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -355,7 +355,7 @@ if(BUILD_TEST_TOOLS)
 		src/libs/voronoi.h
 	)
 
-	add_executable(taspaths_lines
+	add_executable(taspaths-lines
 		src/tools/lines_main.cpp
 		src/tools/lines.cpp src/tools/lines.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -370,7 +370,7 @@ if(BUILD_TEST_TOOLS)
 		src/libs/voronoi_lines.h
 	)
 
-	add_executable(taspaths_poly
+	add_executable(taspaths-poly
 		src/tools/poly_main.cpp
 		src/tools/poly.cpp src/tools/poly.h
 		src/tools/vertex.cpp src/tools/vertex.h
@@ -410,21 +410,21 @@ if(QT_VER EQUAL 6)
 
 	if(BUILD_TEST_TOOLS)
 		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-			target_link_options(taspaths_hull
+			target_link_options(taspaths-hull
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
 			)
 
-			target_link_options(taspaths_lines
+			target_link_options(taspaths-lines
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
 			)
 
-			target_link_options(taspaths_poly
+			target_link_options(taspaths-poly
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
 			)
 		endif()
 
 
-		target_link_libraries(taspaths_hull
+		target_link_libraries(taspaths-hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
@@ -432,7 +432,7 @@ if(QT_VER EQUAL 6)
 			Qt6::Svg
 		)
 
-		target_link_libraries(taspaths_lines
+		target_link_libraries(taspaths-lines
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
@@ -443,7 +443,7 @@ if(QT_VER EQUAL 6)
 			Qt6::Svg
 		)
 
-		target_link_libraries(taspaths_poly
+		target_link_libraries(taspaths-poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt6::Core Qt6::Gui Qt6::Widgets
@@ -467,21 +467,21 @@ elseif(QT_VER EQUAL 5)
 
 	if(BUILD_TEST_TOOLS)
 		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-			target_link_options(taspaths_hull
+			target_link_options(taspaths-hull
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
 			)
 
-			target_link_options(taspaths_lines
+			target_link_options(taspaths-lines
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
 			)
 
-			target_link_options(taspaths_poly
+			target_link_options(taspaths-poly
 				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
 			)
 		endif()
 
 
-		target_link_libraries(taspaths_hull
+		target_link_libraries(taspaths-hull
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${Qhull_LIBRARIES}"
@@ -492,7 +492,7 @@ elseif(QT_VER EQUAL 5)
 			Qt5::Svg
 		)
 
-		target_link_libraries(taspaths_lines
+		target_link_libraries(taspaths-lines
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			"${OVD_LIBRARIES}"
@@ -503,7 +503,7 @@ elseif(QT_VER EQUAL 5)
 			Qt5::Svg
 		)
 
-		target_link_libraries(taspaths_poly
+		target_link_libraries(taspaths-poly
 			"${Boost_LIBRARIES}"
 			"${Lapacke_LIBRARIES}"
 			Qt5::Core Qt5::Gui Qt5::Widgets
