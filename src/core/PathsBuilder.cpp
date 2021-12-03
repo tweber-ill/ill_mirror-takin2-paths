@@ -27,6 +27,7 @@
  */
 
 #include "PathsBuilder.h"
+#include "tlibs2/libs/fit.h"
 
 #include <iostream>
 #include <thread>
@@ -1723,43 +1724,25 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 
 	t_real min_dist_to_start = GetPathLength(path_vertices[second_pt_idx] - path_vertices[first_pt_idx]);
 	std::size_t min_idx = second_pt_idx;
-	bool distance_falling = false;
 	bool minimum_found = false;
 
-	std::size_t iter_idx = second_pt_idx;
+	// get path lengths from start point
+	std::vector<t_real> dists;
+	std::vector<t_real> path_pos;
+	std::vector<std::size_t> path_indices;
+	dists.reserve(path_vertices.size());
+	path_pos.reserve(path_vertices.size());
+	path_indices.reserve(path_vertices.size());
 
-	// find first local minimum after first local maximum
-	// TODO: use peak finder for this
+	t_real cur_path_pos = 0.;
+	std::size_t iter_idx = second_pt_idx;
 	while(true)
 	{
 		t_real dist = GetPathLength(path_vertices[iter_idx] - path_vertices[first_pt_idx]);
 
-		if(dist < min_dist_to_start)
-		{
-			// lengths become smaller
-			min_idx = iter_idx;
-			min_dist_to_start = dist;
-			distance_falling = true;
-		}
-		else
-		{
-			// distance was falling, but is rising again -> minimum found
-			if(distance_falling)
-			{
-				//std::cout << "minimum index: " << min_idx << ", distance: " << min_dist_to_start << std::endl;
-
-				// within search radius?
-				if(dist <= max_radius)
-					minimum_found = true;
-
-				break;
-			}
-			// initially rising distance
-			else
-			{
-				min_dist_to_start = dist;
-			}
-		}
+		path_indices.push_back(iter_idx);
+		path_pos.push_back(cur_path_pos);
+		dists.push_back(dist);
 
 		if(reverse)
 		{
@@ -1772,6 +1755,40 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 			if(iter_idx >= N-1)
 				break;
 			++iter_idx;
+		}
+
+		cur_path_pos += 1.;
+	}
+
+	// find local minima in the distances
+	std::vector<t_real> peaks_x, peaks_sizes, peaks_widths;
+	std::vector<bool> peaks_minima;
+
+	tl2::find_peaks(dists.size(), path_pos.data(), dists.data(), 3,
+		peaks_x, peaks_sizes, peaks_widths, peaks_minima,
+		256, m_eps);
+
+	// look for the largest minimum within the search radius
+	for(std::size_t peak_idx=0; peak_idx<peaks_x.size(); ++peak_idx)
+	{
+		// no minimum
+		if(!peaks_minima[peak_idx])
+			continue;
+
+		std::size_t peak_min_idx = (std::size_t)peaks_x[peak_idx];
+		if(peak_min_idx >= path_indices.size())
+			peak_min_idx = path_indices.size()-1;
+
+		// not within the search radius
+		if(dists[peak_min_idx] > max_radius)
+			continue;
+
+		if(dists[peak_min_idx] < min_dist_to_start)
+		{
+			min_idx = path_indices[peak_min_idx];
+			min_dist_to_start = dists[peak_min_idx];
+			std::cout << "min " << std::endl;
+			minimum_found = true;
 		}
 	}
 
