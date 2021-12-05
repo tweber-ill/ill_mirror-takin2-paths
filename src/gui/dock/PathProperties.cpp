@@ -77,7 +77,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_sliderPath->setToolTip("Path tracking.");
 	m_btnGo = new QToolButton(this);
 	SetGoButtonText(true);
-	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 
 	// TODO: change the label "monochromator" to "analyser" for ki=const mode
 	const char* labels[] = {"Monochromator:", "Sample:"};
@@ -108,9 +108,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 
 		int y = 0;
 		layoutPath->addWidget(m_btnCalcMesh, y++, 0, 1, 3);
-		layoutPath->addWidget(m_btnCalcPath, y++, 0, 1, 3);
+		layoutPath->addWidget(m_btnCalcPath, y, 0, 1, 2);
+		layoutPath->addWidget(m_btnGo, y++, 2, 2, 1);
 		layoutPath->addWidget(m_sliderPath, y, 0, 1, 2);
-		layoutPath->addWidget(m_btnGo, y++, 2, 1, 1);
 	}
 
 	auto *grid = new QGridLayout(this);

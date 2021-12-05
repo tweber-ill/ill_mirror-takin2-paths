@@ -1331,14 +1331,46 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// view menu
 	QMenu *menuView = new QMenu("View", m_menubar);
 
+	QAction *acHideAllDocks = new QAction("Hide All", menuFile);
+	QAction *acShowAllDocks = new QAction("Show All", menuFile);
+
 	menuView->addAction(m_tasProperties->toggleViewAction());
 	menuView->addAction(m_xtalProperties->toggleViewAction());
 	menuView->addAction(m_xtalInfos->toggleViewAction());
 	menuView->addAction(m_coordProperties->toggleViewAction());
 	menuView->addAction(m_pathProperties->toggleViewAction());
 	menuView->addAction(m_camProperties->toggleViewAction());
-	//menuView->addSeparator();
+	menuView->addSeparator();
+	menuView->addAction(acHideAllDocks);
+	menuView->addAction(acShowAllDocks);
 	//menuView->addAction(acPersp);
+
+	// connections
+	connect(acHideAllDocks, &QAction::triggered, [this]() -> void
+	{
+		for(QDockWidget* dock : std::initializer_list<QDockWidget*>
+		{
+			m_tasProperties.get(), m_xtalProperties.get(),
+			m_xtalInfos.get(), m_coordProperties.get(),
+			m_pathProperties.get(), m_camProperties.get()
+		})
+		{
+			dock->hide();
+		}
+	});
+
+	connect(acShowAllDocks, &QAction::triggered, [this]() -> void
+	{
+		for(QDockWidget* dock : std::initializer_list<QDockWidget*>
+		{
+			m_tasProperties.get(), m_xtalProperties.get(),
+			m_xtalInfos.get(), m_coordProperties.get(),
+			m_pathProperties.get(), m_camProperties.get()
+		})
+		{
+			dock->show();
+		}
+	});
 
 
 	// geometry menu

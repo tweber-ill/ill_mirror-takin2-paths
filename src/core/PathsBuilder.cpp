@@ -1787,7 +1787,6 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 		{
 			min_idx = path_indices[peak_min_idx];
 			min_dist_to_start = dists[peak_min_idx];
-			std::cout << "min " << std::endl;
 			minimum_found = true;
 		}
 	}
