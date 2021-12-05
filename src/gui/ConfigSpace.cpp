@@ -168,7 +168,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	QGroupBox *radioGroup = new QGroupBox(this);
 	radioGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-	QRadioButton *radioInstrPos = new QRadioButton("Move Instrument Position", radioGroup);
+	QRadioButton *radioInstrPos = new QRadioButton("Move Current Position", radioGroup);
 	QRadioButton *radioTargetPos = new QRadioButton("Move Target Position", radioGroup);
 	QRadioButton *radioEnableZoom = new QRadioButton("Enable Zoom", radioGroup);
 
@@ -351,7 +351,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	menuPathOptions->addMenu(menuPathStrategy);
 	// ------------------------------------------------------------------------
 
-	QAction *acMoveTarget = new QAction("Move Target Point", menuView);
+	QAction *acMoveTarget = new QAction("Move Target Position", menuView);
 	acMoveTarget->setCheckable(true);
 	acMoveTarget->setChecked(m_movetarget);
 	menuPathOptions->addSeparator();
