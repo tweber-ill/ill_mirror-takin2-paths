@@ -27,6 +27,7 @@
 #define __PATHS_TOOL_H__
 
 #include <QtCore/QSettings>
+#include <QtCore/QByteArray>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QMenu>
@@ -69,6 +70,7 @@ class PathsTool : public QMainWindow
 { Q_OBJECT
 private:
 	QSettings m_sett{"takin", "taspaths"};
+	QByteArray m_initial_state{};
 
 	// renderer
 	std::shared_ptr<PathsRenderer> m_renderer

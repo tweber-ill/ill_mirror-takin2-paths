@@ -77,8 +77,8 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	m_spinCoords[5]->setValue(0);
 	m_checkKfFixed->setChecked(true);
 
-	QPushButton *btnGoto = new QPushButton("Jump to Coordinates", this);
-	QPushButton *btnTarget = new QPushButton("Set Coordinates as Target Angles", this);
+	QPushButton *btnGoto = new QPushButton("Set as Current Angles", this);
+	QPushButton *btnTarget = new QPushButton("Set as Target Angles", this);
 	btnGoto->setToolTip("Set the current instrument position to the given crystal coordinates.");
 	btnTarget->setToolTip("Set the given crystal coordinates as the target position for pathfinding.");
 
@@ -91,7 +91,7 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 		"Energy (E):"
 	};
 
-	auto *groupCoords = new QGroupBox("Crystal Coordinates", this);
+	auto *groupCoords = new QGroupBox(/*"Crystal Coordinates",*/ this);
 	{
 		auto *layoutStart = new QGridLayout(groupCoords);
 		layoutStart->setHorizontalSpacing(2);
@@ -103,6 +103,13 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 		{
 			layoutStart->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
 			layoutStart->addWidget(m_spinCoords[i], y++, 1, 1, 1);
+
+			if(i==2)
+			{
+				QFrame *separator = new QFrame(this);
+				separator->setFrameStyle(QFrame::HLine);
+				layoutStart->addWidget(separator, y++, 0, 1, 2);
+			}
 		}
 
 		layoutStart->addWidget(m_checkKfFixed, y++, 0, 1, 2);

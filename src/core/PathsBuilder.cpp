@@ -1786,12 +1786,18 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 		if(dists[peak_min_idx] < min_dist_to_start)
 		{
 			min_idx = path_indices[peak_min_idx];
+			if(min_idx >= dists.size())
+				continue;
+
 			min_dist_to_start = dists[peak_min_idx];
 			minimum_found = true;
 		}
 	}
 
-	if(minimum_found && !DoesDirectPathCollide(path_vertices[first_pt_idx], path_vertices[min_idx], deg))
+	if(minimum_found &&
+		!DoesDirectPathCollide(
+			path_vertices[first_pt_idx],
+			path_vertices[min_idx], deg))
 	{
 		std::size_t range_start = first_pt_idx;
 		std::size_t range_end = min_idx;
@@ -1801,7 +1807,11 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 
 		// a shortcut was found
 		if(range_start+1 < range_end)
-			path_vertices.erase(path_vertices.begin()+range_start+1, path_vertices.begin()+range_end);
+		{
+			path_vertices.erase(
+				path_vertices.begin()+range_start+1,
+				path_vertices.begin()+range_end);
+		}
 	}
 }
 

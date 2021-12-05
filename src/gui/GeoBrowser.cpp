@@ -146,6 +146,7 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 	// connections
 	connect(buttons, &QDialogButtonBox::accepted, this, &GeometriesBrowser::accept);
+	connect(buttons, &QDialogButtonBox::rejected, this, &GeometriesBrowser::reject);
 
 	connect(m_geotree, &QTreeWidget::customContextMenuRequested,
 		this, &GeometriesBrowser::ShowGeoTreeContextMenu);
@@ -225,6 +226,9 @@ void GeometriesBrowser::GeoTreeItemChanged(QTreeWidgetItem *item, int col)
 	//std::cout << "renaming from " << oldid << " to " << newid << std::endl;
 	item->setData(col, Qt::UserRole, QString(newid.c_str()));
 	emit SignalRenameObject(oldid, newid);
+
+	// re-select item
+	m_curObject = newid;
 }
 
 
@@ -233,7 +237,7 @@ void GeometriesBrowser::GeoTreeItemChanged(QTreeWidgetItem *item, int col)
  */
 void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWidgetItem */*previtem*/)
 {
-	if(!item || !m_instrspace)
+	if(!item || !m_instrspace || !m_geosettings)
 		return;
 
 	std::string itemid = item->text(0).toStdString();
@@ -245,7 +249,10 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 	// ignore programmatic settings changes
 	m_ignoresettingschanges = true;
 	GeometriesBrowser* pThis = this;
-	BOOST_SCOPE_EXIT(pThis) { pThis->m_ignoresettingschanges = false; } BOOST_SCOPE_EXIT_END
+	BOOST_SCOPE_EXIT(pThis)
+	{
+		pThis->m_ignoresettingschanges = false;
+	} BOOST_SCOPE_EXIT_END
 
 
 	// get the geometry object properties and insert them in the table

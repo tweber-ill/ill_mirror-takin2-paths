@@ -48,6 +48,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 
 	m_checkPerspectiveProj = new QCheckBox(this);
 	m_checkPerspectiveProj->setText("Perspective Projection");
+	m_checkPerspectiveProj->setToolTip("Choose perspective or parallel projection.");
 	m_checkPerspectiveProj->setChecked(true);
 
 	for(int pos=0; pos<3; ++pos)
@@ -55,7 +56,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		m_spinPos[pos] = new QDoubleSpinBox(this);
 		m_spinPos[pos]->setMinimum(-100);
 		m_spinPos[pos]->setMaximum(+100);
-		m_spinPos[pos]->setDecimals(g_prec_gui);
+		m_spinPos[pos]->setDecimals(g_prec_gui/2);
 		m_spinPos[pos]->setSingleStep(1);
 	}
 
@@ -94,21 +95,20 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		layoutVecs->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutVecs->addWidget(new QLabel("Position x:", this), y, 0, 1, 1);
-		layoutVecs->addWidget(m_spinPos[0], y++, 1, 1, 1);
-		layoutVecs->addWidget(new QLabel("Position y:", this), y, 0, 1, 1);
-		layoutVecs->addWidget(m_spinPos[1], y++, 1, 1, 1);
-		layoutVecs->addWidget(new QLabel("Position z:", this), y, 0, 1, 1);
-		layoutVecs->addWidget(m_spinPos[2], y++, 1, 1, 1);
+		layoutVecs->addWidget(new QLabel("Position (x, y, z):", this),
+			y++, 0, 1, 6);
+		layoutVecs->addWidget(m_spinPos[0], y, 0, 1, 2);
+		layoutVecs->addWidget(m_spinPos[1], y, 2, 1, 2);
+		layoutVecs->addWidget(m_spinPos[2], y++, 4, 1, 2);
 
-		QFrame *separator = new QFrame(this);
-		separator->setFrameStyle(QFrame::HLine);
-		layoutVecs->addWidget(separator, y++, 0, 1, 2);
+		//QFrame *separator = new QFrame(this);
+		//separator->setFrameStyle(QFrame::HLine);
+		//layoutVecs->addWidget(separator, y++, 0, 1, 6);
 
-		layoutVecs->addWidget(new QLabel("Rotation φ:", this), y, 0, 1, 1);
-		layoutVecs->addWidget(m_spinRot[0], y++, 1, 1, 1);
-		layoutVecs->addWidget(new QLabel("Rotation θ:", this), y, 0, 1, 1);
-		layoutVecs->addWidget(m_spinRot[1], y++, 1, 1, 1);
+		layoutVecs->addWidget(new QLabel("Rotation (φ, θ):", this),
+			y++, 0, 1, 6);
+		layoutVecs->addWidget(m_spinRot[0], y, 0, 1, 3);
+		layoutVecs->addWidget(m_spinRot[1], y++, 3, 1, 3);
 	}
 
 	auto *grid = new QGridLayout(this);

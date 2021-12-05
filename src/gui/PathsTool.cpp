@@ -1032,10 +1032,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
-	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_coordProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
+	addDockWidget(Qt::NoDockWidgetArea, m_xtalInfos.get());
 
 	auto* taswidget = m_tasProperties->GetWidget().get();
 	auto* xtalwidget = m_xtalProperties->GetWidget().get();
@@ -1328,22 +1328,25 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 
 
-	// view menu
-	QMenu *menuView = new QMenu("View", m_menubar);
+	// window menu
+	QMenu *menuWindow = new QMenu("Window", m_menubar);
 
-	QAction *acHideAllDocks = new QAction("Hide All", menuFile);
-	QAction *acShowAllDocks = new QAction("Show All", menuFile);
+	QAction *acHideAllDocks = new QAction("Hide All Dock Widgets", menuFile);
+	QAction *acShowAllDocks = new QAction("Show All Dock Widgets", menuFile);
+	QAction *acRestoreState = new QAction("Restore Layout", menuFile);
 
-	menuView->addAction(m_tasProperties->toggleViewAction());
-	menuView->addAction(m_xtalProperties->toggleViewAction());
-	menuView->addAction(m_xtalInfos->toggleViewAction());
-	menuView->addAction(m_coordProperties->toggleViewAction());
-	menuView->addAction(m_pathProperties->toggleViewAction());
-	menuView->addAction(m_camProperties->toggleViewAction());
-	menuView->addSeparator();
-	menuView->addAction(acHideAllDocks);
-	menuView->addAction(acShowAllDocks);
-	//menuView->addAction(acPersp);
+	menuWindow->addAction(m_tasProperties->toggleViewAction());
+	menuWindow->addAction(m_xtalProperties->toggleViewAction());
+	menuWindow->addAction(m_xtalInfos->toggleViewAction());
+	menuWindow->addAction(m_coordProperties->toggleViewAction());
+	menuWindow->addAction(m_pathProperties->toggleViewAction());
+	menuWindow->addAction(m_camProperties->toggleViewAction());
+	menuWindow->addSeparator();
+	menuWindow->addAction(acHideAllDocks);
+	menuWindow->addAction(acShowAllDocks);
+	menuWindow->addSeparator();
+	menuWindow->addAction(acRestoreState);
+	//menuWindow->addAction(acPersp);
 
 	// connections
 	connect(acHideAllDocks, &QAction::triggered, [this]() -> void
@@ -1370,6 +1373,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		{
 			dock->show();
 		}
+	});
+
+	connect(acRestoreState, &QAction::triggered, [this]() -> void
+	{
+		this->restoreState(m_initial_state);
 	});
 
 
@@ -1673,11 +1681,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	// menu bar
 	m_menubar->addMenu(menuFile);
-	m_menubar->addMenu(menuView);
 	m_menubar->addMenu(menuGeo);
 	m_menubar->addMenu(menuCalc);
 	if(num_tools)
 		m_menubar->addMenu(menuTools);
+	m_menubar->addMenu(menuWindow);
 	m_menubar->addMenu(menuSettings);
 	m_menubar->addMenu(menuHelp);
 	//m_menubar->setNativeMenuBar(false);
@@ -1772,6 +1780,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 	// restore window size, position, and state
 	// --------------------------------------------------------------------
+	// save initial state
+	m_initial_state = saveState();
+
 	if(m_sett.contains("geo"))
 		restoreGeometry(m_sett.value("geo").toByteArray());
 	else

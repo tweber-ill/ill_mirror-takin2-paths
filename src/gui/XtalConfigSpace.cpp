@@ -142,7 +142,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// buttons
 	QPushButton *btnCalc = new QPushButton("Calculate", this);
 	QPushButton *btnSave = new QPushButton("Save Figure...", this);
-	QPushButton *btnClose = new QPushButton("OK", this);
+	QPushButton *btnClose = new QPushButton("Close", this);
 
 	// grid
 	auto grid = new QGridLayout(this);

@@ -70,7 +70,7 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		m_spinPlane[i]->setMaximum(999);
 		m_spinPlane[i]->setDecimals(g_prec_gui/2);
 		m_spinPlane[i]->setValue((i==0 || i==4) ? 1 : 0);
-		m_spinPlane[i]->setSuffix(" rlu");
+		//m_spinPlane[i]->setSuffix(" rlu");
 	}
 
 	for(std::size_t i=1; i<m_num_lattice_elems; ++i)
@@ -114,23 +114,29 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		layoutPlane->setVerticalSpacing(2);
 		layoutPlane->setContentsMargins(4,4,4,4);
 
-		const char* labels[] = {
-			"Vector 1, x:", "Vector 1, y:", "Vector 1, z:",
-			"Vector 2, x:", "Vector 2, y:", "Vector 2, z:"
-		};
+		const char* labels[] = { "Vector 1 (rlu):", "Vector 2 (rlu):" };
+
 		int y = 0;
 		for(std::size_t i=0; i<m_num_plane_elems; ++i)
 		{
-			layoutPlane->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
-			layoutPlane->addWidget(m_spinPlane[i], y++, 1, 1, 1);
+			if(i == 0 || i == 3)
+			{
+				layoutPlane->addWidget(
+					new QLabel(labels[i/3], this), y++, 0, 1, 3);
+			}
+
+			layoutPlane->addWidget(m_spinPlane[i], y, i%3, 1, 1);
 
 			if(i == 2)
 			{
-				QFrame *separator = new QFrame(this);
-				separator->setFrameStyle(QFrame::HLine);
-				layoutPlane->addWidget(separator, y++, 0, 1, 2);
+				//QFrame *separator = new QFrame(this);
+				//separator->setFrameStyle(QFrame::HLine);
+				//layoutPlane->addWidget(separator, y++, 0, 1, 2);
+
+				++y;
 			}
 		}
+		++y;
 	}
 
 	auto *grid = new QGridLayout(this);

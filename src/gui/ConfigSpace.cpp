@@ -201,7 +201,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// buttons
 	QPushButton *btnCalc = new QPushButton("Calculate Mesh", this);
 	QPushButton *btnSave = new QPushButton("Save Figure...", this);
-	QPushButton *btnClose = new QPushButton("OK", this);
+	QPushButton *btnClose = new QPushButton("Close", this);
 
 	// grid
 	auto grid = new QGridLayout(this);
