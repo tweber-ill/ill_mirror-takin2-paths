@@ -122,6 +122,10 @@ extern int g_automatic_screenshots;
 // camera translation scaling factor
 extern tl2::t_real_gl g_move_scale;
 
+// camera zoom scaling factors
+extern tl2::t_real_gl g_zoom_scale;
+extern tl2::t_real_gl g_wheel_zoom_scale;
+
 // camera rotation scaling factor
 extern tl2::t_real_gl g_rotation_scale;
 

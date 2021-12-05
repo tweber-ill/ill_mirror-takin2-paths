@@ -98,6 +98,8 @@ unsigned int g_timer_fps = 30;
 
 // renderer options
 tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);
+tl2::t_real_gl g_zoom_scale = 0.0025;
+tl2::t_real_gl g_wheel_zoom_scale = tl2::t_real_gl(1./64.);
 tl2::t_real_gl g_rotation_scale = tl2::t_real_gl(0.02);
 
 int g_light_follows_cursor = 0;

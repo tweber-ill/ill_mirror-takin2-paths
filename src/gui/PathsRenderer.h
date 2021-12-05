@@ -139,6 +139,8 @@ protected:
 	void UpdateViewport();
 	void UpdateShadowFramebuffer();
 
+	void ZoomCam(t_real zoom, bool update = true);
+
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);
 
@@ -157,6 +159,7 @@ private:
 	bool m_perspectiveProjection = true;
 	bool m_arrowDown[4] = { 0, 0, 0, 0 };	// l, r, u, d
 	bool m_pageDown[2] = { 0, 0 };
+	bool m_bracketDown[2] = { 0, 0 };
 
 
 protected:

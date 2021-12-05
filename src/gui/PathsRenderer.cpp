@@ -626,6 +626,8 @@ void PathsRenderer::tick()
 
 void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
+	bool update = false;
+
 	// if a key is pressed, move and update the camera
 	if(m_arrowDown[0] || m_arrowDown[1] || m_arrowDown[2] || m_arrowDown[3]
 		|| m_pageDown[0] || m_pageDown[1])
@@ -647,8 +649,23 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 		m_matCamTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
 		m_matCamTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
 
-		UpdateCam();
+		update = true;
 	}
+
+	// zoom the view
+	if(m_bracketDown[0] || m_bracketDown[1])
+	{
+		t_real zoom_dir = -1;
+		if(m_bracketDown[1])
+			zoom_dir = 1;
+
+		t_real zoom_scale = t_real_gl(ms.count()) * g_zoom_scale;
+		ZoomCam(zoom_dir * zoom_scale);
+		update = true;
+	}
+
+	if(update)
+		UpdateCam();
 }
 
 
@@ -1301,6 +1318,14 @@ void PathsRenderer::keyPressEvent(QKeyEvent *pEvt)
 			m_pageDown[1] = 1;
 			pEvt->accept();
 			break;
+		case Qt::Key_BracketLeft:
+			m_bracketDown[0] = 1;
+			pEvt->accept();
+			break;
+		case Qt::Key_BracketRight:
+			m_bracketDown[1] = 1;
+			pEvt->accept();
+			break;
 		/*case Qt::Key_S:
 			SaveShadowFramebuffer("shadow.png");
 			break;*/
@@ -1339,6 +1364,14 @@ void PathsRenderer::keyReleaseEvent(QKeyEvent *pEvt)
 		case Qt::Key_PageDown:
 		case Qt::Key_Period:
 			m_pageDown[1] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_BracketLeft:
+			m_bracketDown[0] = 0;
+			pEvt->accept();
+			break;
+		case Qt::Key_BracketRight:
+			m_bracketDown[1] = 0;
 			pEvt->accept();
 			break;
 		default:
@@ -1482,12 +1515,18 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 {
 	const t_real_gl degrees = pEvt->angleDelta().y() / 8.;
-
-	// zoom
-	m_zoom *= std::pow(2., degrees/64.);
-	UpdateCam();
+	ZoomCam(degrees * g_wheel_zoom_scale);
 
 	pEvt->accept();
+}
+
+
+void PathsRenderer::ZoomCam(t_real zoom, bool update)
+{
+	m_zoom *= std::pow(2., zoom);
+
+	if(update)
+		UpdateCam();
 }
 
 
