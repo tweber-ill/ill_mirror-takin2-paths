@@ -1140,9 +1140,9 @@ bool HullWnd::SaveFile(const QString& file)
 	}
 
 	ptree::ptree prop{};
-	prop.put("lines2d.ident", "takin_taspaths_hull");
-	prop.put("lines2d.doi", "https://doi.org/10.5281/zenodo.4625649");
-	prop.put("lines2d.timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
+	prop.put("voro2d.ident", "takin_taspaths_hull");
+	prop.put("voro2d.doi", "https://doi.org/10.5281/zenodo.4625649");
+	prop.put("voro2d.timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
 
 	std::size_t vertidx = 0;
 	for(const Vertex* vertex : m_scene->GetVertices())
