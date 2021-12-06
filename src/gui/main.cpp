@@ -25,6 +25,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QFileOpenEvent>
 #include <QtWidgets/QApplication>
 
 #include "PathsTool.h"
@@ -34,7 +35,110 @@
 
 
 /**
- * main
+ * main application
+ */
+class PathsApp : public QApplication
+{
+public:
+	/**
+	 * constructor getting command-line arguments
+	 */
+	explicit PathsApp(int& argc, char **argv) : QApplication{argc, argv}
+	{
+		// application settings
+		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
+		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
+		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
+
+		setOrganizationName("tw");
+		setApplicationName("taspaths");
+		//setApplicationDisplayName(TASPATHS_TITLE);
+		setApplicationVersion(TASPATHS_VERSION);
+
+		// application path
+		g_apppath = applicationDirPath().toStdString();
+		addLibraryPath(applicationDirPath() + QDir::separator() + ".." +
+			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
+#ifdef DEBUG
+		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
+#endif
+	}
+
+
+	/**
+	 * no default constructor
+	 */
+	PathsApp() = delete;
+
+
+	/**
+	 * default destructor
+	 */
+	virtual ~PathsApp() = default;
+
+
+	/**
+	 * get the initial file to be loaded
+	 */
+	const QString& GetInitialFile() const
+	{
+		return m_init_file;
+	}
+
+
+	/**
+	 * associate a main window with the application
+	 */
+	void SetMainWnd(const std::shared_ptr<PathsTool>& paths)
+	{
+		m_paths = paths;
+	}
+
+
+protected:
+	/**
+	 * receive file open events
+	 * @see https://doc.qt.io/qt-5/qfileopenevent.html
+	 */
+	virtual bool event(QEvent *evt) override
+	{
+		if(!evt)
+			return false;
+
+		switch(evt->type())
+		{
+			// open a file
+			case QEvent::FileOpen:
+			{
+				m_init_file = static_cast<QFileOpenEvent*>(evt)->file();
+
+				// if the main window is ready, directly open it
+				if(m_paths)
+					m_paths->OpenFile(m_init_file);
+				break;
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+
+		return QApplication::event(evt);
+	}
+
+
+private:
+	// file requested to open
+	QString m_init_file{};
+
+	// main application window
+	std::shared_ptr<PathsTool> m_paths{};
+};
+
+
+/**
+ * main entry point
  */
 int main(int argc, char** argv)
 {
@@ -71,6 +175,7 @@ int main(int argc, char** argv)
 					<< "function " << get_str(ctx.function) << ", "
 					<< "line " << ctx.line;
 			}
+
 			std::cerr << ": " << log.toStdString() << std::endl;
 		});
 
@@ -81,25 +186,10 @@ int main(int argc, char** argv)
 		// set maximum number of threads
 		g_maxnum_threads = std::max<unsigned int>(1, std::thread::hardware_concurrency()/2);
 
-		// application settings
-		//QApplication::setAttribute(Qt::AA_NativeWindows, true);
-		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
-		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
-
 		// create application
-		auto app = std::make_unique<QApplication>(argc, argv);
-		app->setOrganizationName("tw");
-		app->setApplicationName("taspaths");
-		//app->setApplicationDisplayName(TASPATHS_TITLE);
-		app->setApplicationVersion(TASPATHS_VERSION);
+		auto app = std::make_unique<PathsApp>(argc, argv);
 
-		// application path
-		g_apppath = app->applicationDirPath().toStdString();
-		app->addLibraryPath(app->applicationDirPath() + QDir::separator() + ".." +
-			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
-		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
-
-		// resource paths
+		// set up resource paths
 		fs::path apppath = g_apppath;
 		g_res.AddPath((apppath / "res").string());
 		g_res.AddPath((apppath / ".." / "res").string());
@@ -111,6 +201,7 @@ int main(int argc, char** argv)
 		g_res.AddPath(fs::path("/usr/share/taspaths/res").string());
 		g_res.AddPath(fs::path("/usr/local/share/taspaths").string());
 		g_res.AddPath(fs::path("/usr/share/taspaths").string());
+		g_res.AddPath(fs::current_path().string());
 
 		// make type definitions known as qt meta objects
 		qRegisterMetaType<t_real>("t_real");
@@ -120,9 +211,13 @@ int main(int argc, char** argv)
 		qRegisterMetaType<CalculationState>("CalculationState");
 
 		// create main window
-		auto mainwnd = std::make_unique<PathsTool>(nullptr);
+		auto mainwnd = std::make_shared<PathsTool>(nullptr);
+
+		// the main window is not yet ready, indirectly open a given file
 		if(argc > 1)
 			mainwnd->SetInitialInstrumentFile(argv[1]);
+		else if(const QString& init_file = app->GetInitialFile(); init_file!="")
+			mainwnd->SetInitialInstrumentFile(init_file.toStdString());
 
 		// sequence to show the window,
 		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
@@ -131,6 +226,7 @@ int main(int argc, char** argv)
 		mainwnd->activateWindow();
 
 		// run application
+		app->SetMainWnd(mainwnd);
 		return app->exec();
 	}
 	catch(const std::exception& ex)

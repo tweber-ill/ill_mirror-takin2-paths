@@ -80,7 +80,7 @@ public:
 	virtual ~PathsRenderer();
 
 	void Clear();
-	void LoadInstrument(const InstrumentSpace& instr);
+	bool LoadInstrument(const InstrumentSpace& instr);
 	void AddWall(const Geometry& geo, bool update_scene=true);
 
 	// receivers for instrument (space) update signals

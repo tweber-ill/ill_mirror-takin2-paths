@@ -45,6 +45,7 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/helper.h"
+#include "tlibs2/libs/log.h"
 
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
@@ -167,7 +168,7 @@ void PathsTool::OpenFile()
 {
 	QString dirLast = m_sett.value("cur_dir", "").toString();
 
-	QFileDialog filedlg(this, "Open File", dirLast,
+	QFileDialog filedlg(this, "Open Instrument File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
 	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
 	filedlg.setDefaultSuffix("taspaths");
@@ -204,7 +205,7 @@ void PathsTool::SaveFileAs()
 {
 	QString dirLast = m_sett.value("cur_dir", "").toString();
 
-	QFileDialog filedlg(this, "Open File", dirLast,
+	QFileDialog filedlg(this, "Save Instrument File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("taspaths");
@@ -308,8 +309,12 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 /**
  * load file
  */
-bool PathsTool::OpenFile(const QString &file)
+bool PathsTool::OpenFile(const QString& file)
 {
+	// no file given
+	if(file == "")
+		return false;
+
 	try
 	{
 		NewFile();
@@ -496,6 +501,7 @@ bool PathsTool::SaveFile(const QString &file)
 
 	// set format and version
 	prop.put(FILE_BASENAME "ident", PROG_IDENT);
+	prop.put(FILE_BASENAME "doi", "https://doi.org/10.5281/zenodo.4625649");
 	prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
 
 	std::string filename = file.toStdString();
@@ -1044,7 +1050,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	addDockWidget(Qt::RightDockWidgetArea, m_coordProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
-	//addDockWidget(Qt::NoDockWidgetArea, m_xtalInfos.get());
+	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());
+	m_xtalInfos->hide();
 
 	auto* taswidget = m_tasProperties->GetWidget().get();
 	auto* xtalwidget = m_xtalProperties->GetWidget().get();

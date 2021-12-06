@@ -49,6 +49,7 @@ namespace ptree = boost::property_tree;
 
 #include "settings_variables.h"
 #include "tlibs2/libs/helper.h"
+#include "tlibs2/libs/log.h"
 
 
 // ----------------------------------------------------------------------------
@@ -760,6 +761,9 @@ bool PolyWnd::SaveFile(const QString& file)
 	}
 
 	ptree::ptree prop{};
+	prop.put("lines2d.ident", "takin_taspaths_poly");
+	prop.put("lines2d.doi", "https://doi.org/10.5281/zenodo.4625649");
+	prop.put("lines2d.timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
 
 	std::size_t vertidx = 0;
 	for(const Vertex* vertex : m_view->GetVertexElems())

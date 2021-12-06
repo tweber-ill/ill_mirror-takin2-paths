@@ -160,6 +160,12 @@ public:
 
 	void SetInitialInstrumentFile(const std::string& file);
 
+	// load file
+	bool OpenFile(const QString &file);
+
+	// save file
+	bool SaveFile(const QString &file);
+
 
 protected:
 	// events
@@ -171,12 +177,6 @@ protected:
 
 	// File -> Export Path
 	bool ExportPath(PathsExporterFormat fmt);
-
-	// load file
-	bool OpenFile(const QString &file);
-
-	// save file
-	bool SaveFile(const QString &file);
 
 	// save a screenshot of the instrument 3d view
 	bool SaveScreenshot(const QString& file);

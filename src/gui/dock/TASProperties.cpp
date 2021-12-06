@@ -57,9 +57,9 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_checkScatteringSense[1] = new QCheckBox(this);
 	m_checkScatteringSense[2] = new QCheckBox(this);
 
-	m_checkScatteringSense[0]->setText("Monochromator ccw");
-	m_checkScatteringSense[1]->setText("Sample ccw");
-	m_checkScatteringSense[2]->setText("Analyser ccw");
+	m_checkScatteringSense[0]->setText("Mono.");
+	m_checkScatteringSense[1]->setText("Sample");
+	m_checkScatteringSense[2]->setText("Analyser");
 	m_checkScatteringSense[0]->setToolTip("Move the monochromator scattering angle in the counterclockwise direction.");
 	m_checkScatteringSense[1]->setToolTip("Move the sample scattering angle in the counterclockwise direction.");
 	m_checkScatteringSense[2]->setToolTip("Move the analyser scattering angle in the counterclockwise direction.");
@@ -151,10 +151,11 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		layoutScatter->setVerticalSpacing(2);
 		layoutScatter->setContentsMargins(4,4,4,4);
 
+		int x = 0;
 		int y = 0;
-		layoutScatter->addWidget(m_checkScatteringSense[0], y++, 0, 1, 2);
-		layoutScatter->addWidget(m_checkScatteringSense[1], y++, 0, 1, 2);
-		layoutScatter->addWidget(m_checkScatteringSense[2], y++, 0, 1, 2);
+		for(int comp=0; comp<3; ++comp)
+			layoutScatter->addWidget(
+				m_checkScatteringSense[comp], y, x++, 1, 1);
 	}
 
 	/*auto *groupOptions = new QGroupBox("Options", this);

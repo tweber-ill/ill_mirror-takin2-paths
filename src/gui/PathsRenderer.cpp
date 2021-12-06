@@ -118,8 +118,11 @@ void PathsRenderer::Clear()
 /**
  * create a 3d representation of the instrument and walls
  */
-void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
+bool PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 {
+	if(!m_initialised)
+		return false;
+
 	Clear();
 
 	// upper and lower floor plane
@@ -172,6 +175,7 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	}
 
 	update();
+	return true;
 }
 
 
@@ -180,6 +184,9 @@ void PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
  */
 void PathsRenderer::AddWall(const Geometry& wall, bool update_scene)
 {
+	if(!m_initialised)
+		return;
+
 	auto [_verts, _norms, _uvs] = wall.GetTriangles();
 
 	auto verts = tl2::convert<t_vec3_gl>(_verts);
@@ -204,6 +211,9 @@ void PathsRenderer::AddWall(const Geometry& wall, bool update_scene)
  */
 void PathsRenderer::UpdateInstrumentSpace(const InstrumentSpace& instr)
 {
+	if(!m_initialised)
+		return;
+
 	// update wall matrices
 	for(const auto& wall : instr.GetWalls())
 	{
@@ -219,6 +229,9 @@ void PathsRenderer::UpdateInstrumentSpace(const InstrumentSpace& instr)
  */
 void PathsRenderer::UpdateInstrument(const Instrument& instr)
 {
+	if(!m_initialised)
+		return;
+
 	// instrument axes
 	const auto& mono = instr.GetMonochromator();
 	const auto& sample = instr.GetSample();
