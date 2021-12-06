@@ -104,7 +104,9 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_plot->xAxis->setLabel("2θ_S (deg)");
 	m_plot->yAxis->setLabel("2θ_M (deg)");
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+#if QCUSTOMPLOT_VERSION >= 0x020100
 	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
+#endif
 
 	// wall contours
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);

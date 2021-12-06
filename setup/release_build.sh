@@ -32,6 +32,42 @@ USE_LAPACK=False
 USE_QT6=False
 USE_CGAL=True
 USE_OVD=False
+BUILD_EXTERNALS=1
+
+#export CXX=clang++-10
+#export CXX=g++-10
+
+
+if [ $BUILD_EXTERNALS -ne 0 ]; then
+	echo -e "--------------------------------------------------------------------------------"
+	echo -e "Building external libraries..."
+	echo -e "--------------------------------------------------------------------------------"
+
+	cp -v CMakeLists_externals.txt externals/CMakeLists.txt
+
+	rm -rfv externals/build
+	mkdir externals/build
+	pushd externals/build
+
+	if ! ${cmake_tool} -DUSE_QT6=${USE_QT6} \
+		-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" \
+		-DCMAKE_VERBOSE_MAKEFILE=False ..
+	then
+		echo -e "cmake failed (external libraries)."
+		exit -1
+	fi
+
+	if ! ${cmake_tool} --build . --parallel 4; then
+		echo -e "make failed (external libraries)."
+		exit -1
+	fi
+
+	strip -v libqcustomplot_local.*
+	cp -v libqcustomplot_local.* ../qcustomplot/
+
+	popd
+	echo -e "--------------------------------------------------------------------------------"
+fi
 
 
 echo -e "--------------------------------------------------------------------------------"
@@ -42,12 +78,10 @@ doxygen setup/dev_doc
 echo -e "--------------------------------------------------------------------------------"
 
 
-echo -e "--------------------------------------------------------------------------------"
-echo -e "Building..."
-echo -e "--------------------------------------------------------------------------------"
 
-#export CXX=clang++-10
-#export CXX=g++-10
+echo -e "--------------------------------------------------------------------------------"
+echo -e "Building TAS-Paths..."
+echo -e "--------------------------------------------------------------------------------"
 
 rm -rfv build
 mkdir build
@@ -73,7 +107,10 @@ strip -v taspaths
 strip -v taspaths-lines
 strip -v taspaths-hull
 strip -v taspaths-poly
-strip -v libqcustomplot_local.so
+
+if [ $BUILD_EXTERNALS -ne 0 ]; then
+	cp -v ../externals/qcustomplot/libqcustomplot_local.* .
+fi
 
 popd
 echo -e "--------------------------------------------------------------------------------"

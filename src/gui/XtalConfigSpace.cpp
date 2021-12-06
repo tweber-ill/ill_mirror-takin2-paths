@@ -71,7 +71,9 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_plot->xAxis->setLabel("x * Orientation Vector 1");
 	m_plot->yAxis->setLabel("y * Orientation Vector 2");
 	m_plot->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+#if QCUSTOMPLOT_VERSION >= 0x020100
 	m_plot->setInteraction(QCP::iSelectPlottablesBeyondAxisRect, false);
+#endif
 
 	// wall contours
 	m_colourMap = new QCPColorMap(m_plot->xAxis, m_plot->yAxis);

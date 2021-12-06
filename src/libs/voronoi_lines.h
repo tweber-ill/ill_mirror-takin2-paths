@@ -1103,9 +1103,9 @@ template<class t_vec,
 	class t_int = int>
 VoronoiLinesResults<t_vec, t_line, t_graph>
 calc_voro_ovd(const std::vector<t_line>& lines,
-	typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
-	typename t_vec::value_type para_edge_eps = 1e-2,
-	const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
+	[[maybe_unused]] typename t_vec::value_type eps = std::sqrt(std::numeric_limits<typename t_vec::value_type>::epsilon()),
+	[[maybe_unused]] typename t_vec::value_type para_edge_eps = 1e-2,
+	[[maybe_unused]] const VoronoiLinesRegions<t_vec, t_line>* regions = nullptr)
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	using t_real = typename t_vec::value_type;

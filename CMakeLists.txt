@@ -1,4 +1,5 @@
 #
+# TAS-Paths main cmake file
 # @author Tobias Weber <tweber@ill.fr>
 # @date feb-2021
 # @license GPLv3, see 'LICENSE' file
@@ -152,6 +153,12 @@ if(Qhull_FOUND)
 endif()
 
 
+find_package(QCP)
+if(QCP_FOUND)
+	include_directories("${QCP_INCLUDE_DIRS}")
+endif()
+
+
 if(USE_OVD)
 	find_package(OVD)
 	if(OVD_FOUND)
@@ -232,21 +239,11 @@ set(CMAKE_AUTOMOC TRUE)
 # more compiler settings
 # -----------------------------------------------------------------------------
 add_compile_options(${Boost_CXX_FLAGS})
-#add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	# disable some warnings for generated source files
-	set_source_files_properties("${PROJECT_BINARY_DIR}/qcustomplot_local_autogen/mocs_compilation.cpp"
-		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
 	set_source_files_properties("${PROJECT_BINARY_DIR}/taspaths_autogen/mocs_compilation.cpp"
 		PROPERTIES COMPILE_FLAGS "-Wno-effc++")
-
-	# disable warnings for external source files
-	set_source_files_properties("${PROJECT_SOURCE_DIR}/externals/qcustomplot/qcustomplot.cpp"
-		PROPERTIES COMPILE_FLAGS "-Wno-effc++ \
-			-Wno-implicit-fallthrough \
-			-Wno-deprecated-enum-enum-conversion \
-			-Wno-misleading-indentation")
 endif()
 # -----------------------------------------------------------------------------
 
@@ -281,29 +278,6 @@ target_link_libraries(taspaths_core
 	"${CGAL_LIBRARIES}"
 	Threads::Threads
 )
-
-
-# make a 3rd party qcustomplot library
-add_library(qcustomplot_local SHARED
-	externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
-)
-
-set_property(TARGET qcustomplot_local
-	PROPERTY POSITION_INDEPENDENT_CODE True)
-
-if(QT_VER EQUAL 6)
-	target_link_libraries(qcustomplot_local
-		Qt6::Core Qt6::Gui Qt6::Widgets
-		#Qt6::OpenGL Qt6::OpenGLWidgets
-		Qt6::PrintSupport
-	)
-elseif(QT_VER EQUAL 5)
-	target_link_libraries(qcustomplot_local
-		Qt5::Core Qt5::Gui Qt5::Widgets
-		#Qt5::OpenGL
-		Qt5::PrintSupport
-	)
-endif()
 # -----------------------------------------------------------------------------
 
 
@@ -404,7 +378,7 @@ if(QT_VER EQUAL 6)
 		Qt6::Core Qt6::Gui Qt6::Widgets
 		Qt6::OpenGL Qt6::OpenGLWidgets
 		Qt6::PrintSupport
-		qcustomplot_local
+		"${QCP_LIBRARIES}"
 	)
 
 
@@ -461,7 +435,7 @@ elseif(QT_VER EQUAL 5)
 		Threads::Threads
 		Qt5::Core Qt5::Gui Qt5::Widgets
 		Qt5::OpenGL Qt5::PrintSupport
-		qcustomplot_local
+		"${QCP_LIBRARIES}"
 	)
 
 

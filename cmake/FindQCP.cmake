@@ -1,7 +1,7 @@
 #
-# finds the openvoronoi libs
+# finds the qcustomplot libs
 # @author Tobias Weber <tweber@ill.fr>
-# @date 10-jun-2021
+# @date 16-sep-2020
 # @license GPLv3
 #
 # -----------------------------------------------------------------------------
@@ -23,29 +23,29 @@
 # -----------------------------------------------------------------------------
 #
 
-find_path(OVD_INCLUDE_DIRS
-	NAMES voronoidiagram.hpp
-	PATH_SUFFIXES openvoronoi
-	HINTS /usr/local/include/ /usr/include/ /opt/local/include
-	DOC "OVD include directories"
+find_path(QCP_INCLUDE_DIRS
+	NAMES qcustomplot.h
+	HINTS ./externals/qcustomplot /usr/include/ /usr/local/include/
+		/opt/local/include
+	DOC "QCP include directories"
 )
 
 
-find_library(OVD_LIBRARIES
-	NAMES openvoronoi
-	PATH_SUFFIXES openvoronoi
-	HINTS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /opt/local/lib
-	DOC "OVD library"
+find_library(QCP_LIBRARIES
+	NAMES qcustomplot_local qcustomplot
+	HINTS ./externals/qcustomplot /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
+		 /usr/local/lib64 /usr/local/lib /opt/local/lib
+	DOC "QCP library"
 )
 
 
-if(OVD_INCLUDE_DIRS AND OVD_LIBRARIES)
-	set(OVD_FOUND TRUE)
+if(QCP_INCLUDE_DIRS AND QCP_LIBRARIES)
+	set(QCP_FOUND TRUE)
 
-	message("OVD include directories: ${OVD_INCLUDE_DIRS}")
-	message("OVD library: ${OVD_LIBRARIES}")
+	message("QCP include directories: ${QCP_INCLUDE_DIRS}")
+	message("QCP libraries: ${QCP_LIBRARIES}")
 else()
-	set(OVD_FOUND FALSE)
+	set(QCP_FOUND FALSE)
 
-	message("Error: OVD could not be found!")
+	message("Error: QCP could not be found!")
 endif()

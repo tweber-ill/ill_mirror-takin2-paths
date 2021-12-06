@@ -30,7 +30,13 @@
 // see: https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Weffc++"
+#if __has_include("qcustomplot/qcustomplot.h")
 	#include "qcustomplot/qcustomplot.h"
+#elif __has_include("qcustomplot.h")
+	#include "qcustomplot.h"
+#else
+	#error "QCustomplot header was not found."
+#endif
 #pragma GCC diagnostic pop
 
 #endif
