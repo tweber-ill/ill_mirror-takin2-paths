@@ -165,7 +165,7 @@ void PathsTool::NewFile()
  */
 void PathsTool::OpenFile()
 {
-	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	QString dirLast = m_sett.value("cur_dir", "").toString();
 
 	QFileDialog filedlg(this, "Open File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
@@ -202,7 +202,7 @@ void PathsTool::SaveFile()
  */
 void PathsTool::SaveFileAs()
 {
-	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	QString dirLast = m_sett.value("cur_dir", "").toString();
 
 	QFileDialog filedlg(this, "Open File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
@@ -227,7 +227,7 @@ void PathsTool::SaveFileAs()
  */
 void PathsTool::SaveScreenshot()
 {
-	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	QString dirLast = m_sett.value("cur_dir", "").toString();
 
 	QFileDialog filedlg(this, "Save Screenshot", dirLast,
 		"PNG Images (*.png);;JPEG Images (*.jpg)");
@@ -260,7 +260,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 {
 	std::shared_ptr<PathsExporterBase> exporter;
 
-	QString dirLast = m_sett.value("cur_dir", "~/").toString();
+	QString dirLast = m_sett.value("cur_dir", "").toString();
 
 	QFileDialog filedlg(this, "Export Path", dirLast,
 		"Text Files (*.txt)");
@@ -498,15 +498,18 @@ bool PathsTool::SaveFile(const QString &file)
 	prop.put(FILE_BASENAME "ident", PROG_IDENT);
 	prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
 
-	std::ofstream ofstr{file.toStdString()};
+	std::string filename = file.toStdString();
+	std::ofstream ofstr{filename};
+	ofstr.precision(g_prec);
 	if(!ofstr)
 	{
-		QMessageBox::critical(this, "Error", "Could not save file.");
+		QMessageBox::critical(this, "Error",
+			("Could not save instrument file \"" + filename + "\".").c_str());
 		return false;
 	}
 
-	ofstr.precision(g_prec);
-	pt::write_xml(ofstr, prop, pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
+	pt::write_xml(ofstr, prop, 
+		pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
 
 	SetCurrentFile(file);
 	m_recent.AddRecentFile(file);
@@ -789,7 +792,13 @@ void PathsTool::AfterGLInitialisation()
 	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
 	{
 		if(OpenFile(instrfile.c_str()))
+		{
+			// don't consider the initial instrument configuration as current file
+			if(!m_initialInstrFileModified)
+				SetCurrentFile("");
+
 			m_renderer->LoadInstrument(m_instrspace);
+		}
 	}
 }
 
@@ -1842,6 +1851,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// --------------------------------------------------------------------
 
 	setAcceptDrops(true);
+}
+
+
+/**
+ * set the instrument file to be initially loaded
+ */
+void PathsTool::SetInitialInstrumentFile(const std::string& file)
+{
+	m_initialInstrFile = file;
+	m_initialInstrFileModified = true;
 }
 
 

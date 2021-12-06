@@ -114,6 +114,7 @@ private:
 	std::shared_ptr<CamPropertiesDockWidget> m_camProperties{};
 
 	std::string m_initialInstrFile = "instrument.taspaths";
+	bool m_initialInstrFileModified = false;
 
 	// recently opened files
 	RecentFiles m_recent{};
@@ -157,8 +158,7 @@ public:
 	PathsTool(const PathsTool&) = delete;
 	const PathsTool& operator=(const PathsTool&) = delete;
 
-	void SetInitialInstrumentFile(const std::string& file)
-	{ m_initialInstrFile = file;  }
+	void SetInitialInstrumentFile(const std::string& file);
 
 
 protected:
