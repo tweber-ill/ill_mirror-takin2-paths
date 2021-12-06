@@ -27,5 +27,16 @@
 
     <key>LSMinimumSystemVersion</key>               <string>11.0</string>
     <key>LSApplicationCategoryType</key>            <string>public.app-category.education</string>
+
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeExtensions</key>           <array> <string>taspaths</string> </array>
+        <key>CFBundleTypeName</key>                 <string>TAS-Paths File</string>
+        <key>CFBundleTypeRole</key>                 <string>Editor</string>
+		<key>CFBundleTypeIconFile</key>	            <string>taspaths.icns</string>
+		<key>LSHandlerRank</key>                    <string>Owner</string>
+      </dict>
+    </array>
   </dict>
 </plist>
