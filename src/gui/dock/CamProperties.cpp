@@ -43,6 +43,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinViewingAngle = new QDoubleSpinBox(this);
 	m_spinViewingAngle->setMinimum(1);
 	m_spinViewingAngle->setMaximum(179);
+	m_spinViewingAngle->setDecimals(g_prec_gui);
 	m_spinViewingAngle->setSingleStep(1);
 	m_spinViewingAngle->setSuffix("°");
 	m_spinViewingAngle->setToolTip("Camera field of view in units of [deg].");
