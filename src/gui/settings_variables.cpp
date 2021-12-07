@@ -35,8 +35,9 @@
 // resource manager
 Resources g_res{};
 
-// application path
+// application binary and home directory path
 std::string g_apppath = ".";
+std::string g_homepath = "~/";
 
 
 // maximum number of threads

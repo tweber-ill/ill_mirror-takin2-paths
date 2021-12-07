@@ -55,8 +55,11 @@ public:
 		//setApplicationDisplayName(TASPATHS_TITLE);
 		setApplicationVersion(TASPATHS_VERSION);
 
-		// application path
+		// paths
 		g_apppath = applicationDirPath().toStdString();
+		g_homepath = QDir::homePath().toStdString();
+
+		// qt plugin libraries
 		addLibraryPath(applicationDirPath() + QDir::separator() + ".." +
 			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 #ifdef DEBUG

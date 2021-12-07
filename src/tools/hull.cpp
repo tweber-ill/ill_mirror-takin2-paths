@@ -33,6 +33,7 @@
 #else
 	#include <QtWidgets/QActionGroup>
 #endif
+#include <QtCore/QDir>
 #include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMenuBar>
@@ -673,7 +674,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(
 			this, "Export SVG", dirLast,
@@ -1116,7 +1117,7 @@ bool HullWnd::OpenFile(const QString& file)
  */
 void HullWnd::OpenFile()
 {
-	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getOpenFileName(this,
 		"Open Data", dirLast,
@@ -1186,7 +1187,7 @@ void HullWnd::SaveFile()
  */
 void HullWnd::SaveFileAs()
 {
-	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
 		"Save Data", dirLast,

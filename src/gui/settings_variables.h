@@ -46,8 +46,9 @@
 // resource manager
 extern Resources g_res;
 
-// application binary path
+// application binary and home directory path
 extern std::string g_apppath;
+extern std::string g_homepath;
 
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;

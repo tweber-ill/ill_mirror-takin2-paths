@@ -28,13 +28,14 @@
 
 #include "poly.h"
 
+#include <QtCore/QDir>
+#include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
-#include <QtGui/QMouseEvent>
 #include <QtSvg/QSvgGenerator>
 
 #include <locale>
@@ -442,7 +443,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", "~/").toString();
+		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
 			"Export SVG", dirLast,
@@ -737,7 +738,7 @@ bool PolyWnd::OpenFile(const QString& file)
  */
 void PolyWnd::OpenFile()
 {
-	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getOpenFileName(this,
 		"Load Data", dirLast,
@@ -807,7 +808,7 @@ void PolyWnd::SaveFile()
  */
 void PolyWnd::SaveFileAs()
 {
-	QString dirLast = m_sett.value("recent_dir", "~/").toString();
+	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
 		"Save Data", dirLast,

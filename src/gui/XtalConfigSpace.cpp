@@ -207,7 +207,7 @@ XtalConfigSpaceDlg::XtalConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// export figure as pdf file
 	auto savePDF = [this]()
 	{
-		QString dirLast = this->m_sett->value("xtalconfigspace/cur_dir", "~/").toString();
+		QString dirLast = this->m_sett->value("xtalconfigspace/cur_dir", g_homepath.c_str()).toString();
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save PDF Figure", dirLast, "PDF Files (*.pdf)");
 		if(filename=="")

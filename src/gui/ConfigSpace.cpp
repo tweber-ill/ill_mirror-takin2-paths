@@ -403,7 +403,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_pathsbuilder)
 			return;
 
-		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+		QString dirLast = this->m_sett->value("configspace/cur_dir", g_homepath.c_str()).toString();
 
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save Line Segments", dirLast, "XML Files (*.xml)");
@@ -419,7 +419,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// export figure as pdf file
 	auto savePDF = [this]()
 	{
-		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+		QString dirLast = this->m_sett->value("configspace/cur_dir", g_homepath.c_str()).toString();
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save PDF Figure", dirLast, "PDF Files (*.pdf)");
 		if(filename=="")
@@ -436,7 +436,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 		if(!this->m_pathsbuilder)
 			return;
 
-		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+		QString dirLast = this->m_sett->value("configspace/cur_dir", g_homepath.c_str()).toString();
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Save DOT Graph", dirLast, "DOT Files (*.dot)");
 		if(filename=="")
@@ -456,7 +456,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	{
 		std::shared_ptr<PathsExporterBase> exporter;
 
-		QString dirLast = this->m_sett->value("configspace/cur_dir", "~/").toString();
+		QString dirLast = this->m_sett->value("configspace/cur_dir", g_homepath.c_str()).toString();
 		QString filename = QFileDialog::getSaveFileName(
 			this, "Export Path", dirLast, "Text Files (*.txt)");
 		if(filename=="")
