@@ -449,11 +449,15 @@ bool PathsTool::OpenFile(const QString& file)
 				SetInstrumentStatus(Qrlu, E,
 					in_angular_limits, colliding);
 
-				// if the analyser or monochromator angle changes, the mesh also needs to be updated
-				if(kf_fixed && !tl2::equals<t_real>(oldA6, anaScAngle, g_eps))
+				// if the analyser or monochromator angle changes, the mesh also needs to be updated.
+				// need to use gui epsilon here, because oldA6 and oldA2 come from double spin boxes with that precision
+				if(kf_fixed && !tl2::equals<t_real>(oldA6, anaScAngle, g_eps_gui))
 					ValidatePathMesh(false);
-				if(!kf_fixed && !tl2::equals<t_real>(oldA2, monoScAngle, g_eps))
+				if(!kf_fixed && !tl2::equals<t_real>(oldA2, monoScAngle, g_eps_gui))
 					ValidatePathMesh(false);
+
+				if(m_autocalcpath)
+					CalculatePath();
 
 				if(this->m_dlgConfigSpace)
 				{
@@ -683,6 +687,9 @@ void PathsTool::GotoCoordinates(
 			angles.anaXtalAngle);
 
 		m_tascalc.SetKfix(kf);
+
+		//if(m_autocalcpath)
+		//	CalculatePath();
 	}
 }
 
@@ -763,6 +770,9 @@ void PathsTool::GotoAngles(std::optional<t_real> a1,
 			instr.GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
 			instr.GetAnalyser().SetAxisAngleInternal(*a5);
 		}
+
+		//if(m_autocalcpath)
+		//	CalculatePath();
 	}
 }
 
@@ -1240,6 +1250,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(this->m_dlgConfigSpace)
 			{
 				this->m_dlgConfigSpace->UpdateTarget(a2, a4, sensesCCW);
+			}
+			else
+			{
+				if(m_autocalcpath)
+					CalculatePath();
 			}
 		});
 
@@ -2204,7 +2219,7 @@ void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
 /**
  * calculate the mesh of possible paths
  */
-void PathsTool::CalculatePathMesh()
+bool PathsTool::CalculatePathMesh()
 {
 	m_stop_requested = false;
 	m_pathsbuilder.StartPathMeshWorkflow();
@@ -2213,7 +2228,7 @@ void PathsTool::CalculatePathMesh()
 	ValidatePathMesh(false);
 
 	// start calculation in a background thread
-	m_futCalc = std::async(std::launch::async, [this]()
+	m_futCalc = std::async(std::launch::async, [this]() -> bool
 	{
 		// check if a stop has been requested
 		#define CHECK_STOP \
@@ -2221,7 +2236,7 @@ void PathsTool::CalculatePathMesh()
 			{ \
 				SetTmpStatus("Calculation aborted."); \
 				m_pathsbuilder.FinishPathMeshWorkflow(false); \
-				return; \
+				return false; \
 			}
 
 		const Instrument& instr = m_instrspace.GetInstrument();
@@ -2251,7 +2266,7 @@ void PathsTool::CalculatePathMesh()
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Configuration space calculation failed.");
-			return;
+			return false;
 		}
 
 		CHECK_STOP
@@ -2261,7 +2276,7 @@ void PathsTool::CalculatePathMesh()
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Wall positions index tree calculation failed.");
-			return;
+			return false;
 		}
 
 		CHECK_STOP
@@ -2271,7 +2286,7 @@ void PathsTool::CalculatePathMesh()
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Obstacle contour lines calculation failed.");
-			return;
+			return false;
 		}
 
 		CHECK_STOP
@@ -2281,7 +2296,7 @@ void PathsTool::CalculatePathMesh()
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Line segment calculation failed.");
-			return;
+			return false;
 		}
 
 		CHECK_STOP
@@ -2297,7 +2312,7 @@ void PathsTool::CalculatePathMesh()
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Voronoi regions calculation failed.");
-			return;
+			return false;
 		}
 
 		CHECK_STOP
@@ -2307,20 +2322,31 @@ void PathsTool::CalculatePathMesh()
 		m_pathsbuilder.FinishPathMeshWorkflow(true);
 
 		SetTmpStatus("Path mesh calculated.");
+
+		// also directly calculate a path if possible
+		bool ok = true;
+		if(m_autocalcpath)
+			ok = CalculatePath();
+		return ok;
 	});
 
 	// block till the calculations are finished
-	//m_futCalc.get();
+	bool ok = true;
+	//ok = m_futCalc.get();
+	return ok;
 }
 
 
 /**
  * calculate the path from the current to the target position
  */
-void PathsTool::CalculatePath()
+bool PathsTool::CalculatePath()
 {
 	m_stop_requested = false;
 	m_pathvertices.clear();
+
+	if(!m_pathmeshvalid)
+		return false;
 
 	// get the scattering angles
 	const Instrument& instr = m_instrspace.GetInstrument();
@@ -2355,9 +2381,9 @@ void PathsTool::CalculatePath()
 
 	if(!path.ok)
 	{
-		QMessageBox::critical(this, "Error", "No path could be found.");
+		//QMessageBox::critical(this, "Error", "No path could be found.");
 		SetTmpStatus("Error: No path could be found.");
-		return;
+		return false;
 	}
 
 	// get the vertices on the path
@@ -2365,9 +2391,9 @@ void PathsTool::CalculatePath()
 	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
 	if(!m_pathvertices.size())
 	{
-		QMessageBox::critical(this, "Error", "No valid path could be found.");
+		//QMessageBox::critical(this, "Error", "No valid path could be found.");
 		SetTmpStatus("Error: No valid path could be found.");
-		return;
+		return false;
 	}
 
 	emit PathAvailable(m_pathvertices.size());
@@ -2387,6 +2413,7 @@ void PathsTool::CalculatePath()
 	ostrMsg << ".";
 
 	SetTmpStatus(ostrMsg.str());
+	return true;
 }
 
 
@@ -2396,10 +2423,12 @@ void PathsTool::CalculatePath()
 void PathsTool::TrackPath(std::size_t idx)
 {
 	// block path recalculation during tracking
+	m_autocalcpath = false;
 	if(m_dlgConfigSpace)
 		m_dlgConfigSpace->SetBlockCalc(true);
-	BOOST_SCOPE_EXIT(&m_dlgConfigSpace)
+	BOOST_SCOPE_EXIT(&m_autocalcpath, &m_dlgConfigSpace)
 	{
+		m_autocalcpath = true;
 		if(m_dlgConfigSpace)
 			m_dlgConfigSpace->SetBlockCalc(false);
 	} BOOST_SCOPE_EXIT_END

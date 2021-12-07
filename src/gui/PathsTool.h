@@ -88,7 +88,7 @@ private:
 	QLabel *m_labelCollisionStatus{ nullptr };
 
 	bool m_stop_requested{ false };
-	std::future<void> m_futCalc{};
+	std::future<bool> m_futCalc{};
 
 	QMenu *m_menuOpenRecent{ nullptr };
 	QMenuBar *m_menubar{ nullptr };
@@ -130,6 +130,7 @@ private:
 	InstrumentSpace m_instrspace{};
 	PathsBuilder m_pathsbuilder{};
 	bool m_pathmeshvalid{false};
+	bool m_autocalcpath{true};
 
 	// calculated path vertices
 	std::vector<t_vec2> m_pathvertices{};
@@ -231,8 +232,8 @@ protected slots:
 	void ExternalPathAvailable(const InstrumentPath& path);
 
 	// calculation of the meshes and paths
-	void CalculatePathMesh();
-	void CalculatePath();
+	bool CalculatePathMesh();
+	bool CalculatePath();
 
 	// called after the plotter has initialised
 	void AfterGLInitialisation();

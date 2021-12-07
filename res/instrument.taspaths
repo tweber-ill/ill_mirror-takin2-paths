@@ -227,4 +227,12 @@
 		</instrument>
 
 	</instrument_space>
+
+
+	<configuration>
+		<path>
+			<target_2thM>90</target_2thM>
+			<target_2thS>90</target_2thS>
+		</path>
+	</configuration>
 </paths>

@@ -66,24 +66,29 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	for(std::size_t i=1; i<m_num_coord_elems; ++i)
 		QWidget::setTabOrder(m_spinFinish[i-1], m_spinFinish[i]);
 
-
 	// default values
 	m_spinFinish[0]->setValue(90.);
 	m_spinFinish[1]->setValue(90.);
 
-	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
+
 	m_btnCalcMesh = new QPushButton(CALC_MESH_TITLE, this);
-	m_btnCalcPath = new QPushButton(CALC_PATH_TITLE, this);
-	btnGotoFinish->setToolTip("Set the current instrument position to the given target angles.");
 	m_btnCalcMesh->setToolTip("Calculate the mesh of possible paths used for pathfinding.");
-	m_btnCalcPath->setToolTip("Calculate the actual path from the current to the target instrument position.");
 	//m_btnCalcMesh->setShortcut(Qt::ALT | Qt::Key_M);
+
+	//m_btnCalcPath = new QPushButton(CALC_PATH_TITLE, this);
+	//m_btnCalcPath->setToolTip("Calculate the actual path from the current to the target instrument position.");
 	//m_btnCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
+
+	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
+	btnGotoFinish->setToolTip("Set the current instrument position to the given target angles.");
+
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
 	m_sliderPath->setToolTip("Path tracking.");
+
 	m_btnGo = new QToolButton(this);
 	SetGoButtonText(true);
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+
 
 	// TODO: change the label "monochromator" to "analyser" for ki=const mode
 	const char* labels[] = {"Mono./Ana.:", "Sample:"};
@@ -113,8 +118,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		layoutPath->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutPath->addWidget(m_btnCalcMesh, y++, 0, 1, 3);
-		layoutPath->addWidget(m_btnCalcPath, y, 0, 1, 2);
+		layoutPath->addWidget(m_btnCalcMesh, y, 0, 1, 2);
+		//layoutPath->addWidget(m_btnCalcPath, y, 0, 1, 2);
 		layoutPath->addWidget(m_btnGo, y++, 2, 2, 1);
 		layoutPath->addWidget(m_sliderPath, y, 0, 1, 2);
 	}
@@ -162,10 +167,10 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	});
 
 	// calculate path
-	connect(m_btnCalcPath, &QPushButton::clicked, [this]()
+	/*connect(m_btnCalcPath, &QPushButton::clicked, [this]()
 	{
 		emit CalculatePath();
-	});
+	});*/
 
 	// path tracking slider value has changed
 	connect(m_sliderPath, &QSlider::valueChanged, [this](int value)
@@ -216,7 +221,7 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
 		else
 			m_btnGo->setText("");
 
-		m_btnGo->setToolTip("Start path tracking.");
+		m_btnGo->setToolTip("Start path tracking from current to target instrument position.");
 	}
 	else
 	{
@@ -328,14 +333,15 @@ void PathPropertiesWidget::PathAvailable(std::size_t numVertices)
 	{
 		m_btnGo->setEnabled(false);
 		m_sliderPath->setEnabled(false);
-		return;
 	}
-
-	m_btnGo->setEnabled(true);
-	m_sliderPath->setEnabled(true);
-	m_sliderPath->setMinimum(0);
-	m_sliderPath->setMaximum(numVertices-1);
-	m_sliderPath->setValue(0);
+	else
+	{
+		m_btnGo->setEnabled(true);
+		m_sliderPath->setEnabled(true);
+		m_sliderPath->setMinimum(0);
+		m_sliderPath->setMaximum(numVertices-1);
+		m_sliderPath->setValue(0);
+	}
 }
 
 
@@ -344,7 +350,7 @@ void PathPropertiesWidget::PathAvailable(std::size_t numVertices)
  */
 void PathPropertiesWidget::PathMeshValid(bool valid)
 {
-	m_btnCalcPath->setEnabled(valid);
+	//m_btnCalcPath->setEnabled(valid);
 
 	if(!valid)
 		PathAvailable(0);

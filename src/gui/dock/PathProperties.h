@@ -65,7 +65,7 @@ private:
 	QDoubleSpinBox *m_spinFinish[m_num_coord_elems]{nullptr, nullptr};
 	QSlider *m_sliderPath = nullptr;
 	QPushButton *m_btnCalcMesh = nullptr;
-	QPushButton *m_btnCalcPath = nullptr;
+	//QPushButton *m_btnCalcPath = nullptr;
 	QToolButton *m_btnGo = nullptr;
 
 	QTimer m_pathTrackTimer{};

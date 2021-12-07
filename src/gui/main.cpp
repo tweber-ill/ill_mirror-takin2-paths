@@ -211,6 +211,7 @@ int main(int argc, char** argv)
 		qRegisterMetaType<t_vec>("t_vec");
 		qRegisterMetaType<t_mat>("t_mat");
 		qRegisterMetaType<std::string>("std::string");
+		qRegisterMetaType<std::size_t>("std::size_t");
 		qRegisterMetaType<CalculationState>("CalculationState");
 
 		// create main window
