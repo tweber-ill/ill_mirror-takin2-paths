@@ -859,21 +859,60 @@ InstrumentPath PathsBuilder::FindPath(
 		return path;
 
 
+	std::vector<std::size_t> indices_i{};
+	std::vector<std::size_t> indices_f{};
 	std::size_t idx_i = 0;
 	std::size_t idx_f = 0;
 
 	// calculation of closest voronoi vertices using the index tree
 	if(m_voro_results.GetIndexTreeSize())
 	{
-		std::vector<std::size_t> indices_i =
-			m_voro_results.GetClosestVoronoiVertices(path.vec_i, 1);
-		if(indices_i.size())
-			idx_i = indices_i[0];
+		// check closest voronoi vertices for a possible path from the initial position to a retraction point
+		bool found_i = false;
+		indices_i = m_voro_results.GetClosestVoronoiVertices(path.vec_i, m_num_closest_voronoi_vertices, true);
 
-		std::vector<std::size_t> indices_f =
-			m_voro_results.GetClosestVoronoiVertices(path.vec_f, 1);
-		if(indices_f.size())
-			idx_f = indices_f[0];
+		for(std::size_t _idx_i : indices_i)
+		{
+			bool collides = DoesDirectPathCollide(
+				PixelToAngle(path.vec_i, false),
+				PixelToAngle(voro_vertices[_idx_i], false));
+			if(!collides)
+			{
+				idx_i = _idx_i;
+				found_i = true;
+				break;
+			}
+		}
+
+		if(!found_i)
+		{
+			path.ok = false;
+			return path;
+		}
+
+
+		// check closest voronoi vertices for a possible path from the target position to a retraction point
+		bool found_f = false;
+		indices_f = m_voro_results.GetClosestVoronoiVertices(path.vec_f, m_num_closest_voronoi_vertices, true);
+
+		for(std::size_t _idx_f : indices_f)
+		{
+			bool collides = DoesDirectPathCollide(
+				PixelToAngle(path.vec_f, false),
+				PixelToAngle(voro_vertices[_idx_f], false));
+			if(!collides)
+			{
+				idx_f = _idx_f;
+				found_f = true;
+				break;
+			}
+		}
+
+		if(!found_f)
+		{
+			path.ok = false;
+			return path;
+		}
 	}
 
 	// alternate calculation without index tree
@@ -967,6 +1006,8 @@ InstrumentPath PathsBuilder::FindPath(
 #else
 	#error No suitable value for TASPATHS_SSSP_IMPL has been set!
 #endif
+
+	// index of final voronoi vertex
 	std::size_t cur_vertidx = idx_f;
 
 	while(true)
@@ -1006,6 +1047,9 @@ InstrumentPath PathsBuilder::FindPath(
 	}
 #endif
 
+	if(!path.ok)
+		return path;
+
 
 	// find the retraction points from the start/end point towards the path mesh
 	if(path.voronoi_indices.size() >= 2)
@@ -1014,8 +1058,13 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx1_begin = path.voronoi_indices[0];
 		std::size_t vert_idx2_begin = path.voronoi_indices[1];
 
-		auto [min_param_begin, min_dist_idx_begin, bisector_type_begin] =
+		auto [min_param_begin, min_dist_idx_begin, bisector_type_begin, collides_begin] =
 			FindClosestSegment(vert_idx1_begin, vert_idx2_begin, path.vec_i);
+		if(collides_begin)
+		{
+			path.ok = false;
+			return path;
+		}
 
 		// a neighbour edge is closer
 		if(min_dist_idx_begin != vert_idx2_begin)
@@ -1028,8 +1077,13 @@ InstrumentPath PathsBuilder::FindPath(
 		std::size_t vert_idx1_end = *(path.voronoi_indices.rbegin()+1);
 		std::size_t vert_idx2_end = *path.voronoi_indices.rbegin();
 
-		auto [min_param_end, min_dist_idx_end, bisector_type_end] =
+		auto [min_param_end, min_dist_idx_end, bisector_type_end, collides_end] =
 			FindClosestSegment(vert_idx2_end, vert_idx1_end, path.vec_f, true);
+		if(collides_end)
+		{
+			path.ok = false;
+			return path;
+		}
 
 		// a neighbour edge is closer
 		if(min_dist_idx_end != vert_idx1_end)
@@ -1062,7 +1116,7 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	bool kf_fixed = true;
 	if(m_tascalc)
 	{
-		// move analysator instead of monochromator?
+		// move analyser instead of monochromator?
 		if(!std::get<1>(m_tascalc->GetKfix()))
 			kf_fixed = false;
 	}
@@ -1251,6 +1305,20 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 	// final verification (this only works with path subdivision also active)
 	if(m_verifypath)
 	{
+		// check if we get closer to the walls than the minimum allowed distance
+		/*std::vector<t_real> min_dists = GetDistancesToNearestWall(path_vertices, deg);
+		if(auto min_elem = std::min_element(min_dists.begin(), min_dists.end()); min_elem != min_dists.end())
+		{
+			// ignore too close distances if the start or target point are already too close to a wall
+			// (because in this case we want to move away from the walls)
+			std::size_t min_idx = min_elem - min_dists.begin();
+
+			if(min_idx > 0 && min_idx < min_dists.size()-1 &&
+				*min_elem < m_min_angular_dist_to_walls)
+				return {};
+		}*/
+
+		// check if we're colliding with the walls
 		for(const t_vec2& pos : path_vertices)
 		{
 			if(DoesPositionCollide(pos, deg))
@@ -1412,9 +1480,9 @@ bool PathsBuilder::SaveToLinesTool(const std::string& filename)
 /**
  * find the closest point on a path segment
  * @arg vec starting position, in pixel coordinates
- * @returns [param, distance, 0:quadratic, 1:linear, -1:neither]
+ * @returns [param, distance, 0:quadratic, 1:linear, -1:neither, retraction point]
  */
-std::tuple<t_real, t_real, int>
+std::tuple<t_real, t_real, int, t_vec2>
 PathsBuilder::FindClosestPointOnSegment(
 	std::size_t idx1, std::size_t idx2, const t_vec2& vec) const
 {
@@ -1428,6 +1496,7 @@ PathsBuilder::FindClosestPointOnSegment(
 	// find the closest point by projecting 'vec' onto it
 	t_real param_lin = -1;
 	t_real dist_lin = std::numeric_limits<t_real>::max();
+	t_vec2 pt_on_segment_lin{};
 
 	const auto& lin_edges = m_voro_results.GetLinearEdges();
 	auto lin_result = lin_edges.find({idx1, idx2});
@@ -1440,16 +1509,17 @@ PathsBuilder::FindClosestPointOnSegment(
 
 		// the query point lies on the voronoi vertex
 		if(dir_len < m_eps_angular)
-			return std::make_tuple(0, 0, true);
+			return std::make_tuple(0, 0, true, vec);
 
 		dir /= dir_len;
 
-		auto [_ptProj, _dist_lin, paramProj] =
+		auto [ptProj, _dist_lin, paramProj] =
 			tl2::project_line<t_vec2, t_real>(
 				vec, vert1, dir, true);
 
 		param_lin = paramProj / dir_len;
 		dist_lin = _dist_lin;
+		pt_on_segment_lin = ptProj;
 		has_lin = true;
 
 
@@ -1460,7 +1530,7 @@ PathsBuilder::FindClosestPointOnSegment(
 
 		// initial distance to walls
 		//t_vec2 vertex_1 = vert1 + dir*new_param_lin*dir_len;
-		t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ _ptProj);
+		t_real dist_to_walls_1 = GetDistToNearestWall(/*vertex_1*/ ptProj);
 
 		// direction for parameter search
 		const t_real param_range[2] = { -1., 1. };
@@ -1518,6 +1588,7 @@ PathsBuilder::FindClosestPointOnSegment(
 
 			param_lin = new_param_lin;
 			dist_lin = tl2::norm<t_vec2>(new_vertex-vec);
+			pt_on_segment_lin = new_vertex;
 		}
 	}
 
@@ -1526,6 +1597,7 @@ PathsBuilder::FindClosestPointOnSegment(
 	// find the closest vertex along its segment
 	t_real param_quadr = -1;
 	t_real dist_quadr = std::numeric_limits<t_real>::max();
+	t_vec2 pt_on_segment_quadr{};
 
 	const auto& para_edges = m_voro_results.GetParabolicEdges();
 	auto para_result = para_edges.find({idx1, idx2});
@@ -1555,6 +1627,7 @@ PathsBuilder::FindClosestPointOnSegment(
 
 				min_dist2 = dist2;
 				min_idx = vertidx;
+				pt_on_segment_quadr = path_vertex;
 			}
 		}
 
@@ -1570,37 +1643,37 @@ PathsBuilder::FindClosestPointOnSegment(
 	// only a linear bisector segment was found
 	if(has_lin && !has_quadr)
 	{
-		return std::make_tuple(param_lin, dist_lin, 1);
+		return std::make_tuple(param_lin, dist_lin, 1, pt_on_segment_lin);
 	}
 	// only a quadratic bisector segment was found
 	else if(has_quadr && !has_lin)
 	{
-		return std::make_tuple(param_quadr, dist_quadr, 0);
+		return std::make_tuple(param_quadr, dist_quadr, 0, pt_on_segment_quadr);
 	}
 	// neither bisector segment was found
 	else if(!has_lin && !has_quadr)
 	{
-		return std::make_tuple(param_quadr, dist_quadr, -1);
+		return std::make_tuple(param_quadr, dist_quadr, -1, t_vec2{});
 	}
 	// both bisector segment types were found
 	else
 	{
 		// firstly prefer the one with the parameters in the [0..1] range
 		if((param_quadr < 0. || param_quadr > 1.) && (param_lin >= 0. && param_lin <= 1.))
-			return std::make_tuple(param_lin, dist_lin, 1);
+			return std::make_tuple(param_lin, dist_lin, 1, pt_on_segment_lin);
 		else if((param_lin < 0. || param_lin > 1.) && (param_quadr >= 0. && param_quadr <= 1.))
-			return std::make_tuple(param_quadr, dist_quadr, 0);
+			return std::make_tuple(param_quadr, dist_quadr, 0, pt_on_segment_quadr);
 
 		// secondly prefer the one which is closest
 		if(dist_lin < dist_quadr)
 		{
 			//std::cout << "linear bisector segment: dist=" << dist_lin << ", param=" << param_lin << std::endl;
-			return std::make_tuple(param_lin, dist_lin, 1);
+			return std::make_tuple(param_lin, dist_lin, 1, pt_on_segment_lin);
 		}
 		else
 		{
 			//std::cout << "quadratic bisector segment: dist=" << dist_quadr << ", param=" << param_quadr << std::endl;
-			return std::make_tuple(param_quadr, dist_quadr, 0);
+			return std::make_tuple(param_quadr, dist_quadr, 0, pt_on_segment_quadr);
 		}
 	}
 }
@@ -1609,9 +1682,9 @@ PathsBuilder::FindClosestPointOnSegment(
 /**
  * find a neighbour bisector which is closer to the given vertex than the given one
  * @arg vert given vertex in pixel coordinates
- * @returns [param, min_dist_idx, bisector_type]
+ * @returns [param, min_dist_idx, bisector_type, collides]
  */
-std::tuple<t_real, std::size_t, int>
+std::tuple<t_real, std::size_t, int, bool>
 PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 	const t_vec& vert, bool reversed_order) const
 {
@@ -1622,8 +1695,10 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 	if(reversed_order)
 		std::swap(idx1, idx2);
 	std::size_t min_dist_idx = vert_idx_2;
-	auto [min_param, min_dist, bisector_type] =
+	auto [min_param, min_dist, bisector_type, pt_on_segment] =
 		FindClosestPointOnSegment(idx1, idx2, vert);
+
+	bool collides = DoesDirectPathCollide(PixelToAngle(vert, false), PixelToAngle(pt_on_segment, false));
 
 	// check if any neighbour path before first vertex is even closer
 	std::vector<std::size_t> neighbour_indices =
@@ -1639,24 +1714,28 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 			continue;
 		seen_neighbours.insert(neighbour_idx);
 
-		// add newly discovered neighbours
+		// TODO: add newly discovered neighbours
 		// only consider first-order nearest neighbours
-		if(idx_neighbour < nearest_neighbours_end_idx)
+		// (except when the current path collides)
+		/*if(idx_neighbour < nearest_neighbours_end_idx || collides)
 		{
 			for(std::size_t new_neighbour_idx :
 				voro_graph.GetNeighbours(neighbour_idx))
 				neighbour_indices.push_back(new_neighbour_idx);
-		}
+		}*/
 
 		idx1 = neighbour_idx;
 		idx2 = vert_idx_1;
 		if(reversed_order)
 			std::swap(idx1, idx2);
 
-		auto [neighbour_param, neighbour_dist, neighbour_bisector_type] =
+		auto [neighbour_param, neighbour_dist, neighbour_bisector_type, neighbour_pt_on_segment] =
 			FindClosestPointOnSegment(idx1, idx2, vert);
+		bool neighbour_collides =
+			DoesDirectPathCollide(PixelToAngle(vert, false),
+				PixelToAngle(neighbour_pt_on_segment, false));
 
-		if(neighbour_bisector_type != -1)
+		if(neighbour_bisector_type != -1 && !neighbour_collides)
 		{
 			bool old_parameters_in_range = (min_param >= 0. && min_param <= 1.);
 			bool new_parameters_in_range = (neighbour_param >= 0. && neighbour_param <= 1.);
@@ -1664,20 +1743,21 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 
 			// choose a new position on the adjacent edge if it's either
 			// closer or if the former parameters had been out of bounds
-			// and are now within [0, 1]
-			if((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
-				(new_parameters_in_range && neighbour_closer))
+			// and are now within [0, 1] or if the old path collides
+			if(((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
+				(new_parameters_in_range && neighbour_closer)) || collides)
 			{
 				min_dist = neighbour_dist;
 				min_param = neighbour_param;
 				min_dist_idx = neighbour_idx;
+				collides = neighbour_collides;
 				bisector_type = neighbour_bisector_type;
 			}
 		}
 	}
 
 	min_param = tl2::clamp<t_real>(min_param, 0., 1.);
-	return std::make_tuple(min_param, min_dist_idx, bisector_type);
+	return std::make_tuple(min_param, min_dist_idx, bisector_type, collides);
 }
 
 

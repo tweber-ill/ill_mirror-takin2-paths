@@ -86,6 +86,7 @@ void InstrumentSpace::Clear()
 	m_walls.clear();
 	m_instr.Clear();
 
+	// remove listeners
 	m_sigUpdate = std::make_shared<t_sig_update>();
 }
 

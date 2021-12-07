@@ -42,6 +42,7 @@
 #include "tlibs2/libs/qt/gl.h"
 
 #include "src/core/InstrumentSpace.h"
+#include "InstrumentStatus.h"
 
 
 using t_real_gl = tl2::t_real_gl;
@@ -79,6 +80,9 @@ public:
 	PathsRenderer(QWidget *pParent = nullptr);
 	virtual ~PathsRenderer();
 
+	PathsRenderer(const PathsRenderer&) = delete;
+	const PathsRenderer& operator=(const PathsRenderer&) = delete;
+
 	void Clear();
 	bool LoadInstrument(const InstrumentSpace& instr);
 	void AddWall(const Geometry& geo, bool update_scene=true);
@@ -86,7 +90,8 @@ public:
 	// receivers for instrument (space) update signals
 	void UpdateInstrumentSpace(const InstrumentSpace& instr);
 	void UpdateInstrument(const Instrument& instr);
-	void SetInstrumentStatus(bool in_angular_limits, bool colliding);
+
+	void SetInstrumentStatus(const InstrumentStatus* status);
 
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
 	bool IsInitialised() const { return m_initialised; }
@@ -252,8 +257,7 @@ protected:
 	QTimer m_timer{};
 
 	// instrument status
-	bool m_in_angular_limits{ false };
-	bool m_colliding{ false };
+	const InstrumentStatus *m_instrstatus = nullptr;
 
 
 protected slots:

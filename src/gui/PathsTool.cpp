@@ -56,917 +56,6 @@ namespace pt = boost::property_tree;
 
 
 /**
- * event signalling that the crystal UB matrix needs an update
- */
-void PathsTool::UpdateUB()
-{
-	m_tascalc.UpdateUB();
-
-	if(m_xtalInfos)
-		m_xtalInfos->GetWidget()->SetUB(m_tascalc.GetB(), m_tascalc.GetUB());
-}
-
-
-/**
- * the window is being shown
- */
-void PathsTool::showEvent(QShowEvent *evt)
-{
-	m_renderer->EnableTimer(true);
-
-	QMainWindow::showEvent(evt);
-}
-
-
-/**
- * the window is being hidden
- */
-void PathsTool::hideEvent(QHideEvent *evt)
-{
-	m_renderer->EnableTimer(false);
-
-	QMainWindow::hideEvent(evt);
-}
-
-
-/**
- * the window is being closed
- */
-void PathsTool::closeEvent(QCloseEvent *evt)
-{
-	// save window size, position, and state
-	m_sett.setValue("geo", saveGeometry());
-	m_sett.setValue("state", saveState());
-
-	m_recent.TrimEntries();
-	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
-
-	QMainWindow::closeEvent(evt);
-}
-
-
-/**
- * accept a file dropped onto the main window
- * @see https://doc.qt.io/qt-5/dnd.html
- */
-void PathsTool::dragEnterEvent(QDragEnterEvent *evt)
-{
-	// accept urls
-	if(evt->mimeData()->hasUrls())
-		evt->accept();
-
-	QMainWindow::dragEnterEvent(evt);
-}
-
-
-/**
- * accept a file dropped onto the main window
- * @see https://doc.qt.io/qt-5/dnd.html
- */
-void PathsTool::dropEvent(QDropEvent *evt)
-{
-	// get mime data dropped on the main window
-	if(const QMimeData* dat = evt->mimeData(); dat && dat->hasUrls())
-	{
-		// get the list of urls dropped on the main window
-		if(QList<QUrl> urls = dat->urls(); urls.size() > 0)
-		{
-			// use the first url for the file name
-			QString filename = urls.begin()->path();
-
-			// load the dropped file
-			if(QFile::exists(filename))
-				OpenFile(filename);
-		}
-	}
-
-	QMainWindow::dropEvent(evt);
-}
-
-
-
-/**
- * File -> New
- */
-void PathsTool::NewFile()
-{
-	SetCurrentFile("");
-	m_instrspace.Clear();
-	ValidatePathMesh(false);
-
-	if(m_dlgGeoBrowser)
-		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
-	if(m_renderer)
-		m_renderer->LoadInstrument(m_instrspace);
-}
-
-
-/**
- * File -> Open
- */
-void PathsTool::OpenFile()
-{
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
-
-	QFileDialog filedlg(this, "Open Instrument File", dirLast,
-		"TAS-Paths Files (*.taspaths)");
-	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
-	filedlg.setDefaultSuffix("taspaths");
-	filedlg.setFileMode(QFileDialog::AnyFile);
-
-	if(!filedlg.exec())
-		return;
-
-	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
-		return;
-
-	if(OpenFile(files[0]))
-		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
-}
-
-
-/**
- * File -> Save
- */
-void PathsTool::SaveFile()
-{
-	if(m_recent.GetCurFile() == "")
-		SaveFileAs();
-	else
-		SaveFile(m_recent.GetCurFile());
-}
-
-
-/**
- * File -> Save As
- */
-void PathsTool::SaveFileAs()
-{
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
-
-	QFileDialog filedlg(this, "Save Instrument File", dirLast,
-		"TAS-Paths Files (*.taspaths)");
-	filedlg.setAcceptMode(QFileDialog::AcceptSave);
-	filedlg.setDefaultSuffix("taspaths");
-	filedlg.setFileMode(QFileDialog::AnyFile);
-
-	if(!filedlg.exec())
-		return;
-
-	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="")
-		return;
-
-	if(SaveFile(files[0]))
-		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
-}
-
-
-/**
- * File -> Save Screenshot
- */
-void PathsTool::SaveScreenshot()
-{
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
-
-	QFileDialog filedlg(this, "Save Screenshot", dirLast,
-		"PNG Images (*.png);;JPEG Images (*.jpg)");
-	filedlg.setAcceptMode(QFileDialog::AcceptSave);
-	filedlg.setDefaultSuffix("png");
-	filedlg.setFileMode(QFileDialog::AnyFile);
-
-	if(!filedlg.exec())
-		return;
-
-	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="")
-		return;
-
-	bool ok = false;
-	if(g_combined_screenshots)
-		ok = SaveCombinedScreenshot(files[0]);
-	else
-		ok = SaveScreenshot(files[0]);
-
-	if(ok)
-		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
-}
-
-
-/**
- * File -> Export Path
- */
-bool PathsTool::ExportPath(PathsExporterFormat fmt)
-{
-	std::shared_ptr<PathsExporterBase> exporter;
-
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
-
-	QFileDialog filedlg(this, "Export Path", dirLast,
-		"Text Files (*.txt)");
-	filedlg.setAcceptMode(QFileDialog::AcceptSave);
-	filedlg.setDefaultSuffix("txt");
-	filedlg.setFileMode(QFileDialog::AnyFile);
-
-	if(!filedlg.exec())
-		return false;
-
-	QStringList files = filedlg.selectedFiles();
-	if(!files.size() || files[0]=="")
-		return false;
-
-	switch(fmt)
-	{
-		case PathsExporterFormat::RAW:
-			exporter = std::make_shared<PathsExporterRaw>(files[0].toStdString());
-			break;
-		case PathsExporterFormat::NOMAD:
-			exporter = std::make_shared<PathsExporterNomad>(files[0].toStdString());
-			break;
-		case PathsExporterFormat::NICOS:
-			exporter = std::make_shared<PathsExporterNicos>(files[0].toStdString());
-			break;
-	}
-
-	if(!exporter)
-	{
-		QMessageBox::critical(this, "Error", "No path is available.");
-		return false;
-	}
-
-	if(!m_pathsbuilder.AcceptExporter(exporter.get(), m_pathvertices, true))
-	{
-		QMessageBox::critical(this, "Error", "Path could not be exported.");
-		return false;
-	}
-
-	m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
-	return true;
-}
-
-
-/**
- * load file
- */
-bool PathsTool::OpenFile(const QString& file)
-{
-	// no file given
-	if(file == "")
-		return false;
-
-	try
-	{
-		NewFile();
-
-		// get property tree
-		if(file == "" || !QFile::exists(file))
-		{
-			QMessageBox::critical(this, "Error",
-				"Instrument file \"" + file + "\" does not exist.");
-			return false;
-		}
-
-		// open xml
-		std::string filename = file.toStdString();
-		std::ifstream ifstr{filename};
-		if(!ifstr)
-		{
-			QMessageBox::critical(this, "Error",
-				("Could not read instrument file \"" + filename + "\".").c_str());
-			return false;
-		}
-
-		// read xml
-		pt::ptree prop;
-		pt::read_xml(ifstr, prop);
-		// check format and version
-		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
-			!opt || *opt != PROG_IDENT)
-		{
-			QMessageBox::critical(this, "Error",
-				("Instrument file \"" + filename +
-				"\" has invalid identifier.").c_str());
-			return false;
-		}
-
-
-		// load instrument definition file
-		if(auto [instrok, msg] =
-			InstrumentSpace::load(prop, m_instrspace, &filename); !instrok)
-		{
-			QMessageBox::critical(this, "Error", msg.c_str());
-			return false;
-		}
-		else
-		{
-			std::ostringstream ostr;
-			ostr << "Loaded \"" << QFileInfo{file}.fileName().toStdString() << "\" "
-				<< "dated " << msg << ".";
-
-			SetTmpStatus(ostr.str());
-		}
-
-
-		// load dock window settings
-		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.tas"); prop_dock)
-			m_tasProperties->GetWidget()->Load(*prop_dock);
-		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.crystal"); prop_dock)
-			m_xtalProperties->GetWidget()->Load(*prop_dock);
-		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.coordinates"); prop_dock)
-			m_coordProperties->GetWidget()->Load(*prop_dock);
-		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.path"); prop_dock)
-			m_pathProperties->GetWidget()->Load(*prop_dock);
-		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.camera"); prop_dock)
-			m_camProperties->GetWidget()->Load(*prop_dock);
-
-
-		SetCurrentFile(file);
-		m_recent.AddRecentFile(file);
-
-		if(m_dlgGeoBrowser)
-			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
-		if(m_renderer)
-			m_renderer->LoadInstrument(m_instrspace);
-
-
-		// update slot for instrument space (e.g. walls) changes
-		m_instrspace.AddUpdateSlot(
-			[this](const InstrumentSpace& instrspace)
-			{
-				// invalidate the mesh
-				ValidatePathMesh(false);
-
-				if(m_renderer)
-					m_renderer->UpdateInstrumentSpace(instrspace);
-			});
-
-		// update slot for instrument movements
-		m_instrspace.GetInstrument().AddUpdateSlot(
-			[this](const Instrument& instr)
-			{
-				if(&instr != &m_instrspace.GetInstrument())
-				{
-					std::cerr << "Error: Received update from unknown instrument." << std::endl;
-					return;
-				}
-
-				// is ki or kf fixed?
-				bool kf_fixed = true;
-				if(!std::get<1>(m_tascalc.GetKfix()))
-					kf_fixed = false;
-
-				// old angles
-				t_real oldA6 = m_tasProperties->GetWidget()->GetAnaScatteringAngle()/t_real{180}*tl2::pi<t_real>;
-				t_real oldA2 = m_tasProperties->GetWidget()->GetMonoScatteringAngle()/t_real{180}*tl2::pi<t_real>;
-
-				// get scattering angles
-				t_real monoScAngle = instr.GetMonochromator().GetAxisAngleOut();
-				t_real sampleScAngle = instr.GetSample().GetAxisAngleOut();
-				t_real anaScAngle = instr.GetAnalyser().GetAxisAngleOut();
-
-				// set scattering angles
-				m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
-
-				// get crystal rocking angles
-				t_real monoXtalAngle = instr.GetMonochromator().GetAxisAngleInternal();
-				t_real sampleXtalAngle = instr.GetSample().GetAxisAngleInternal();
-				t_real anaXtalAngle = instr.GetAnalyser().GetAxisAngleInternal();
-
-				// set crystal rocking angles
-				m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
-				m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
-
-				auto [Qrlu, E] = m_tascalc.GetQE(monoXtalAngle, anaXtalAngle,
-					sampleXtalAngle, sampleScAngle);
-
-				bool in_angular_limits = m_instrspace.CheckAngularLimits();
-				bool colliding = m_instrspace.CheckCollision2D();
-
-				SetInstrumentStatus(Qrlu, E,
-					in_angular_limits, colliding);
-
-				// if the analyser or monochromator angle changes, the mesh also needs to be updated.
-				// need to use gui epsilon here, because oldA6 and oldA2 come from double spin boxes with that precision
-				if(kf_fixed && !tl2::equals<t_real>(oldA6, anaScAngle, g_eps_gui))
-					ValidatePathMesh(false);
-				if(!kf_fixed && !tl2::equals<t_real>(oldA2, monoScAngle, g_eps_gui))
-					ValidatePathMesh(false);
-
-				if(m_autocalcpath)
-					CalculatePath();
-
-				if(this->m_dlgConfigSpace)
-				{
-					this->m_dlgConfigSpace->UpdateInstrument(
-						instr, m_tascalc.GetScatteringSenses());
-				}
-
-				if(this->m_renderer)
-				{
-					this->m_renderer->SetInstrumentStatus(
-						in_angular_limits, colliding);
-					this->m_renderer->UpdateInstrument(instr);
-				}
-			});
-
-		m_instrspace.GetInstrument().EmitUpdate();
-	}
-	catch(const std::exception& ex)
-	{
-		QMessageBox::critical(this, "Error",
-			QString{"Instrument configuration error: "} + ex.what() + QString{"."});
-		return false;
-	}
-	return true;
-}
-
-
-/**
- * save file
- */
-bool PathsTool::SaveFile(const QString &file)
-{
-	if(file=="")
-		return false;
-
-	// save instrument space configuration
-	pt::ptree prop = m_instrspace.Save();
-
-	// save dock window settings
-	prop.put_child(FILE_BASENAME "configuration.tas", m_tasProperties->GetWidget()->Save());
-	prop.put_child(FILE_BASENAME "configuration.crystal", m_xtalProperties->GetWidget()->Save());
-	prop.put_child(FILE_BASENAME "configuration.coordinates", m_coordProperties->GetWidget()->Save());
-	prop.put_child(FILE_BASENAME "configuration.path", m_pathProperties->GetWidget()->Save());
-	prop.put_child(FILE_BASENAME "configuration.camera", m_camProperties->GetWidget()->Save());
-
-	// set format and version
-	prop.put(FILE_BASENAME "ident", PROG_IDENT);
-	prop.put(FILE_BASENAME "doi", "https://doi.org/10.5281/zenodo.4625649");
-	prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
-
-	std::string filename = file.toStdString();
-	std::ofstream ofstr{filename};
-	ofstr.precision(g_prec);
-	if(!ofstr)
-	{
-		QMessageBox::critical(this, "Error",
-			("Could not save instrument file \"" + filename + "\".").c_str());
-		return false;
-	}
-
-	pt::write_xml(ofstr, prop,
-		pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
-
-	SetCurrentFile(file);
-	m_recent.AddRecentFile(file);
-	return true;
-}
-
-
-/**
- * save screenshot
- */
-bool PathsTool::SaveScreenshot(const QString &file)
-{
-	if(file=="" || !m_renderer)
-		return false;
-
-	QImage img = m_renderer->grabFramebuffer();
-	return img.save(file, nullptr, 90);
-}
-
-
-/**
- * save a combined screenshot of the instrument view and config space
- */
-bool PathsTool::SaveCombinedScreenshot(const QString& filename)
-{
-	bool ok1 = SaveScreenshot(filename);
-
-	bool ok2 = false;
-	if(m_dlgConfigSpace)
-	{
-		fs::path file_pdf{filename.toStdString()};
-		file_pdf.replace_extension(fs::path{".pdf"});
-
-		ok2 = m_dlgConfigSpace->SaveFigure(file_pdf.string().c_str());
-	}
-
-	return ok1 && ok2;
-}
-
-
-/**
- * remember current file and set window title
- */
-void PathsTool::SetCurrentFile(const QString &file)
-{
-	static const QString title(TASPATHS_TITLE);
-	m_recent.SetCurFile(file);
-
-	this->setWindowFilePath(m_recent.GetCurFile());
-
-	if(m_recent.GetCurFile() == "")
-		this->setWindowTitle(title);
-	else
-		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());
-}
-
-
-/**
- * (in)validates the path mesh if the obstacle configuration has changed
- */
-void PathsTool::ValidatePathMesh(bool valid)
-{
-	m_pathmeshvalid = valid;
-	emit PathMeshValid(m_pathmeshvalid);
-}
-
-
-/**
- * set the instrument's energy selection mode to either kf=const or ki=const
- */
-void PathsTool::SetKfConstMode(bool kf_const)
-{
-	bool old_kf_const = std::get<1>(m_tascalc.GetKfix());
-	if(old_kf_const != kf_const)
-	{
-		m_tascalc.SetKfix(kf_const);
-		ValidatePathMesh(false);
-	}
-}
-
-
-/**
- * go to crystal coordinates
- */
-void PathsTool::GotoCoordinates(
-	t_real h, t_real k, t_real l,
-	t_real ki, t_real kf,
-	bool only_set_target)
-{
-	TasAngles angles = m_tascalc.GetAngles(h, k, l, ki, kf);
-
-	if(!angles.mono_ok)
-	{
-		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");
-		return;
-	}
-
-	if(!angles.ana_ok)
-	{
-		QMessageBox::critical(this, "Error", "Invalid analyser angle.");
-		return;
-	}
-
-	if(!angles.sample_ok)
-	{
-		QMessageBox::critical(this, "Error", "Invalid scattering angles.");
-		return;
-	}
-
-	// set target coordinate angles
-	if(only_set_target)
-	{
-		if(!m_pathProperties)
-			return;
-
-		auto pathwidget = m_pathProperties->GetWidget();
-		if(!pathwidget)
-			return;
-
-		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
-		t_real a2_abs = angles.monoXtalAngle * 2. * sensesCCW[0];
-		t_real a4_abs = angles.sampleScatteringAngle * sensesCCW[1];
-		t_real a6_abs = angles.anaXtalAngle * 2. * sensesCCW[2];
-
-		// is kf or ki fixed?
-		bool kf_fixed = true;
-		if(!std::get<1>(m_tascalc.GetKfix()))
-			kf_fixed = false;
-
-		t_real _a2_or_a6 = kf_fixed ? a2_abs : a6_abs;
-
-		pathwidget->SetTarget(
-			_a2_or_a6 / tl2::pi<t_real> * 180.,
-			a4_abs / tl2::pi<t_real> * 180.);
-	}
-
-	// set instrument angles
-	else
-	{
-		Instrument& instr = m_instrspace.GetInstrument();
-
-		// send one update signal at the end
-		// and not after each angle change
-		instr.SetBlockUpdates(true);
-		BOOST_SCOPE_EXIT(&instr)
-		{
-			instr.SetBlockUpdates(false);
-			instr.EmitUpdate();
-		} BOOST_SCOPE_EXIT_END
-
-		// set scattering angles
-		instr.GetMonochromator().SetAxisAngleOut(
-			t_real{2} * angles.monoXtalAngle);
-		instr.GetSample().SetAxisAngleOut(
-			angles.sampleScatteringAngle);
-		instr.GetAnalyser().SetAxisAngleOut(
-			t_real{2} * angles.anaXtalAngle);
-
-		// set crystal angles
-		instr.GetMonochromator().SetAxisAngleInternal(
-			angles.monoXtalAngle);
-		instr.GetSample().SetAxisAngleInternal(
-			angles.sampleXtalAngle);
-		instr.GetAnalyser().SetAxisAngleInternal(
-			angles.anaXtalAngle);
-
-		m_tascalc.SetKfix(kf);
-
-		//if(m_autocalcpath)
-		//	CalculatePath();
-	}
-}
-
-
-/**
- * set the instrument angles to the specified ones
- * (angles have to be positive as scattering senses are applied in the function)
- */
-void PathsTool::GotoAngles(std::optional<t_real> a1,
-	std::optional<t_real> a3, std::optional<t_real> a4,
-	std::optional<t_real> a5, bool only_set_target)
-{
-	// set target coordinate angles
-	if(only_set_target && (a1 || a5) && a4)
-	{
-		if(!m_pathProperties)
-			return;
-		auto pathwidget = m_pathProperties->GetWidget();
-		if(!pathwidget)
-			return;
-
-		// is kf or ki fixed?
-		bool kf_fixed = true;
-		if(!std::get<1>(m_tascalc.GetKfix()))
-			kf_fixed = false;
-
-		// move either monochromator or analyser depending if kf=fixed
-		t_real _a2_or_a6 = kf_fixed ? *a1 * 2. : *a5 * 2.;
-		t_real _a4 = *a4;
-
-		pathwidget->SetTarget(
-			_a2_or_a6 / tl2::pi<t_real> * 180.,
-			_a4 / tl2::pi<t_real> * 180.);
-	}
-
-	// set instrument angles
-	else
-	{
-		Instrument& instr = m_instrspace.GetInstrument();
-
-		// send one update signal at the end
-		// and not after each angle change
-		instr.SetBlockUpdates(true);
-		BOOST_SCOPE_EXIT(&instr)
-		{
-			instr.SetBlockUpdates(false);
-			instr.EmitUpdate();
-		} BOOST_SCOPE_EXIT_END
-
-		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
-
-		// set mono angle
-		if(a1)
-		{
-			*a1 *= sensesCCW[0];
-			instr.GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
-			instr.GetMonochromator().SetAxisAngleInternal(*a1);
-		}
-
-		// set sample crystal angle
-		if(a3)
-		{
-			*a3 *= sensesCCW[1];
-			instr.GetSample().SetAxisAngleInternal(*a3);
-		}
-
-		// set sample scattering angle
-		if(a4)
-		{
-			*a4 *= sensesCCW[1];
-			instr.GetSample().SetAxisAngleOut(*a4);
-		}
-
-		// set ana angle
-		if(a5)
-		{
-			*a5 *= sensesCCW[2];
-			instr.GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
-			instr.GetAnalyser().SetAxisAngleInternal(*a5);
-		}
-
-		//if(m_autocalcpath)
-		//	CalculatePath();
-	}
-}
-
-
-/**
- * called after the plotter has initialised
- */
-void PathsTool::AfterGLInitialisation()
-{
-	// GL device info
-	std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
-		= m_renderer->GetGlDescr();
-
-	// get viewing angle
-	t_real viewingAngle = m_renderer ? m_renderer->GetCamViewingAngle() : tl2::pi<t_real>*0.5;
-	m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
-
-	// get perspective projection flag
-	bool persp = m_renderer ? m_renderer->GetPerspectiveProjection() : true;
-	m_camProperties->GetWidget()->SetPerspectiveProj(persp);
-
-	// get camera position
-	t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
-	m_camProperties->GetWidget()->SetCamPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
-
-	// get camera rotation
-	t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
-	m_camProperties->GetWidget()->SetCamRotation(
-		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>,
-		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
-
-	// load an initial instrument definition
-	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
-	{
-		if(OpenFile(instrfile.c_str()))
-		{
-			// don't consider the initial instrument configuration as current file
-			if(!m_initialInstrFileModified)
-				SetCurrentFile("");
-
-			m_renderer->LoadInstrument(m_instrspace);
-		}
-	}
-}
-
-
-/**
- * mouse coordinates on base plane
- */
-void PathsTool::CursorCoordsChanged(t_real_gl x, t_real_gl y)
-{
-	m_mouseX = x;
-	m_mouseY = y;
-	UpdateStatusLabel();
-}
-
-
-/**
- * mouse is over an object
- */
-void PathsTool::PickerIntersection(const t_vec3_gl* /*pos*/,
-	std::string obj_name, const t_vec3_gl* /*posSphere*/)
-{
-	m_curObj = obj_name;
-	UpdateStatusLabel();
-}
-
-
-/**
- * clicked on an object
- */
-void PathsTool::ObjectClicked(const std::string& obj, bool /*left*/, bool middle, bool right)
-{
-	if(!m_renderer)
-		return;
-
-	// show context menu for object
-	if(right && obj != "")
-	{
-		m_curContextObj = obj;
-
-		QPoint pos = m_renderer->GetMousePosition(true);
-		pos.setX(pos.x() + 8);
-		pos.setY(pos.y() + 8);
-		m_contextMenuObj->popup(pos);
-	}
-
-	// centre scene around object
-	if(middle)
-	{
-		m_renderer->CentreCam(obj);
-	}
-}
-
-
-/**
- * dragging an object
- */
-void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
-	t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y)
-{
-	/*std::cout << "Dragging " << obj
-		<< " from (" << x_start << ", " << y_start << ")"
-		<< " to (" << x << ", " << y << ")." << std::endl;*/
-
-	m_instrspace.DragObject(drag_start, obj, x_start, y_start, x, y);
-}
-
-
-/**
- * set temporary status message, by default for 2 seconds
- */
-void PathsTool::SetTmpStatus(const std::string& msg, int msg_duration)
-{
-	if(!m_statusbar)
-		return;
-
-	if(thread() == QThread::currentThread())
-	{
-		m_statusbar->showMessage(msg.c_str(), msg_duration);
-	}
-	else
-	{
-		// alternate call via meta object when coming from another thread
-		QMetaObject::invokeMethod(m_statusbar, "showMessage", Qt::QueuedConnection,
-			Q_ARG(QString, msg.c_str()),
-			Q_ARG(int, msg_duration)
-		);
-	}
-}
-
-
-/**
- * update permanent status message
- */
-void PathsTool::UpdateStatusLabel()
-{
-	const t_real maxRange = 1e6;
-
-	if(!std::isfinite(m_mouseX) || !std::isfinite(m_mouseY))
-		return;
-	if(std::abs(m_mouseX) >= maxRange || std::abs(m_mouseY) >= maxRange)
-		return;
-
-	std::ostringstream ostr;
-	ostr.precision(g_prec_gui);
-	ostr << std::fixed << std::showpos
-		<< "Cursor: (" << m_mouseX << ", " << m_mouseY << ") m";
-
-	// show object name
-	//if(m_curObj != "")
-	//	ostr << ", object: " << m_curObj;
-
-	ostr << ".";
-	m_labelStatus->setText(ostr.str().c_str());
-}
-
-
-/**
- * set permanent instrumetn status message
- */
-void PathsTool::SetInstrumentStatus(const std::optional<t_vec>& Qopt, t_real E,
-	bool in_angular_limits, bool colliding)
-{
-	using namespace tl2_ops;
-
-	std::ostringstream ostr;
-	ostr.precision(g_prec_gui);
-	//ostr << "Position: ";
-	if(Qopt)
-	{
-		t_vec Q = *Qopt;
-		tl2::set_eps_0<t_vec>(Q, g_eps_gui);
-		ostr << std::fixed << "Q = (" << Q << ") rlu, ";
-	}
-	else
-		ostr << "Q invalid, ";
-
-	tl2::set_eps_0<t_real>(E, g_eps_gui);
-	ostr << std::fixed << "E = " << E << " meV, ";
-
-	if(!in_angular_limits)
-		ostr << "invalid angles, ";
-
-	if(colliding)
-		ostr << "collision detected!";
-	else
-		ostr << "no collision.";
-
-	m_labelCollisionStatus->setText(ostr.str().c_str());
-}
-
-
-/**
  * constructor, create UI
  */
 PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
@@ -1264,8 +353,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		this, &PathsTool::CalculatePathMesh);
 
 	// calculate path
-	connect(pathwidget, &PathPropertiesWidget::CalculatePath,
-		this, &PathsTool::CalculatePath);
+	//connect(pathwidget, &PathPropertiesWidget::CalculatePath,
+	//	this, &PathsTool::CalculatePath);
 
 	// a path mesh is being calculated
 	connect(this, &PathsTool::PathMeshCalculation,
@@ -1879,6 +968,951 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 
 /**
+ * event signalling that the crystal UB matrix needs an update
+ */
+void PathsTool::UpdateUB()
+{
+	m_tascalc.UpdateUB();
+
+	if(m_xtalInfos)
+		m_xtalInfos->GetWidget()->SetUB(m_tascalc.GetB(), m_tascalc.GetUB());
+}
+
+
+/**
+ * the window is being shown
+ */
+void PathsTool::showEvent(QShowEvent *evt)
+{
+	m_renderer->EnableTimer(true);
+
+	QMainWindow::showEvent(evt);
+}
+
+
+/**
+ * the window is being hidden
+ */
+void PathsTool::hideEvent(QHideEvent *evt)
+{
+	m_renderer->EnableTimer(false);
+
+	QMainWindow::hideEvent(evt);
+}
+
+
+/**
+ * the window is being closed
+ */
+void PathsTool::closeEvent(QCloseEvent *evt)
+{
+	// save window size, position, and state
+	m_sett.setValue("geo", saveGeometry());
+	m_sett.setValue("state", saveState());
+
+	m_recent.TrimEntries();
+	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
+
+	QMainWindow::closeEvent(evt);
+}
+
+
+/**
+ * accept a file dropped onto the main window
+ * @see https://doc.qt.io/qt-5/dnd.html
+ */
+void PathsTool::dragEnterEvent(QDragEnterEvent *evt)
+{
+	// accept urls
+	if(evt->mimeData()->hasUrls())
+		evt->accept();
+
+	QMainWindow::dragEnterEvent(evt);
+}
+
+
+/**
+ * accept a file dropped onto the main window
+ * @see https://doc.qt.io/qt-5/dnd.html
+ */
+void PathsTool::dropEvent(QDropEvent *evt)
+{
+	// get mime data dropped on the main window
+	if(const QMimeData* dat = evt->mimeData(); dat && dat->hasUrls())
+	{
+		// get the list of urls dropped on the main window
+		if(QList<QUrl> urls = dat->urls(); urls.size() > 0)
+		{
+			// use the first url for the file name
+			QString filename = urls.begin()->path();
+
+			// load the dropped file
+			if(QFile::exists(filename))
+				OpenFile(filename);
+		}
+	}
+
+	QMainWindow::dropEvent(evt);
+}
+
+
+
+/**
+ * File -> New
+ */
+void PathsTool::NewFile()
+{
+	SetCurrentFile("");
+	m_instrspace.Clear();
+	ValidatePathMesh(false);
+
+	if(m_dlgGeoBrowser)
+		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+	if(m_renderer)
+		m_renderer->LoadInstrument(m_instrspace);
+}
+
+
+/**
+ * File -> Open
+ */
+void PathsTool::OpenFile()
+{
+	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+
+	QFileDialog filedlg(this, "Open Instrument File", dirLast,
+		"TAS-Paths Files (*.taspaths)");
+	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
+	filedlg.setDefaultSuffix("taspaths");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="" || !QFile::exists(files[0]))
+		return;
+
+	if(OpenFile(files[0]))
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
+}
+
+
+/**
+ * File -> Save
+ */
+void PathsTool::SaveFile()
+{
+	if(m_recent.GetCurFile() == "")
+		SaveFileAs();
+	else
+		SaveFile(m_recent.GetCurFile());
+}
+
+
+/**
+ * File -> Save As
+ */
+void PathsTool::SaveFileAs()
+{
+	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+
+	QFileDialog filedlg(this, "Save Instrument File", dirLast,
+		"TAS-Paths Files (*.taspaths)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("taspaths");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="")
+		return;
+
+	if(SaveFile(files[0]))
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
+}
+
+
+/**
+ * File -> Save Screenshot
+ */
+void PathsTool::SaveScreenshot()
+{
+	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+
+	QFileDialog filedlg(this, "Save Screenshot", dirLast,
+		"PNG Images (*.png);;JPEG Images (*.jpg)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("png");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="")
+		return;
+
+	bool ok = false;
+	if(g_combined_screenshots)
+		ok = SaveCombinedScreenshot(files[0]);
+	else
+		ok = SaveScreenshot(files[0]);
+
+	if(ok)
+		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
+}
+
+
+/**
+ * File -> Export Path
+ */
+bool PathsTool::ExportPath(PathsExporterFormat fmt)
+{
+	std::shared_ptr<PathsExporterBase> exporter;
+
+	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+
+	QFileDialog filedlg(this, "Export Path", dirLast,
+		"Text Files (*.txt)");
+	filedlg.setAcceptMode(QFileDialog::AcceptSave);
+	filedlg.setDefaultSuffix("txt");
+	filedlg.setFileMode(QFileDialog::AnyFile);
+
+	if(!filedlg.exec())
+		return false;
+
+	QStringList files = filedlg.selectedFiles();
+	if(!files.size() || files[0]=="")
+		return false;
+
+	switch(fmt)
+	{
+		case PathsExporterFormat::RAW:
+			exporter = std::make_shared<PathsExporterRaw>(files[0].toStdString());
+			break;
+		case PathsExporterFormat::NOMAD:
+			exporter = std::make_shared<PathsExporterNomad>(files[0].toStdString());
+			break;
+		case PathsExporterFormat::NICOS:
+			exporter = std::make_shared<PathsExporterNicos>(files[0].toStdString());
+			break;
+	}
+
+	if(!exporter)
+	{
+		QMessageBox::critical(this, "Error", "No path is available.");
+		return false;
+	}
+
+	if(!m_pathsbuilder.AcceptExporter(exporter.get(), m_pathvertices, true))
+	{
+		QMessageBox::critical(this, "Error", "Path could not be exported.");
+		return false;
+	}
+
+	m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
+	return true;
+}
+
+
+/**
+ * load file
+ */
+bool PathsTool::OpenFile(const QString& file)
+{
+	// no file given
+	if(file == "")
+		return false;
+
+	try
+	{
+		NewFile();
+
+		// get property tree
+		if(file == "" || !QFile::exists(file))
+		{
+			QMessageBox::critical(this, "Error",
+				"Instrument file \"" + file + "\" does not exist.");
+			return false;
+		}
+
+		// open xml
+		std::string filename = file.toStdString();
+		std::ifstream ifstr{filename};
+		if(!ifstr)
+		{
+			QMessageBox::critical(this, "Error",
+				("Could not read instrument file \"" + filename + "\".").c_str());
+			return false;
+		}
+
+		// read xml
+		pt::ptree prop;
+		pt::read_xml(ifstr, prop);
+		// check format and version
+		if(auto opt = prop.get_optional<std::string>(FILE_BASENAME "ident");
+			!opt || *opt != PROG_IDENT)
+		{
+			QMessageBox::critical(this, "Error",
+				("Instrument file \"" + filename +
+				"\" has invalid identifier.").c_str());
+			return false;
+		}
+
+
+		// load instrument definition file
+		if(auto [instrok, msg] =
+			InstrumentSpace::load(prop, m_instrspace, &filename); !instrok)
+		{
+			QMessageBox::critical(this, "Error", msg.c_str());
+			return false;
+		}
+		else
+		{
+			std::ostringstream ostr;
+			ostr << "Loaded \"" << QFileInfo{file}.fileName().toStdString() << "\" "
+				<< "dated " << msg << ".";
+
+			SetTmpStatus(ostr.str());
+		}
+
+
+		// load dock window settings
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.tas"); prop_dock)
+			m_tasProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.crystal"); prop_dock)
+			m_xtalProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.coordinates"); prop_dock)
+			m_coordProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.path"); prop_dock)
+			m_pathProperties->GetWidget()->Load(*prop_dock);
+		if(auto prop_dock = prop.get_child_optional(FILE_BASENAME "configuration.camera"); prop_dock)
+			m_camProperties->GetWidget()->Load(*prop_dock);
+
+
+		SetCurrentFile(file);
+		m_recent.AddRecentFile(file);
+
+		if(m_dlgGeoBrowser)
+			m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+		if(m_renderer)
+			m_renderer->LoadInstrument(m_instrspace);
+
+
+		// update slot for instrument space (e.g. walls) changes
+		m_instrspace.AddUpdateSlot(
+			[this](const InstrumentSpace& instrspace)
+			{
+				// invalidate the mesh
+				ValidatePathMesh(false);
+
+				if(m_renderer)
+					m_renderer->UpdateInstrumentSpace(instrspace);
+			});
+
+		// update slot for instrument movements
+		m_instrspace.GetInstrument().AddUpdateSlot(
+			[this](const Instrument& instr)
+			{
+				Instrument &localinstr = m_instrspace.GetInstrument();
+				if(&instr != &localinstr)
+				{
+					std::cerr << "Error: Received update from unknown instrument." << std::endl;
+					return;
+				}
+
+				// is ki or kf fixed?
+				bool kf_fixed = true;
+				if(!std::get<1>(m_tascalc.GetKfix()))
+					kf_fixed = false;
+
+				// old angles
+				t_real oldA6 = m_tasProperties->GetWidget()->GetAnaScatteringAngle()/t_real{180}*tl2::pi<t_real>;
+				t_real oldA2 = m_tasProperties->GetWidget()->GetMonoScatteringAngle()/t_real{180}*tl2::pi<t_real>;
+
+				// get scattering angles
+				t_real monoScAngle = instr.GetMonochromator().GetAxisAngleOut();
+				t_real sampleScAngle = instr.GetSample().GetAxisAngleOut();
+				t_real anaScAngle = instr.GetAnalyser().GetAxisAngleOut();
+
+				// get crystal rocking angles
+				t_real monoXtalAngle = instr.GetMonochromator().GetAxisAngleInternal();
+				t_real sampleXtalAngle = instr.GetSample().GetAxisAngleInternal();
+				t_real anaXtalAngle = instr.GetAnalyser().GetAxisAngleInternal();
+
+				{
+					// block new update signals while we're still handling one
+					BOOST_SCOPE_EXIT(&localinstr)
+					{
+						localinstr.SetBlockUpdates(false);
+					} BOOST_SCOPE_EXIT_END
+					localinstr.SetBlockUpdates(true);
+
+					// set scattering angles
+					m_tasProperties->GetWidget()->SetMonoScatteringAngle(monoScAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetSampleScatteringAngle(sampleScAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetAnaScatteringAngle(anaScAngle*t_real{180}/tl2::pi<t_real>);
+
+					// set crystal rocking angles
+					m_tasProperties->GetWidget()->SetMonoCrystalAngle(monoXtalAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetSampleCrystalAngle(sampleXtalAngle*t_real{180}/tl2::pi<t_real>);
+					m_tasProperties->GetWidget()->SetAnaCrystalAngle(anaXtalAngle*t_real{180}/tl2::pi<t_real>);
+				}
+
+				std::tie(m_instrstatus.curQrlu, m_instrstatus.curE) =
+					m_tascalc.GetQE(monoXtalAngle, anaXtalAngle, sampleXtalAngle, sampleScAngle);
+
+				m_instrstatus.in_angular_limits = m_instrspace.CheckAngularLimits();
+				m_instrstatus.colliding = m_instrspace.CheckCollision2D();
+
+				UpdateInstrumentStatus();
+
+				// if the analyser or monochromator angle changes, the mesh also needs to be updated.
+				// need to use gui epsilon here, because oldA6 and oldA2 come from double spin boxes with that precision
+				if(kf_fixed && !tl2::equals<t_real>(oldA6, anaScAngle, g_eps_gui))
+					ValidatePathMesh(false);
+				if(!kf_fixed && !tl2::equals<t_real>(oldA2, monoScAngle, g_eps_gui))
+					ValidatePathMesh(false);
+
+				if(m_autocalcpath)
+					CalculatePath();
+
+				if(this->m_dlgConfigSpace)
+				{
+					this->m_dlgConfigSpace->UpdateInstrument(
+						instr, m_tascalc.GetScatteringSenses());
+				}
+
+				if(this->m_renderer)
+				{
+					//this->m_renderer->UpdateInstrumentStatus(m_instrstatus);
+					this->m_renderer->UpdateInstrument(instr);
+				}
+			});
+
+		m_instrspace.GetInstrument().EmitUpdate();
+	}
+	catch(const std::exception& ex)
+	{
+		QMessageBox::critical(this, "Error",
+			QString{"Instrument configuration error: "} + ex.what() + QString{"."});
+		return false;
+	}
+	return true;
+}
+
+
+/**
+ * save file
+ */
+bool PathsTool::SaveFile(const QString &file)
+{
+	if(file=="")
+		return false;
+
+	// save instrument space configuration
+	pt::ptree prop = m_instrspace.Save();
+
+	// save dock window settings
+	prop.put_child(FILE_BASENAME "configuration.tas", m_tasProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.crystal", m_xtalProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.coordinates", m_coordProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.path", m_pathProperties->GetWidget()->Save());
+	prop.put_child(FILE_BASENAME "configuration.camera", m_camProperties->GetWidget()->Save());
+
+	// set format and version
+	prop.put(FILE_BASENAME "ident", PROG_IDENT);
+	prop.put(FILE_BASENAME "doi", "https://doi.org/10.5281/zenodo.4625649");
+	prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
+
+	std::string filename = file.toStdString();
+	std::ofstream ofstr{filename};
+	ofstr.precision(g_prec);
+	if(!ofstr)
+	{
+		QMessageBox::critical(this, "Error",
+			("Could not save instrument file \"" + filename + "\".").c_str());
+		return false;
+	}
+
+	pt::write_xml(ofstr, prop,
+		pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
+
+	SetCurrentFile(file);
+	m_recent.AddRecentFile(file);
+	return true;
+}
+
+
+/**
+ * save screenshot
+ */
+bool PathsTool::SaveScreenshot(const QString &file)
+{
+	if(file=="" || !m_renderer)
+		return false;
+
+	QImage img = m_renderer->grabFramebuffer();
+	return img.save(file, nullptr, 90);
+}
+
+
+/**
+ * save a combined screenshot of the instrument view and config space
+ */
+bool PathsTool::SaveCombinedScreenshot(const QString& filename)
+{
+	bool ok1 = SaveScreenshot(filename);
+
+	bool ok2 = false;
+	if(m_dlgConfigSpace)
+	{
+		fs::path file_pdf{filename.toStdString()};
+		file_pdf.replace_extension(fs::path{".pdf"});
+
+		ok2 = m_dlgConfigSpace->SaveFigure(file_pdf.string().c_str());
+	}
+
+	return ok1 && ok2;
+}
+
+
+/**
+ * remember current file and set window title
+ */
+void PathsTool::SetCurrentFile(const QString &file)
+{
+	static const QString title(TASPATHS_TITLE);
+	m_recent.SetCurFile(file);
+
+	this->setWindowFilePath(m_recent.GetCurFile());
+
+	if(m_recent.GetCurFile() == "")
+		this->setWindowTitle(title);
+	else
+		this->setWindowTitle(title + " \u2014 " + m_recent.GetCurFile());
+}
+
+
+/**
+ * (in)validates the path mesh if the obstacle configuration has changed
+ */
+void PathsTool::ValidatePathMesh(bool valid)
+{
+	m_instrstatus.pathmeshvalid = valid;
+	emit PathMeshValid(m_instrstatus.pathmeshvalid);
+
+	if(m_renderer)
+		m_renderer->update();
+}
+
+
+/**
+ * (in)validates the path
+ */
+void PathsTool::ValidatePath(bool valid)
+{
+	m_instrstatus.pathvalid = valid;
+	emit PathAvailable(m_pathvertices.size());
+
+	if(m_renderer)
+		m_renderer->update();
+}
+
+
+/**
+ * set the instrument's energy selection mode to either kf=const or ki=const
+ */
+void PathsTool::SetKfConstMode(bool kf_const)
+{
+	bool old_kf_const = std::get<1>(m_tascalc.GetKfix());
+	if(old_kf_const != kf_const)
+	{
+		m_tascalc.SetKfix(kf_const);
+		ValidatePathMesh(false);
+	}
+}
+
+
+/**
+ * go to crystal coordinates
+ */
+void PathsTool::GotoCoordinates(
+	t_real h, t_real k, t_real l,
+	t_real ki, t_real kf,
+	bool only_set_target)
+{
+	TasAngles angles = m_tascalc.GetAngles(h, k, l, ki, kf);
+
+	if(!angles.mono_ok)
+	{
+		QMessageBox::critical(this, "Error", "Invalid monochromator angle.");
+		return;
+	}
+
+	if(!angles.ana_ok)
+	{
+		QMessageBox::critical(this, "Error", "Invalid analyser angle.");
+		return;
+	}
+
+	if(!angles.sample_ok)
+	{
+		QMessageBox::critical(this, "Error", "Invalid scattering angles.");
+		return;
+	}
+
+	// set target coordinate angles
+	if(only_set_target)
+	{
+		if(!m_pathProperties)
+			return;
+
+		auto pathwidget = m_pathProperties->GetWidget();
+		if(!pathwidget)
+			return;
+
+		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
+		t_real a2_abs = angles.monoXtalAngle * 2. * sensesCCW[0];
+		t_real a4_abs = angles.sampleScatteringAngle * sensesCCW[1];
+		t_real a6_abs = angles.anaXtalAngle * 2. * sensesCCW[2];
+
+		// is kf or ki fixed?
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
+
+		t_real _a2_or_a6 = kf_fixed ? a2_abs : a6_abs;
+
+		pathwidget->SetTarget(
+			_a2_or_a6 / tl2::pi<t_real> * 180.,
+			a4_abs / tl2::pi<t_real> * 180.);
+	}
+
+	// set instrument angles
+	else
+	{
+		Instrument& instr = m_instrspace.GetInstrument();
+
+		// send one update signal at the end
+		// and not after each angle change
+		BOOST_SCOPE_EXIT(&instr)
+		{
+			instr.SetBlockUpdates(false);
+			instr.EmitUpdate();
+		} BOOST_SCOPE_EXIT_END
+		instr.SetBlockUpdates(true);
+
+		// set scattering angles
+		instr.GetMonochromator().SetAxisAngleOut(
+			t_real{2} * angles.monoXtalAngle);
+		instr.GetSample().SetAxisAngleOut(
+			angles.sampleScatteringAngle);
+		instr.GetAnalyser().SetAxisAngleOut(
+			t_real{2} * angles.anaXtalAngle);
+
+		// set crystal angles
+		instr.GetMonochromator().SetAxisAngleInternal(
+			angles.monoXtalAngle);
+		instr.GetSample().SetAxisAngleInternal(
+			angles.sampleXtalAngle);
+		instr.GetAnalyser().SetAxisAngleInternal(
+			angles.anaXtalAngle);
+
+		m_tascalc.SetKfix(kf);
+
+		//if(m_autocalcpath)
+		//	CalculatePath();
+	}
+}
+
+
+/**
+ * set the instrument angles to the specified ones
+ * (angles have to be positive as scattering senses are applied in the function)
+ */
+void PathsTool::GotoAngles(std::optional<t_real> a1,
+	std::optional<t_real> a3, std::optional<t_real> a4,
+	std::optional<t_real> a5, bool only_set_target)
+{
+	// set target coordinate angles
+	if(only_set_target && (a1 || a5) && a4)
+	{
+		if(!m_pathProperties)
+			return;
+		auto pathwidget = m_pathProperties->GetWidget();
+		if(!pathwidget)
+			return;
+
+		// is kf or ki fixed?
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
+
+		// move either monochromator or analyser depending if kf=fixed
+		t_real _a2_or_a6 = kf_fixed ? *a1 * 2. : *a5 * 2.;
+		t_real _a4 = *a4;
+
+		pathwidget->SetTarget(
+			_a2_or_a6 / tl2::pi<t_real> * 180.,
+			_a4 / tl2::pi<t_real> * 180.);
+	}
+
+	// set instrument angles
+	else
+	{
+		Instrument& instr = m_instrspace.GetInstrument();
+
+		// send one update signal at the end
+		// and not after each angle change
+		BOOST_SCOPE_EXIT(&instr)
+		{
+			instr.SetBlockUpdates(false);
+			instr.EmitUpdate();
+		} BOOST_SCOPE_EXIT_END
+		instr.SetBlockUpdates(true);
+
+		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
+
+		// set mono angle
+		if(a1)
+		{
+			*a1 *= sensesCCW[0];
+			instr.GetMonochromator().SetAxisAngleOut(t_real{2} * *a1);
+			instr.GetMonochromator().SetAxisAngleInternal(*a1);
+		}
+
+		// set sample crystal angle
+		if(a3)
+		{
+			*a3 *= sensesCCW[1];
+			instr.GetSample().SetAxisAngleInternal(*a3);
+		}
+
+		// set sample scattering angle
+		if(a4)
+		{
+			*a4 *= sensesCCW[1];
+			instr.GetSample().SetAxisAngleOut(*a4);
+		}
+
+		// set ana angle
+		if(a5)
+		{
+			*a5 *= sensesCCW[2];
+			instr.GetAnalyser().SetAxisAngleOut(t_real{2} * *a5);
+			instr.GetAnalyser().SetAxisAngleInternal(*a5);
+		}
+
+		//if(m_autocalcpath)
+		//	CalculatePath();
+	}
+}
+
+
+/**
+ * called after the plotter has initialised
+ */
+void PathsTool::AfterGLInitialisation()
+{
+	// GL device info
+	std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
+		= m_renderer->GetGlDescr();
+
+	// get viewing angle
+	t_real viewingAngle = m_renderer ? m_renderer->GetCamViewingAngle() : tl2::pi<t_real>*0.5;
+	m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
+
+	// get perspective projection flag
+	bool persp = m_renderer ? m_renderer->GetPerspectiveProjection() : true;
+	m_camProperties->GetWidget()->SetPerspectiveProj(persp);
+
+	// get camera position
+	t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
+	m_camProperties->GetWidget()->SetCamPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
+
+	// get camera rotation
+	t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
+	m_camProperties->GetWidget()->SetCamRotation(
+		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>,
+		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
+
+	m_renderer->SetInstrumentStatus(&m_instrstatus);
+
+	// load an initial instrument definition
+	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
+	{
+		if(OpenFile(instrfile.c_str()))
+		{
+			// don't consider the initial instrument configuration as current file
+			if(!m_initialInstrFileModified)
+				SetCurrentFile("");
+
+			m_renderer->LoadInstrument(m_instrspace);
+		}
+	}
+}
+
+
+/**
+ * mouse coordinates on base plane
+ */
+void PathsTool::CursorCoordsChanged(t_real_gl x, t_real_gl y)
+{
+	m_mouseX = x;
+	m_mouseY = y;
+	UpdateStatusLabel();
+}
+
+
+/**
+ * mouse is over an object
+ */
+void PathsTool::PickerIntersection(const t_vec3_gl* /*pos*/,
+	std::string obj_name, const t_vec3_gl* /*posSphere*/)
+{
+	m_curObj = obj_name;
+	UpdateStatusLabel();
+}
+
+
+/**
+ * clicked on an object
+ */
+void PathsTool::ObjectClicked(const std::string& obj, bool /*left*/, bool middle, bool right)
+{
+	if(!m_renderer)
+		return;
+
+	// show context menu for object
+	if(right && obj != "")
+	{
+		m_curContextObj = obj;
+
+		QPoint pos = m_renderer->GetMousePosition(true);
+		pos.setX(pos.x() + 8);
+		pos.setY(pos.y() + 8);
+		m_contextMenuObj->popup(pos);
+	}
+
+	// centre scene around object
+	if(middle)
+	{
+		m_renderer->CentreCam(obj);
+	}
+}
+
+
+/**
+ * dragging an object
+ */
+void PathsTool::ObjectDragged(bool drag_start, const std::string& obj,
+	t_real_gl x_start, t_real_gl y_start, t_real_gl x, t_real_gl y)
+{
+	/*std::cout << "Dragging " << obj
+		<< " from (" << x_start << ", " << y_start << ")"
+		<< " to (" << x << ", " << y << ")." << std::endl;*/
+
+	m_instrspace.DragObject(drag_start, obj, x_start, y_start, x, y);
+}
+
+
+/**
+ * set temporary status message, by default for 2 seconds
+ */
+void PathsTool::SetTmpStatus(const std::string& msg, int msg_duration)
+{
+	if(!m_statusbar)
+		return;
+
+	if(thread() == QThread::currentThread())
+	{
+		m_statusbar->showMessage(msg.c_str(), msg_duration);
+	}
+	else
+	{
+		// alternate call via meta object when coming from another thread
+		QMetaObject::invokeMethod(m_statusbar, "showMessage", Qt::QueuedConnection,
+			Q_ARG(QString, msg.c_str()),
+			Q_ARG(int, msg_duration)
+		);
+	}
+}
+
+
+/**
+ * update permanent status message
+ */
+void PathsTool::UpdateStatusLabel()
+{
+	const t_real maxRange = 1e6;
+
+	if(!std::isfinite(m_mouseX) || !std::isfinite(m_mouseY))
+		return;
+	if(std::abs(m_mouseX) >= maxRange || std::abs(m_mouseY) >= maxRange)
+		return;
+
+	std::ostringstream ostr;
+	ostr.precision(g_prec_gui);
+	ostr << std::fixed << std::showpos
+		<< "Cursor: (" << m_mouseX << ", " << m_mouseY << ") m";
+
+	// show object name
+	//if(m_curObj != "")
+	//	ostr << ", object: " << m_curObj;
+
+	ostr << ".";
+	m_labelStatus->setText(ostr.str().c_str());
+}
+
+
+/**
+ * set permanent instrument status message
+ */
+void PathsTool::UpdateInstrumentStatus()
+{
+	using namespace tl2_ops;
+
+	std::ostringstream ostr;
+	ostr.precision(g_prec_gui);
+	//ostr << "Position: ";
+
+	if(m_instrstatus.curQrlu)
+	{
+		tl2::set_eps_0<t_vec>(*m_instrstatus.curQrlu, g_eps_gui);
+		ostr << std::fixed << "Q = (" << *m_instrstatus.curQrlu << ") rlu, ";
+	}
+	else
+	{
+		ostr << "Q invalid, ";
+	}
+
+	if(m_instrstatus.curE)
+	{
+		tl2::set_eps_0<t_real>(*m_instrstatus.curE, g_eps_gui);
+		ostr << std::fixed << "E = " << *m_instrstatus.curE << " meV, ";
+	}
+	else
+	{
+		ostr << "E invalid, ";
+	}
+
+	if(!m_instrstatus.in_angular_limits)
+		ostr << "invalid angles, ";
+
+	if(m_instrstatus.colliding)
+		ostr << "collision detected!";
+	else
+		ostr << "no collision.";
+
+	m_labelCollisionStatus->setText(ostr.str().c_str());
+}
+
+
+/**
  * set the instrument file to be initially loaded
  */
 void PathsTool::SetInitialInstrumentFile(const std::string& file)
@@ -2181,7 +2215,7 @@ void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectPro
  */
 void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
 {
-	if(!m_pathmeshvalid)
+	if(!m_instrstatus.pathmeshvalid)
 		return;
 
 	SetTmpStatus("Received external path.");
@@ -2195,21 +2229,28 @@ void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
 	{
 		// get the vertices on the path
 		m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
-		emit PathAvailable(m_pathvertices.size());
+		ValidatePath(m_pathvertices.size() != 0);
 
 		std::ostringstream ostrMsg;
 		ostrMsg.precision(g_prec_gui);
-		ostrMsg << "Path calculated";
 
-		if(g_verifypath && m_pathvertices.size())
+		if(m_instrstatus.pathvalid)
 		{
-			auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
-			t_real min_dist = *std::min_element(distances.begin(), distances.end());
-			min_dist = min_dist / tl2::pi<t_real>*t_real(180);
+			ostrMsg << "Path calculated";
+			if(g_verifypath)
+			{
+				auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
+				t_real min_dist = *std::min_element(distances.begin(), distances.end());
+				min_dist = min_dist / tl2::pi<t_real>*t_real(180);
 
-			ostrMsg << ", min. wall dist.: " << min_dist << "°";
+				ostrMsg << ", min. wall dist.: " << min_dist << "°";
+			}
+			ostrMsg << ".";
 		}
-		ostrMsg << ".";
+		else
+		{
+			ostrMsg << "Error: No valid path could be found.";
+		}
 
 		SetTmpStatus(ostrMsg.str());
 	}
@@ -2342,27 +2383,31 @@ bool PathsTool::CalculatePathMesh()
  */
 bool PathsTool::CalculatePath()
 {
+	//std::cout << __func__ << std::endl;
 	m_stop_requested = false;
 	m_pathvertices.clear();
+	ValidatePath(false);
 
-	if(!m_pathmeshvalid)
+	if(!m_instrstatus.pathmeshvalid)
 		return false;
-
-	// get the scattering angles
-	const Instrument& instr = m_instrspace.GetInstrument();
-	t_real curMonoScatteringAngle = instr.GetMonochromator().GetAxisAngleOut();
-	t_real curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
-
-	// adjust scattering senses
-	const t_real* sensesCCW = m_tascalc.GetScatteringSenses();
 
 	bool kf_fixed = true;
 	if(!std::get<1>(m_tascalc.GetKfix()))
 		kf_fixed = false;
 
+	// get the scattering angles
+	const Instrument& instr = m_instrspace.GetInstrument();
+	t_real curMonoOrAnaScatteringAngle = kf_fixed
+		? instr.GetMonochromator().GetAxisAngleOut()
+		: instr.GetAnalyser().GetAxisAngleOut();
+	t_real curSampleScatteringAngle = instr.GetSample().GetAxisAngleOut();
+
+	// adjust scattering senses
+	const t_real* sensesCCW = m_tascalc.GetScatteringSenses();
+
 	t_real sense_mono_or_ana = kf_fixed ? sensesCCW[0] : sensesCCW[2];
 
-	curMonoScatteringAngle *= sense_mono_or_ana;
+	curMonoOrAnaScatteringAngle *= sense_mono_or_ana;
 	curSampleScatteringAngle *= sensesCCW[1];
 	t_real targetMonoScatteringAngle = m_targetMonoScatteringAngle * sense_mono_or_ana;
 	t_real targetSampleScatteringAngle = m_targetSampleScatteringAngle * sensesCCW[1];
@@ -2375,7 +2420,7 @@ bool PathsTool::CalculatePath()
 	// find path from current to target position
 	SetTmpStatus("Calculating path.");
 	InstrumentPath path = m_pathsbuilder.FindPath(
-		curMonoScatteringAngle, curSampleScatteringAngle,
+		curMonoOrAnaScatteringAngle, curSampleScatteringAngle,
 		targetMonoScatteringAngle, targetSampleScatteringAngle,
 		pathstrategy);
 
@@ -2389,31 +2434,34 @@ bool PathsTool::CalculatePath()
 	// get the vertices on the path
 	SetTmpStatus("Retrieving path vertices.");
 	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
-	if(!m_pathvertices.size())
+	ValidatePath(m_pathvertices.size() != 0);
+
+	if(!m_instrstatus.pathvalid)
 	{
 		//QMessageBox::critical(this, "Error", "No valid path could be found.");
 		SetTmpStatus("Error: No valid path could be found.");
 		return false;
 	}
-
-	emit PathAvailable(m_pathvertices.size());
-
-	std::ostringstream ostrMsg;
-	ostrMsg.precision(g_prec_gui);
-	ostrMsg << "Path calculated";
-
-	if(g_verifypath && m_pathvertices.size())
+	else
 	{
-		auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
-		t_real min_dist = *std::min_element(distances.begin(), distances.end());
-		min_dist = min_dist / tl2::pi<t_real>*t_real(180);
+		std::ostringstream ostrMsg;
+		ostrMsg.precision(g_prec_gui);
+		ostrMsg << "Path calculated";
 
-		ostrMsg << ", min. wall dist.: " << min_dist << "°";
+		if(g_verifypath)
+		{
+			auto distances = m_pathsbuilder.GetDistancesToNearestWall(m_pathvertices, false);
+			t_real min_dist = *std::min_element(distances.begin(), distances.end());
+			min_dist = min_dist / tl2::pi<t_real>*t_real(180);
+
+			ostrMsg << ", min. wall dist.: " << min_dist << "°";
+		}
+		ostrMsg << ".";
+
+		SetTmpStatus(ostrMsg.str());
 	}
-	ostrMsg << ".";
 
-	SetTmpStatus(ostrMsg.str());
-	return true;
+	return m_instrstatus.pathvalid;
 }
 
 
@@ -2423,15 +2471,16 @@ bool PathsTool::CalculatePath()
 void PathsTool::TrackPath(std::size_t idx)
 {
 	// block path recalculation during tracking
-	m_autocalcpath = false;
-	if(m_dlgConfigSpace)
-		m_dlgConfigSpace->SetBlockCalc(true);
 	BOOST_SCOPE_EXIT(&m_autocalcpath, &m_dlgConfigSpace)
 	{
 		m_autocalcpath = true;
 		if(m_dlgConfigSpace)
 			m_dlgConfigSpace->SetBlockCalc(false);
 	} BOOST_SCOPE_EXIT_END
+
+	m_autocalcpath = false;
+	if(m_dlgConfigSpace)
+		m_dlgConfigSpace->SetBlockCalc(true);
 
 
 	if(idx >= m_pathvertices.size())

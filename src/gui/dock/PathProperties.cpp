@@ -38,8 +38,8 @@
 // --------------------------------------------------------------------------------
 // properties widget
 // --------------------------------------------------------------------------------
-#define CALC_MESH_TITLE "Calculate Path &Mesh"
-#define CALC_PATH_TITLE "Calculate &Path"
+#define CALC_MESH_TITLE "Update Path &Mesh"
+//#define CALC_PATH_TITLE "Calculate &Path"
 
 
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)

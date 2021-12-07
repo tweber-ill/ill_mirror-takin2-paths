@@ -596,7 +596,7 @@ public:
 	 * get the index of the closest n voronoi vertices
 	 */
 	std::vector<std::size_t>
-	GetClosestVoronoiVertices(const t_vec& vec, std::size_t n = 1) const
+	GetClosestVoronoiVertices(const t_vec& vec, std::size_t n = 1, bool sort = false) const
 	{
 		std::vector<std::size_t> indices;
 		indices.reserve(n);
@@ -607,6 +607,23 @@ public:
 			{
 				indices.push_back(std::get<1>(val));
 			}));
+
+		if(sort)
+		{
+			std::stable_sort(indices.begin(), indices.end(),
+				[this, &vec](std::size_t idx1, std::size_t idx2) -> bool
+				{
+					using t_real = typename t_vec::value_type;
+
+					t_vec dir1 = vertices[idx1] - vec;
+					t_vec dir2 = vertices[idx2] - vec;
+
+					t_real len1 = tl2::inner<t_vec>(dir1, dir1);
+					t_real len2 = tl2::inner<t_vec>(dir2, dir2);
+
+					return len1 < len2;
+				});
+		}
 
 		return indices;
 	}

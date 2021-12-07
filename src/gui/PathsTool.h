@@ -47,6 +47,7 @@
 #include "src/core/InstrumentSpace.h"
 #include "src/core/TasCalculator.h"
 
+#include "InstrumentStatus.h"
 #include "PathsRenderer.h"
 #include "ConfigSpace.h"
 #include "XtalConfigSpace.h"
@@ -64,10 +65,27 @@
 #include "dock/CamProperties.h"
 
 
-// ----------------------------------------------------------------------------
-
 class PathsTool : public QMainWindow
 { Q_OBJECT
+public:
+	/**
+	 * create UI
+	 */
+	PathsTool(QWidget* pParent = nullptr);
+	virtual ~PathsTool() = default;
+
+	PathsTool(const PathsTool&) = delete;
+	const PathsTool& operator=(const PathsTool&) = delete;
+
+	void SetInitialInstrumentFile(const std::string& file);
+
+	// load file
+	bool OpenFile(const QString &file);
+
+	// save file
+	bool SaveFile(const QString &file);
+
+
 private:
 	QSettings m_sett{"takin", "taspaths"};
 	QByteArray m_initial_state{};
@@ -129,7 +147,6 @@ private:
 	// instrument configuration and paths builder
 	InstrumentSpace m_instrspace{};
 	PathsBuilder m_pathsbuilder{};
-	bool m_pathmeshvalid{false};
 	bool m_autocalcpath{true};
 
 	// calculated path vertices
@@ -144,28 +161,10 @@ private:
 
 	// tas calculations
 	TasCalculator m_tascalc{};
+	InstrumentStatus m_instrstatus{};
 
 	// progress of active calculation
 	t_real m_calculationprogress{};
-
-
-public:
-	/**
-	 * create UI
-	 */
-	PathsTool(QWidget* pParent=nullptr);
-	~PathsTool() = default;
-
-	PathsTool(const PathsTool&) = delete;
-	const PathsTool& operator=(const PathsTool&) = delete;
-
-	void SetInitialInstrumentFile(const std::string& file);
-
-	// load file
-	bool OpenFile(const QString &file);
-
-	// save file
-	bool SaveFile(const QString &file);
 
 
 protected:
@@ -192,6 +191,8 @@ protected:
 
 	// (in)validates the path mesh if the obstacle configuration has changed
 	void ValidatePathMesh(bool valid = true);
+	// (in)validates the path
+	void ValidatePath(bool valid = true);
 
 
 protected slots:
@@ -257,9 +258,8 @@ protected slots:
 	// update permanent status message
 	void UpdateStatusLabel();
 
-	// set instrument status (coordinates, collision flag)
-	void SetInstrumentStatus(const std::optional<t_vec>& Q, t_real E,
-		bool in_angluar_limits, bool colliding);
+	// update instrument status display (e.g, coordinates, collision flag)
+	void UpdateInstrumentStatus();
 
 	// move the instrument to a position on the path
 	void TrackPath(std::size_t idx);
@@ -290,7 +290,6 @@ signals:
 	// signal if a path mesh is valid or invalid
 	void PathMeshValid(bool valid);
 };
-// ----------------------------------------------------------------------------
 
 
 #endif

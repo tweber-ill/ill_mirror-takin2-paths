@@ -133,12 +133,12 @@ protected:
 	t_real GetDistToNearestWall(const t_vec2& vertex) const;
 
 	// find the closest point on a path segment
-	std::tuple<t_real, t_real, int>
+	std::tuple<t_real, t_real, int, t_vec2>
 	FindClosestPointOnSegment(std::size_t idx1, std::size_t idx2,
 		const t_vec2& vec) const;
 
 	// find a neighbour bisector which is closer to the given vertex than the given one
-	std::tuple<t_real, std::size_t, int>
+	std::tuple<t_real, std::size_t, int, bool>
 	FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 		const t_vec& vert, bool reversed_order = false) const;
 
@@ -367,6 +367,9 @@ private:
 
 	// radius inside with to search for direct paths
 	t_real m_directpath_search_radius = 20. / t_real(180.) * tl2::pi<t_real>;
+
+	// number of closest voronoi vertices to look at for retraction point search
+	std::size_t m_num_closest_voronoi_vertices = 64;
 
 	// check the generated path for collisions
 	bool m_verifypath = true;

@@ -71,8 +71,8 @@ public:
 
 	// send an update signal
 	void EmitUpdate();
-	void SetBlockUpdates(bool b) { m_block_updates = b; }
-	bool GetBlockUpdates() const { return m_block_updates; }
+	void SetBlockUpdates(bool b);
+	bool GetBlockUpdates() const;
 
 	std::vector<ObjectProperty> GetProperties(const std::string& obj) const;
 	std::tuple<bool, std::shared_ptr<Geometry>> SetProperties(

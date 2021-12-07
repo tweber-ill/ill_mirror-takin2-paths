@@ -263,10 +263,9 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 }
 
 
-void PathsRenderer::SetInstrumentStatus(bool in_angular_limits, bool colliding)
+void PathsRenderer::SetInstrumentStatus(const InstrumentStatus *status)
 {
-	m_in_angular_limits = in_angular_limits;
-	m_colliding = colliding;
+	m_instrstatus = status;
 }
 
 
@@ -1106,7 +1105,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
 	// clear
-	if(m_colliding || !m_in_angular_limits)
+	if(m_instrstatus && (m_instrstatus->colliding || !m_instrstatus->in_angular_limits))
 		pGl->glClearColor(0.8, 0.8, 0.8, 1.);
 	else
 		pGl->glClearColor(1., 1., 1., 1.);
@@ -1247,44 +1246,90 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 		}
 	}
 
-	// collision and angular limits errors
-	if(m_colliding || !m_in_angular_limits)
+	// instrument status labels
+	if(m_instrstatus)
 	{
-		QString label;
-		if(!m_in_angular_limits && m_colliding)
-			label = "Out of angular limits and collision detected!";
-		else if(!m_in_angular_limits)
-			label = "Out of angular limits!";
-		else if(m_colliding)
-			label = "Collision detected!";
+		// collision and angular limits errors
+		if(m_instrstatus->colliding || !m_instrstatus->in_angular_limits)
+		{
+			QString label;
+			if(!m_instrstatus->in_angular_limits && m_instrstatus->colliding)
+				label = "Out of angular limits\nand collision detected!";
+			else if(!m_instrstatus->in_angular_limits)
+				label = "Out of angular limits!";
+			else if(m_instrstatus->colliding)
+				label = "Collision detected!";
 
-		QFont fontLabel = fontOrig;
-		QPen penLabel = penOrig;
-		QBrush brushLabel = brushOrig;
+			QFont fontLabel = fontOrig;
+			QPen penLabel = penOrig;
+			QBrush brushLabel = brushOrig;
 
-		fontLabel.setStyleStrategy(
-			QFont::StyleStrategy(
-				QFont::PreferAntialias |
-				QFont::PreferQuality));
-		fontLabel.setWeight(QFont::Bold);
-		fontLabel.setPointSize(fontLabel.pointSize()*1.5);
-		penLabel.setColor(QColor(0, 0, 0, 255));
-		penLabel.setWidth(penLabel.width()*2);
-		brushLabel.setColor(QColor(255, 0, 0, 200));
-		brushLabel.setStyle(Qt::SolidPattern);
-		painter.setFont(fontLabel);
-		painter.setPen(penLabel);
-		painter.setBrush(brushLabel);
+			fontLabel.setStyleStrategy(
+				QFont::StyleStrategy(
+					QFont::PreferAntialias |
+					QFont::PreferQuality));
+			fontLabel.setWeight(QFont::Bold);
+			fontLabel.setPointSize(fontLabel.pointSize()*1.5);
+			penLabel.setColor(QColor(0, 0, 0, 255));
+			penLabel.setWidth(penLabel.width()*2);
+			brushLabel.setColor(QColor(255, 0, 0, 200));
+			brushLabel.setStyle(Qt::SolidPattern);
+			painter.setFont(fontLabel);
+			painter.setPen(penLabel);
+			painter.setBrush(brushLabel);
 
-		QRect boundingRect = painter.fontMetrics().boundingRect(label);
-		boundingRect.setWidth(boundingRect.width() * 1.5);
-		boundingRect.setHeight(boundingRect.height() * 2);
-		boundingRect.translate(16, 32);
+			QRect boundingRect = painter.fontMetrics().boundingRect(QRect{0,0,0,0}, 0, label);
+			int w = boundingRect.width() * 1.5;
+			int h = boundingRect.height() * 2;
+			boundingRect.setWidth(w);
+			boundingRect.setHeight(h);
+			boundingRect.translate(16, 32);
 
-		painter.drawRect(boundingRect);
-		painter.drawText(boundingRect,
-			Qt::AlignCenter | Qt::AlignVCenter,
-			label);
+			painter.drawRect(boundingRect);
+			painter.drawText(boundingRect,
+				Qt::AlignCenter | Qt::AlignVCenter,
+				label);
+		}
+
+		// path and path mesh status
+		if(!m_instrstatus->pathmeshvalid || !m_instrstatus->pathvalid)
+		{
+			QString label;
+			if(!m_instrstatus->pathmeshvalid)
+				label = "Path mesh needs update.";
+			else if(!m_instrstatus->pathvalid)
+				label = "No path found.";
+
+			QFont fontLabel = fontOrig;
+			QPen penLabel = penOrig;
+			QBrush brushLabel = brushOrig;
+
+			fontLabel.setStyleStrategy(
+				QFont::StyleStrategy(
+					QFont::PreferAntialias |
+					QFont::PreferQuality));
+			//fontLabel.setWeight(QFont::Bold);
+			fontLabel.setPointSize(fontLabel.pointSize()*1.5);
+			penLabel.setColor(QColor(255, 255, 255, 255));
+			penLabel.setWidth(penLabel.width()*2);
+			brushLabel.setColor(QColor(0, 0, 195, 200));
+			brushLabel.setStyle(Qt::SolidPattern);
+			painter.setFont(fontLabel);
+			painter.setPen(penLabel);
+			painter.setBrush(brushLabel);
+
+			QRect boundingRect = painter.fontMetrics().boundingRect(QRect{0,0,0,0}, 0, label);
+			int w = boundingRect.width() * 1.5;
+			int h = boundingRect.height() * 2;
+			boundingRect.setWidth(w);
+			boundingRect.setHeight(h);
+			boundingRect.translate(width() - w - 16, 32);
+
+			painter.drawRect(boundingRect);
+			painter.drawText(boundingRect,
+				Qt::AlignCenter | Qt::AlignVCenter,
+				label);
+		}
 	}
 
 	// restore original styles

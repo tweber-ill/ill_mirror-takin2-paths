@@ -93,6 +93,7 @@ void Instrument::Clear()
 	GetSample().Clear();
 	GetAnalyser().Clear();
 
+	// remove listeners
 	m_sigUpdate = std::make_shared<t_sig_update>();
 }
 
@@ -237,6 +238,22 @@ void Instrument::EmitUpdate()
 		return;
 
 	(*m_sigUpdate)(*this);
+}
+
+
+/**
+ * block the update signal from being sent
+ */
+void Instrument::SetBlockUpdates(bool b)
+{
+	//std::cout << "instrument blocks update signal: " << std::boolalpha << b << std::endl;
+	m_block_updates = b;
+}
+
+
+bool Instrument::GetBlockUpdates() const
+{
+	return m_block_updates;
 }
 
 
