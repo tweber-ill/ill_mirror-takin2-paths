@@ -869,13 +869,14 @@ InstrumentPath PathsBuilder::FindPath(
 	{
 		// check closest voronoi vertices for a possible path from the initial position to a retraction point
 		bool found_i = false;
-		indices_i = m_voro_results.GetClosestVoronoiVertices(path.vec_i, m_num_closest_voronoi_vertices, true);
+		indices_i = m_voro_results.GetClosestVoronoiVertices(
+			path.vec_i, m_num_closest_voronoi_vertices, true);
 
 		for(std::size_t _idx_i : indices_i)
 		{
-			bool collides = DoesDirectPathCollide(
-				PixelToAngle(path.vec_i, false),
-				PixelToAngle(voro_vertices[_idx_i], false));
+			bool collides = DoesDirectPathCollidePixel(
+				path.vec_i, voro_vertices[_idx_i], false);
+
 			if(!collides)
 			{
 				idx_i = _idx_i;
@@ -886,6 +887,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 		if(!found_i)
 		{
+			std::cerr << "Initial voronoi vertex not found!" << std::endl;
 			path.ok = false;
 			return path;
 		}
@@ -893,13 +895,14 @@ InstrumentPath PathsBuilder::FindPath(
 
 		// check closest voronoi vertices for a possible path from the target position to a retraction point
 		bool found_f = false;
-		indices_f = m_voro_results.GetClosestVoronoiVertices(path.vec_f, m_num_closest_voronoi_vertices, true);
+		indices_f = m_voro_results.GetClosestVoronoiVertices(
+			path.vec_f, m_num_closest_voronoi_vertices, true);
 
 		for(std::size_t _idx_f : indices_f)
 		{
-			bool collides = DoesDirectPathCollide(
-				PixelToAngle(path.vec_f, false),
-				PixelToAngle(voro_vertices[_idx_f], false));
+			bool collides = DoesDirectPathCollidePixel(
+				path.vec_f, voro_vertices[_idx_f], false);
+
 			if(!collides)
 			{
 				idx_f = _idx_f;
@@ -910,6 +913,7 @@ InstrumentPath PathsBuilder::FindPath(
 
 		if(!found_f)
 		{
+			std::cerr << "Final voronoi vertex not found!" << std::endl;
 			path.ok = false;
 			return path;
 		}
@@ -1698,12 +1702,12 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 	auto [min_param, min_dist, bisector_type, pt_on_segment] =
 		FindClosestPointOnSegment(idx1, idx2, vert);
 
-	bool collides = DoesDirectPathCollide(PixelToAngle(vert, false), PixelToAngle(pt_on_segment, false));
+	bool collides = false; //DoesDirectPathCollidePixel(vert, pt_on_segment, false);
 
 	// check if any neighbour path before first vertex is even closer
 	std::vector<std::size_t> neighbour_indices =
 		voro_graph.GetNeighbours(vert_idx_1);
-	std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
+	//std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
 	std::unordered_set<std::size_t> seen_neighbours;
 	seen_neighbours.insert(vert_idx_2);
 
@@ -1731,9 +1735,8 @@ PathsBuilder::FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
 
 		auto [neighbour_param, neighbour_dist, neighbour_bisector_type, neighbour_pt_on_segment] =
 			FindClosestPointOnSegment(idx1, idx2, vert);
-		bool neighbour_collides =
-			DoesDirectPathCollide(PixelToAngle(vert, false),
-				PixelToAngle(neighbour_pt_on_segment, false));
+		bool neighbour_collides = false; /*DoesDirectPathCollidePixel(
+			vert, neighbour_pt_on_segment, false);*/
 
 		if(neighbour_bisector_type != -1 && !neighbour_collides)
 		{
@@ -1922,18 +1925,29 @@ bool PathsBuilder::DoesPositionCollide(const t_vec2& pos, bool deg) const
  * @arg vert1 starting angular position of the path, in deg or rad
  * @arg vert2 ending angular position of the path, in deg or rad
  */
-bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg) const
+bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg, bool use_min_dist) const
 {
 	t_vec2 pix1 = AngleToPixel(vert1, deg, false);
 	t_vec2 pix2 = AngleToPixel(vert2, deg, false);
 
+	return DoesDirectPathCollidePixel(pix1, pix2, use_min_dist);
+}
+
+
+/**
+ * check if a direct path between the two vertices leads to a collision
+ * @arg vert1 starting position of the path, in pixels
+ * @arg vert2 ending position of the path, in pixels
+ */
+bool PathsBuilder::DoesDirectPathCollidePixel(const t_vec2& vert1, const t_vec2& vert2, bool use_min_dist) const
+{
 	t_int last_x = -1;
 	t_int last_y = -1;
 
 	for(t_real t=0.; t<=1.; t+=m_eps_angular)
 	{
-		t_int x = (t_int)std::lerp(pix1[0], pix2[0], t);
-		t_int y = (t_int)std::lerp(pix1[1], pix2[1], t);
+		t_int x = (t_int)std::lerp(vert1[0], vert2[0], t);
+		t_int y = (t_int)std::lerp(vert1[1], vert2[1], t);
 
 		// don't check the same pixel again
 		if(last_x == x && last_y == y)
@@ -1946,13 +1960,16 @@ bool PathsBuilder::DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert
 		if(m_img.GetPixel(x, y) != PIXEL_VALUE_NOCOLLISION)
 			return true;
 
-		// look for the closest wall
-		t_vec2 pix = tl2::create<t_vec2>({t_real(x), t_real(y)});
-		t_real dist_to_walls = GetDistToNearestWall(pix);
+		if(use_min_dist)
+		{
+			// look for the closest wall
+			t_vec2 pix = tl2::create<t_vec2>({t_real(x), t_real(y)});
+			t_real dist_to_walls = GetDistToNearestWall(pix);
 
-		// reject path if the minimum distance to the walls is undercut
-		if(dist_to_walls < m_min_angular_dist_to_walls)
-			return true;
+			// reject path if the minimum distance to the walls is undercut
+			if(dist_to_walls < m_min_angular_dist_to_walls)
+				return true;
+		}
 
 		last_x = x;
 		last_y = y;

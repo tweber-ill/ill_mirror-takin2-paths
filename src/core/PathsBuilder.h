@@ -127,7 +127,10 @@ protected:
 	bool DoesPositionCollide(const t_vec2& pos, bool deg = false) const;
 
 	// check if a direct path between the two vertices leads to a collision
-	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2, bool deg = false) const;
+	bool DoesDirectPathCollide(const t_vec2& vert1, const t_vec2& vert2,
+		bool deg = false, bool use_min_dist = true) const;
+	bool DoesDirectPathCollidePixel(const t_vec2& vert1, const t_vec2& vert2,
+		bool use_min_dist = true) const;
 
 	// get the angular distance of a vertex to the nearest wall from pixel coordinates
 	t_real GetDistToNearestWall(const t_vec2& vertex) const;
