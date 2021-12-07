@@ -49,7 +49,7 @@ unsigned int g_maxnum_recents = 16;
 
 // epsilons and precisions
 int g_prec = 6;
-int g_prec_gui = 4;
+int g_prec_gui = 3;
 t_real g_eps = 1e-6;
 t_real g_eps_angular = 0.01 / 180. * tl2::pi<t_real>;
 t_real g_eps_gui = 1e-4;

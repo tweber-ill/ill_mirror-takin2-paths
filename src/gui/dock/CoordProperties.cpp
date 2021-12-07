@@ -44,6 +44,16 @@
 CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
+	const QString tooltips[] =
+	{
+		"Reduced momentum transfer h in relative lattice units [rlu].",
+		"Reduced momentum transfer k in relative lattice units [rlu].",
+		"Reduced momentum transfer l in relative lattice units [rlu].",
+		"Incoming wavenumber ki in units of [Å⁻¹].",
+		"Outgoing wavenumber kf in units of [Å⁻¹].",
+		"Energy transfer E in units of [meV].",
+	};
+
 	for(std::size_t i=0; i<m_num_coord_elems; ++i)
 	{
 		m_spinCoords[i] = new QDoubleSpinBox(this);
@@ -53,13 +63,14 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 		m_spinCoords[i]->setSingleStep(0.1);
 		m_spinCoords[i]->setDecimals(g_prec_gui);
 		m_spinCoords[i]->setValue(0);
+		m_spinCoords[i]->setToolTip(tooltips[i]);
 
 		if(i==3 || i==4)
 			m_spinCoords[i]->setSuffix(" Å⁻¹");
 		else if(i==5)
 			m_spinCoords[i]->setSuffix(" meV");
-		else
-			m_spinCoords[i]->setSuffix(" rlu");
+		//else
+		//	m_spinCoords[i]->setSuffix(" rlu");
 	}
 
 	for(std::size_t i=1; i<m_num_coord_elems; ++i)
@@ -67,7 +78,7 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 
 
 	m_checkKfFixed = new QCheckBox(this);
-	m_checkKfFixed->setText("Keep kf = const.");
+	m_checkKfFixed->setText("kf = const.");
 	m_checkKfFixed->setToolTip("Select the energy transfer by keeping either ki or kf fixed.");
 
 	// default values
@@ -82,15 +93,6 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 	btnGoto->setToolTip("Set the current instrument position to the given crystal coordinates.");
 	btnTarget->setToolTip("Set the given crystal coordinates as the target position for pathfinding.");
 
-	const char* labels[] = {
-		"Momentum (h):",
-		"Momentum (k):",
-		"Momentum (l):",
-		"Initial k (ki):",
-		"Final k (kf):",
-		"Energy (E):"
-	};
-
 	auto *groupCoords = new QGroupBox(/*"Crystal Coordinates",*/ this);
 	{
 		auto *layoutStart = new QGridLayout(groupCoords);
@@ -99,22 +101,23 @@ CoordPropertiesWidget::CoordPropertiesWidget(QWidget *parent)
 		layoutStart->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		for(std::size_t i=0; i<m_num_coord_elems; ++i)
-		{
-			layoutStart->addWidget(new QLabel(labels[i], this), y, 0, 1, 1);
-			layoutStart->addWidget(m_spinCoords[i], y++, 1, 1, 1);
+		layoutStart->addWidget(new QLabel("Momentum Transfer (h, k, l) [rlu]:", this), y++, 0, 1, 6);
+		for(std::size_t i=0; i<3; ++i)
+			layoutStart->addWidget(m_spinCoords[i], y, i*2, 1, 2);
+		++y;
 
-			if(i==2)
-			{
-				QFrame *separator = new QFrame(this);
-				separator->setFrameStyle(QFrame::HLine);
-				layoutStart->addWidget(separator, y++, 0, 1, 2);
-			}
-		}
+		layoutStart->addWidget(new QLabel("Wavenumbers (ki, kf) [Å⁻¹]:", this), y++, 0, 1, 6);
+		for(std::size_t i=3; i<5; ++i)
+			layoutStart->addWidget(m_spinCoords[i], y, (i-3)*3, 1, 3);
+		++y;
 
-		layoutStart->addWidget(m_checkKfFixed, y++, 0, 1, 2);
-		layoutStart->addWidget(btnGoto, y++, 0, 1, 2);
-		layoutStart->addWidget(btnTarget, y++, 0, 1, 2);
+		layoutStart->addWidget(new QLabel("Energy Transfer [meV]:", this), y++, 0, 1, 6);
+		layoutStart->addWidget(new QLabel("E [meV]:", this), y, 0, 1, 3);
+		layoutStart->addWidget(m_spinCoords[5], y, 0, 1, 3);
+		layoutStart->addWidget(m_checkKfFixed, y++, 3, 1, 3);
+
+		layoutStart->addWidget(btnGoto, y++, 0, 1, 6);
+		layoutStart->addWidget(btnTarget, y++, 0, 1, 6);
 	}
 
 	auto *grid = new QGridLayout(this);

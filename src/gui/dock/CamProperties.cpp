@@ -45,34 +45,39 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinViewingAngle->setMaximum(179);
 	m_spinViewingAngle->setSingleStep(1);
 	m_spinViewingAngle->setSuffix("°");
+	m_spinViewingAngle->setToolTip("Camera field of view in units of [deg].");
 
 	m_checkPerspectiveProj = new QCheckBox(this);
 	m_checkPerspectiveProj->setText("Perspective Projection");
 	m_checkPerspectiveProj->setToolTip("Choose perspective or parallel projection.");
 	m_checkPerspectiveProj->setChecked(true);
 
+	const char* pos_comp[] = {"x", "y", "z"};
 	for(int pos=0; pos<3; ++pos)
 	{
 		m_spinPos[pos] = new QDoubleSpinBox(this);
 		m_spinPos[pos]->setMinimum(-100);
 		m_spinPos[pos]->setMaximum(+100);
-		m_spinPos[pos]->setDecimals(g_prec_gui/2);
+		m_spinPos[pos]->setDecimals(g_prec_gui);
 		m_spinPos[pos]->setSingleStep(1);
+		m_spinPos[pos]->setToolTip(QString("Camera %1 position in units of [m].").arg(pos_comp[pos]));
 	}
 
 	m_spinRot[0] = new QDoubleSpinBox(this);
 	m_spinRot[0]->setMinimum(0);
 	m_spinRot[0]->setMaximum(360);
-	m_spinRot[0]->setDecimals(g_prec_gui/2);
+	m_spinRot[0]->setDecimals(g_prec_gui);
 	m_spinRot[0]->setSingleStep(1);
 	m_spinRot[0]->setSuffix("°");
+	m_spinRot[0]->setToolTip("Camera φ rotation in units of [deg].");
 
 	m_spinRot[1] = new QDoubleSpinBox(this);
 	m_spinRot[1]->setMinimum(-90);
 	m_spinRot[1]->setMaximum(0);
-	m_spinRot[1]->setDecimals(g_prec_gui/2);
+	m_spinRot[1]->setDecimals(g_prec_gui);
 	m_spinRot[1]->setSingleStep(1);
 	m_spinRot[1]->setSuffix("°");
+	m_spinRot[1]->setToolTip("Camera θ rotation in units of [deg].");
 
 	auto *groupProj = new QGroupBox("Projection", this);
 	{
@@ -122,7 +127,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 
 	// viewing angle
-	connect(m_spinViewingAngle, 
+	connect(m_spinViewingAngle,
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &CamPropertiesWidget::ViewingAngleChanged);
 

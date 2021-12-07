@@ -45,6 +45,9 @@
 PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
+	const QString target_comp[] = { "monochromator/analyser", "sample" };
+	const QString target_angle[] = { "Θm/a", "Θs" };
+
 	for(std::size_t i=0; i<m_num_coord_elems; ++i)
 	{
 		m_spinFinish[i] = new QDoubleSpinBox(this);
@@ -55,6 +58,9 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 		m_spinFinish[i]->setDecimals(g_prec_gui);
 		m_spinFinish[i]->setValue(0);
 		m_spinFinish[i]->setSuffix("°");
+		m_spinFinish[i]->setToolTip(
+			QString("Target %1 scattering angle %2 in units of [deg].").
+				arg(target_comp[i]).arg(target_angle[i]));
 	}
 
 	for(std::size_t i=1; i<m_num_coord_elems; ++i)
@@ -80,7 +86,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_btnGo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 
 	// TODO: change the label "monochromator" to "analyser" for ki=const mode
-	const char* labels[] = {"Monochromator:", "Sample:"};
+	const char* labels[] = {"Mono./Ana.:", "Sample:"};
 
 	auto *groupFinish = new QGroupBox("Target Scattering Angles", this);
 	{
@@ -136,7 +142,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 				coords[i] = val;
 				coords[j] = m_spinFinish[j]->value();
 
-				//std::cout << coords[0] << ", " << coords[1] << std::endl;
 				emit TargetChanged(coords[0], coords[1]);
 			});
 	}

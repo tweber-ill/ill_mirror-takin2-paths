@@ -42,13 +42,23 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_spinMonoScAngle = new QDoubleSpinBox(this);
 	m_spinSampleScAngle = new QDoubleSpinBox(this);
 	m_spinAnaScAngle = new QDoubleSpinBox(this);
+	m_spinMonoScAngle->setToolTip("Monochromator scattering angle Θm in units of [deg].");
+	m_spinSampleScAngle->setToolTip("Sample scattering angle Θs in units of [deg].");
+	m_spinAnaScAngle->setToolTip("Analyser scattering angle Θa in units of [deg].");
 
 	m_spinMonoXtalAngle = new QDoubleSpinBox(this);
 	m_spinSampleXtalAngle = new QDoubleSpinBox(this);
 	m_spinAnaXtalAngle = new QDoubleSpinBox(this);
+	m_spinMonoXtalAngle->setToolTip("Monochromator crystal rocking angle θm in units of [deg].");
+	m_spinSampleXtalAngle->setToolTip("Sample crystal rocking angle θm in units of [deg].");
+	m_spinAnaXtalAngle->setToolTip("Analyser crystal rocking angle θm in units of [deg].");
 
 	m_spinMonoD = new QDoubleSpinBox(this);
 	m_spinAnaD = new QDoubleSpinBox(this);
+	m_spinMonoD->setToolTip("Monochromator crystal d spacing da in units of [Å].");
+	m_spinAnaD->setToolTip("Analyser crystal d spacing dm in units of [Å].");
+	//m_spinMonoD->setPrefix("dm=");
+	//m_spinAnaD->setPrefix("da=");
 
 	QPushButton *btnTarget = new QPushButton("Set Current Angles as Target", this);
 	btnTarget->setToolTip("Set the current instrument position as the target position for pathfinding.");
@@ -98,7 +108,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		spin->setSuffix(" Å");
 	}
 
-	auto *groupScatterAngles = new QGroupBox("Scattering Angles", this);
+	auto *groupScatterAngles = new QGroupBox("Scattering Angles [deg]", this);
 	{
 		auto *layoutScatterAngles = new QGridLayout(groupScatterAngles);
 		layoutScatterAngles->setHorizontalSpacing(2);
@@ -114,7 +124,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		layoutScatterAngles->addWidget(m_spinAnaScAngle, y++, 1, 1, 1);
 	}
 
-	auto *groupXtalAngles = new QGroupBox("Crystal Angles", this);
+	auto *groupXtalAngles = new QGroupBox("Crystal Angles [deg]", this);
 	{
 		auto *layoutXtalAngles = new QGridLayout(groupXtalAngles);
 		layoutXtalAngles->setHorizontalSpacing(2);
@@ -130,7 +140,7 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		layoutXtalAngles->addWidget(m_spinAnaXtalAngle, y++, 1, 1, 1);
 	}
 
-	auto *groupD = new QGroupBox("d Spacings", this);
+	auto *groupD = new QGroupBox("d Spacings (Mono/Ana.) [Å]", this);
 	{
 		auto *layoutScatter = new QGridLayout(groupD);
 		layoutScatter->setHorizontalSpacing(2);
@@ -138,13 +148,12 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 		layoutScatter->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutScatter->addWidget(new QLabel("Monochromator:", this), y, 0, 1, 1);
-		layoutScatter->addWidget(m_spinMonoD, y++, 1, 1, 1);
-		layoutScatter->addWidget(new QLabel("Analyser:", this), y, 0, 1, 1);
-		layoutScatter->addWidget(m_spinAnaD, y++, 1, 1, 1);
+		int x = 0;
+		layoutScatter->addWidget(m_spinMonoD, y, x++, 1, 1);
+		layoutScatter->addWidget(m_spinAnaD, y++, x++, 1, 1);
 	}
 
-	auto *groupSenses = new QGroupBox("Scattering Senses", this);
+	auto *groupSenses = new QGroupBox("Scattering Senses [ccw]", this);
 	{
 		auto *layoutScatter = new QGridLayout(groupSenses);
 		layoutScatter->setHorizontalSpacing(2);
@@ -158,17 +167,6 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 				m_checkScatteringSense[comp], y, x++, 1, 1);
 	}
 
-	/*auto *groupOptions = new QGroupBox("Options", this);
-	{
-		auto *layoutScatter = new QGridLayout(groupOptions);
-		layoutScatter->setHorizontalSpacing(2);
-		layoutScatter->setVerticalSpacing(2);
-		layoutScatter->setContentsMargins(4,4,4,4);
-
-		int y = 0;
-		layoutScatter->addWidget(btnTarget, y++, 0, 1, 1);
-	}*/
-
 	auto *grid = new QGridLayout(this);
 	grid->setHorizontalSpacing(2);
 	grid->setVerticalSpacing(2);
@@ -179,7 +177,6 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	grid->addWidget(groupXtalAngles, y++, 0, 1, 1);
 	grid->addWidget(groupD, y++, 0, 1, 1);
 	grid->addWidget(groupSenses, y++, 0, 1, 1);
-	//grid->addWidget(groupOptions, y++, 0, 1, 1);
 	grid->addWidget(btnTarget, y++, 0, 1, 1);
 	grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), y++, 0, 1, 1);
 

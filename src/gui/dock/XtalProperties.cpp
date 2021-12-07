@@ -43,6 +43,10 @@
 XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 	: QWidget{parent}
 {
+	const QString consts[] = { "a", "b", "c" };
+	const QString angles[] = { "α", "β", "γ" };
+	const QString vec_comp[] = { "ax", "ay", "az", "bx", "by", "bz" };
+
 	for(std::size_t i=0; i<m_num_lattice_elems; ++i)
 	{
 		m_spinLatticeConsts[i] = new QDoubleSpinBox(this);
@@ -53,13 +57,17 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		m_spinLatticeConsts[i]->setSingleStep(0.1);
 		m_spinLatticeConsts[i]->setDecimals(g_prec_gui);
 		m_spinLatticeConsts[i]->setValue(5);
-		m_spinLatticeConsts[i]->setSuffix(" Å");
+		//m_spinLatticeConsts[i]->setPrefix(QString("%1=").arg(consts[i]));
+		//m_spinLatticeConsts[i]->setSuffix(" Å");
+		m_spinLatticeConsts[i]->setToolTip(QString("Crystal lattice constant %1 in units of [Å].").arg(consts[i]));
 
 		m_spinLatticeAngles[i]->setMinimum(0);
 		m_spinLatticeAngles[i]->setMaximum(180);
-		m_spinLatticeAngles[i]->setDecimals(g_prec_gui/2);
+		m_spinLatticeAngles[i]->setDecimals(g_prec_gui);
 		m_spinLatticeAngles[i]->setValue(90);
-		m_spinLatticeAngles[i]->setSuffix("°");
+		//m_spinLatticeAngles[i]->setPrefix(QString("%1=").arg(angles[i]));
+		//m_spinLatticeAngles[i]->setSuffix("°");
+		m_spinLatticeAngles[i]->setToolTip(QString("Crystal lattice angle %1 in units of [deg].").arg(angles[i]));
 	}
 
 	for(std::size_t i=0; i<m_num_plane_elems; ++i)
@@ -68,9 +76,12 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 
 		m_spinPlane[i]->setMinimum(-999);
 		m_spinPlane[i]->setMaximum(999);
-		m_spinPlane[i]->setDecimals(g_prec_gui/2);
+		m_spinPlane[i]->setDecimals(g_prec_gui);
 		m_spinPlane[i]->setValue((i==0 || i==4) ? 1 : 0);
 		//m_spinPlane[i]->setSuffix(" rlu");
+		m_spinPlane[i]->setToolTip(QString(
+			"%1 component of scattering plane vector %2 in relative lattice units [rlu].")
+				.arg(vec_comp[i]).arg(i/3 + 1));
 	}
 
 	for(std::size_t i=1; i<m_num_lattice_elems; ++i)
@@ -88,23 +99,18 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		layoutLattice->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutLattice->addWidget(new QLabel("Constant a:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeConsts[0], y++, 1, 1, 1);
-		layoutLattice->addWidget(new QLabel("Constant b:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeConsts[1], y++, 1, 1, 1);
-		layoutLattice->addWidget(new QLabel("Constant c:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeConsts[2], y++, 1, 1, 1);
+		layoutLattice->addWidget(new QLabel("Constants (a, b, c) [Å]:", this), y++, 0, 1, 3);
 
-		QFrame *separator = new QFrame(this);
-		separator->setFrameStyle(QFrame::HLine);
-		layoutLattice->addWidget(separator, y++, 0, 1, 2);
+		int x = 0;
+		for(std::size_t i=0; i<m_num_lattice_elems; ++i)
+			layoutLattice->addWidget(m_spinLatticeConsts[i], y, x++, 1, 1);
+		y++;
 
-		layoutLattice->addWidget(new QLabel("Angle α:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeAngles[0], y++, 1, 1, 1);
-		layoutLattice->addWidget(new QLabel("Angle β:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeAngles[1], y++, 1, 1, 1);
-		layoutLattice->addWidget(new QLabel("Angle γ:", this), y, 0, 1, 1);
-		layoutLattice->addWidget(m_spinLatticeAngles[2], y++, 1, 1, 1);
+		layoutLattice->addWidget(new QLabel("Angles (α, β, γ) [deg]:", this), y++, 0, 1, 3);
+
+		x = 0;
+		for(std::size_t i=0; i<m_num_lattice_elems; ++i)
+			layoutLattice->addWidget(m_spinLatticeAngles[i], y, x++, 1, 1);
 	}
 
 	auto *groupPlane = new QGroupBox("Scattering Plane", this);
@@ -114,7 +120,7 @@ XtalPropertiesWidget::XtalPropertiesWidget(QWidget *parent)
 		layoutPlane->setVerticalSpacing(2);
 		layoutPlane->setContentsMargins(4,4,4,4);
 
-		const char* labels[] = { "Vector 1 (rlu):", "Vector 2 (rlu):" };
+		const char* labels[] = { "Vector 1 [rlu]:", "Vector 2 [rlu]:" };
 
 		int y = 0;
 		for(std::size_t i=0; i<m_num_plane_elems; ++i)
@@ -364,7 +370,7 @@ XtalPropertiesDockWidget::XtalPropertiesDockWidget(QWidget *parent)
 		m_widget{std::make_shared<XtalPropertiesWidget>(this)}
 {
 	setObjectName("XtalPropertiesDockWidget");
-	setWindowTitle("Crystal Definition");
+	setWindowTitle("Sample Crystal");
 
 	setWidget(m_widget.get());
 }
@@ -430,7 +436,6 @@ void XtalInfoWidget::SetUB(const t_mat& matB, const t_mat& matUB)
 	ostr << "\nUB matrix:\n";
 	print_mat(matUB);
 
-	//std::cout << ostr.str() << std::endl;
 	m_txt->setPlainText(ostr.str().c_str());
 }
 

@@ -297,7 +297,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 
 	if(!m_pathsbuilder.AcceptExporter(exporter.get(), m_pathvertices, true))
 	{
-		QMessageBox::critical(this, "Error", "path could not be exported.");
+		QMessageBox::critical(this, "Error", "Path could not be exported.");
 		return false;
 	}
 
@@ -514,7 +514,7 @@ bool PathsTool::SaveFile(const QString &file)
 		return false;
 	}
 
-	pt::write_xml(ofstr, prop, 
+	pt::write_xml(ofstr, prop,
 		pt::xml_writer_make_settings('\t', 1, std::string{"utf-8"}));
 
 	SetCurrentFile(file);
@@ -1049,10 +1049,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 	addDockWidget(Qt::LeftDockWidgetArea, m_tasProperties.get());
 	addDockWidget(Qt::LeftDockWidgetArea, m_xtalProperties.get());
+	addDockWidget(Qt::LeftDockWidgetArea, m_xtalInfos.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_coordProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_pathProperties.get());
 	addDockWidget(Qt::RightDockWidgetArea, m_camProperties.get());
-	addDockWidget(Qt::RightDockWidgetArea, m_xtalInfos.get());
 	m_xtalInfos->hide();
 
 	auto* taswidget = m_tasProperties->GetWidget().get();
