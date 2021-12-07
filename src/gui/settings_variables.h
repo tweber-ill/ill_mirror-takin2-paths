@@ -103,6 +103,9 @@ extern t_real g_directpath_search_radius;
 // verify the generated path?
 extern int g_verifypath;
 
+// number of closest voronoi vertices to consider for retraction point search
+extern unsigned int g_num_closest_voronoi_vertices;
+
 // minimum distance to keep from the walls
 extern t_real g_min_dist_to_walls;
 
@@ -158,7 +161,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 27> g_settingsvariables
+constexpr std::array<SettingsVariable, 28> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -285,6 +288,11 @@ constexpr std::array<SettingsVariable, 27> g_settingsvariables
 		.key = "settings/verify_path",
 		.value = &g_verifypath,
 		.editor = SettingsVariableEditor::YESNO,
+	},
+	{
+		.description = "Number of closest voronoi vertices for retraction point search",
+		.key = "settings/num_closest_voronoi_vertices",
+		.value = &g_num_closest_voronoi_vertices,
 	},
 	{
 		.description = "Path tracker FPS",

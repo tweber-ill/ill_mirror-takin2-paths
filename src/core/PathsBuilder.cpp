@@ -851,6 +851,31 @@ InstrumentPath PathsBuilder::FindPath(
 	std::cout << "target pixel: (" << path.vec_f[0] << ", " << path.vec_f[1] << std::endl;
 #endif
 
+
+	// test if a direct path is possible
+	if(m_directpath)
+	{
+		// is distance between start and target point within search radius
+		t_real dist_i_f = GetPathLength(
+			PixelToAngle(path.vec_f, false, false) - 
+			PixelToAngle(path.vec_i, false, false));
+
+		if(dist_i_f <= m_directpath_search_radius)
+		{
+			bool collides = DoesDirectPathCollidePixel(
+				path.vec_i, path.vec_f, true);
+
+			// direct-path shortcut found
+			if(!collides)
+			{
+				path.ok = true;
+				path.is_direct = true;
+				return path;
+			}
+		}
+	}
+
+
 	// find closest voronoi vertices
 	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
 
@@ -872,22 +897,30 @@ InstrumentPath PathsBuilder::FindPath(
 		indices_i = m_voro_results.GetClosestVoronoiVertices(
 			path.vec_i, m_num_closest_voronoi_vertices, true);
 
-		for(std::size_t _idx_i : indices_i)
+		// first look for the voronoi vertex where the path keeps the minimum 
+		// distance to the walls; second just use first non-colliding path
+		for(bool use_min_dist : {true, false})
 		{
-			bool collides = DoesDirectPathCollidePixel(
-				path.vec_i, voro_vertices[_idx_i], false);
-
-			if(!collides)
+			for(std::size_t _idx_i : indices_i)
 			{
-				idx_i = _idx_i;
-				found_i = true;
-				break;
+				bool collides = DoesDirectPathCollidePixel(
+					path.vec_i, voro_vertices[_idx_i], use_min_dist);
+
+				if(!collides)
+				{
+					idx_i = _idx_i;
+					found_i = true;
+					break;
+				}
 			}
+
+			if(found_i)
+				break;
 		}
 
 		if(!found_i)
 		{
-			std::cerr << "Initial voronoi vertex not found!" << std::endl;
+			//std::cerr << "Initial voronoi vertex not found!" << std::endl;
 			path.ok = false;
 			return path;
 		}
@@ -898,22 +931,28 @@ InstrumentPath PathsBuilder::FindPath(
 		indices_f = m_voro_results.GetClosestVoronoiVertices(
 			path.vec_f, m_num_closest_voronoi_vertices, true);
 
-		for(std::size_t _idx_f : indices_f)
+		for(bool use_min_dist : {true, false})
 		{
-			bool collides = DoesDirectPathCollidePixel(
-				path.vec_f, voro_vertices[_idx_f], false);
-
-			if(!collides)
+			for(std::size_t _idx_f : indices_f)
 			{
-				idx_f = _idx_f;
-				found_f = true;
-				break;
+				bool collides = DoesDirectPathCollidePixel(
+					path.vec_f, voro_vertices[_idx_f], use_min_dist);
+
+				if(!collides)
+				{
+					idx_f = _idx_f;
+					found_f = true;
+					break;
+				}
 			}
+
+			if(found_f)
+				break;
 		}
 
 		if(!found_f)
 		{
-			std::cerr << "Final voronoi vertex not found!" << std::endl;
+			//std::cerr << "Final voronoi vertex not found!" << std::endl;
 			path.ok = false;
 			return path;
 		}
@@ -1113,6 +1152,22 @@ std::vector<t_vec2> PathsBuilder::GetPathVertices(
 
 	if(!path.ok)
 		return path_vertices;
+
+	// is it a direct path?
+	if(path.is_direct)
+	{
+		path_vertices.push_back(PixelToAngle(path.vec_i, deg));
+		path_vertices.push_back(PixelToAngle(path.vec_f, deg));
+
+		// interpolate points
+		if(subdivide_lines)
+		{
+			path_vertices = geo::subdivide_lines<t_vec2>(
+				path_vertices, m_subdiv_len);
+		}
+
+		return path_vertices;
+	}
 
 	const auto& voro_results = GetVoronoiResults();
 	const auto& voro_vertices = voro_results.GetVoronoiVertices();
@@ -1805,7 +1860,9 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	const std::size_t first_pt_idx = reverse ? N - 1 : 0;
 	const std::size_t second_pt_idx = reverse ? first_pt_idx-1 : first_pt_idx+1;
 
-	t_real min_dist_to_start = GetPathLength(path_vertices[second_pt_idx] - path_vertices[first_pt_idx]);
+	t_real min_dist_to_start = GetPathLength(
+		path_vertices[second_pt_idx] - 
+		path_vertices[first_pt_idx]);
 	std::size_t min_idx = second_pt_idx;
 	bool minimum_found = false;
 
@@ -1821,7 +1878,9 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	std::size_t iter_idx = second_pt_idx;
 	while(true)
 	{
-		t_real dist = GetPathLength(path_vertices[iter_idx] - path_vertices[first_pt_idx]);
+		t_real dist = GetPathLength(
+			path_vertices[iter_idx] - 
+			path_vertices[first_pt_idx]);
 
 		path_indices.push_back(iter_idx);
 		path_pos.push_back(cur_path_pos);

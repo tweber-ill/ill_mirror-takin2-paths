@@ -83,6 +83,9 @@ int g_pathstrategy = 0;
 int g_try_direct_path = 1;
 int g_verifypath = 1;
 
+// number of closest voronoi vertices to consider for retraction point search
+unsigned int g_num_closest_voronoi_vertices = 64;
+
 // maximum angular search radius for direct paths
 t_real g_directpath_search_radius = 20. / t_real(180.) * tl2::pi<t_real>;
 

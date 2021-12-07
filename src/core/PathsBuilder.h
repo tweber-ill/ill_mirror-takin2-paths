@@ -57,6 +57,9 @@ struct InstrumentPath
 	t_vec2 vec_i;
 	t_vec2 vec_f;
 
+	// is it a direct path from vec_i to vec_f?
+	bool is_direct = false;
+
 	// are the initial and final vertices on a linear or a quadratic bisector?
 	bool is_linear_i = true;
 	bool is_linear_f = true;
@@ -262,6 +265,9 @@ public:
 	t_real GetMaxDirectPathRadius() const { return m_directpath_search_radius; }
 	void SetMaxDirectPathRadius(t_real dist) { m_directpath_search_radius = dist; }
 
+	unsigned int GetNumClosestVoronoiVertices() const { return m_num_closest_voronoi_vertices; }
+	void SetNumClosestVoronoiVertices(unsigned int num) { m_num_closest_voronoi_vertices = num; }
+
 	bool GetVerifyPath() const { return m_verifypath; }
 	void SetVerifyPath(bool verify) { m_verifypath = verify; }
 
@@ -372,7 +378,7 @@ private:
 	t_real m_directpath_search_radius = 20. / t_real(180.) * tl2::pi<t_real>;
 
 	// number of closest voronoi vertices to look at for retraction point search
-	std::size_t m_num_closest_voronoi_vertices = 64;
+	unsigned int m_num_closest_voronoi_vertices = 64;
 
 	// check the generated path for collisions
 	bool m_verifypath = true;
