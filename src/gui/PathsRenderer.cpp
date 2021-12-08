@@ -50,9 +50,9 @@
 #include "tlibs2/libs/file.h"
 
 
-#define OBJNAME_COORD_CROSS "coord_cross"
-#define OBJNAME_FLOOR_PLANE "floor"
-#define MAX_LIGHTS 4	// max. number allowed in shader
+#define OBJNAME_COORD_CROSS  "coord_cross"
+#define OBJNAME_FLOOR_PLANE  "floor"
+#define MAX_LIGHTS           4  // max. number allowed in shader
 
 
 PathsRenderer::PathsRenderer(QWidget *pParent) : QOpenGLWidget(pParent)
@@ -1451,7 +1451,7 @@ void PathsRenderer::keyReleaseEvent(QKeyEvent *pEvt)
 
 void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 {
-#if QT_VERSION >= 0x060000
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	m_posMouse = pEvt->position();
 #else
 	m_posMouse = pEvt->localPos();

@@ -46,7 +46,7 @@
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QFileDialog>
 
-#if QT_VERSION >= 0x060000
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 	#include <QtGui/QActionGroup>
 #else
 	#include <QtWidgets/QActionGroup>
