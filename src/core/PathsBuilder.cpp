@@ -33,6 +33,7 @@
 #include <thread>
 #include <future>
 #include <unordered_set>
+#include <unordered_map>
 #include <cmath>
 #include <cstdint>
 
@@ -50,6 +51,117 @@ using t_taskptr = std::shared_ptr<t_task>;
 #define PIXEL_VALUE_NOCOLLISION      0x00
 
 
+
+// ----------------------------------------------------------------------------
+// helper functions
+// ----------------------------------------------------------------------------
+/**
+ * hash function for vertex indices in arbitrary order
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+struct _t_bisector_hash
+{
+	std::size_t operator()(const t_bisector& idx) const
+	{
+		return geo::unordered_hash(std::get<0>(idx), std::get<1>(idx));
+	}
+};
+
+
+/**
+ * equality function for vertex indices in arbitrary order
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+struct _t_bisector_equ
+{
+	bool operator()(const t_bisector& a, const t_bisector& b) const
+	{
+		bool ok1 = (std::get<0>(a) == std::get<0>(b)) && (std::get<1>(a) == std::get<1>(b));
+		bool ok2 = (std::get<0>(a) == std::get<1>(b)) && (std::get<1>(a) == std::get<0>(b));
+
+		return ok1 || ok2;
+	}
+};
+
+
+/**
+ * remove loops in a sequence of bisectors
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+void remove_bisector_loops(std::vector<t_bisector>& bisectors)
+{
+	// indices of already seen bisectors
+	std::unordered_map<t_bisector, std::size_t,
+		_t_bisector_hash<t_bisector>,
+		_t_bisector_equ<t_bisector>> first_seen;
+
+	for(auto iter = bisectors.begin(); iter != bisectors.end(); ++iter)
+	{
+		// bisector already seen?
+		auto seen = first_seen.find(*iter);
+		if(seen != first_seen.end())
+		{
+			// remove loop
+			iter = bisectors.erase(bisectors.begin()+seen->second, iter);
+
+			// remove entries in map with now invalid indices
+			for(auto iter=first_seen.begin(); iter!=first_seen.end(); ++iter)
+			{
+				if(iter->second >= bisectors.size())
+					iter = first_seen.erase(iter);
+			}
+		}
+
+		// bisector not yet seen
+		else
+		{
+			std::size_t idx = iter - bisectors.begin();
+			first_seen.insert(std::make_pair(*iter, idx));
+		}
+	}
+}
+
+
+/**
+ * remove loops in a path vertex indices
+ */
+void remove_path_loops(std::vector<std::size_t>& indices)
+{
+	// indices of already seen vertices
+	std::unordered_map<std::size_t, std::size_t> first_seen;
+
+	for(auto iter = indices.begin(); iter != indices.end(); ++iter)
+	{
+		// vertex index already seen?
+		auto seen = first_seen.find(*iter);
+		if(seen != first_seen.end())
+		{
+			// remove loop
+			iter = indices.erase(indices.begin()+seen->second, iter);
+
+			// remove entries in map with now invalid indices
+			for(auto iter=first_seen.begin(); iter!=first_seen.end(); ++iter)
+			{
+				if(iter->second >= indices.size())
+					iter = first_seen.erase(iter);
+			}
+		}
+
+		// vertex not yet seen
+		else
+		{
+			std::size_t idx = iter - indices.begin();
+			first_seen.insert(std::make_pair(*iter, idx));
+		}
+	}
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// paths builder
+// ----------------------------------------------------------------------------
 /**
  * constructor
  */
@@ -748,7 +860,7 @@ PathsBuilder::GetLineSegmentRegionAsArray(std::size_t groupidx) const
 InstrumentPath PathsBuilder::FindPath(
 	t_real a2_i, t_real a4_i,
 	t_real a2_f, t_real a4_f,
-	PathStrategy pathstragy)
+	PathStrategy pathstrategy)
 {
 	InstrumentPath path{};
 	path.ok = false;
@@ -857,7 +969,7 @@ InstrumentPath PathsBuilder::FindPath(
 	{
 		// is distance between start and target point within search radius
 		t_real dist_i_f = GetPathLength(
-			PixelToAngle(path.vec_f, false, false) - 
+			PixelToAngle(path.vec_f, false, false) -
 			PixelToAngle(path.vec_i, false, false));
 
 		if(dist_i_f <= m_directpath_search_radius)
@@ -897,7 +1009,7 @@ InstrumentPath PathsBuilder::FindPath(
 		indices_i = m_voro_results.GetClosestVoronoiVertices(
 			path.vec_i, m_num_closest_voronoi_vertices, true);
 
-		// first look for the voronoi vertex where the path keeps the minimum 
+		// first look for the voronoi vertex where the path keeps the minimum
 		// distance to the walls; second just use first non-colliding path
 		for(bool use_min_dist : {true, false})
 		{
@@ -1001,12 +1113,11 @@ InstrumentPath PathsBuilder::FindPath(
 	if(idx_i >= voro_graph.GetNumVertices() || idx_f >= voro_graph.GetNumVertices())
 		return path;
 
-	const std::string& ident_i = voro_graph.GetVertexIdent(idx_i);
 	using t_weight = typename t_graph::t_weight;
 
 
 	// callback function with which the graph's edge weights can be modified
-	auto weight_func = [this, &voro_graph, &voro_vertices, pathstragy](
+	auto weight_func = [this, &voro_graph, &voro_vertices, pathstrategy](
 		std::size_t idx1, std::size_t idx2) -> std::optional<t_weight>
 	{
 		// get original graph edge weight
@@ -1015,7 +1126,7 @@ InstrumentPath PathsBuilder::FindPath(
 			return std::nullopt;
 
 		// shortest path -> just use original edge weights
-		if(pathstragy == PathStrategy::SHORTEST)
+		if(pathstrategy == PathStrategy::SHORTEST)
 			return _weight;
 
 
@@ -1031,49 +1142,69 @@ InstrumentPath PathsBuilder::FindPath(
 		t_real min_dist = std::min(dist1, dist2);
 
 		// modify edge weights using the minimum distance to the next wall
-		if(pathstragy == PathStrategy::PENALISE_WALLS)
+		if(pathstrategy == PathStrategy::PENALISE_WALLS)
 			return weight / min_dist;
 
 		return weight;
 	};
 
 
-	// find shortest path given the above weight function
-#if TASPATHS_SSSP_IMPL==1
-	const auto predecessors = geo::dijk(voro_graph, ident_i, &weight_func);
-#elif TASPATHS_SSSP_IMPL==2
-	const auto predecessors = geo::dijk_mod(voro_graph, ident_i, &weight_func);
-#elif TASPATHS_SSSP_IMPL==3
-	const auto [distvecs, predecessors] = geo::bellman(
-		voro_graph, ident_i, &weight_func);
-#else
-	#error No suitable value for TASPATHS_SSSP_IMPL has been set!
-#endif
-
-	// index of final voronoi vertex
-	std::size_t cur_vertidx = idx_f;
-
-	while(true)
+	// execute dijkstra's algorithm
+	auto find_shortest_path = [&weight_func, &voro_graph](
+		std::size_t idx_initial, std::size_t idx_final)
+			-> std::pair<bool, std::vector<std::size_t>>
 	{
-		path.voronoi_indices.push_back(cur_vertidx);
+		const std::string& ident_initial = voro_graph.GetVertexIdent(idx_initial);
 
-		if(cur_vertidx == idx_i)
+		// find shortest path given the above weight function
+	#if TASPATHS_SSSP_IMPL==1
+		auto predecessors = geo::dijk(voro_graph, ident_initial, &weight_func);
+	#elif TASPATHS_SSSP_IMPL==2
+		auto predecessors = geo::dijk_mod(voro_graph, ident_initial, &weight_func);
+	#elif TASPATHS_SSSP_IMPL==3
+		auto [distvecs, predecessors] = geo::bellman(
+			voro_graph, ident_initial, &weight_func);
+	#else
+		#error No suitable value for TASPATHS_SSSP_IMPL has been set!
+		return std::make_pair(false, {});
+	#endif
+
+		std::vector<std::size_t> voro_indices;
+		voro_indices.reserve(predecessors.size());
+
+		// index of final voronoi vertex
+		std::size_t cur_vertidx = idx_final;
+		bool ok = false;
+
+		while(true)
 		{
-			path.ok = true;
-			break;
+			voro_indices.push_back(cur_vertidx);
+
+			// found full path?
+			if(cur_vertidx == idx_initial)
+			{
+				ok = true;
+				break;
+			}
+
+			auto next_vertidx = predecessors[cur_vertidx];
+			if(!next_vertidx)
+			{
+				ok = false;
+				break;
+			}
+
+			cur_vertidx = *next_vertidx;
 		}
 
-		auto next_vertidx = predecessors[cur_vertidx];
-		if(!next_vertidx)
-		{
-			path.ok = false;
-			break;
-		}
+		std::reverse(voro_indices.begin(), voro_indices.end());
+		return std::make_pair(ok, voro_indices);
+	};
 
-		cur_vertidx = *next_vertidx;
-	}
 
-	std::reverse(path.voronoi_indices.begin(), path.voronoi_indices.end());
+	// find shortest path from initial to final voronoi vertex
+	std::tie(path.ok, path.voronoi_indices) = find_shortest_path(idx_i, idx_f);
+
 
 #ifdef DEBUG
 	std::cout << "Path ok: " << std::boolalpha << path.ok << std::endl;
@@ -1110,9 +1241,25 @@ InstrumentPath PathsBuilder::FindPath(
 		}
 
 		// another neighbour edge is closer
-		// TODO: use another dijkstra search here
-		if(std::get<0>(bisector_begin) != vert_idx2_begin)
+		// vert_idx1_begin is still the same
+		if(std::get<1>(bisector_begin)==vert_idx1_begin && std::get<0>(bisector_begin)!=vert_idx2_begin)
+		{
 			path.voronoi_indices.insert(path.voronoi_indices.begin(), std::get<0>(bisector_begin));
+		}
+		// a completely different bisector has been found, use dijkstra again to find a path
+		else if(std::get<1>(bisector_begin)!=vert_idx1_begin && std::get<0>(bisector_begin)!=vert_idx2_begin)
+		{
+			if(auto[pathseg_ok, pathseg] = find_shortest_path(vert_idx2_begin, std::get<1>(bisector_begin)); pathseg_ok)
+			{
+				path.voronoi_indices.erase(path.voronoi_indices.begin(), path.voronoi_indices.begin()+2);
+				for(std::size_t pathseg_idx=0; pathseg_idx<pathseg.size(); ++pathseg_idx)
+					path.voronoi_indices.insert(path.voronoi_indices.begin(), pathseg[pathseg_idx]);
+				path.voronoi_indices.insert(path.voronoi_indices.begin(), std::get<0>(bisector_begin));
+
+				remove_path_loops(path.voronoi_indices);
+			}
+		}
+
 		path.param_i = min_param_begin;
 		path.is_linear_i = (bisector_type_begin == 1);
 
@@ -1130,9 +1277,24 @@ InstrumentPath PathsBuilder::FindPath(
 		}
 
 		// another neighbour edge is closer
-		// TODO: use another dijkstra search here
-		if(std::get<0>(bisector_end) != vert_idx2_end)
+		// vert_idx1_end is still the same
+		if(std::get<1>(bisector_end)==vert_idx1_end && std::get<0>(bisector_end)!=vert_idx2_end)
+		{
 			path.voronoi_indices.push_back(std::get<0>(bisector_end));
+		}
+		// a completely different bisector has been found, use dijkstra again to find a path
+		else if(std::get<1>(bisector_end)!=vert_idx1_end && std::get<0>(bisector_end)!=vert_idx2_end)
+		{
+			if(auto[pathseg_ok, pathseg] = find_shortest_path(vert_idx2_end, std::get<1>(bisector_end)); pathseg_ok)
+			{
+				path.voronoi_indices.erase(path.voronoi_indices.end()-2, path.voronoi_indices.end());
+				for(std::size_t pathseg_idx=0; pathseg_idx<pathseg.size(); ++pathseg_idx)
+					path.voronoi_indices.push_back(pathseg[pathseg_idx]);
+				path.voronoi_indices.push_back(std::get<0>(bisector_end));
+
+				remove_path_loops(path.voronoi_indices);
+			}
+		}
 
 		path.param_f = 1. - min_param_end;
 		path.is_linear_f = (bisector_type_end == 1);
@@ -1741,102 +1903,102 @@ PathsBuilder::FindClosestPointOnBisector(
 
 
 /**
- * hash function for vertex indices in arbitrary order
- */
-template<class t_bisector>
-struct _t_bisector_hash
-{
-	std::size_t operator()(const t_bisector& idx) const
-	{
-		return geo::unordered_hash(std::get<0>(idx), std::get<1>(idx));
-	}
-};
-
-
-/**
- * equality function for vertex indices in arbitrary order
- */
-template<class t_bisector>
-struct _t_bisector_equ
-{
-	bool operator()(const t_bisector& a, const t_bisector& b) const
-	{
-		bool ok1 = (std::get<0>(a) == std::get<0>(b)) && (std::get<1>(a) == std::get<1>(b));
-		bool ok2 = (std::get<0>(a) == std::get<1>(b)) && (std::get<1>(a) == std::get<0>(b));
-
-		return ok1 || ok2;
-	}
-};
-
-
-/**
  * find a neighbour bisector which is closer to the given vertex than the given one
  * @arg vert given vertex in pixel coordinates
  * @returns [param, min dist bisector, bisector_type, collides]
  */
 std::tuple<t_real, std::pair<std::size_t, std::size_t>, int, bool>
 PathsBuilder::FindClosestBisector(
-	std::size_t vert_idx_1, std::size_t vert_idx_2,
+	std::size_t vert_idx_end, std::size_t vert_idx_before_end,
 	const t_vec& vert) const
 {
+	bool use_min_dist = false;
+
 	const auto& voro_graph = m_voro_results.GetVoronoiGraph();
+	const auto& voro_vertices = m_voro_results.GetVoronoiVertices();
 
-	std::size_t idx1 = vert_idx_1;
-	std::size_t idx2 = vert_idx_2;
+	// invalid indices
+	if(vert_idx_end >= voro_vertices.size() || vert_idx_before_end >= voro_vertices.size())
+		return std::make_tuple(0, std::make_pair(0, 0), -1, true);
 
-	std::size_t min_dist_idx1 = vert_idx_2;
-	std::size_t min_dist_idx2 = vert_idx_1;
+	auto min_bisector = std::make_pair(vert_idx_before_end, vert_idx_end);
 
 	auto [min_param, min_dist, bisector_type, pt_on_segment] =
-		FindClosestPointOnBisector(idx1, idx2, vert);
-
-	bool collides = false; //DoesDirectPathCollidePixel(vert, pt_on_segment, false);
-
-	// check if any neighbour bisector connecting to first vertex is even closer
-	std::vector<std::size_t> neighbour_indices =
-		voro_graph.GetNeighbours(vert_idx_1);
-	std::size_t nearest_neighbours_end_idx = neighbour_indices.size();
+		FindClosestPointOnBisector(vert_idx_end, vert_idx_before_end, vert);
+	bool collides = DoesDirectPathCollidePixel(vert, pt_on_segment, use_min_dist);
+	//std::cout << "bisector " << vert_idx_end << " " << vert_idx_before_end
+	//	<< " collides: " << std::boolalpha << collides << std::endl;
 
 	using t_bisector = std::pair<std::size_t, std::size_t>;
 
-	// add all bisector edges connected to vertex 1
+	// check if any neighbour bisector connecting to this one is even closer
+	std::vector<std::size_t> neighbour_indices_end =
+		voro_graph.GetNeighbours(vert_idx_end);
+	std::vector<std::size_t> neighbour_indices_before_end =
+		voro_graph.GetNeighbours(vert_idx_before_end);
+
+	// add all bisector edges connected to the two vertices of the original bisector
 	std::vector<t_bisector> next_bisectors;
-	next_bisectors.reserve(neighbour_indices.size());
-	for(std::size_t neighbour_idx : neighbour_indices)
-		next_bisectors.emplace_back(std::make_pair(neighbour_idx, vert_idx_1));
+	next_bisectors.reserve(neighbour_indices_end.size() + neighbour_indices_before_end.size());
+
+	for(std::size_t neighbour_idx : neighbour_indices_end)
+	{
+		if(neighbour_idx < voro_vertices.size() && neighbour_idx!=vert_idx_end)
+			next_bisectors.emplace_back(std::make_pair(neighbour_idx, vert_idx_end));
+	}
+	for(std::size_t neighbour_idx : neighbour_indices_before_end)
+	{
+		if(neighbour_idx < voro_vertices.size() && neighbour_idx!=vert_idx_before_end)
+			next_bisectors.emplace_back(std::make_pair(vert_idx_before_end, neighbour_idx));
+	}
+
+	std::size_t num_first_order_neighbours = next_bisectors.size();
+
 
 	// set of already visited bisectors
 	std::unordered_set<t_bisector,
 		_t_bisector_hash<t_bisector>,
 		_t_bisector_equ<t_bisector>> seen_bisectors;
-	seen_bisectors.insert(std::make_pair(vert_idx_1, vert_idx_2));
+	seen_bisectors.insert(std::make_pair(vert_idx_end, vert_idx_before_end));
 
 	for(std::size_t bisector_idx=0; bisector_idx<next_bisectors.size(); ++bisector_idx)
 	{
-		const t_bisector& bisector = next_bisectors[bisector_idx];
+		// can't take reference as this vector is modified in the loop
+		t_bisector bisector = next_bisectors[bisector_idx];
+		//std::cout << "visiting bisector " << std::get<0>(bisector) << " " << std::get<1>(bisector) << std::endl;
+
 		if(seen_bisectors.find(bisector) != seen_bisectors.end())
+		{
+			//std::cout << "bisector already visited" << std::endl;
 			continue;
+		}
 		seen_bisectors.insert(bisector);
 
 		// TODO: add newly discovered neighbours
 		// only consider first-order nearest neighbours
 		// (except when the current path collides)
-		if(bisector_idx < nearest_neighbours_end_idx || collides)
+		if(bisector_idx < num_first_order_neighbours || collides)
 		{
 			for(std::size_t new_neighbour_idx :
 				voro_graph.GetNeighbours(std::get<0>(bisector)))
 			{
-				next_bisectors.push_back(std::make_pair(new_neighbour_idx, std::get<1>(bisector)));
+				if(new_neighbour_idx < voro_vertices.size() && new_neighbour_idx!=std::get<0>(bisector))
+					next_bisectors.push_back(std::make_pair(std::get<0>(bisector), new_neighbour_idx));
+			}
+
+			for(std::size_t new_neighbour_idx :
+				voro_graph.GetNeighbours(std::get<1>(bisector)))
+			{
+				if(new_neighbour_idx < voro_vertices.size() && new_neighbour_idx!=std::get<1>(bisector))
+					next_bisectors.push_back(std::make_pair(new_neighbour_idx, std::get<1>(bisector)));
 			}
 		}
 
-		idx1 = std::get<0>(bisector);
-		idx2 = std::get<1>(bisector);
-
 		auto [neighbour_param, neighbour_dist, neighbour_bisector_type, neighbour_pt_on_segment] =
-			FindClosestPointOnBisector(idx1, idx2, vert);
-		bool neighbour_collides = false; /*DoesDirectPathCollidePixel(
-			vert, neighbour_pt_on_segment, false);*/
+			FindClosestPointOnBisector(std::get<0>(bisector), std::get<1>(bisector), vert);
+		bool neighbour_collides = DoesDirectPathCollidePixel(vert, neighbour_pt_on_segment, use_min_dist);
+		//std::cout << "neighbour bisector " << std::get<0>(bisector) << " " << std::get<1>(bisector)
+		//	<< " collides: " << std::boolalpha << neighbour_collides << std::endl;
 
 		if(neighbour_bisector_type != -1 && !neighbour_collides)
 		{
@@ -1852,18 +2014,16 @@ PathsBuilder::FindClosestBisector(
 			{
 				min_dist = neighbour_dist;
 				min_param = neighbour_param;
-				min_dist_idx1 = idx1;
-				min_dist_idx2 = idx2;
+				min_bisector = bisector;
 				collides = neighbour_collides;
 				bisector_type = neighbour_bisector_type;
 			}
 		}
 	}
+	//std::cout << std::endl;
 
 	min_param = tl2::clamp<t_real>(min_param, 0., 1.);
-	auto new_bisector = std::make_pair(min_dist_idx1, min_dist_idx2);
-
-	return std::make_tuple(min_param, new_bisector, bisector_type, collides);
+	return std::make_tuple(min_param, min_bisector, bisector_type, collides);
 }
 
 
@@ -1909,7 +2069,7 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	const std::size_t second_pt_idx = reverse ? first_pt_idx-1 : first_pt_idx+1;
 
 	t_real min_dist_to_start = GetPathLength(
-		path_vertices[second_pt_idx] - 
+		path_vertices[second_pt_idx] -
 		path_vertices[first_pt_idx]);
 	std::size_t min_idx = second_pt_idx;
 	bool minimum_found = false;
@@ -1927,7 +2087,7 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	while(true)
 	{
 		t_real dist = GetPathLength(
-			path_vertices[iter_idx] - 
+			path_vertices[iter_idx] -
 			path_vertices[first_pt_idx]);
 
 		path_indices.push_back(iter_idx);
@@ -2084,3 +2244,4 @@ bool PathsBuilder::DoesDirectPathCollidePixel(const t_vec2& vert1, const t_vec2&
 
 	return false;
 }
+// ----------------------------------------------------------------------------
