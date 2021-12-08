@@ -134,4 +134,7 @@ int g_tabbed_docks = 0;
 
 // allow nested dock widgets?
 int g_nested_docks = 0;
+
+// allow flashing buttons?
+//int g_allow_gui_flashing = 0;
 // ----------------------------------------------------------------------------

@@ -70,6 +70,8 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	m_spinFinish[0]->setValue(90.);
 	m_spinFinish[1]->setValue(90.);
 
+	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
+	btnGotoFinish->setToolTip("Set the current instrument position to the given target angles.");
 
 	m_btnCalcMesh = new QPushButton(CALC_MESH_TITLE, this);
 	m_btnCalcMesh->setToolTip("Calculate the mesh of possible paths used for pathfinding.");
@@ -78,9 +80,6 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	//m_btnCalcPath = new QPushButton(CALC_PATH_TITLE, this);
 	//m_btnCalcPath->setToolTip("Calculate the actual path from the current to the target instrument position.");
 	//m_btnCalcPath->setShortcut(Qt::ALT | Qt::Key_P);
-
-	QPushButton *btnGotoFinish = new QPushButton("Jump to Target Angles", this);
-	btnGotoFinish->setToolTip("Set the current instrument position to the given target angles.");
 
 	m_sliderPath = new QSlider(Qt::Horizontal, this);
 	m_sliderPath->setToolTip("Path tracking.");
@@ -203,6 +202,20 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 			SetGoButtonText(true);
 		}
 	});
+
+
+	// palette for flashing the mesh button
+	m_paletteBtnNormal = m_btnCalcMesh->palette();
+	m_paletteBtnFlash = m_paletteBtnNormal;
+	m_paletteBtnFlash.setColor(m_btnCalcMesh->backgroundRole(), QColor(0, 0, 195));
+	m_paletteBtnFlash.setColor(m_btnCalcMesh->foregroundRole(), QColor(255, 255, 255));
+
+
+	// mesh button flashing timer
+	/*connect(&m_meshButtonFlashTimer, &QTimer::timeout,
+		this, static_cast<void (PathPropertiesWidget::*)()>(
+			&PathPropertiesWidget::MeshButtonFlashTick));*/
+
 }
 
 
@@ -262,6 +275,29 @@ void PathPropertiesWidget::TrackerTick()
 		SetGoButtonText(true);
 	}
 }
+
+
+/**
+ * timer tick to flash mesh calculation button
+ */
+/*void PathPropertiesWidget::MeshButtonFlashTick()
+{
+	if(!m_btnCalcMesh)
+		return;
+
+	static bool toggle = false;
+
+	if(toggle)
+	{
+		m_btnCalcMesh->setPalette(m_paletteBtnNormal);
+	}
+	else
+	{
+		m_btnCalcMesh->setPalette(m_paletteBtnFlash);
+	}
+
+	toggle = !toggle;
+}*/
 
 
 PathPropertiesWidget::~PathPropertiesWidget()
@@ -352,8 +388,23 @@ void PathPropertiesWidget::PathMeshValid(bool valid)
 {
 	//m_btnCalcPath->setEnabled(valid);
 
-	if(!valid)
+	if(valid)
+	{
+		//m_meshButtonFlashTimer.stop();
+		if(m_btnCalcMesh)
+			m_btnCalcMesh->setPalette(m_paletteBtnNormal);
+	}
+	else
+	{
 		PathAvailable(0);
+
+		if(m_btnCalcMesh)
+			m_btnCalcMesh->setPalette(m_paletteBtnFlash);
+
+		/*if(g_allow_gui_flashing && !m_meshButtonFlashTimer.isActive())
+			m_meshButtonFlashTimer.start(
+				std::chrono::milliseconds(1000));*/
+	}
 }
 
 

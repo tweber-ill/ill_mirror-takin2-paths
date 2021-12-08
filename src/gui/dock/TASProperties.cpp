@@ -60,9 +60,6 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	//m_spinMonoD->setPrefix("dm=");
 	//m_spinAnaD->setPrefix("da=");
 
-	QPushButton *btnTarget = new QPushButton("Set Current Angles as Target", this);
-	btnTarget->setToolTip("Set the current instrument position as the target position for pathfinding.");
-
 	m_checkScatteringSense[0] = new QCheckBox(this);
 	m_checkScatteringSense[1] = new QCheckBox(this);
 	m_checkScatteringSense[2] = new QCheckBox(this);
@@ -77,6 +74,9 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_checkScatteringSense[0]->setChecked(true);
 	m_checkScatteringSense[1]->setChecked(false);
 	m_checkScatteringSense[2]->setChecked(true);
+
+	QPushButton *btnTarget = new QPushButton("Set Current Angles as Target", this);
+	btnTarget->setToolTip("Set the current instrument position as the target position for pathfinding.");
 
 	for(QDoubleSpinBox *spin : {m_spinMonoScAngle, m_spinSampleScAngle, m_spinAnaScAngle})
 	{

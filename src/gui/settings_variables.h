@@ -154,6 +154,9 @@ extern int g_tabbed_docks;
 
 // allow nested dock widgets?
 extern int g_nested_docks;
+
+// allow flashing buttons?
+//extern int g_allow_gui_flashing;
 // ----------------------------------------------------------------------------
 
 
@@ -325,6 +328,12 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 		.value = &g_enable_shadow_rendering,
 		.editor = SettingsVariableEditor::YESNO,
 	},
+	/*{
+		.description = "Allow flashing GUI elements",
+		.key = "settings/allow_gui_flashing",
+		.value = &g_allow_gui_flashing,
+		.editor = SettingsVariableEditor::YESNO,
+	},*/
 
 	// screenshot options
 	{

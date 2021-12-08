@@ -68,12 +68,16 @@ private:
 	//QPushButton *m_btnCalcPath = nullptr;
 	QToolButton *m_btnGo = nullptr;
 
+	QPalette m_paletteBtnNormal{}, m_paletteBtnFlash{};
+
 	QTimer m_pathTrackTimer{};
+	//QTimer m_meshButtonFlashTimer{};
 
 
 protected:
 	void SetGoButtonText(bool start=true);
 	void TrackerTick();
+	//void MeshButtonFlashTick();
 
 
 public slots:

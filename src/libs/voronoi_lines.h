@@ -135,6 +135,114 @@ struct boost::polygon::segment_traits<std::pair<t_vec, t_vec>>
 
 namespace geo {
 
+// ----------------------------------------------------------------------------
+// helper definitions and functions
+// ----------------------------------------------------------------------------
+/**
+ * hash function for vertex indices in arbitrary order
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+struct t_bisector_hash
+{
+	std::size_t operator()(const t_bisector& idx) const
+	{
+		return unordered_hash(std::get<0>(idx), std::get<1>(idx));
+	}
+};
+
+
+/**
+ * equality function for vertex indices in arbitrary order
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+struct t_bisector_equ
+{
+	bool operator()(const t_bisector& a, const t_bisector& b) const
+	{
+		bool ok1 = (std::get<0>(a) == std::get<0>(b)) && (std::get<1>(a) == std::get<1>(b));
+		bool ok2 = (std::get<0>(a) == std::get<1>(b)) && (std::get<1>(a) == std::get<0>(b));
+
+		return ok1 || ok2;
+	}
+};
+
+
+/**
+ * remove loops in a sequence of bisectors
+ */
+template<class t_bisector = std::pair<std::size_t, std::size_t>>
+void remove_bisector_loops(std::vector<t_bisector>& bisectors)
+{
+	// indices of already seen bisectors
+	std::unordered_map<t_bisector, std::size_t,
+		t_bisector_hash<t_bisector>,
+		t_bisector_equ<t_bisector>> first_seen;
+
+	for(auto iter = bisectors.begin(); iter != bisectors.end(); ++iter)
+	{
+		// bisector already seen?
+		auto seen = first_seen.find(*iter);
+		if(seen != first_seen.end())
+		{
+			// remove loop
+			iter = bisectors.erase(bisectors.begin()+seen->second, iter);
+
+			// remove entries in map with now invalid indices
+			for(auto iter=first_seen.begin(); iter!=first_seen.end(); ++iter)
+			{
+				if(iter->second >= bisectors.size())
+					iter = first_seen.erase(iter);
+			}
+		}
+
+		// bisector not yet seen
+		else
+		{
+			std::size_t idx = iter - bisectors.begin();
+			first_seen.insert(std::make_pair(*iter, idx));
+		}
+	}
+}
+
+
+/**
+ * remove loops in a path vertex indices
+ */
+template<typename t_idx = std::size_t>
+void remove_path_loops(std::vector<t_idx>& indices)
+{
+	// indices of already seen vertices
+	std::unordered_map<t_idx, std::size_t> first_seen;
+
+	for(auto iter = indices.begin(); iter != indices.end(); ++iter)
+	{
+		// vertex index already seen?
+		auto seen = first_seen.find(*iter);
+		if(seen != first_seen.end())
+		{
+			// remove loop
+			iter = indices.erase(indices.begin()+seen->second, iter);
+
+			// remove entries in map with now invalid indices
+			for(auto iter=first_seen.begin(); iter!=first_seen.end(); ++iter)
+			{
+				if(iter->second >= indices.size())
+					iter = first_seen.erase(iter);
+			}
+		}
+
+		// vertex not yet seen
+		else
+		{
+			std::size_t idx = iter - indices.begin();
+			first_seen.insert(std::make_pair(*iter, idx));
+		}
+	}
+}
+// ----------------------------------------------------------------------------
+
+
+
 /**
  * options for defining regions
  */
@@ -352,33 +460,6 @@ public:
 
 	// ------------------------------------------------------------------------
 	/**
-	 * hash function for vertex indices in arbitrary order
-	 */
-	struct t_vert_hash
-	{
-		std::size_t operator()(const t_vert_indices& idx) const
-		{
-			return unordered_hash(std::get<0>(idx), std::get<1>(idx));
-		}
-	};
-
-
-	/**
-	 * equality function for vertex indices in arbitrary order
-	 */
-	struct t_vert_equ
-	{
-		bool operator()(const t_vert_indices& a, const t_vert_indices& b) const
-		{
-			bool ok1 = (std::get<0>(a) == std::get<0>(b)) && (std::get<1>(a) == std::get<1>(b));
-			bool ok2 = (std::get<0>(a) == std::get<1>(b)) && (std::get<1>(a) == std::get<0>(b));
-
-			return ok1 || ok2;
-		}
-	};
-
-
-	/**
 	 * hash function for vertex indices in arbitrary order (using std::optional)
 	 */
 	struct t_vert_hash_opt
@@ -390,7 +471,7 @@ public:
 					std::get<0>(idx) ? *std::get<0>(idx) : std::numeric_limits<t_vert_index>::max(),
 					std::get<1>(idx) ? *std::get<1>(idx) : std::numeric_limits<t_vert_index>::max());
 
-			return t_vert_hash{}(_idx);
+			return t_bisector_hash<t_vert_indices>{}(_idx);
 		}
 	};
 
@@ -412,7 +493,7 @@ public:
 					std::get<0>(b) ? *std::get<0>(b) : std::numeric_limits<t_vert_index>::max(),
 					std::get<1>(b) ? *std::get<1>(b) : std::numeric_limits<t_vert_index>::max());
 
-			return t_vert_equ{}(_a, _b);
+			return t_bisector_equ<t_vert_indices>{}(_a, _b);
 		}
 	};
 	// ------------------------------------------------------------------------
@@ -428,7 +509,7 @@ public:
 	// container type mapping voronoi vertex indices to their respective quadratic bisectors
 	using t_edgemap_quadr =
 		std::unordered_map<
-			t_vert_indices, std::vector<t_vec>, t_vert_hash, t_vert_equ>;
+			t_vert_indices, std::vector<t_vec>, t_bisector_hash<t_vert_indices>, t_bisector_equ<t_vert_indices>>;
 
 	using t_edgevec_lin =
 		std::vector<std::tuple<t_line,
@@ -708,8 +789,6 @@ calc_voro(const std::vector<t_line>& lines,
 requires tl2::is_vec<t_vec> && is_graph<t_graph>
 {
 	namespace poly = boost::polygon;
-	namespace geo = boost::geometry;
-
 	using t_real = typename t_vec::value_type;
 
 	// internal scale for int-conversion
@@ -819,6 +898,7 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 	}
 
 
+	// get the index of the given voronoi vertex
 	auto get_vertex_idx =
 		[&vorovertices](const typename t_vorotraits::vertex_type* vert)
 			-> std::optional<std::size_t>
@@ -847,6 +927,11 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 
 	linear_edges_vec.reserve(voro.edges().size());
 
+	// set of already visited bisector edges
+	using t_bisector = std::pair<std::size_t, std::size_t>;
+	std::unordered_set<t_bisector,
+		t_bisector_hash<t_bisector>,
+		t_bisector_equ<t_bisector>> seen_bisectors;
 
 	for(const auto& edge : voro.edges())
 	{
@@ -859,6 +944,18 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 		const auto* vert1 = edge.vertex1();
 		auto vert0idx = get_vertex_idx(vert0);
 		auto vert1idx = get_vertex_idx(vert1);
+
+		const bool valid_vertices = vert0idx && vert1idx;
+
+		// has this bisector already been handled?
+		if(valid_vertices)
+		{
+			auto bisector = std::make_pair(*vert0idx, *vert1idx);
+			if(seen_bisectors.find(bisector) != seen_bisectors.end())
+				continue;
+			else
+				seen_bisectors.insert(bisector);
+		}
 
 		// line groups defined?
 		if(regions)
@@ -903,7 +1000,6 @@ requires tl2::is_vec<t_vec> && is_graph<t_graph>
 			}
 		}
 
-		bool valid_vertices = vert0idx && vert1idx;
 		if(valid_vertices)
 		{
 			// add edge to graph

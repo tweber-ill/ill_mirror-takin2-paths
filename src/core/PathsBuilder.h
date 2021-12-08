@@ -99,6 +99,12 @@ enum class VoronoiBackend
 };
 
 
+// pixel values for various configuration space conditions
+#define PATHSBUILDER_PIXEL_VALUE_FORBIDDEN_ANGLE  0xf0
+#define PATHSBUILDER_PIXEL_VALUE_COLLISION        0xff
+#define PATHSBUILDER_PIXEL_VALUE_NOCOLLISION      0x00
+
+
 class PathsBuilder
 {
 public:
