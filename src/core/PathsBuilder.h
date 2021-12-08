@@ -140,13 +140,11 @@ protected:
 
 	// find the closest point on a path segment
 	std::tuple<t_real, t_real, int, t_vec2>
-	FindClosestPointOnSegment(std::size_t idx1, std::size_t idx2,
-		const t_vec2& vec) const;
+	FindClosestPointOnBisector(std::size_t idx1, std::size_t idx2, const t_vec2& vec) const;
 
 	// find a neighbour bisector which is closer to the given vertex than the given one
-	std::tuple<t_real, std::size_t, int, bool>
-	FindClosestSegment(std::size_t vert_idx_1, std::size_t vert_idx_2,
-		const t_vec& vert, bool reversed_order = false) const;
+	std::tuple<t_real, std::pair<std::size_t, std::size_t>, int, bool>
+	FindClosestBisector(std::size_t vert_idx_1, std::size_t vert_idx_2, const t_vec& vert) const;
 
 	// find and remove loops near the retraction points in the path
 	void RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg = false, bool reverse = false) const;
