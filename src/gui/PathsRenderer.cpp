@@ -1249,6 +1249,10 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	// instrument status labels
 	if(m_instrstatus)
 	{
+		const int label_padding_x = 16;
+		const int label_padding_y = 16;
+		int label_cur_y = 16;
+
 		// collision and angular limits errors
 		if(m_instrstatus->colliding || !m_instrstatus->in_angular_limits)
 		{
@@ -1283,12 +1287,16 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			int h = boundingRect.height() * 2;
 			boundingRect.setWidth(w);
 			boundingRect.setHeight(h);
-			boundingRect.translate(16, 32);
+			boundingRect.translate(
+				label_padding_x,
+				label_cur_y + label_padding_y);
 
 			painter.drawRect(boundingRect);
 			painter.drawText(boundingRect,
 				Qt::AlignCenter | Qt::AlignVCenter,
 				label);
+
+			label_cur_y += h + label_padding_y;
 		}
 
 		// path and path mesh status
@@ -1298,7 +1306,7 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			if(!m_instrstatus->pathmeshvalid)
 				label = "Path mesh needs update.";
 			else if(!m_instrstatus->pathvalid)
-				label = "No path found.";
+				label = "Path to target not found.";
 
 			QFont fontLabel = fontOrig;
 			QPen penLabel = penOrig;
@@ -1323,7 +1331,9 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 			int h = boundingRect.height() * 2;
 			boundingRect.setWidth(w);
 			boundingRect.setHeight(h);
-			boundingRect.translate(width() - w - 16, 32);
+			boundingRect.translate(
+				label_padding_x, //width() - w - 16,
+				label_cur_y + label_padding_y);
 
 			painter.drawRect(boundingRect);
 			painter.drawText(boundingRect,

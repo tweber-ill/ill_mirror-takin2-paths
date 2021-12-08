@@ -201,7 +201,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	m_spinDelta2ThM->setSingleStep(0.1);
 
 	// buttons
-	QPushButton *btnCalc = new QPushButton("Calculate Mesh", this);
+	QPushButton *btnCalc = new QPushButton("Update Path Mesh", this);
 	QPushButton *btnSave = new QPushButton("Save Figure...", this);
 	QPushButton *btnClose = new QPushButton("Close", this);
 

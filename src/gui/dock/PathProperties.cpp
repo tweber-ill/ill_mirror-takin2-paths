@@ -113,7 +113,7 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	{
 		auto *layoutPath = new QGridLayout(groupPath);
 		layoutPath->setHorizontalSpacing(2);
-		layoutPath->setVerticalSpacing(2);
+		layoutPath->setVerticalSpacing(/*2*/ 8); // to prevent track-bar clipping
 		layoutPath->setContentsMargins(4,4,4,4);
 
 		int y = 0;
@@ -207,9 +207,11 @@ PathPropertiesWidget::PathPropertiesWidget(QWidget *parent)
 	// palette for flashing the mesh button
 	m_paletteBtnNormal = m_btnCalcMesh->palette();
 	m_paletteBtnFlash = m_paletteBtnNormal;
-	m_paletteBtnFlash.setColor(m_btnCalcMesh->backgroundRole(), QColor(0, 0, 195));
-	m_paletteBtnFlash.setColor(m_btnCalcMesh->foregroundRole(), QColor(255, 255, 255));
-
+	if(g_theme.toLower() != "macintosh")  // themes with hard-coded colours
+	{
+		m_paletteBtnFlash.setColor(m_btnCalcMesh->backgroundRole(), QColor(0, 0, 195));
+		m_paletteBtnFlash.setColor(m_btnCalcMesh->foregroundRole(), QColor(255, 255, 255));
+	}
 
 	// mesh button flashing timer
 	/*connect(&m_meshButtonFlashTimer, &QTimer::timeout,
@@ -230,11 +232,11 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
 		QIcon iconStart = QIcon::fromTheme("media-playback-start");
 		m_btnGo->setIcon(iconStart);
 		if(iconStart.isNull())
-			m_btnGo->setText("Go");
+			m_btnGo->setText(" Go ");
 		else
-			m_btnGo->setText("");
+			m_btnGo->setText("    ");
 
-		m_btnGo->setToolTip("Start path tracking from current to target instrument position.");
+		m_btnGo->setToolTip("Start path tracking from the current to the target instrument position.");
 	}
 	else
 	{
@@ -244,7 +246,7 @@ void PathPropertiesWidget::SetGoButtonText(bool start)
 		if(iconStop.isNull())
 			m_btnGo->setText("Stop");
 		else
-			m_btnGo->setText("");
+			m_btnGo->setText("    ");
 
 		m_btnGo->setToolTip("Stop path tracking.");
 	}
