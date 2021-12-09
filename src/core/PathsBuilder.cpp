@@ -1,7 +1,9 @@
 /**
  * the paths builder comprises two steps:
- * - it calculates the path mesh (i.e. the roadmap) of possible instrument paths
- * - it calculates a specific path on the path mesh (this file)
+ *   (1) it calculates the path mesh (i.e. the roadmap) of possible instrument
+ *       paths (file: PathsMeshBuilder.cpp).
+ *   (2) it calculates a specific path on the path mesh from the current to
+ *       the target instrument position (file: PathsBuilder.cpp, this file)
  *
  * @author Tobias Weber <tweber@ill.fr>
  * @date jun-2021

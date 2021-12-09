@@ -1,7 +1,9 @@
 /**
  * the paths builder comprises two steps:
- * - it calculates the path mesh (i.e. the roadmap) of possible instrument paths (this file)
- * - it calculates a specific path on the path mesh
+ *   (1) it calculates the path mesh (i.e. the roadmap) of possible instrument
+ *       paths (file: PathsMeshBuilder.cpp, this file).
+ *   (2) it calculates a specific path on the path mesh from the current to
+ *       the target instrument position (file: PathsBuilder.cpp)
  *
  * @author Tobias Weber <tweber@ill.fr>
  * @date jun-2021
@@ -753,25 +755,25 @@ bool PathsBuilder::SaveToLinesTool(std::ostream& ostr)
 
 	// alternatively: contour regions (obsolete)
 	/*ostr << "\n<regions>\n";
-	 *	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
-	 *	{
-	 *		const auto& contour = m_wallcontours[contouridx];
-	 *		ostr << "\t<!-- contour " << contouridx << " -->\n";
-	 *		ostr << "\t<" << contouridx << ">\n";
-	 *
-	 *		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
-	 *		{
-	 *			const t_contourvec& vec = contour[vertidx];
-	 *
-	 *			ostr << "\t\t<" << vertidx;
-	 *			ostr << " x=\"" << vec[0] << "\"";
-	 *			ostr << " y=\"" << vec[1] << "\"";
-	 *			ostr << "/>\n";
-}
+	for(std::size_t contouridx = 0; contouridx<m_wallcontours.size(); ++contouridx)
+	{
+		const auto& contour = m_wallcontours[contouridx];
+		ostr << "\t<!-- contour " << contouridx << " -->\n";
+		ostr << "\t<" << contouridx << ">\n";
 
-ostr << "\t</" << contouridx << ">\n\n";
-}
-ostr << "</regions>\n";*/
+		for(std::size_t vertidx=0; vertidx<contour.size(); ++vertidx)
+		{
+			const t_contourvec& vec = contour[vertidx];
+
+			ostr << "\t\t<" << vertidx;
+			ostr << " x=\"" << vec[0] << "\"";
+			ostr << " y=\"" << vec[1] << "\"";
+			ostr << "/>\n";
+		}
+
+		ostr << "\t</" << contouridx << ">\n\n";
+	}
+	ostr << "</regions>\n";*/
 
 	ostr << "</lines2d>" << std::endl;
 	return true;

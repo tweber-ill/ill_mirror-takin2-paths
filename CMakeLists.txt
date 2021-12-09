@@ -257,7 +257,7 @@ add_library(taspaths_core STATIC
 	src/core/Axis.cpp src/core/Axis.h
 	src/core/Instrument.cpp src/core/Instrument.h
 	src/core/InstrumentSpace.cpp src/core/InstrumentSpace.h
-	src/core/PathsBuilder.cpp src/core/PathsBuilder_mesh.cpp src/core/PathsBuilder.h
+	src/core/PathsBuilder.cpp src/core/PathsMeshBuilder.cpp src/core/PathsBuilder.h
 	src/core/PathsExporter.cpp src/core/PathsExporter.h
 	src/core/TasCalculator.cpp src/core/TasCalculator.h
 	src/core/types.h

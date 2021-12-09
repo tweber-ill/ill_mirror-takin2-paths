@@ -1122,6 +1122,7 @@ void PathsTool::SaveFileAs()
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("taspaths");
 	filedlg.setFileMode(QFileDialog::AnyFile);
+	filedlg.selectFile("untitled.taspaths");
 
 	if(!filedlg.exec())
 		return;
@@ -1147,6 +1148,7 @@ void PathsTool::SaveScreenshot()
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("png");
 	filedlg.setFileMode(QFileDialog::AnyFile);
+	filedlg.selectFile("taspaths.png");
 
 	if(!filedlg.exec())
 		return;
@@ -1180,6 +1182,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("txt");
 	filedlg.setFileMode(QFileDialog::AnyFile);
+	filedlg.selectFile("taspaths.txt");
 
 	if(!filedlg.exec())
 		return false;
