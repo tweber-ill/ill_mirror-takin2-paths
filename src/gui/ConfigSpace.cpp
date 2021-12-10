@@ -1266,50 +1266,70 @@ void ConfigSpaceDlg::RedrawPathPlot()
  */
 bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progress, const std::string& message)
 {
-	if(isHidden())
+	bool ok = true;
+	bool hidden = isHidden();
+
+	// don't replot too often
+	static unsigned skip_updates = 1;
+	static unsigned cur_update = 0;
+
+	// don't show the progress dialog if the config space dialog is hidden
+	if(hidden)
 	{
-		// don't show the progress dialog if the config space dialog is hidden
 		if(m_progress)
 		{
 			m_progress->reset();
 			m_progress.reset();
 		}
-
-		return true;
 	}
-
-	static const int max_progress = 1000;
-
-	if(!m_progress)
-		m_progress = std::make_unique<QProgressDialog>(this);
-
-	if(state == CalculationState::STARTED ||
-		state == CalculationState::STEP_STARTED)
+	else
 	{
-		m_progress->setWindowModality(Qt::WindowModal);
-		m_progress->setLabelText(message.c_str());
-		m_progress->setMinimum(0);
-		m_progress->setMaximum(max_progress);
-		m_progress->setValue(0);
-		m_progress->setAutoReset(false);
-		m_progress->setMinimumDuration(1000);
-	}
+		static const int max_progress = 1000;
 
-	m_progress->setValue(int(progress*max_progress));
-	bool ok = !m_progress->wasCanceled();
+		if(!m_progress)
+			m_progress = std::make_unique<QProgressDialog>(this);
+
+		if(state == CalculationState::STARTED ||
+			state == CalculationState::STEP_STARTED)
+		{
+			cur_update = 0;
+			m_progress->setWindowModality(Qt::WindowModal);
+			m_progress->setLabelText(message.c_str());
+			m_progress->setMinimum(0);
+			m_progress->setMaximum(max_progress);
+			m_progress->setValue(0);
+			m_progress->setAutoReset(false);
+			m_progress->setMinimumDuration(1000);
+		}
+
+		m_progress->setValue(int(progress*max_progress));
+		ok = !m_progress->wasCanceled();
+	}
 
 	if(state == CalculationState::SUCCEEDED ||
 		state == CalculationState::STEP_SUCCEEDED ||
 		state == CalculationState::FAILED)
 	{
-		m_progress->reset();
-		//m_progress.reset();
+		if(!hidden)
+		{
+			m_progress->reset();
+			//m_progress.reset();
+		}
+
+		// plot final result
+		RedrawVoronoiPlot();
 
 		if(m_autocalcpath)
 			CalculatePath();
 	}
 
-	RedrawVoronoiPlot();
+	// show incremental updates
+	if(!hidden)
+	{
+		if(cur_update++ % skip_updates == 0)
+			RedrawVoronoiPlot();
+	}
+
 	return ok;
 }
 

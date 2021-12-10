@@ -353,7 +353,7 @@ bool PathsBuilder::CalculateConfigSpace(
 
 	// get results
 	std::size_t num_tasks = tasks.size();
-	// send no more than four-percent update signals
+	// send no more than (100/25) percent update signals
 	std::size_t signal_skip = num_tasks / 25;
 
 	for(std::size_t taskidx=0; taskidx<num_tasks; ++taskidx)
