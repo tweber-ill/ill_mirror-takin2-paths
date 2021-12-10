@@ -20,8 +20,8 @@ Basic tutorial videos are available here:
 Steps to try out the pathfinding functionality:
 - Move existing or add new walls or obstacles to the scene.
 - Open the configuration space dialog using the "Calculation" -> "Angular Configuration Space..." menu item.
-- Click the "Calculate Mesh" button in the configuration space dialog to compute the roadmap corresponding to the current instrument and wall configuration.
-- Click the "Move Instrument Position" and "Move Target Position" radio buttons and click in the configuration space plot to set and move the start and target positions, respectively. 
+- Click the "Update Path Mesh" button in the configuration space dialog to compute the roadmap corresponding to the current instrument and wall configuration.
+- Click the "Move Current Position" and "Move Target Position" radio buttons and click in the configuration space plot to set and move the start and target positions, respectively. 
 - A path from the start to the target position is calculated. It can be directly traced by clicking the "Go" button in the main window's "Path Properties" dock window.
 
 
