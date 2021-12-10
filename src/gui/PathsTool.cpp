@@ -1115,7 +1115,7 @@ void PathsTool::OpenFile()
 	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
 	filedlg.setDefaultSuffix("taspaths");
 	filedlg.setViewMode(QFileDialog::Detail);
-	filedlg.setFileMode(QFileDialog::ExistingFiles);
+	filedlg.setFileMode(QFileDialog::ExistingFile);
 	filedlg.setSidebarUrls(QList<QUrl>({
 		QUrl::fromLocalFile(g_homepath.c_str()),
 		QUrl::fromLocalFile(g_docpath.c_str())}));
