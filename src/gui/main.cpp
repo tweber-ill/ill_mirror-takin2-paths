@@ -87,6 +87,7 @@ public:
 		g_appdirpath = get_appdir_path(g_apppath);
 		g_homepath = QDir::homePath().toStdString();
 
+		// standard paths
 		if(QStringList docdirs = QStandardPaths::standardLocations(
 			QStandardPaths::DocumentsLocation); docdirs.size())
 			g_docpath = docdirs[0].toStdString();
@@ -98,6 +99,26 @@ public:
 			g_imgpath = imgdirs[0].toStdString();
 		else
 			g_imgpath = g_docpath;
+
+		// override standard paths with own subdir
+		if(g_use_taspaths_subdir)
+		{
+			std::string taspaths_subdir = "TAS-Paths Files";
+
+			QDir taspathsdir(g_homepath.c_str());
+			bool taspaths_subdir_ok = false;
+
+			taspaths_subdir_ok = taspathsdir.exists(taspaths_subdir.c_str());
+			if(!taspaths_subdir_ok)
+				taspaths_subdir_ok = taspathsdir.mkdir(taspaths_subdir.c_str());
+
+			if(taspaths_subdir_ok)
+			{
+				taspathsdir.cd(taspaths_subdir.c_str());
+				g_docpath = taspathsdir.absolutePath().toStdString();
+				g_imgpath = taspathsdir.absolutePath().toStdString();
+			}
+		}
 
 		// qt plugin libraries
 		addLibraryPath(applicationDirPath() + QDir::separator() + ".." +

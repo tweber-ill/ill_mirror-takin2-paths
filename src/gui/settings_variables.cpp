@@ -26,6 +26,7 @@
 #include "settings_variables.h"
 #include "tlibs2/libs/maths.h"
 
+#include <boost/predef.h>
 
 
 // ----------------------------------------------------------------------------
@@ -41,6 +42,12 @@ std::optional<std::string> g_appdirpath;
 std::string g_homepath = "~/";
 std::string g_docpath = g_homepath;
 std::string g_imgpath = g_homepath;
+
+#if BOOST_OS_MACOS
+	int g_use_taspaths_subdir = 1;
+#else
+	int g_use_taspaths_subdir = 0;
+#endif
 
 
 // maximum number of threads

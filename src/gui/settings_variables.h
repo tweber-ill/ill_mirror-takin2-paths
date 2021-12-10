@@ -60,6 +60,9 @@ extern std::string g_homepath;
 extern std::string g_docpath;
 extern std::string g_imgpath;
 
+// create a subdirectory under the home directory for taspaths files
+extern int g_use_taspaths_subdir;
+
 
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;
@@ -175,75 +178,75 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 28> g_settingsvariables
+constexpr std::array<SettingsVariable, 29> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
-		.description = "Calculation epsilon",
+		.description = "Calculation epsilon.",
 		.key = "settings/eps",
 		.value = &g_eps,
 	},
 	{
-		.description = "Angular epsilon",
+		.description = "Angular epsilon.",
 		.key = "settings/eps_angular",
 		.value = &g_eps_angular,
 		.is_angle = true
 	},
 	{
-		.description = "Voronoi edge epsilon",
+		.description = "Voronoi edge epsilon.",
 		.key = "settings/eps_voronoi_edge",
 		.value = &g_eps_voronoiedge,
 	},
 	{
-		.description = "Drawing epsilon",
+		.description = "Drawing epsilon.",
 		.key = "settings/eps_gui",
 		.value = &g_eps_gui,
 	},
 	{
-		.description = "Number precision",
+		.description = "Number precision.",
 		.key = "settings/prec",
 		.value = &g_prec,
 	},
 	{
-		.description = "GUI number precision",
+		.description = "GUI number precision.",
 		.key = "settings/prec_gui",
 		.value = &g_prec_gui,
 	},
 
 	{
-		.description = "Line subdivision length",
+		.description = "Line subdivision length.",
 		.key = "settings/line_subdiv_len",
 		.value = &g_line_subdiv_len,
 	},
 
 	// threading options
 	{
-		.description = "Maximum number of threads",
+		.description = "Maximum number of threads.",
 		.key = "settings/maxnum_threads",
 		.value = &g_maxnum_threads,
 	},
 	// file options
 	{
-		.description = "Maximum number of recent files",
+		.description = "Maximum number of recent files.",
 		.key = "settings/maxnum_recents",
 		.value = &g_maxnum_recents,
 	},
 
 	// angle options
 	{
-		.description = "Sample rotation offset",
+		.description = "Sample rotation offset.",
 		.key = "settings/a3_offs",
 		.value = &g_a3_offs,
 		.is_angle = true
 	},
 	{
-		.description = "Monochromator scattering angle delta",
+		.description = "Monochromator scattering angle delta.",
 		.key = "settings/a2_delta",
 		.value = &g_a2_delta,
 		.is_angle = true,
 	},
 	{
-		.description = "Sample scattering angle delta",
+		.description = "Sample scattering angle delta.",
 		.key = "settings/a4_delta",
 		.value = &g_a4_delta,
 		.is_angle = true,
@@ -251,27 +254,27 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 
 	// mesh options
 	{
-		.description = "Polygon intersection method",
+		.description = "Polygon intersection method.",
 		.key = "settings/poly_inters_method",
 		.value = &g_poly_intersection_method,
 		.editor = SettingsVariableEditor::COMBOBOX,
 		.editor_config = "Sweep;;Half-plane Test",
 	},
 	{
-		.description = "Voronoi calculation backend",
+		.description = "Voronoi calculation backend.",
 		.key = "settings/voronoi_backend",
 		.value = &g_voronoi_backend,
 		.editor = SettingsVariableEditor::COMBOBOX,
 		.editor_config = "BOOST/Polygon;;CGAL/S.D.Graph",
 	},
 	{
-		.description = "Use region function",
+		.description = "Use region function.",
 		.key = "settings/use_region_function",
 		.value = &g_use_region_function,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Remove bisectors close to walls (careful!)",
+		.description = "Remove bisectors close to walls (careful!).",
 		.key = "settings/remove_bisectors_below_min_wall_dist",
 		.value = &g_remove_bisectors_below_min_wall_dist,
 		.editor = SettingsVariableEditor::YESNO,
@@ -279,20 +282,20 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 
 	// path options
 	{
-		.description = "Path finding strategy",
+		.description = "Path finding strategy.",
 		.key = "settings/path_finding_strategy",
 		.value = &g_pathstrategy,
 		.editor = SettingsVariableEditor::COMBOBOX,
 		.editor_config = "Shortest Path;;Avoid Walls",
 	},
 	{
-		.description = "Try using direct path segments",
+		.description = "Try using direct path segments.",
 		.key = "settings/try_direct_path",
 		.value = &g_try_direct_path,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Angular search radius for direct path",
+		.description = "Angular search radius for direct path.",
 		.key = "settings/direct_path_search_radius",
 		.value = &g_directpath_search_radius,
 		.is_angle = true,
@@ -304,17 +307,17 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Number of closest voronoi vertices for retraction point search",
+		.description = "Number of closest voronoi vertices for retraction point search.",
 		.key = "settings/num_closest_voronoi_vertices",
 		.value = &g_num_closest_voronoi_vertices,
 	},
 	{
-		.description = "Path tracker FPS",
+		.description = "Path tracker FPS.",
 		.key = "settings/pathtracker_fps",
 		.value = &g_pathtracker_fps,
 	},
 	{
-		.description = "Minimum angular distance to walls",
+		.description = "Minimum angular distance to walls.",
 		.key = "settings/min_dist_to_walls",
 		.value = &g_min_dist_to_walls,
 		.is_angle = true
@@ -323,18 +326,18 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 
 	// renderer options
 	{
-		.description = "Renderer FPS",
+		.description = "Renderer FPS.",
 		.key = "settings/renderer_fps",
 		.value = &g_timer_fps,
 	},
 	{
-		.description = "Light follows cursor",
+		.description = "Light follows cursor.",
 		.key = "settings/light_follows_cursor",
 		.value = &g_light_follows_cursor,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Enable shadow rendering",
+		.description = "Enable shadow rendering.",
 		.key = "settings/enable_shadow_rendering",
 		.value = &g_enable_shadow_rendering,
 		.editor = SettingsVariableEditor::YESNO,
@@ -348,15 +351,21 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 
 	// screenshot options
 	{
-		.description = "Combine instrument/configuration space screenshots",
+		.description = "Combine instrument/configuration space screenshots.",
 		.key = "settings/combined_screenshots",
 		.value = &g_combined_screenshots,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	{
-		.description = "Automatically take screenshots (careful!)",
+		.description = "Automatically take screenshots (careful!).",
 		.key = "settings/automatic_screenshots",
 		.value = &g_automatic_screenshots,
+		.editor = SettingsVariableEditor::YESNO,
+	},
+	{
+		.description = "Create a subdirectory for TAS-Paths files.",
+		.key = "settings/use_taspaths_subdir",
+		.value = &g_use_taspaths_subdir,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 }};
