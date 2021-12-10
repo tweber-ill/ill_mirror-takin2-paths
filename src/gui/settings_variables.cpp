@@ -35,8 +35,9 @@
 // resource manager
 Resources g_res{};
 
-// application binary and home directory path
+// application binary, root, and home directory path
 std::string g_apppath = ".";
+std::optional<std::string> g_appdirpath;
 std::string g_homepath = "~/";
 
 
@@ -121,7 +122,7 @@ QString g_theme = "Fusion";
 QString g_font = "";
 
 // use native menubar?
-int g_use_native_menubar = 0;
+int g_use_native_menubar = 1;
 
 // use native dialogs?
 int g_use_native_dialogs = 1;

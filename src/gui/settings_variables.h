@@ -31,6 +31,7 @@
 #include <string>
 #include <array>
 #include <variant>
+#include <optional>
 
 #include "Resources.h"
 #include "src/core/types.h"
@@ -46,8 +47,11 @@
 // resource manager
 extern Resources g_res;
 
-// application binary and home directory path
+// application binary
 extern std::string g_apppath;
+// application directory root path (if this exists)
+extern std::optional<std::string> g_appdirpath;
+// home directory path
 extern std::string g_homepath;
 
 // maximum number of threads for calculations

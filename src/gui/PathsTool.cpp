@@ -33,6 +33,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtGui/QDesktopServices>
 
+#include <boost/predef.h>
 #include <boost/scope_exit.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -408,15 +409,43 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_recent.SetRecentFilesMenu(m_menuOpenRecent);
 	m_recent.SetMaxRecentFiles(g_maxnum_recents);
 	m_recent.SetOpenFunc(&m_open_func);
+#if BOOST_OS_MACOS
+	m_recent.AddForbiddenDir("/Applications");
+#elif BOOST_OS_LINUX
+	m_recent.AddForbiddenDir("/usr");
+#endif
+	if(g_appdirpath)
+		m_recent.AddForbiddenDir(g_appdirpath->c_str());
 
 	actionQuit->setMenuRole(QAction::QuitRole);
 
 	// connections
-	connect(actionNew, &QAction::triggered, this, [this]() { this->NewFile(); });
-	connect(actionOpen, &QAction::triggered, this, [this]() { this->OpenFile(); });
-	connect(actionSave, &QAction::triggered, this, [this]() { this->SaveFile(); });
-	connect(actionSaveAs, &QAction::triggered, this, [this]() { this->SaveFileAs(); });
-	connect(actionScreenshot, &QAction::triggered, this, [this]() { this->SaveScreenshot(); });
+	connect(actionNew, &QAction::triggered, this, [this]()
+	{
+		//this->NewFile();
+		this->LoadInitialInstrumentFile();
+	});
+
+	connect(actionOpen, &QAction::triggered, this, [this]()
+	{
+		this->OpenFile();
+	});
+
+	connect(actionSave, &QAction::triggered, this, [this]()
+	{
+		this->SaveFile();
+	});
+
+	connect(actionSaveAs, &QAction::triggered, this, [this]()
+	{
+		this->SaveFileAs();
+	});
+
+	connect(actionScreenshot, &QAction::triggered, this, [this]()
+	{
+		this->SaveScreenshot();
+	});
+
 	connect(actionQuit, &QAction::triggered, this, &PathsTool::close);
 
 	connect(acExportRaw, &QAction::triggered, [this]() -> void
@@ -1745,18 +1774,31 @@ void PathsTool::AfterGLInitialisation()
 
 	m_renderer->SetInstrumentStatus(&m_instrstatus);
 
-	// load an initial instrument definition
+	LoadInitialInstrumentFile();
+}
+
+
+/**
+ * load an initial instrument definition
+ */
+bool PathsTool::LoadInitialInstrumentFile()
+{
+	bool ok = false;
+
 	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
 	{
-		if(OpenFile(instrfile.c_str()))
+		if(ok = OpenFile(instrfile.c_str()); ok)
 		{
 			// don't consider the initial instrument configuration as current file
 			if(!m_initialInstrFileModified)
 				SetCurrentFile("");
 
-			m_renderer->LoadInstrument(m_instrspace);
+			if(m_renderer)
+				m_renderer->LoadInstrument(m_instrspace);
 		}
 	}
+
+	return ok;
 }
 
 

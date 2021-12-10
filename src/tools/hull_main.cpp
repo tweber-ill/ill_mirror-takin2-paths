@@ -39,8 +39,8 @@ int main(int argc, char** argv)
 	try
 	{
 		auto app = std::make_unique<QApplication>(argc, argv);
-		app->setOrganizationName("tw");
-		app->setApplicationName("hull");
+		app->setOrganizationName("eu.ill.cs.takin");
+		app->setApplicationName("taspaths-hull");
 		tl2::set_locales();
 
 		auto hullwnd = std::make_unique<HullWnd>();

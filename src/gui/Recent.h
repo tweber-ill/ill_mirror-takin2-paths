@@ -68,6 +68,9 @@ public:
 	void SetCurFile(const QString& file) { m_curFile = file; }
 	const QString& GetCurFile() const { return m_curFile; }
 
+	void AddForbiddenDir(const QString& dir) { m_forbiddenDirs << dir; }
+	bool IsFileInForbiddenDir(const QString& file) const;
+
 	void SetMaxRecentFiles(std::size_t num) { m_maxRecentFiles = num; }
 
 
@@ -83,6 +86,9 @@ private:
 
 	// currently active file
 	QString m_curFile{};
+
+	// list of directories for which recent files shouldn't be saved
+	QStringList m_forbiddenDirs{};
 
 	// function to be called when the menu element is clicked
 	const std::function<bool(const QString& filename)>* m_open_func{ nullptr };

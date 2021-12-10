@@ -28,10 +28,36 @@
 #include <QtGui/QFileOpenEvent>
 #include <QtWidgets/QApplication>
 
+#include <optional>
+#include <boost/predef.h>
+
 #include "PathsTool.h"
 #include "settings_variables.h"
 #include "tlibs2/libs/file.h"
+#include "tlibs2/libs/str.h"
 #include "tlibs2/libs/helper.h"
+
+
+/**
+ * the get application directory (if this exists)
+ */
+static std::optional<std::string> get_appdir_path(const std::string& _binpath)
+{
+	fs::path binpath = fs::absolute(_binpath);
+
+#if BOOST_OS_MACOS
+	std::string dir = binpath.filename().string();
+	std::string parentdir = binpath.parent_path().filename().string();
+
+	if(tl2::str_is_equal<std::string>(dir, "macos", false) &&
+		tl2::str_is_equal<std::string>(parentdir, "contents", false))
+	{
+		return binpath.parent_path().parent_path().string();
+	}
+#endif
+
+	return std::nullopt;
+}
 
 
 /**
@@ -50,19 +76,22 @@ public:
 		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
 		QApplication::addLibraryPath(QDir::currentPath() + QDir::separator() + "Qt_Plugins");
 
-		setOrganizationName("tw");
+		setOrganizationName("eu.ill.cs.takin");
 		setApplicationName("taspaths");
 		//setApplicationDisplayName(TASPATHS_TITLE);
 		setApplicationVersion(TASPATHS_VERSION);
 
 		// paths
 		g_apppath = applicationDirPath().toStdString();
+		g_appdirpath = get_appdir_path(g_apppath);
 		g_homepath = QDir::homePath().toStdString();
 
 		// qt plugin libraries
 		addLibraryPath(applicationDirPath() + QDir::separator() + ".." +
 			QDir::separator() + "Libraries" + QDir::separator() + "Qt_Plugins");
 #ifdef DEBUG
+		if(g_appdirpath)
+			std::cout << "Application directory path: " << (*g_appdirpath) << "." << std::endl;
 		std::cout << "Application binary path: " << g_apppath << "." << std::endl;
 #endif
 	}

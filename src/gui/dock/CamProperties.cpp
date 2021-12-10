@@ -88,7 +88,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		layoutProj->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutProj->addWidget(new QLabel("Viewing Angle:", this), y, 0, 1, 1);
+		layoutProj->addWidget(new QLabel("Field of View:", this), y, 0, 1, 1);
 		layoutProj->addWidget(m_spinViewingAngle, y++, 1, 1, 1);
 		layoutProj->addWidget(m_checkPerspectiveProj, y++, 0, 1, 2);
 	}

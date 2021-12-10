@@ -39,8 +39,8 @@ int main(int argc, char** argv)
 	try
 	{
 		auto app = std::make_unique<QApplication>(argc, argv);
-		app->setOrganizationName("tw");
-		app->setApplicationName("polygon");
+		app->setOrganizationName("eu.ill.cs.takin");
+		app->setApplicationName("taspaths-poly");
 		tl2::set_locales();
 
 		auto vis = std::make_unique<PolyWnd>();

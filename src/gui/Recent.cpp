@@ -27,6 +27,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QFile>
+#include <QtCore/QDir>
 
 
 /**
@@ -69,7 +70,7 @@ void RecentFiles::RebuildRecentFiles()
 		QString filename = *iter;
 
 		// remove recent file entries which do not exist anymore
-		if(!QFile::exists(filename))
+		if(!QFile::exists(filename) || IsFileInForbiddenDir(filename))
 		{
 			// current iterator position
 			std::ptrdiff_t positer = iter - m_recentFiles.rbegin();
@@ -117,4 +118,27 @@ void RecentFiles::TrimEntries()
 	// remove superfluous entries and save the recent files list
 	while((std::size_t)m_recentFiles.size() > m_maxRecentFiles)
 		m_recentFiles.pop_front();
+}
+
+
+/**
+ * tests if the file is in the list of forbidden directories
+ */
+bool RecentFiles::IsFileInForbiddenDir(const QString& file) const
+{
+	QString file_abs = QDir(file).absolutePath();
+
+	for(const QString& dir : m_forbiddenDirs)
+	{
+		QString dir_abs = QDir(dir).absolutePath();
+
+		// is file path shorter than directory?
+		if(file_abs.length() < dir_abs.length())
+			continue;
+
+		if(std::equal(dir_abs.begin(), dir_abs.end(), file_abs.begin()))
+			return true;
+	}
+
+	return false;
 }

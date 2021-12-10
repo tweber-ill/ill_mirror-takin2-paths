@@ -198,6 +198,7 @@ protected:
 protected slots:
 	// File -> New
 	void NewFile();
+	bool LoadInitialInstrumentFile();
 
 	// File -> Open
 	void OpenFile();
