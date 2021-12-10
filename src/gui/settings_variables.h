@@ -49,10 +49,17 @@ extern Resources g_res;
 
 // application binary
 extern std::string g_apppath;
+
 // application directory root path (if this exists)
 extern std::optional<std::string> g_appdirpath;
+
 // home directory path
 extern std::string g_homepath;
+
+// documents and image directory
+extern std::string g_docpath;
+extern std::string g_imgpath;
+
 
 // maximum number of threads for calculations
 extern unsigned int g_maxnum_threads;

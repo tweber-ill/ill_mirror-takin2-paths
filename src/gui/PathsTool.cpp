@@ -1107,7 +1107,8 @@ void PathsTool::NewFile()
  */
 void PathsTool::OpenFile()
 {
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+	QString dirLast = m_sett.value("cur_dir",
+		g_docpath.c_str()).toString();
 
 	QFileDialog filedlg(this, "Open Instrument File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
@@ -1144,7 +1145,8 @@ void PathsTool::SaveFile()
  */
 void PathsTool::SaveFileAs()
 {
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+	QString dirLast = m_sett.value("cur_dir",
+		g_docpath.c_str()).toString();
 
 	QFileDialog filedlg(this, "Save Instrument File", dirLast,
 		"TAS-Paths Files (*.taspaths)");
@@ -1170,7 +1172,8 @@ void PathsTool::SaveFileAs()
  */
 void PathsTool::SaveScreenshot()
 {
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+	QString dirLast = m_sett.value("cur_dir",
+		g_imgpath.c_str()).toString();
 
 	QFileDialog filedlg(this, "Save Screenshot", dirLast,
 		"PNG Images (*.png);;JPEG Images (*.jpg)");
@@ -1204,7 +1207,8 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 {
 	std::shared_ptr<PathsExporterBase> exporter;
 
-	QString dirLast = m_sett.value("cur_dir", g_homepath.c_str()).toString();
+	QString dirLast = m_sett.value("cur_dir",
+		g_docpath.c_str()).toString();
 
 	QFileDialog filedlg(this, "Export Path", dirLast,
 		"Text Files (*.txt)");

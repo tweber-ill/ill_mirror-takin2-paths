@@ -39,6 +39,8 @@ Resources g_res{};
 std::string g_apppath = ".";
 std::optional<std::string> g_appdirpath;
 std::string g_homepath = "~/";
+std::string g_docpath = g_homepath;
+std::string g_imgpath = g_homepath;
 
 
 // maximum number of threads

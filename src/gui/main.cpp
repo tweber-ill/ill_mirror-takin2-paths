@@ -24,6 +24,7 @@
  */
 
 #include <QtCore/QDir>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QFileOpenEvent>
 #include <QtWidgets/QApplication>
@@ -85,6 +86,18 @@ public:
 		g_apppath = applicationDirPath().toStdString();
 		g_appdirpath = get_appdir_path(g_apppath);
 		g_homepath = QDir::homePath().toStdString();
+
+		if(QStringList docdirs = QStandardPaths::standardLocations(
+			QStandardPaths::DocumentsLocation); docdirs.size())
+			g_docpath = docdirs[0].toStdString();
+		else
+			g_docpath = g_homepath;
+
+		if(QStringList imgdirs = QStandardPaths::standardLocations(
+			QStandardPaths::PicturesLocation); imgdirs.size())
+			g_imgpath = imgdirs[0].toStdString();
+		else
+			g_imgpath = g_docpath;
 
 		// qt plugin libraries
 		addLibraryPath(applicationDirPath() + QDir::separator() + ".." +
