@@ -87,7 +87,7 @@ public:
 
 
 private:
-	QSettings m_sett{"takin", "taspaths"};
+	QSettings m_sett{};
 	QByteArray m_initial_state{};
 
 	// renderer

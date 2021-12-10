@@ -130,7 +130,7 @@ protected:
 	void SetCurrentFile(const QString &file);
 
 private:
-	QSettings m_sett{"geo_tools", "polygon"};
+	QSettings m_sett{};
 
 	// recently opened files
 	QMenu *m_menuOpenRecent{ nullptr };

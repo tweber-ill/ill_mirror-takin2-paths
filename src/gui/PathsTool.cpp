@@ -411,8 +411,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_recent.SetOpenFunc(&m_open_func);
 #if BOOST_OS_MACOS
 	m_recent.AddForbiddenDir("/Applications");
-#elif BOOST_OS_LINUX
-	m_recent.AddForbiddenDir("/usr");
+//#elif BOOST_OS_LINUX
+//	m_recent.AddForbiddenDir("/usr");
 #endif
 	if(g_appdirpath)
 		m_recent.AddForbiddenDir(g_appdirpath->c_str());
@@ -937,7 +937,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	if(m_sett.contains("geo"))
 		restoreGeometry(m_sett.value("geo").toByteArray());
 	else
-		resize(1200, 800);
+		resize(1500, 1000);
 
 	if(m_sett.contains("state"))
 		restoreState(m_sett.value("state").toByteArray());
@@ -1114,7 +1114,11 @@ void PathsTool::OpenFile()
 		"TAS-Paths Files (*.taspaths)");
 	filedlg.setAcceptMode(QFileDialog::AcceptOpen);
 	filedlg.setDefaultSuffix("taspaths");
-	filedlg.setFileMode(QFileDialog::AnyFile);
+	filedlg.setViewMode(QFileDialog::Detail);
+	filedlg.setFileMode(QFileDialog::ExistingFiles);
+	filedlg.setSidebarUrls(QList<QUrl>({
+		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
 		return;
@@ -1153,7 +1157,11 @@ void PathsTool::SaveFileAs()
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("taspaths");
 	filedlg.setFileMode(QFileDialog::AnyFile);
+	filedlg.setViewMode(QFileDialog::Detail);
 	filedlg.selectFile("untitled.taspaths");
+	filedlg.setSidebarUrls(QList<QUrl>({
+		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
 		return;
@@ -1179,8 +1187,13 @@ void PathsTool::SaveScreenshot()
 		"PNG Images (*.png);;JPEG Images (*.jpg)");
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("png");
+	filedlg.setViewMode(QFileDialog::Detail);
 	filedlg.setFileMode(QFileDialog::AnyFile);
 	filedlg.selectFile("taspaths.png");
+	filedlg.setSidebarUrls(QList<QUrl>({
+		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_imgpath.c_str()),
+		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
 		return;
@@ -1214,8 +1227,12 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 		"Text Files (*.txt)");
 	filedlg.setAcceptMode(QFileDialog::AcceptSave);
 	filedlg.setDefaultSuffix("txt");
+	filedlg.setViewMode(QFileDialog::Detail);
 	filedlg.setFileMode(QFileDialog::AnyFile);
 	filedlg.selectFile("taspaths.txt");
+	filedlg.setSidebarUrls(QList<QUrl>({
+		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
 		return false;

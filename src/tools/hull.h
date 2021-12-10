@@ -209,7 +209,7 @@ private:
 	std::vector<int> GetSelectedRows(bool sort_reversed = false) const;
 
 private:
-	QSettings m_sett{"geo_tools", "hull"};
+	QSettings m_sett{};
 
 	int m_iCursorRow{-1};
 
@@ -253,7 +253,7 @@ protected slots:
 	void SaveFileAs();
 
 private:
-	QSettings m_sett{"geo_tools", "hull"};
+	QSettings m_sett{};
 
 	// recently opened files
 	QMenu *m_menuOpenRecent{ nullptr };
