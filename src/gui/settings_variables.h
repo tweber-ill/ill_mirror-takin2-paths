@@ -178,7 +178,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 29> g_settingsvariables
+constexpr std::array<SettingsVariable, 28> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -362,12 +362,12 @@ constexpr std::array<SettingsVariable, 29> g_settingsvariables
 		.value = &g_automatic_screenshots,
 		.editor = SettingsVariableEditor::YESNO,
 	},
-	{
+	/*{
 		.description = "Create a subdirectory for TAS-Paths files.",
 		.key = "settings/use_taspaths_subdir",
 		.value = &g_use_taspaths_subdir,
 		.editor = SettingsVariableEditor::YESNO,
-	},
+	},*/
 }};
 // ----------------------------------------------------------------------------
 
