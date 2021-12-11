@@ -50,13 +50,13 @@ TASPropertiesWidget::TASPropertiesWidget(QWidget *parent)
 	m_spinSampleXtalAngle = new QDoubleSpinBox(this);
 	m_spinAnaXtalAngle = new QDoubleSpinBox(this);
 	m_spinMonoXtalAngle->setToolTip("Monochromator crystal rocking angle θm in units of [deg].");
-	m_spinSampleXtalAngle->setToolTip("Sample crystal rocking angle θm in units of [deg].");
-	m_spinAnaXtalAngle->setToolTip("Analyser crystal rocking angle θm in units of [deg].");
+	m_spinSampleXtalAngle->setToolTip("Sample crystal rocking angle θs in units of [deg].");
+	m_spinAnaXtalAngle->setToolTip("Analyser crystal rocking angle θa in units of [deg].");
 
 	m_spinMonoD = new QDoubleSpinBox(this);
 	m_spinAnaD = new QDoubleSpinBox(this);
-	m_spinMonoD->setToolTip("Monochromator crystal d spacing da in units of [Å].");
-	m_spinAnaD->setToolTip("Analyser crystal d spacing dm in units of [Å].");
+	m_spinMonoD->setToolTip("Monochromator crystal d spacing dm in units of [Å].");
+	m_spinAnaD->setToolTip("Analyser crystal d spacing da in units of [Å].");
 	//m_spinMonoD->setPrefix("dm=");
 	//m_spinAnaD->setPrefix("da=");
 

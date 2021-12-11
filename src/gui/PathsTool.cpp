@@ -1946,7 +1946,24 @@ void PathsTool::UpdateInstrumentStatus()
 	ostr.precision(g_prec_gui);
 	//ostr << "Position: ";
 
-	if(m_instrstatus.curQrlu)
+	bool validQ = m_instrstatus.curQrlu.operator bool();
+	if(validQ)
+	{
+		// check if each component is valid
+		for(std::size_t i=0; i<m_instrstatus.curQrlu->size(); ++i)
+		{
+			bool isinfQ = std::isinf((*m_instrstatus.curQrlu)[i]);
+			bool isnanQ = std::isnan((*m_instrstatus.curQrlu)[i]);
+
+			if(isinfQ || isnanQ)
+				validQ = false;
+
+			if(!validQ)
+				break;
+		}
+	}
+
+	if(validQ)
 	{
 		tl2::set_eps_0<t_vec>(*m_instrstatus.curQrlu, g_eps_gui);
 		ostr << std::fixed << "Q = (" << *m_instrstatus.curQrlu << ") rlu, ";
@@ -1956,23 +1973,31 @@ void PathsTool::UpdateInstrumentStatus()
 		ostr << "Q invalid, ";
 	}
 
-	if(m_instrstatus.curE)
+
+	bool validE = m_instrstatus.curE.operator bool();
+	bool isinfE = std::isinf(*m_instrstatus.curE);
+	bool isnanE = std::isnan(*m_instrstatus.curE);
+
+	if(isinfE || isnanE)
+		validE = false;
+
+	if(validE)
 	{
 		tl2::set_eps_0<t_real>(*m_instrstatus.curE, g_eps_gui);
-		ostr << std::fixed << "E = " << *m_instrstatus.curE << " meV, ";
+		ostr << std::fixed << "E = " << *m_instrstatus.curE << " meV.";
 	}
 	else
 	{
-		ostr << "E invalid, ";
+		ostr << "E invalid.";
 	}
 
-	if(!m_instrstatus.in_angular_limits)
+	/*if(!m_instrstatus.in_angular_limits)
 		ostr << "invalid angles, ";
 
 	if(m_instrstatus.colliding)
 		ostr << "collision detected!";
 	else
-		ostr << "no collision.";
+		ostr << "no collision.";*/
 
 	m_labelCollisionStatus->setText(ostr.str().c_str());
 }
