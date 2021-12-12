@@ -58,6 +58,7 @@ if [ $BUILD_EXTERNALS -ne 0 ]; then
 	fi
 
 	if ! ${cmake_tool} --build . --parallel 4; then
+	#if ! ${make_tool} -j4; then
 		echo -e "make failed (external libraries)."
 		exit -1
 	fi
@@ -97,8 +98,8 @@ then
 	exit -1
 fi
 
-#if ! ${make_tool} -j4; then
 if ! ${cmake_tool} --build . --parallel 4; then
+#if ! ${make_tool} -j4; then
 	echo -e "make failed."
 	exit -1
 fi

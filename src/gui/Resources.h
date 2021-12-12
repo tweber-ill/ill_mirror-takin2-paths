@@ -38,7 +38,7 @@ public:
 	~Resources() = default;
 
 	void AddPath(const std::string& path);
-	std::string FindResource(const std::string& file) const;
+	std::string FindFile(const std::string& file) const;
 
 
 private:

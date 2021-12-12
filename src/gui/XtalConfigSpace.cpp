@@ -29,6 +29,7 @@
  * ----------------------------------------------------------------------------
  */
 
+#include "src/core/mingw_hacks.h"
 #include "XtalConfigSpace.h"
 
 #include <QtGui/QClipboard>
@@ -42,7 +43,6 @@
 
 #include "settings_variables.h"
 
-#include "src/core/mingw_hacks.h"
 #include <boost/asio.hpp>
 namespace asio = boost::asio;
 

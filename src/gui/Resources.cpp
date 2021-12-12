@@ -40,7 +40,7 @@ void Resources::AddPath(const std::string& pathname)
 /**
  * find a resource file
  */
-std::string Resources::FindResource(const std::string& filename) const
+std::string Resources::FindFile(const std::string& filename) const
 {
 	fs::path file{filename};
 

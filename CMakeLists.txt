@@ -46,7 +46,7 @@ list(APPEND CMAKE_MODULE_PATH
 
 option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
-option(USE_OVD "use openvoronoi" TRUE)
+option(USE_OVD "use openvoronoi" FALSE)
 option(USE_CGAL "use cgal" TRUE)
 option(USE_PY "use python scripting" FALSE)
 option(BUILD_TEST_TOOLS "build test tools" TRUE)

@@ -6,7 +6,7 @@
  * @license GPLv3, see 'LICENSE' file
  *
  * References for the algorithms:
- *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005), 
+ *   - (Klein 2005) R. Klein, "Algorithmische Geometrie" (2005),
  *                  ISBN: 978-3540209560 (http://dx.doi.org/10.1007/3-540-27619-X).
  *   - (FUH 2020) R. Klein, C. Icking, "Algorithmische Geometrie" (2020),
  *                Kurs 1840, Fernuni Hagen (https://vu.fernuni-hagen.de/lvuweb/lvu/app/Kurs/1840).

@@ -26,6 +26,7 @@
  * ----------------------------------------------------------------------------
  */
 
+#include "src/core/mingw_hacks.h"
 #include "lines.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -58,7 +59,6 @@
 
 #include "src/libs/voronoi_lines.h"
 #include "settings_variables.h"
-#include "src/core/mingw_hacks.h"
 
 #include <boost/asio.hpp>
 namespace asio = boost::asio;

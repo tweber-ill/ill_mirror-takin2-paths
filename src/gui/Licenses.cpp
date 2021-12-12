@@ -68,9 +68,9 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		grid->addWidget(text, 0, 0, 1, 1);
 
 		// find the license file
-		std::string license_file = g_res.FindResource("LICENSE");
+		std::string license_file = g_res.FindFile("LICENSE");
 		if(license_file == "")
-			license_file = g_res.FindResource("LICENSE.txt");
+			license_file = g_res.FindFile("LICENSE.txt");
 		auto [license_ok, license_text] = tl2::load_file<std::string>(license_file);
 
 		if(license_file == "" || !license_ok)
@@ -105,7 +105,7 @@ LicensesDlg::LicensesDlg(QWidget* parent, QSettings *sett)
 		ostr << "<h1>Licenses for 3rd Party Software</h1>\n";
 
 		// find the directory with the license files
-		std::string license_dir = g_res.FindResource("3rdparty_licenses");
+		std::string license_dir = g_res.FindFile("3rdparty_licenses");
 		if(license_dir == "")
 		{
 			text->setPlainText("Error: 3rd party license directory could not be found!");

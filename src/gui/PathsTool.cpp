@@ -64,7 +64,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	setWindowTitle(TASPATHS_TITLE);
 
 	// set the svg icon
-	if(std::string icon_file = g_res.FindResource("taspaths.svg");
+	if(std::string icon_file = g_res.FindFile("taspaths.svg");
 		!icon_file.empty())
 	{
 		QIcon icon{icon_file.c_str()};
@@ -724,7 +724,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// if the help files were not found, remove its menu item
 	std::string dev_docfile{};
 	bool show_dev_doc = true;
-	if(dev_docfile = g_res.FindResource("dev_doc/html/index.html"); dev_docfile.empty())
+	if(dev_docfile = g_res.FindFile("dev_doc/html/index.html"); dev_docfile.empty())
 		show_dev_doc = false;
 
 	QAction *actionDevDoc = nullptr;
@@ -1035,6 +1035,8 @@ void PathsTool::hideEvent(QHideEvent *evt)
  */
 void PathsTool::closeEvent(QCloseEvent *evt)
 {
+	m_stop_requested = true;
+
 	// save window size, position, and state
 	m_sett.setValue("geo", saveGeometry());
 	m_sett.setValue("state", saveState());
@@ -1806,7 +1808,7 @@ bool PathsTool::LoadInitialInstrumentFile()
 {
 	bool ok = false;
 
-	if(std::string instrfile = g_res.FindResource(m_initialInstrFile); !instrfile.empty())
+	if(std::string instrfile = g_res.FindFile(m_initialInstrFile); !instrfile.empty())
 	{
 		if(ok = OpenFile(instrfile.c_str()); ok)
 		{

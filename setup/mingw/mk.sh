@@ -37,6 +37,7 @@ EXT_LIBS=( \
 	Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll Qt5OpenGL.dll \
 	Qt5DBus.dll Qt5PrintSupport.dll Qt5Svg.dll \
 	libboost_system-x64.dll libboost_filesystem-x64.dll \
+	libqcustomplot.dll \
 	libstdc++-6.dll libwinpthread-1.dll libglib-2.0-0.dll \
 	libgcc_s_sjlj-1.dll libgcc_s_seh-1.dll \
 	libbz2-1.dll zlib1.dll \

@@ -70,9 +70,9 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	titleWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
 	QLabel *labelIcon = new QLabel(titleWidget);
-	std::string icon_file = g_res.FindResource("taspaths.png");
+	std::string icon_file = g_res.FindFile("taspaths.png");
 	if(icon_file == "")
-		icon_file = g_res.FindResource("taspaths.svg");
+		icon_file = g_res.FindFile("taspaths.svg");
 	QIcon icon{icon_file.c_str()};
 	QPixmap pixmap = icon.pixmap(48, 48);
 	labelIcon->setPixmap(pixmap);
