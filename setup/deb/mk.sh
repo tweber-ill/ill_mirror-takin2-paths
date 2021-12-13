@@ -38,6 +38,9 @@ APPDEBNAME="${APPNAME}.deb"
 # create application directories
 #
 if [ $create_appdir -ne 0 ]; then
+	# clean up old dir
+	rm -rfv "${APPDIRNAME}"
+
 	# directories
 	mkdir -p ${APPDIRNAME}/usr/local/bin
 	mkdir -p ${APPDIRNAME}/usr/local/lib
