@@ -222,10 +222,18 @@ if(QT_VER EQUAL 6)
 		COMPONENTS Core Gui Svg Widgets
 			OpenGL OpenGLWidgets
 			PrintSupport)
+	list(APPEND QtBaseLibraries Qt6::Core Qt6::Gui Qt6::Widgets
+		Qt6::Svg)
+	list(APPEND QtAllLibraries Qt6::Core Qt6::Gui Qt6::Widgets
+		Qt6::OpenGL Qt6::OpenGLWidgets Qt6::PrintSupport)
 elseif(QT_VER EQUAL 5)
 	find_package(Qt5 REQUIRED
 		COMPONENTS Core Gui Svg Widgets OpenGL
 			PrintSupport)
+	list(APPEND QtBaseLibraries Qt5::Core Qt5::Gui Qt5::Widgets
+		Qt5::Svg)
+	list(APPEND QtAllLibraries Qt5::Core Qt5::Gui Qt5::Widgets
+		Qt5::OpenGL Qt5::PrintSupport)
 else()
 	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
@@ -367,124 +375,62 @@ endif()
 #	)
 #endif()
 
-if(QT_VER EQUAL 6)
-	target_link_libraries(taspaths
-		taspaths_core
-		"${Boost_LIBRARIES}"
-		"${Lapacke_LIBRARIES}"
-		#"${Qhull_LIBRARIES}"
-		"${MINGW_WINSOCK}"
-		Threads::Threads
-		Qt6::Core Qt6::Gui Qt6::Widgets
-		Qt6::OpenGL Qt6::OpenGLWidgets
-		Qt6::PrintSupport
-		"${QCP_LIBRARIES}"
-	)
+
+target_link_libraries(taspaths
+	taspaths_core
+	"${Boost_LIBRARIES}"
+	"${Lapacke_LIBRARIES}"
+	#"${Qhull_LIBRARIES}"
+	"${MINGW_WINSOCK}"
+	Threads::Threads
+	"${QtAllLibraries}"
+	"${QCP_LIBRARIES}"
+)
 
 
-	if(BUILD_TEST_TOOLS)
-		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-			target_link_options(taspaths-hull
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
-			)
-
-			target_link_options(taspaths-lines
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
-			)
-
-			target_link_options(taspaths-poly
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
-			)
-		endif()
-
-
-		target_link_libraries(taspaths-hull
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			"${Qhull_LIBRARIES}"
-			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg
+if(BUILD_TEST_TOOLS)
+	if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+		target_link_options(taspaths-hull
+			PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
 		)
 
-		target_link_libraries(taspaths-lines
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			"${OVD_LIBRARIES}"
-			"${CGAL_LIBRARIES}"
-			"${MINGW_WINSOCK}"
-			Threads::Threads
-			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg
+		target_link_options(taspaths-lines
+			PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
 		)
 
-		target_link_libraries(taspaths-poly
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			Qt6::Core Qt6::Gui Qt6::Widgets
-			Qt6::Svg
+		target_link_options(taspaths-poly
+			PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
 		)
 	endif()
 
-elseif(QT_VER EQUAL 5)
-	target_link_libraries(taspaths
-		taspaths_core
+
+	target_link_libraries(taspaths-hull
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
-		#"${Qhull_LIBRARIES}"
-		"${MINGW_WINSOCK}"
-		Threads::Threads
-		Qt5::Core Qt5::Gui Qt5::Widgets
-		Qt5::OpenGL Qt5::PrintSupport
-		"${QCP_LIBRARIES}"
+		"${Qhull_LIBRARIES}"
+		##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic.a
+		#/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic_r.a
+		##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullcpp.a
+		"${QtBaseLibraries}"
 	)
 
+	target_link_libraries(taspaths-lines
+		"${Boost_LIBRARIES}"
+		"${Lapacke_LIBRARIES}"
+		"${OVD_LIBRARIES}"
+		"${CGAL_LIBRARIES}"
+		"${MINGW_WINSOCK}"
+		Threads::Threads
+		"${QtBaseLibraries}"
+	)
 
-	if(BUILD_TEST_TOOLS)
-		if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-			target_link_options(taspaths-hull
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/hull.plist
-			)
-
-			target_link_options(taspaths-lines
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/lines.plist
-			)
-
-			target_link_options(taspaths-poly
-				PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,${PROJECT_SOURCE_DIR}/setup/osx/poly.plist
-			)
-		endif()
-
-
-		target_link_libraries(taspaths-hull
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			"${Qhull_LIBRARIES}"
-			##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic.a
-			#/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullstatic_r.a
-			##/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libqhullcpp.a
-			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg
-		)
-
-		target_link_libraries(taspaths-lines
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			"${OVD_LIBRARIES}"
-			"${CGAL_LIBRARIES}"
-			"${MINGW_WINSOCK}"
-			Threads::Threads
-			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg
-		)
-
-		target_link_libraries(taspaths-poly
-			"${Boost_LIBRARIES}"
-			"${Lapacke_LIBRARIES}"
-			Qt5::Core Qt5::Gui Qt5::Widgets
-			Qt5::Svg
-		)
-	endif()
+	target_link_libraries(taspaths-poly
+		"${Boost_LIBRARIES}"
+		"${Lapacke_LIBRARIES}"
+		"${QtBaseLibraries}"
+	)
 endif()
+
 
 
 # link resource directory
