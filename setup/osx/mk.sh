@@ -41,10 +41,16 @@ APPICON_ICNS="${APPICON%\.svg}.icns"
 declare -a QT_LIBS=(QtCore QtGui QtWidgets QtOpenGL QtDBus QtPrintSupport QtSvg)
 
 
+COL_ERR="\033[1;31m"
+COL_WARN="\033[1;31m"
+COL_NORM="\033[0m"
+
+
 #
 # test if the given file is a binary image
 #
-is_binary() {
+function is_binary()
+{
 	local binary="$1"
 
 	# does the file exist?
@@ -62,9 +68,37 @@ is_binary() {
 
 
 #
+# tests if the given binary still has remaining bindings to /usr/local/
+#
+function check_local_bindings()
+{
+	cfile=$1
+
+	if [ ! -e ${cfile} ]; then
+		echo -e "${COL_WARN}Warning: ${cfile} does not exist.${COL_NORM}"
+		return
+	fi
+
+	local local_binding=$(otool -L ${cfile} | grep --color /usr/local)
+	local num_local_bindings=$(echo -e "${local_binding}" | wc -l)
+
+	if [ "${num_local_bindings}" -gt "1" ]; then
+		echo -e "${COL_WARN}Warning: Possible local binding remaining, please check \"local_bindings.txt\"!${COL_NORM}"
+	fi
+
+	echo -e "--------------------------------------------------------------------------------" >> local_bindings.txt
+	echo -e "${num_local_bindings} local binding(s) in binary \"${cfile}\":" >> local_bindings.txt
+	echo -e "${local_binding}" >> local_bindings.txt
+	echo -e "--------------------------------------------------------------------------------\n" >> local_bindings.txt
+}
+
+
+
+#
 # change a /usr/local linker path to an @rpath
 #
-change_to_rpath() {
+function change_to_rpath()
+{
 	local binary="$1"
 	local old_paths=$(otool -L ${binary} | grep /usr/local | sed -e "s/(.*)//p" -n | sed -e "s/\t//p" -n)
 
@@ -107,7 +141,8 @@ change_to_rpath() {
 #
 # create a png icon with the specified size out of an svg
 #
-svg_to_png() {
+function svg_to_png()
+{
 	local ICON_SVG="$1"
 	local ICON_PNG="${APPICON%\.svg}.png"
 	local ICON_SIZE="$2"
@@ -212,6 +247,7 @@ if [ $create_appdir -ne 0 ]; then
 
 
 	echo -e "\nChanging linked names..."
+	rm -fv local_bindings.txt
 
 	# binaries
 	for binary in $(ls "${APPDIRNAME}/Contents/MacOS/"); do
@@ -223,6 +259,7 @@ if [ $create_appdir -ne 0 ]; then
 			"${APPDIRNAME}/Contents/MacOS/${binary}"
 
 		change_to_rpath "${APPDIRNAME}/Contents/MacOS/${binary}"
+		check_local_bindings "${APPDIRNAME}/Contents/MacOS/${binary}"
 
 		if [ $strip_binaries -ne 0 ]; then
 			llvm-strip "${APPDIRNAME}/Contents/MacOS/${binary}"
@@ -246,6 +283,7 @@ if [ $create_appdir -ne 0 ]; then
 		#	"${library}"
 
 		change_to_rpath "${library}"
+		check_local_bindings "${library}"
 
 		#for (( libidx=0; libidx<${#QT_LIBS[@]}; ++libidx )); do
 		#	otherlibrary=${QT_LIBS[$libidx]}
@@ -276,7 +314,7 @@ if [ $create_dmg -ne 0 ]; then
 	if ! hdiutil create "${APPDMGNAME}" -srcfolder "${APPDIRNAME}" \
 		-fs UDF -format "UDRW" -volname "${APPNAME}"
 	then
-		echo -e "Error: Cannot create ${APPDMGNAME}."
+		echo -e "${COL_ERR}Error: Cannot create ${APPDMGNAME}.${COL_NORM}"
 		exit -1
 	fi
 	echo -e "--------------------------------------------------------------------------------"
@@ -284,7 +322,7 @@ if [ $create_dmg -ne 0 ]; then
 
 	echo -e "\nMounting ${APPDMGNAME}..."
 	if ! hdiutil attach "${APPDMGNAME}" -readwrite; then
-		echo -e "Error: Cannot mount ${APPDMGNAME}."
+		echo -e "${COL_ERR}Error: Cannot mount ${APPDMGNAME}.${COL_NORM}"
 		exit -1
 	fi
 
@@ -294,7 +332,7 @@ if [ $create_dmg -ne 0 ]; then
 
 	echo -e "\nUnmounting ${APPDMGNAME}..."
 	if ! hdiutil detach "/Volumes/${APPNAME}"; then
-		echo -e "Error: Cannot detach ${APPDMGNAME}."
+		echo -e "${COL_ERR}Error: Cannot detach ${APPDMGNAME}.${COL_NORM}"
 		exit -1
 	fi
 	echo -e "--------------------------------------------------------------------------------"
@@ -303,7 +341,7 @@ if [ $create_dmg -ne 0 ]; then
 	echo -e "\nCompressing ${APPDMGNAME} into ${TMPFILE}..."
 	if ! hdiutil convert "${APPDMGNAME}" -o "${TMPFILE}" -format "UDBZ"
 	then
-		echo -e "Error: Cannot compress ${APPDMGNAME}."
+		echo -e "${COL_ERR}Error: Cannot compress ${APPDMGNAME}.${COL_NORM}"
 		exit -1
 	fi
 	echo -e "--------------------------------------------------------------------------------"

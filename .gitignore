@@ -49,6 +49,7 @@ unittests/build/**
 *.1
 *.prof
 *.swp
+local_bindings.txt
 
 # Temporary tex files
 *.log
