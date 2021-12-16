@@ -134,7 +134,7 @@ QString g_font = "";
 int g_use_native_menubar = 1;
 
 // use native dialogs?
-int g_use_native_dialogs = 0;
+int g_use_native_dialogs = 1;
 
 // use gui animations?
 int g_use_animations = 0;

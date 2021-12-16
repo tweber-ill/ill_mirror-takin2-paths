@@ -29,6 +29,11 @@
 #include <QtGui/QFileOpenEvent>
 #include <QtWidgets/QApplication>
 
+#if BOOST_OS_MACOS
+	#include <unistd.h>
+	#include <pwd.h>
+#endif
+
 #include <optional>
 #include <boost/predef.h>
 
@@ -85,7 +90,15 @@ public:
 		// paths
 		g_apppath = applicationDirPath().toStdString();
 		g_appdirpath = get_appdir_path(g_apppath);
+#if BOOST_OS_MACOS
+		// get the real home directory, not the sandboxed one,
+		// see: https://developer.apple.com/forums/thread/107593
+		const ::uid_t uid = ::getuid();
+		const ::passwd* pwd = ::getpwuid(uid);
+		g_homepath = pwd->pw_dir;
+#else
 		g_homepath = QDir::homePath().toStdString();
+#endif
 
 		// standard paths
 		if(QStringList docdirs = QStandardPaths::standardLocations(
