@@ -1849,7 +1849,8 @@ void PathsTool::PickerIntersection([[maybe_unused]] const t_vec3_gl* pos, std::s
 /**
  * clicked on an object
  */
-void PathsTool::ObjectClicked(const std::string& obj, bool /*left*/, bool middle, bool right)
+void PathsTool::ObjectClicked(const std::string& obj, 
+	[[maybe_unused]] bool left, bool middle, bool right)
 {
 	if(!m_renderer)
 		return;
