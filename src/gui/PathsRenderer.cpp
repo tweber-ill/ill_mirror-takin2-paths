@@ -269,6 +269,9 @@ void PathsRenderer::SetInstrumentStatus(const InstrumentStatus *status)
 }
 
 
+/**
+ * convert a vector into screen coordinates
+ */
 QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) const
 {
 	auto [ vecPersp, vec ] =
@@ -407,7 +410,7 @@ void PathsRenderer::UpdateCam()
 
 
 /**
- * @brief centre camera around a given object
+ * centre camera around a given object
  */
 void PathsRenderer::CentreCam(const std::string& objid)
 {
@@ -489,36 +492,6 @@ void PathsRenderer::UpdatePicker()
 	t_vec3_gl org3 = tl2::create<t_vec3_gl>({org[0], org[1], org[2]});
 	t_vec3_gl dir3 = tl2::create<t_vec3_gl>({dir[0], dir[1], dir[2]});
 
-
-	// intersection with unit sphere around origin
-	bool hasSphereInters = false;
-	t_vec_gl vecClosestSphereInters = tl2::create<t_vec_gl>({0, 0, 0, 0});
-
-	auto intersUnitSphere =
-		tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
-			tl2::create<t_vec3_gl>({0,0,0}), t_real_gl(m_pickerSphereRadius));
-	for(const auto& result : intersUnitSphere)
-	{
-		t_vec_gl vecInters4 =
-			tl2::create<t_vec_gl>({result[0], result[1], result[2], 1});
-
-		if(!hasSphereInters)
-		{	// first intersection
-			vecClosestSphereInters = vecInters4;
-			hasSphereInters = true;
-		}
-		else
-		{	// test if next intersection is closer...
-			t_vec_gl oldPosTrafo = m_matCam * vecClosestSphereInters;
-			t_vec_gl newPosTrafo = m_matCam * vecInters4;
-
-			// ... it is closer.
-			if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
-				vecClosestSphereInters = vecInters4;
-		}
-	}
-
-
 	// intersection with geometry
 	bool hasInters = false;
 	m_curObj = "";
@@ -531,7 +504,6 @@ void PathsRenderer::UpdatePicker()
 	{
 		if(obj.m_type != tl2::GlRenderObjType::TRIANGLES || !obj.m_visible)
 			continue;
-
 
 		const t_mat_gl& matTrafo = obj.m_mat;
 
@@ -613,6 +585,7 @@ void PathsRenderer::UpdatePicker()
 
 				if(updateUV)
 				{
+					// TODO
 				}
 			}
 		}
@@ -621,12 +594,9 @@ void PathsRenderer::UpdatePicker()
 	m_pickerNeedsUpdate = false;
 	t_vec3_gl vecClosestInters3 = tl2::create<t_vec3_gl>({
 		vecClosestInters[0], vecClosestInters[1], vecClosestInters[2]});
-	t_vec3_gl vecClosestSphereInters3 = tl2::create<t_vec3_gl>({
-		vecClosestSphereInters[0], vecClosestSphereInters[1], vecClosestSphereInters[2]});
 
 	update();
-	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr,
-		m_curObj, hasSphereInters ? &vecClosestSphereInters3 : nullptr);
+	emit PickerIntersection(hasInters ? &vecClosestInters3 : nullptr, m_curObj);
 }
 
 
@@ -793,6 +763,10 @@ void PathsRenderer::initializeGL()
 	LOGGLERR(pGl);
 
 	SetLight(0, tl2::create<t_vec3_gl>({0, 0, 10}));
+
+	// TODO
+	//if(QImage image("/Users/t_weber/tmp/wood.jpg"); !image.isNull())
+	//	m_texture = std::make_shared<QOpenGLTexture>(image);
 
 	m_initialised = true;
 	emit AfterGLInitialisation();
@@ -1003,10 +977,12 @@ void PathsRenderer::UpdateShadowFramebuffer()
 
 	BOOST_SCOPE_EXIT(pGl, m_fboshadow)
 	{
+		pGl->glActiveTexture(GL_TEXTURE0);
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
 		m_fboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
+	pGl->glActiveTexture(GL_TEXTURE0);
 	m_fboshadow->bind();
 	pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
 
@@ -1022,6 +998,9 @@ void PathsRenderer::UpdateShadowFramebuffer()
 }
 
 
+/**
+ * draw the scene
+ */
 void PathsRenderer::paintGL()
 {
 	if(!m_initialised || thread() != QThread::currentThread())
@@ -1066,8 +1045,10 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
+	// remove shadow texture
 	BOOST_SCOPE_EXIT(m_fboshadow, pGl)
 	{
+		pGl->glActiveTexture(GL_TEXTURE0);
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
 		if(m_fboshadow)
 			m_fboshadow->release();
@@ -1077,6 +1058,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	{
 		if(m_shadowRenderPass)
 		{
+			// render into the shadow framebuffer
 			if(m_shadowFramebufferNeedsUpdate)
 				UpdateShadowFramebuffer();
 
@@ -1085,10 +1067,33 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		}
 		else
 		{
+			// bind shadow texture
 			if(m_fboshadow)
+			{
+				pGl->glActiveTexture(GL_TEXTURE0);
 				pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
+			}
 		}
 	}
+
+
+	// TODO: textures
+	/*BOOST_SCOPE_EXIT(m_texture, pGl)
+	{
+		if(m_texture)
+		{
+			pGl->glActiveTexture(GL_TEXTURE1);
+			pGl->glBindTexture(GL_TEXTURE_2D, 0);
+			m_texture->release();
+		}
+	} BOOST_SCOPE_EXIT_END
+
+	if(m_texture)
+	{
+		pGl->glActiveTexture(GL_TEXTURE1);
+		m_texture->bind();
+	}*/
+
 
 	// default options
 	pGl->glCullFace(GL_BACK);
@@ -1140,7 +1145,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	m_shaders->setUniformValue(m_uniShadowMap, 0);
 
 	m_shaders->setUniformValue(m_uniTextureActive, 0);
-	m_shaders->setUniformValue(m_uniTexture, 0);
+	m_shaders->setUniformValue(m_uniTexture, 1);
 
 	// cursor
 	m_shaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);

@@ -256,10 +256,15 @@ protected:
 	std::vector<t_vec3_gl> m_lights{};
 	std::unordered_map<std::string, PathsObj> m_objs{};
 
+	// TODO
+	//std::shared_ptr<QOpenGLTexture> m_texture;
+
+	// cursor
 	QPointF m_posMouse{};
 	QPointF m_posMouseRotationStart{}, m_posMouseRotationEnd{};
 	bool m_inRotation = false;
 
+	// timer
 	QTimer m_timer{};
 
 	// instrument status
@@ -293,7 +298,7 @@ signals:
 		t_real_gl x_start, t_real_gl y_start,
 		t_real_gl x, t_real_gl y);
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
-	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
+	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name);
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
 	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
 };

@@ -212,9 +212,9 @@ t_real lighting(vec4 objVert, vec4 objNorm)
 
 void main()
 {
-//	if(texture_active)
-//		frag_out_col = texture(texture_image, frag_in.coords);
-//	else
+	if(texture_active)
+		frag_out_col = texture(texture_image, frag_in.coords);
+	else
 		frag_out_col = vec4(1, 1, 1, 1);
 
 	// shadow rendering pass, @see (Sellers 2014), pp. 534-540

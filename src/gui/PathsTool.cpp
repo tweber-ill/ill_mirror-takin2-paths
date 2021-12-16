@@ -1839,8 +1839,7 @@ void PathsTool::CursorCoordsChanged(t_real_gl x, t_real_gl y)
 /**
  * mouse is over an object
  */
-void PathsTool::PickerIntersection(const t_vec3_gl* /*pos*/,
-	std::string obj_name, const t_vec3_gl* /*posSphere*/)
+void PathsTool::PickerIntersection([[maybe_unused]] const t_vec3_gl* pos, std::string obj_name)
 {
 	m_curObj = obj_name;
 	UpdateStatusLabel();

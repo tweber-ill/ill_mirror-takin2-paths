@@ -244,7 +244,7 @@ protected slots:
 	void CursorCoordsChanged(t_real_gl x, t_real_gl y);
 
 	// mouse is over an object
-	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name, const t_vec3_gl* posSphere);
+	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name);
 
 	// clicked on an object
 	void ObjectClicked(const std::string& obj, bool left, bool middle, bool right);
