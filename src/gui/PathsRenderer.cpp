@@ -8,7 +8,7 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
- *   - https://doc.qt.io/qt-5/qtgui-openglwindow-example.html
+ *   - http://doc.qt.io/qt-5/qtgui-openglwindow-example.html
  *   - http://doc.qt.io/qt-5/qopengltexture.html
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  *
@@ -74,7 +74,7 @@ PathsRenderer::~PathsRenderer()
 	Clear();
 
 	// delete gl objects within current gl context
-	m_pShaders.reset();
+	m_shaders.reset();
 }
 
 
@@ -459,12 +459,12 @@ void PathsRenderer::UpdateLights()
 	}
 
 	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	m_shaders->bind();
+	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	m_pShaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
-	m_pShaders->setUniformValue(m_uniNumActiveLights, num_lights);
+	m_shaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
+	m_shaders->setUniformValue(m_uniNumActiveLights, num_lights);
 
 	UpdateLightPerspective();
 	m_lightsNeedUpdate = false;
@@ -735,27 +735,27 @@ void PathsRenderer::initializeGL()
 	{
 		std::cerr << err << std::endl;
 
-		std::string strLog = m_pShaders->log().toStdString();
+		std::string strLog = m_shaders->log().toStdString();
 		if(strLog.size())
 			std::cerr << "Shader log: " << strLog << std::endl;
 	};
 
 	// compile & link shaders
-	m_pShaders = std::make_shared<QOpenGLShaderProgram>(this);
+	m_shaders = std::make_shared<QOpenGLShaderProgram>(this);
 
-	if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
+	if(!m_shaders->addShaderFromSourceCode(QOpenGLShader::Fragment, strFragShader.c_str()))
 	{
 		shader_err("Cannot compile fragment shader.");
 		return;
 	}
 
-	if(!m_pShaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
+	if(!m_shaders->addShaderFromSourceCode(QOpenGLShader::Vertex, strVertexShader.c_str()))
 	{
 		shader_err("Cannot compile vertex shader.");
 		return;
 	}
 
-	if(!m_pShaders->link())
+	if(!m_shaders->link())
 	{
 		shader_err("Cannot link shaders.");
 		return;
@@ -763,30 +763,33 @@ void PathsRenderer::initializeGL()
 
 
 	// get attribute handles from shaders
-	m_attrVertex = m_pShaders->attributeLocation("vertex");
-	m_attrVertexNorm = m_pShaders->attributeLocation("normal");
-	m_attrVertexCol = m_pShaders->attributeLocation("vertex_col");
-	m_attrTexCoords = m_pShaders->attributeLocation("tex_coords");
+	m_attrVertex = m_shaders->attributeLocation("vertex");
+	m_attrVertexNorm = m_shaders->attributeLocation("normal");
+	m_attrVertexCol = m_shaders->attributeLocation("vertex_col");
+	m_attrTexCoords = m_shaders->attributeLocation("tex_coords");
 
 	// get uniform handles from shaders
-	m_uniMatrixCam = m_pShaders->uniformLocation("trafos_cam");
-	m_uniMatrixCamInv = m_pShaders->uniformLocation("trafos_cam_inv");
-	m_uniMatrixLight = m_pShaders->uniformLocation("trafos_light");
-	m_uniMatrixLightInv = m_pShaders->uniformLocation("trafos_light_inv");
-	m_uniMatrixProj = m_pShaders->uniformLocation("trafos_proj");
-	m_uniMatrixLightProj = m_pShaders->uniformLocation("trafos_light_proj");
-	m_uniMatrixObj = m_pShaders->uniformLocation("trafos_obj");
+	m_uniMatrixCam = m_shaders->uniformLocation("trafos_cam");
+	m_uniMatrixCamInv = m_shaders->uniformLocation("trafos_cam_inv");
+	m_uniMatrixLight = m_shaders->uniformLocation("trafos_light");
+	m_uniMatrixLightInv = m_shaders->uniformLocation("trafos_light_inv");
+	m_uniMatrixProj = m_shaders->uniformLocation("trafos_proj");
+	m_uniMatrixLightProj = m_shaders->uniformLocation("trafos_light_proj");
+	m_uniMatrixObj = m_shaders->uniformLocation("trafos_obj");
 
-	m_uniConstCol = m_pShaders->uniformLocation("lights_const_col");
-	m_uniLightPos = m_pShaders->uniformLocation("lights_pos");
-	m_uniNumActiveLights = m_pShaders->uniformLocation("lights_numactive");
+	m_uniTextureActive = m_shaders->uniformLocation("texture_active");
+	m_uniTexture = m_shaders->uniformLocation("texture_image");
 
-	m_uniShadowRenderingEnabled = m_pShaders->uniformLocation("shadow_enabled");
-	m_uniShadowRenderPass = m_pShaders->uniformLocation("shadow_renderpass");
-	m_uniShadowMap = m_pShaders->uniformLocation("shadow_map");
+	m_uniConstCol = m_shaders->uniformLocation("lights_const_col");
+	m_uniLightPos = m_shaders->uniformLocation("lights_pos");
+	m_uniNumActiveLights = m_shaders->uniformLocation("lights_numactive");
 
-	m_uniCursorActive = m_pShaders->uniformLocation("cursor_active");
-	m_uniCursorCoords = m_pShaders->uniformLocation("cursor_coords");
+	m_uniShadowRenderingEnabled = m_shaders->uniformLocation("shadow_enabled");
+	m_uniShadowRenderPass = m_shaders->uniformLocation("shadow_renderpass");
+	m_uniShadowMap = m_shaders->uniformLocation("shadow_map");
+
+	m_uniCursorActive = m_shaders->uniformLocation("cursor_active");
+	m_uniCursorCoords = m_shaders->uniformLocation("cursor_coords");
 	LOGGLERR(pGl);
 
 	SetLight(0, tl2::create<t_vec3_gl>({0, 0, 10}));
@@ -896,12 +899,12 @@ void PathsRenderer::UpdatePerspective()
 		tl2::inv<t_mat_gl>(m_matPerspective);
 
 	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	m_shaders->bind();
+	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	// set matrices
-	m_pShaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
+	m_shaders->setUniformValue(m_uniMatrixProj, m_matPerspective);
 	LOGGLERR(pGl);
 
 	m_perspectiveNeedsUpdate = false;
@@ -919,10 +922,10 @@ void PathsRenderer::UpdateLightPerspective()
 	const t_real_gl farPlane = 1000.;
 
 	t_real ratio = 1;
-	if(m_pfboshadow)
+	if(m_fboshadow)
 	{
-		ratio = t_real_gl(m_pfboshadow->height()) /
-			t_real_gl(m_pfboshadow->width());
+		ratio = t_real_gl(m_fboshadow->height()) /
+			t_real_gl(m_fboshadow->width());
 	}
 
 	if(m_perspectiveProjection)
@@ -943,12 +946,12 @@ void PathsRenderer::UpdateLightPerspective()
 		tl2::inv<t_mat_gl>(m_matLightPerspective);
 
 	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	m_shaders->bind();
+	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	// set matrices
-	m_pShaders->setUniformValue(m_uniMatrixLightProj, m_matLightPerspective);
+	m_shaders->setUniformValue(m_uniMatrixLightProj, m_matLightPerspective);
 	LOGGLERR(pGl);
 }
 
@@ -995,17 +998,17 @@ void PathsRenderer::UpdateShadowFramebuffer()
 	fbformat.setTextureTarget(GL_TEXTURE_2D);
 	fbformat.setInternalTextureFormat(GL_RGBA32F);
 	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
-	m_pfboshadow = std::make_shared<QOpenGLFramebufferObject>(
+	m_fboshadow = std::make_shared<QOpenGLFramebufferObject>(
 		w, h, fbformat);
 
-	BOOST_SCOPE_EXIT(pGl, m_pfboshadow)
+	BOOST_SCOPE_EXIT(pGl, m_fboshadow)
 	{
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
-		m_pfboshadow->release();
+		m_fboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
-	m_pfboshadow->bind();
-	pGl->glBindTexture(GL_TEXTURE_2D, m_pfboshadow->texture());
+	m_fboshadow->bind();
+	pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
 
 	// shadow texture parameters
 	// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
@@ -1063,11 +1066,11 @@ void PathsRenderer::paintGL()
  */
 void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 {
-	BOOST_SCOPE_EXIT(m_pfboshadow, pGl)
+	BOOST_SCOPE_EXIT(m_fboshadow, pGl)
 	{
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
-		if(m_pfboshadow)
-			m_pfboshadow->release();
+		if(m_fboshadow)
+			m_fboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
 	if(m_shadowRenderingEnabled)
@@ -1077,13 +1080,13 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			if(m_shadowFramebufferNeedsUpdate)
 				UpdateShadowFramebuffer();
 
-			if(m_pfboshadow)
-				m_pfboshadow->bind();
+			if(m_fboshadow)
+				m_fboshadow->bind();
 		}
 		else
 		{
-			if(m_pfboshadow)
-				pGl->glBindTexture(GL_TEXTURE_2D, m_pfboshadow->texture());
+			if(m_fboshadow)
+				pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
 		}
 	}
 
@@ -1120,24 +1123,27 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		UpdateLights();
 
 	// bind shaders
-	m_pShaders->bind();
-	BOOST_SCOPE_EXIT(m_pShaders) { m_pShaders->release(); } BOOST_SCOPE_EXIT_END
+	m_shaders->bind();
+	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
-	m_pShaders->setUniformValue(m_uniShadowRenderingEnabled, m_shadowRenderingEnabled);
-	m_pShaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
+	m_shaders->setUniformValue(m_uniShadowRenderingEnabled, m_shadowRenderingEnabled);
+	m_shaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
 
 	// set cam and light matrices
-	m_pShaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_pShaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+	m_shaders->setUniformValue(m_uniMatrixCam, m_matCam);
+	m_shaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
 
-	m_pShaders->setUniformValue(m_uniMatrixLight, m_matLight);
-	m_pShaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
+	m_shaders->setUniformValue(m_uniMatrixLight, m_matLight);
+	m_shaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
 
-	m_pShaders->setUniformValue(m_uniShadowMap, 0);
+	m_shaders->setUniformValue(m_uniShadowMap, 0);
+
+	m_shaders->setUniformValue(m_uniTextureActive, 0);
+	m_shaders->setUniformValue(m_uniTexture, 0);
 
 	// cursor
-	m_pShaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);
+	m_shaders->setUniformValue(m_uniCursorCoords, m_cursorUV[0], m_cursorUV[1]);
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
@@ -1148,7 +1154,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			continue;
 
 		// set override color to white
-		m_pShaders->setUniformValue(m_uniConstCol, colOverride);
+		m_shaders->setUniformValue(m_uniConstCol, colOverride);
 
 		if(obj.m_cull)
 			pGl->glEnable(GL_CULL_FACE);
@@ -1156,10 +1162,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
-		m_pShaders->setUniformValue(m_uniCursorActive, obj_name==OBJNAME_FLOOR_PLANE && m_curActive);
+		m_shaders->setUniformValue(m_uniCursorActive, obj_name==OBJNAME_FLOOR_PLANE && m_curActive);
 
 		// set object matrix
-		m_pShaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
+		m_shaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
 		// main vertex array object
 		obj.m_pvertexarr->bind();
@@ -1351,7 +1357,7 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 
 void PathsRenderer::SaveShadowFramebuffer(const std::string& filename) const
 {
-	auto img = m_pfboshadow->toImage(true, 0);
+	auto img = m_fboshadow->toImage(true, 0);
 	img.save(filename.c_str());
 }
 

@@ -8,6 +8,8 @@
  * References:
  *   - http://doc.qt.io/qt-5/qopenglwidget.html#details
  *   - http://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/threadedqopenglwidget
+ *   - http://doc.qt.io/qt-5/qtgui-openglwindow-example.html
+ *   - http://doc.qt.io/qt-5/qopengltexture.html
  *   - (Sellers 2014) G. Sellers et al., ISBN: 978-0-321-90294-8 (2014).
  *
  * ----------------------------------------------------------------------------
@@ -171,14 +173,18 @@ protected:
 	// ------------------------------------------------------------------------
 	// shader interface
 	// ------------------------------------------------------------------------
-	std::shared_ptr<QOpenGLShaderProgram> m_pShaders{};
-	std::shared_ptr<QOpenGLFramebufferObject> m_pfboshadow{};
+	std::shared_ptr<QOpenGLShaderProgram> m_shaders{};
+	std::shared_ptr<QOpenGLFramebufferObject> m_fboshadow{};
 
 	// vertex attributes
 	GLint m_attrVertex = -1;
 	GLint m_attrVertexNorm = -1;
 	GLint m_attrVertexCol = -1;
 	GLint m_attrTexCoords = -1;
+
+	// texture
+	GLint m_uniTextureActive = -1;
+	GLint m_uniTexture = -1;
 
 	// lighting
 	GLint m_uniConstCol = -1;
