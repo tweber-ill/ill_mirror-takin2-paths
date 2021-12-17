@@ -1120,6 +1120,7 @@ void PathsTool::OpenFile()
 	filedlg.setFileMode(QFileDialog::ExistingFile);
 	filedlg.setSidebarUrls(QList<QUrl>({
 		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_desktoppath.c_str()),
 		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
@@ -1163,6 +1164,7 @@ void PathsTool::SaveFileAs()
 	filedlg.selectFile("untitled.taspaths");
 	filedlg.setSidebarUrls(QList<QUrl>({
 		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_desktoppath.c_str()),
 		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())
@@ -1194,6 +1196,7 @@ void PathsTool::SaveScreenshot()
 	filedlg.selectFile("taspaths.png");
 	filedlg.setSidebarUrls(QList<QUrl>({
 		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_desktoppath.c_str()),
 		QUrl::fromLocalFile(g_imgpath.c_str()),
 		QUrl::fromLocalFile(g_docpath.c_str())}));
 
@@ -1234,6 +1237,7 @@ bool PathsTool::ExportPath(PathsExporterFormat fmt)
 	filedlg.selectFile("taspaths.txt");
 	filedlg.setSidebarUrls(QList<QUrl>({
 		QUrl::fromLocalFile(g_homepath.c_str()),
+		QUrl::fromLocalFile(g_desktoppath.c_str()),
 		QUrl::fromLocalFile(g_docpath.c_str())}));
 
 	if(!filedlg.exec())

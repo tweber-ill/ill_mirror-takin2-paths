@@ -40,14 +40,15 @@ Resources g_res{};
 std::string g_apppath = ".";
 std::optional<std::string> g_appdirpath;
 std::string g_homepath = "~/";
+std::string g_desktoppath = g_homepath;
 std::string g_docpath = g_homepath;
 std::string g_imgpath = g_homepath;
 
-#if BOOST_OS_MACOS
-	int g_use_taspaths_subdir = 1;
-#else
+//#if BOOST_OS_MACOS
+//	int g_use_taspaths_subdir = 1;
+//#else
 	int g_use_taspaths_subdir = 0;
-#endif
+//#endif
 
 
 // maximum number of threads

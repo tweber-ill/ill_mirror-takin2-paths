@@ -101,6 +101,12 @@ public:
 #endif
 
 		// standard paths
+		if(QStringList deskdirs = QStandardPaths::standardLocations(
+			QStandardPaths::DesktopLocation); deskdirs.size())
+			g_desktoppath = deskdirs[0].toStdString();
+		else
+			g_desktoppath = g_homepath;
+
 		if(QStringList docdirs = QStandardPaths::standardLocations(
 			QStandardPaths::DocumentsLocation); docdirs.size())
 			g_docpath = docdirs[0].toStdString();

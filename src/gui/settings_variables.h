@@ -53,8 +53,9 @@ extern std::string g_apppath;
 // application directory root path (if this exists)
 extern std::optional<std::string> g_appdirpath;
 
-// home directory path
+// home and desktop directory path
 extern std::string g_homepath;
+extern std::string g_desktoppath;
 
 // documents and image directory
 extern std::string g_docpath;
