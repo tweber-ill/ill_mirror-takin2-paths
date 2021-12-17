@@ -29,13 +29,13 @@
 #include <QtGui/QFileOpenEvent>
 #include <QtWidgets/QApplication>
 
+#include <optional>
+#include <boost/predef.h>
+
 #if BOOST_OS_MACOS
 	#include <unistd.h>
 	#include <pwd.h>
 #endif
-
-#include <optional>
-#include <boost/predef.h>
 
 #include "PathsTool.h"
 #include "settings_variables.h"
