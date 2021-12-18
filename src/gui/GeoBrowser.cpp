@@ -59,7 +59,8 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	m_geotree = new QTreeWidget(this);
 	m_geotree->headerItem()->setText(0, "Instrument Space");
 
- 	QSizePolicy sptree(QSizePolicy::Preferred, QSizePolicy::Expanding, QSizePolicy::DefaultType);
+	QSizePolicy sptree(QSizePolicy::Preferred,
+		QSizePolicy::Expanding, QSizePolicy::DefaultType);
 	sptree.setHorizontalStretch(1);
 	sptree.setVerticalStretch(1);
 	m_geotree->setSizePolicy(sptree);
@@ -68,14 +69,20 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 	// tree context menu
 	m_contextMenuGeoTree = new QMenu(m_geotree);
-	QAction *actionRenObj = new QAction(QIcon::fromTheme("edit-find-replace"), "Rename Object");
-	QAction *actionDelObj = new QAction(QIcon::fromTheme("edit-delete"), "Delete Object");
+	QAction *actionRenObj = new QAction(
+		QIcon::fromTheme("edit-find-replace"),
+		"Rename Object");
+	QAction *actionDelObj = new QAction(
+		QIcon::fromTheme("edit-delete"),
+		"Delete Object");
 
 	m_contextMenuGeoTree->addAction(actionRenObj);
 	m_contextMenuGeoTree->addAction(actionDelObj);
 
-	connect(actionRenObj, &QAction::triggered, this, &GeometriesBrowser::RenameCurrentGeoTreeObject);
-	connect(actionDelObj, &QAction::triggered, this, &GeometriesBrowser::DeleteCurrentGeoTreeObject);
+	connect(actionRenObj, &QAction::triggered,
+		this, &GeometriesBrowser::RenameCurrentGeoTreeObject);
+	connect(actionDelObj, &QAction::triggered,
+		this, &GeometriesBrowser::DeleteCurrentGeoTreeObject);
 
 
 	// geometry settings table
@@ -92,13 +99,17 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 	m_geosettings->setColumnWidth(0, 150);
 	m_geosettings->setColumnWidth(1, 75);
 	m_geosettings->setColumnWidth(2, 150);
-	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_KEY, new QTableWidgetItem{"Key"});
-	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_TYPE, new QTableWidgetItem{"Type"});
-	m_geosettings->setHorizontalHeaderItem(GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem{"Value"});
+	m_geosettings->setHorizontalHeaderItem(
+		GEOBROWSER_SETTINGS_KEY, new QTableWidgetItem{"Key"});
+	m_geosettings->setHorizontalHeaderItem(
+		GEOBROWSER_SETTINGS_TYPE, new QTableWidgetItem{"Type"});
+	m_geosettings->setHorizontalHeaderItem(
+		GEOBROWSER_SETTINGS_VALUE, new QTableWidgetItem{"Value"});
 
- 	QSizePolicy spsettings(QSizePolicy::Preferred, QSizePolicy::Expanding, QSizePolicy::Frame);
-    spsettings.setHorizontalStretch(2);
-    spsettings.setVerticalStretch(1);
+	QSizePolicy spsettings(QSizePolicy::Preferred,
+		QSizePolicy::Expanding, QSizePolicy::Frame);
+	spsettings.setHorizontalStretch(2);
+	spsettings.setVerticalStretch(1);
 	m_geosettings->setSizePolicy(spsettings);
 
 
@@ -145,8 +156,10 @@ GeometriesBrowser::GeometriesBrowser(QWidget* parent, QSettings *sett)
 
 
 	// connections
-	connect(buttons, &QDialogButtonBox::accepted, this, &GeometriesBrowser::accept);
-	connect(buttons, &QDialogButtonBox::rejected, this, &GeometriesBrowser::reject);
+	connect(buttons, &QDialogButtonBox::accepted,
+		this, &GeometriesBrowser::accept);
+	connect(buttons, &QDialogButtonBox::rejected,
+		this, &GeometriesBrowser::reject);
 
 	connect(m_geotree, &QTreeWidget::customContextMenuRequested,
 		this, &GeometriesBrowser::ShowGeoTreeContextMenu);
@@ -292,6 +305,25 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 				new QTableWidgetItem(ostr.str().c_str()));
 		}
 
+		// integer value
+		else if(std::holds_alternative<t_int>(prop.value))
+		{
+			t_int val = std::get<t_int>(prop.value);
+
+			std::ostringstream ostr;
+			ostr.precision(g_prec);
+			ostr << val;
+
+			// type
+			auto* itemType = new QTableWidgetItem("integer");
+			itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
+
+			// value
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE,
+				new QTableWidgetItem(ostr.str().c_str()));
+		}
+
 		// vector value
 		else if(std::holds_alternative<t_vec>(prop.value))
 		{
@@ -356,7 +388,17 @@ void GeometriesBrowser::GeoSettingsItemChanged(QTableWidgetItem *item)
 			// parse the expression to yield a real value
 			tl2::ExprParser<t_real> parser;
 			if(!parser.parse(val))
-				throw std::logic_error("Could not parse expression.");
+				throw std::logic_error("Could not parse real expression.");
+			prop.value = parser.eval();
+		}
+
+		// integer value
+		else if(ty == "integer")
+		{
+			// parse the expression to yield a real value
+			tl2::ExprParser<t_int> parser;
+			if(!parser.parse(val))
+				throw std::logic_error("Could not parse integer expression.");
 			prop.value = parser.eval();
 		}
 

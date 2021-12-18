@@ -107,9 +107,13 @@ public:
 	void DeleteObject(const std::string& obj_name);
 	void RenameObject(const std::string& oldname, const std::string& newname);
 
-	void AddTriangleObject(const std::string& obj_name,
+	// 3d objects
+	using t_objs = std::unordered_map<std::string, PathsObj>;
+
+	t_objs::iterator AddTriangleObject(const std::string& obj_name,
 		const std::vector<t_vec3_gl>& triag_verts,
-		const std::vector<t_vec3_gl>& triag_norms, const std::vector<t_vec3_gl>& triag_uvs,
+		const std::vector<t_vec3_gl>& triag_norms,
+		const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
 	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
@@ -259,7 +263,7 @@ protected:
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
 
 	// 3d objects
-	std::unordered_map<std::string, PathsObj> m_objs{};
+	t_objs m_objs{};
 
 	// lights
 	std::vector<t_vec3_gl> m_lights{};

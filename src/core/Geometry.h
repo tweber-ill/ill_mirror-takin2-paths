@@ -69,7 +69,7 @@ enum class GeometryType
 struct ObjectProperty
 {
 	std::string key{};
-	std::variant<t_real, t_vec> value{};
+	std::variant<t_real, t_vec, t_int> value{};
 };
 
 
@@ -99,6 +99,9 @@ public:
 	virtual const t_vec& GetColour() const { return m_colour; }
 	virtual void SetColour(const t_vec& col) { m_colour = col; }
 
+	virtual const std::optional<std::size_t>& GetTexture() const { return m_texture; }
+	virtual void SetTexture(std::size_t idx) { m_texture = idx; }
+
 	virtual void Rotate(t_real angle) = 0;
 
 	virtual std::vector<ObjectProperty> GetProperties() const = 0;
@@ -110,6 +113,7 @@ public:
 protected:
 	std::string m_id{};
 	t_vec m_colour = tl2::create<t_vec>({1, 0, 0});
+	std::optional<std::size_t> m_texture;
 
 	mutable bool m_trafo_needs_update = true;
 	mutable t_mat m_trafo = tl2::unit<t_mat>(4);

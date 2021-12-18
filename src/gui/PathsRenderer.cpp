@@ -143,7 +143,8 @@ bool PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 		// get geometries relative to incoming, internal, and outgoing axis
 		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
 		{
-			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
+			t_mat_gl matAxis = tl2::convert<t_mat_gl>(
+				axis->GetTrafo(axisangle));
 
 			for(const auto& comp : axis->GetComps(axisangle))
 			{
@@ -154,14 +155,15 @@ bool PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 				auto uvs = tl2::convert<t_vec3_gl>(_uvs);
 				auto cols = tl2::convert<t_vec3_gl>(comp->GetColour());
 
-				AddTriangleObject(comp->GetId(), verts, norms, uvs,
+				auto obj_iter = AddTriangleObject(comp->GetId(),
+					verts, norms, uvs,
 					cols[0], cols[1], cols[2], 1);
 
 				const t_mat& _matGeo = comp->GetTrafo();
 				t_mat_gl matGeo = tl2::convert<t_mat_gl>(_matGeo);
 				t_mat_gl mat = matAxis * matGeo;
 
-				m_objs[comp->GetId()].m_mat = mat;
+				obj_iter->second.m_mat = mat;
 			}
 		}
 	}
@@ -194,12 +196,13 @@ void PathsRenderer::AddWall(const Geometry& wall, bool update_scene)
 	auto uvs = tl2::convert<t_vec3_gl>(_uvs);
 	auto cols = tl2::convert<t_vec3_gl>(wall.GetColour());
 
-	AddTriangleObject(wall.GetId(), verts, norms, uvs,
+	auto obj_iter = AddTriangleObject(
+		wall.GetId(), verts, norms, uvs,
 		cols[0], cols[1], cols[2], 1);
 
 	const t_mat& _mat = wall.GetTrafo();
 	t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
-	m_objs[wall.GetId()].m_mat = mat;
+	obj_iter->second.m_mat = mat;
 
 	if(update_scene)
 		update();
@@ -240,9 +243,13 @@ void PathsRenderer::UpdateInstrument(const Instrument& instr)
 	for(const Axis* axis : { &mono, &sample, &ana })
 	{
 		// get geometries both relative to incoming and to outgoing axis
-		for(AxisAngle axisangle : {AxisAngle::INCOMING, AxisAngle::INTERNAL, AxisAngle::OUTGOING})
+		for(AxisAngle axisangle : {
+			AxisAngle::INCOMING, 
+			AxisAngle::INTERNAL,
+			AxisAngle::OUTGOING })
 		{
-			t_mat_gl matAxis = tl2::convert<t_mat_gl>(axis->GetTrafo(axisangle));
+			t_mat_gl matAxis = tl2::convert<t_mat_gl>(
+				axis->GetTrafo(axisangle));
 
 			for(const auto& comp : axis->GetComps(axisangle))
 			{
@@ -330,14 +337,14 @@ void PathsRenderer::RenameObject(const std::string& oldname, const std::string& 
 		node.key() = newname;
 		m_objs.insert(std::move(node));
 	}
-
 }
 
 
 /**
  * add a polygon-based object
  */
-void PathsRenderer::AddTriangleObject(const std::string& obj_name,
+PathsRenderer::t_objs::iterator 
+PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms,
 	const std::vector<t_vec3_gl>& triag_uvs,
@@ -351,14 +358,16 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 
 	PathsObj obj;
 	create_triangle_object(this, obj,
-		triag_verts, triag_verts, triag_norms, triag_uvs, col,
-		false, m_attrVertex, m_attrVertexNorm, m_attrVertexCol, m_attrTexCoords);
+		triag_verts, triag_verts, triag_norms,
+		triag_uvs, col,
+		false, m_attrVertex, m_attrVertexNorm,
+		m_attrVertexCol, m_attrTexCoords);
 
 	obj.m_mat = tl2::hom_translation<t_mat_gl, t_real_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
 
-	m_objs.insert(std::make_pair(obj_name, std::move(obj)));
+	return m_objs.emplace(std::make_pair(obj_name, std::move(obj))).first;
 }
 
 
@@ -368,12 +377,13 @@ void PathsRenderer::AddTriangleObject(const std::string& obj_name,
 void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, t_real_gl len_y)
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
-	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(norm, 0.5*len_x, 0.5*len_y);
+	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(
+		norm, 0.5*len_x, 0.5*len_y);
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(
 		tl2::create_triangles<t_vec3_gl>(plane), 1);
 
-	AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
-	m_objs[obj_name].m_cull = false;
+	auto obj_iter = AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
+	obj_iter->second.m_cull = false;
 }
 
 
@@ -536,57 +546,59 @@ void PathsRenderer::UpdatePicker()
 			auto [vecInters, bInters, lamInters] =
 				tl2::intersect_line_poly<t_vec3_gl, t_mat_gl>(org3, dir3, poly, matTrafo);
 
-			if(bInters)
+			if(!bInters)
+				continue;
+
+			t_vec_gl vecInters4 = tl2::create<t_vec_gl>({vecInters[0], vecInters[1], vecInters[2], 1});
+
+			// intersection with floor plane
+			if(obj_name == OBJNAME_FLOOR_PLANE)
 			{
-				t_vec_gl vecInters4 = tl2::create<t_vec_gl>({vecInters[0], vecInters[1], vecInters[2], 1});
+				auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>(
+					poly[0], poly[1], poly[2],
+					polyuv[0], polyuv[1], polyuv[2],
+					vecInters);
 
-				// intersection with floor plane
-				if(obj_name == OBJNAME_FLOOR_PLANE)
-				{
-					auto uv = tl2::poly_uv<t_mat_gl, t_vec3_gl>
-						(poly[0], poly[1], poly[2], polyuv[0], polyuv[1], polyuv[2], vecInters);
+				// save intersections with base plane for drawing walls
+				m_cursorUV[0] = uv[0];
+				m_cursorUV[1] = uv[1];
+				m_cursor[0] = vecInters4[0];
+				m_cursor[1] = vecInters4[1];
+				m_curActive = true;
 
-					// save intersections with base plane for drawing walls
-					m_cursorUV[0] = uv[0];
-					m_cursorUV[1] = uv[1];
-					m_cursor[0] = vecInters4[0];
-					m_cursor[1] = vecInters4[1];
-					m_curActive = true;
+				emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
 
-					emit FloorPlaneCoordsChanged(vecInters4[0], vecInters4[1]);
+				if(m_light_follows_cursor)
+					SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
+			}
 
-					if(m_light_follows_cursor)
-						SetLight(0, tl2::create<t_vec3_gl>({vecInters4[0], vecInters4[1], 10}));
-				}
+			// intersection with other objects
+			bool updateUV = false;
 
-				// intersection with other objects
-				bool updateUV = false;
+			if(!hasInters)
+			{	// first intersection
+				vecClosestInters = vecInters4;
+				m_curObj = obj_name;
+				hasInters = true;
+				updateUV = true;
+			}
+			else
+			{	// test if next intersection is closer...
+				t_vec_gl oldPosTrafo = m_matCam * vecClosestInters;
+				t_vec_gl newPosTrafo = m_matCam * vecInters4;
 
-				if(!hasInters)
-				{	// first intersection
+				if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
+				{	// ...it is closer
 					vecClosestInters = vecInters4;
 					m_curObj = obj_name;
-					hasInters = true;
+
 					updateUV = true;
 				}
-				else
-				{	// test if next intersection is closer...
-					t_vec_gl oldPosTrafo = m_matCam * vecClosestInters;
-					t_vec_gl newPosTrafo = m_matCam * vecInters4;
+			}
 
-					if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
-					{	// ...it is closer
-						vecClosestInters = vecInters4;
-						m_curObj = obj_name;
-
-						updateUV = true;
-					}
-				}
-
-				if(updateUV)
-				{
-					// TODO
-				}
+			if(updateUV)
+			{
+				// TODO
 			}
 		}
 	}
@@ -773,6 +785,9 @@ void PathsRenderer::initializeGL()
 }
 
 
+/**
+ * renderer widget is being resized
+ */
 void PathsRenderer::resizeGL(int w, int h)
 {
 	m_screenDims[0] = w;
@@ -796,6 +811,9 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
 }
 
 
+/**
+ * set the camera's field of view
+ */
 void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
 {
 	m_camViewingAngle = angle;
@@ -804,6 +822,9 @@ void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
 }
 
 
+/**
+ * set the camera's position
+ */
 void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
 {
 	m_matCamTrans(0,3) = pos[0];
@@ -814,6 +835,9 @@ void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
 }
 
 
+/**
+ * get the camera's position
+ */
 t_vec3_gl PathsRenderer::GetCamPosition() const
 {
 	return tl2::create<t_vec3_gl>({
@@ -824,6 +848,9 @@ t_vec3_gl PathsRenderer::GetCamPosition() const
 }
 
 
+/**
+ * set the camera's rotation
+ */
 void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
 {
 	m_phi_saved = m_phi = rot[0];
@@ -833,6 +860,9 @@ void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
 }
 
 
+/**
+ * get the camera's position
+ */
 t_vec2_gl PathsRenderer::GetCamRotation() const
 {
 	return tl2::create<t_vec2_gl>({ m_phi, m_theta });
