@@ -122,16 +122,17 @@ public:
 		// override standard paths with own subdir
 		if(g_use_taspaths_subdir)
 		{
-			std::string taspaths_subdir = "TAS-Paths Files";
+			//std::string taspaths_subdir = "TAS-Paths Files";
+			std::string taspaths_subdir = "Desktop";
 
 			QDir taspathsdir(g_homepath.c_str());
 			bool taspaths_subdir_ok = false;
 
 			taspaths_subdir_ok = taspathsdir.exists(taspaths_subdir.c_str());
-			if(!taspaths_subdir_ok)
-				taspaths_subdir_ok = taspathsdir.mkdir(taspaths_subdir.c_str());
+			//if(!taspaths_subdir_ok)
+			//	taspaths_subdir_ok = taspathsdir.mkdir(taspaths_subdir.c_str());
 
-			if(taspaths_subdir_ok)
+			//if(taspaths_subdir_ok)
 			{
 				taspathsdir.cd(taspaths_subdir.c_str());
 				g_docpath = taspathsdir.absolutePath().toStdString();

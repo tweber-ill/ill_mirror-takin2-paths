@@ -35,6 +35,7 @@
 #define __PATHS_RENDERER_H__
 
 #include <unordered_map>
+#include <optional>
 
 #include <QtCore/QTimer>
 #include <QtWidgets/QDialog>
@@ -68,6 +69,8 @@ struct PathsObj : public tl2::GlRenderObj
 
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
+
+	std::optional<std::size_t> m_texture;	// texture index
 };
 
 
@@ -99,7 +102,6 @@ public:
 	bool IsInitialised() const { return m_initialised; }
 
 	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
-	void SetPickerSphereRadius(t_real_gl rad) { m_pickerSphereRadius = rad; }
 
 	void DeleteObject(PathsObj& obj);
 	void DeleteObject(const std::string& obj_name);
@@ -115,6 +117,8 @@ public:
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
 	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
+
+	void EnableTextures(bool b) { m_textures_active = b; }
 
 	void CentreCam(const std::string& obj);
 	QPoint GetMousePosition(bool global_pos = false) const;
@@ -219,6 +223,9 @@ protected:
 	bool m_curActive = false;
 	bool m_light_follows_cursor = false;
 
+	// textures active?
+	bool m_textures_active = false;
+
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
@@ -251,13 +258,14 @@ protected:
 
 	std::atomic<int> m_screenDims[2] = { 800, 600 };
 
-	t_real_gl m_pickerSphereRadius = 1;
-
-	std::vector<t_vec3_gl> m_lights{};
+	// 3d objects
 	std::unordered_map<std::string, PathsObj> m_objs{};
 
-	// TODO
-	//std::shared_ptr<QOpenGLTexture> m_texture;
+	// lights
+	std::vector<t_vec3_gl> m_lights{};
+
+	// textures
+	std::vector<std::shared_ptr<QOpenGLTexture>> m_textures;
 
 	// cursor
 	QPointF m_posMouse{};

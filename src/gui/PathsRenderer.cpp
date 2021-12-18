@@ -764,9 +764,9 @@ void PathsRenderer::initializeGL()
 
 	SetLight(0, tl2::create<t_vec3_gl>({0, 0, 10}));
 
-	// TODO
+	// TODO: load textures
 	//if(QImage image("/Users/t_weber/tmp/wood.jpg"); !image.isNull())
-	//	m_texture = std::make_shared<QOpenGLTexture>(image);
+	//	m_textures.emplace_back(std::make_shared<QOpenGLTexture>(image));
 
 	m_initialised = true;
 	emit AfterGLInitialisation();
@@ -1077,24 +1077,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	}
 
 
-	// TODO: textures
-	/*BOOST_SCOPE_EXIT(m_texture, pGl)
-	{
-		if(m_texture)
-		{
-			pGl->glActiveTexture(GL_TEXTURE1);
-			pGl->glBindTexture(GL_TEXTURE_2D, 0);
-			m_texture->release();
-		}
-	} BOOST_SCOPE_EXIT_END
-
-	if(m_texture)
-	{
-		pGl->glActiveTexture(GL_TEXTURE1);
-		m_texture->bind();
-	}*/
-
-
 	// default options
 	pGl->glCullFace(GL_BACK);
 	pGl->glFrontFace(GL_CCW);
@@ -1144,7 +1126,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	m_shaders->setUniformValue(m_uniShadowMap, 0);
 
-	m_shaders->setUniformValue(m_uniTextureActive, 0);
+	m_shaders->setUniformValue(m_uniTextureActive, m_textures_active);
 	m_shaders->setUniformValue(m_uniTexture, 1);
 
 	// cursor
@@ -1157,6 +1139,31 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	{
 		if(!obj.m_visible)
 			continue;
+
+		// textures
+		std::shared_ptr<QOpenGLTexture> texture;
+		if(m_textures_active && obj.m_texture && 
+			*obj.m_texture < m_textures.size())
+		{
+			texture = m_textures[*obj.m_texture];
+		}
+
+		BOOST_SCOPE_EXIT(texture, pGl)
+		{
+			if(texture)
+			{
+				pGl->glActiveTexture(GL_TEXTURE1);
+				pGl->glBindTexture(GL_TEXTURE_2D, 0);
+				texture->release();
+			}
+		} BOOST_SCOPE_EXIT_END
+
+		if(texture)
+		{
+			pGl->glActiveTexture(GL_TEXTURE1);
+			texture->bind();
+		}
+
 
 		// set override color to white
 		m_shaders->setUniformValue(m_uniConstCol, colOverride);
