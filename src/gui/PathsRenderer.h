@@ -248,7 +248,7 @@ protected:
 	t_real_gl m_camViewingAngle = tl2::pi<t_real_gl>*t_real_gl(0.5);
 	t_real_gl m_phi = 0, m_theta = 0;
 	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
-	t_real_gl m_zoom = 1.;
+	t_real_gl m_camZoom = 1.;
 
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;
@@ -291,10 +291,12 @@ public slots:
 	void EnablePicker(bool b);
 	void SetPerspectiveProjection(bool b);
 	void SetCamViewingAngle(t_real_gl angle);
+	void SetCamZoom(t_real_gl zoom);
 	void SetCamPosition(const t_vec3_gl& pos);
 	void SetCamRotation(const t_vec2_gl& rot);
 
 	t_real_gl GetCamViewingAngle() const { return m_camViewingAngle; }
+	t_real_gl GetCamZoom() const { return m_camZoom; }
 	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
 	t_vec3_gl GetCamPosition() const;
 	t_vec2_gl GetCamRotation() const;
@@ -309,10 +311,13 @@ signals:
 	void ObjectDragged(bool drag_start, const std::string& obj,
 		t_real_gl x_start, t_real_gl y_start,
 		t_real_gl x, t_real_gl y);
+
 	void FloorPlaneCoordsChanged(t_real_gl x, t_real_gl y);
 	void PickerIntersection(const t_vec3_gl* pos, std::string obj_name);
+
 	void CamPositionChanged(t_real_gl x, t_real_gl y, t_real_gl z);
 	void CamRotationChanged(t_real_gl phi, t_real_gl theta);
+	void CamZoomChanged(t_real_gl zoom);
 };
 
 

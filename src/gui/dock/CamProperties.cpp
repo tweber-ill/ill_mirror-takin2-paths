@@ -48,6 +48,13 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 	m_spinViewingAngle->setSuffix("°");
 	m_spinViewingAngle->setToolTip("Camera field of view in units of [deg].");
 
+	m_spinZoom = new QDoubleSpinBox(this);
+	m_spinZoom->setMinimum(0.001);
+	m_spinZoom->setMaximum(999);
+	m_spinZoom->setDecimals(g_prec_gui);
+	m_spinZoom->setSingleStep(0.1);
+	m_spinZoom->setToolTip("Camera zoom.");
+
 	m_checkPerspectiveProj = new QCheckBox(this);
 	m_checkPerspectiveProj->setText("Perspective Projection");
 	m_checkPerspectiveProj->setToolTip("Choose perspective or parallel projection.");
@@ -88,8 +95,10 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		layoutProj->setContentsMargins(4,4,4,4);
 
 		int y = 0;
-		layoutProj->addWidget(new QLabel("Field of View:", this), y, 0, 1, 1);
-		layoutProj->addWidget(m_spinViewingAngle, y++, 1, 1, 1);
+		layoutProj->addWidget(new QLabel("Field of View and Zoom:", this),
+			y++, 0, 1, 2);
+		layoutProj->addWidget(m_spinViewingAngle, y, 0, 1, 1);
+		layoutProj->addWidget(m_spinZoom, y++, 1, 1, 1);
 		layoutProj->addWidget(m_checkPerspectiveProj, y++, 0, 1, 2);
 	}
 
@@ -132,6 +141,11 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
 		this, &CamPropertiesWidget::ViewingAngleChanged);
 
+	// zoom
+	connect(m_spinZoom,
+		static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+		this, &CamPropertiesWidget::ZoomChanged);
+
 	// perspective projection flag
 	connect(m_checkPerspectiveProj, &QCheckBox::stateChanged,
 		[this](int state) -> void
@@ -155,7 +169,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 						pos[j] = m_spinPos[j]->value();
 				}
 
-				emit CamPositionChanged(pos[0], pos[1], pos[2]);
+				emit PositionChanged(pos[0], pos[1], pos[2]);
 			});
 	}
 
@@ -175,7 +189,7 @@ CamPropertiesWidget::CamPropertiesWidget(QWidget *parent)
 						angles[j] = m_spinRot[j]->value();
 				}
 
-				emit CamRotationChanged(angles[0], angles[1]);
+				emit RotationChanged(angles[0], angles[1]);
 			});
 	}
 }
@@ -191,12 +205,17 @@ void CamPropertiesWidget::SetViewingAngle(t_real angle)
 	m_spinViewingAngle->setValue(angle);
 }
 
+void CamPropertiesWidget::SetZoom(t_real angle)
+{
+	m_spinZoom->setValue(angle);
+}
+
 void CamPropertiesWidget::SetPerspectiveProj(bool proj)
 {
 	m_checkPerspectiveProj->setChecked(proj);
 }
 
-void CamPropertiesWidget::SetCamPosition(t_real x, t_real y, t_real z)
+void CamPropertiesWidget::SetPosition(t_real x, t_real y, t_real z)
 {
 	this->blockSignals(true);
 	if(m_spinPos[0]) m_spinPos[0]->setValue(x);
@@ -205,7 +224,7 @@ void CamPropertiesWidget::SetCamPosition(t_real x, t_real y, t_real z)
 	this->blockSignals(false);
 }
 
-void CamPropertiesWidget::SetCamRotation(t_real phi, t_real theta)
+void CamPropertiesWidget::SetRotation(t_real phi, t_real theta)
 {
 	this->blockSignals(true);
 	if(m_spinRot[0]) m_spinRot[0]->setValue(phi);
@@ -232,6 +251,7 @@ boost::property_tree::ptree CamPropertiesWidget::Save() const
 
 	// viewing angle and projection
 	prop.put<t_real>("viewing_angle", m_spinViewingAngle->value());
+	prop.put<t_real>("zoom", m_spinZoom->value());
 	prop.put<int>("perspective_proj", m_checkPerspectiveProj->isChecked());
 
 	return prop;
@@ -269,16 +289,18 @@ bool CamPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 	// viewing angle and projection
 	if(auto opt = prop.get_optional<t_real>("viewing_angle"); opt)
 		m_spinViewingAngle->setValue(*opt);
+	if(auto opt = prop.get_optional<t_real>("zoom"); opt)
+		m_spinZoom->setValue(*opt);
 	if(auto opt = prop.get_optional<int>("perspective_proj"); opt)
 		m_checkPerspectiveProj->setChecked(*opt != 0);
 
 	// set new values
-	SetCamPosition(pos0, pos1, pos2);
-	SetCamRotation(rot0, rot1);
+	SetPosition(pos0, pos1, pos2);
+	SetRotation(rot0, rot1);
 
 	// emit changes
-	emit CamPositionChanged(pos0, pos1, pos2);
-	emit CamRotationChanged(rot0, rot1);
+	emit PositionChanged(pos0, pos1, pos2);
+	emit RotationChanged(rot0, rot1);
 
 	return true;
 }

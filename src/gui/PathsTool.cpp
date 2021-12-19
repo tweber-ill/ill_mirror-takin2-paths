@@ -99,7 +99,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real z = t_real(_z);
 
 			if(m_camProperties)
-				m_camProperties->GetWidget()->SetCamPosition(x, y, z);
+				m_camProperties->GetWidget()->SetPosition(x, y, z);
 		});
 
 	// camera rotation
@@ -110,9 +110,19 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real theta = t_real(_theta);
 
 			if(m_camProperties)
-				m_camProperties->GetWidget()->SetCamRotation(
+				m_camProperties->GetWidget()->SetRotation(
 					phi*t_real{180}/tl2::pi<t_real>,
 					theta*t_real{180}/tl2::pi<t_real>);
+		});
+
+	// camera zoom
+	connect(m_renderer.get(), &PathsRenderer::CamZoomChanged,
+		[this](t_real_gl _zoom) -> void
+		{
+			t_real zoom = t_real(_zoom);
+
+			if(m_camProperties)
+				m_camProperties->GetWidget()->SetZoom(zoom);
 		});
 
 	auto pGrid = new QGridLayout(plotpanel);
@@ -241,7 +251,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real angle) -> void
 		{
 			if(m_renderer)
-				m_renderer->SetCamViewingAngle(angle/t_real{180}*tl2::pi<t_real>);
+				m_renderer->SetCamViewingAngle(
+					angle/t_real{180}*tl2::pi<t_real>);
+		});
+
+	// camera zoom
+	connect(camwidget, &CamPropertiesWidget::ZoomChanged,
+		[this](t_real zoom) -> void
+		{
+			if(m_renderer)
+				m_renderer->SetCamZoom(zoom);
 		});
 
 	// camera projection
@@ -253,7 +272,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		});
 
 	// camera position
-	connect(camwidget, &CamPropertiesWidget::CamPositionChanged,
+	connect(camwidget, &CamPropertiesWidget::PositionChanged,
 		[this](t_real _x, t_real _y, t_real _z) -> void
 		{
 			t_real_gl x = t_real_gl(_x);
@@ -261,11 +280,12 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real_gl z = t_real_gl(_z);
 
 			if(m_renderer)
-				m_renderer->SetCamPosition(tl2::create<t_vec3_gl>({x, y, z}));
+				m_renderer->SetCamPosition(
+					tl2::create<t_vec3_gl>({x, y, z}));
 		});
 
 	// camera rotation
-	connect(camwidget, &CamPropertiesWidget::CamRotationChanged,
+	connect(camwidget, &CamPropertiesWidget::RotationChanged,
 		[this](t_real _phi, t_real _theta) -> void
 		{
 			t_real_gl phi = t_real_gl(_phi);
@@ -538,15 +558,18 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QAction *actionAddCuboidWall = new QAction(QIcon::fromTheme("insert-object"), "Add Wall", menuGeo);
 	QAction *actionAddCylindricalWall = new QAction(QIcon::fromTheme("insert-object"), "Add Pillar", menuGeo);
 	QAction *actionGeoBrowser = new QAction(QIcon::fromTheme("document-properties"), "Object Browser...", menuGeo);
+	QAction *actionTextureBrowser = new QAction(QIcon::fromTheme("image-x-generic"), "Texture Browser...", menuGeo);
 
 	connect(actionAddCuboidWall, &QAction::triggered, this, &PathsTool::AddWall);
 	connect(actionAddCylindricalWall, &QAction::triggered, this, &PathsTool::AddPillar);
-	connect(actionGeoBrowser, &QAction::triggered, this, &PathsTool::ShowGeometriesBrowser);
+	connect(actionGeoBrowser, &QAction::triggered, this, &PathsTool::ShowGeometryBrowser);
+	connect(actionTextureBrowser, &QAction::triggered, this, &PathsTool::ShowTextureBrowser);
 
 	menuGeo->addAction(actionAddCuboidWall);
 	menuGeo->addAction(actionAddCylindricalWall);
 	menuGeo->addSeparator();
 	menuGeo->addAction(actionGeoBrowser);
+	menuGeo->addAction(actionTextureBrowser);
 
 
 
@@ -681,6 +704,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 
 		if(this->m_dlgGeoBrowser)
 			this->m_dlgGeoBrowser.reset();
+
+		if(this->m_dlgTextureBrowser)
+			this->m_dlgTextureBrowser.reset();
 
 		if(this->m_dlgConfigSpace)
 			this->m_dlgConfigSpace.reset();
@@ -1184,7 +1210,7 @@ void PathsTool::SaveFileAs()
  */
 void PathsTool::SaveScreenshot()
 {
-	QString dirLast = m_sett.value("cur_dir",
+	QString dirLast = m_sett.value("cur_image_dir",
 		g_imgpath.c_str()).toString();
 
 	QFileDialog filedlg(this, "Save Screenshot", dirLast,
@@ -1214,7 +1240,7 @@ void PathsTool::SaveScreenshot()
 		ok = SaveScreenshot(files[0]);
 
 	if(ok)
-		m_sett.setValue("cur_dir", QFileInfo(files[0]).path());
+		m_sett.setValue("cur_image_dir", QFileInfo(files[0]).path());
 }
 
 
@@ -1781,9 +1807,11 @@ void PathsTool::AfterGLInitialisation()
 	std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
 		= m_renderer->GetGlDescr();
 
-	// get viewing angle
+	// get viewing angle and zoom
 	t_real viewingAngle = m_renderer ? m_renderer->GetCamViewingAngle() : tl2::pi<t_real>*0.5;
+	t_real zoom = m_renderer ? m_renderer->GetCamZoom() : 1.;
 	m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
+	m_camProperties->GetWidget()->SetZoom(zoom);
 
 	// get perspective projection flag
 	bool persp = m_renderer ? m_renderer->GetPerspectiveProjection() : true;
@@ -1791,11 +1819,11 @@ void PathsTool::AfterGLInitialisation()
 
 	// get camera position
 	t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
-	m_camProperties->GetWidget()->SetCamPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
+	m_camProperties->GetWidget()->SetPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
 
 	// get camera rotation
 	t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
-	m_camProperties->GetWidget()->SetCamRotation(
+	m_camProperties->GetWidget()->SetRotation(
 		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>,
 		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
 
@@ -2212,7 +2240,7 @@ void PathsTool::RotateObject(const std::string& objname, t_real angle)
  */
 void PathsTool::ShowCurrentObjectProperties()
 {
-	ShowGeometriesBrowser();
+	ShowGeometryBrowser();
 
 	if(m_dlgGeoBrowser)
 	{
@@ -2224,18 +2252,18 @@ void PathsTool::ShowCurrentObjectProperties()
 /**
  * open the geometry browser dialog
  */
-void PathsTool::ShowGeometriesBrowser()
+void PathsTool::ShowGeometryBrowser()
 {
 	if(!m_dlgGeoBrowser)
 	{
 		m_dlgGeoBrowser = std::make_shared<GeometriesBrowser>(this, &m_sett);
 
 		connect(m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalDeleteObject,
-				this, &PathsTool::DeleteObject);
+			this, &PathsTool::DeleteObject);
 		connect(m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalRenameObject,
-				this, &PathsTool::RenameObject);
+			this, &PathsTool::RenameObject);
 		connect(m_dlgGeoBrowser.get(), &GeometriesBrowser::SignalChangeObjectProperty,
-				this, &PathsTool::ChangeObjectProperty);
+			this, &PathsTool::ChangeObjectProperty);
 
 		this->m_dlgGeoBrowser->UpdateGeoTree(this->m_instrspace);
 	}
@@ -2243,6 +2271,22 @@ void PathsTool::ShowGeometriesBrowser()
 	m_dlgGeoBrowser->show();
 	m_dlgGeoBrowser->raise();
 	m_dlgGeoBrowser->activateWindow();
+}
+
+
+/**
+ * open the texture browser dialog
+ */
+void PathsTool::ShowTextureBrowser()
+{
+	if(!m_dlgTextureBrowser)
+	{
+		m_dlgTextureBrowser = std::make_shared<TextureBrowser>(this, &m_sett);
+	}
+
+	m_dlgTextureBrowser->show();
+	m_dlgTextureBrowser->raise();
+	m_dlgTextureBrowser->activateWindow();
 }
 
 

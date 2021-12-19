@@ -311,6 +311,7 @@ add_executable(taspaths
 	src/gui/ConfigSpace.cpp src/gui/ConfigSpace.h
 	src/gui/XtalConfigSpace.cpp src/gui/XtalConfigSpace.h
 	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
+	src/gui/TextureBrowser.cpp src/gui/TextureBrowser.h
 
 	src/libs/lines.h src/libs/graphs.h
 	src/libs/voronoi.h src/libs/voronoi_lines.h

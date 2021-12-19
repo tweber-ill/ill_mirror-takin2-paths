@@ -407,13 +407,14 @@ void PathsRenderer::UpdateCam()
 
 	m_matCam = tl2::unit<t_mat_gl>();
 	m_matCam *= m_matCamTrans;
-	m_matCam(2,3) /= m_zoom;
+	m_matCam(2,3) /= m_camZoom;
 	m_matCam *= matCamTrans_inv * m_matCamRot * matCamTrans;
 	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
 
 	m_pickerNeedsUpdate = true;
 	emit CamPositionChanged(m_matCamTrans(0,3), m_matCamTrans(1,3), m_matCamTrans(2,3));
 	emit CamRotationChanged(m_phi, m_theta);
+	emit CamZoomChanged(m_camZoom);
 
 	update();
 }
@@ -818,7 +819,20 @@ void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
 {
 	m_camViewingAngle = angle;
 	m_perspectiveNeedsUpdate = true;
+
 	update();
+}
+
+
+/**
+ * set the camera's zoom
+ */
+void PathsRenderer::SetCamZoom(t_real_gl zoom)
+{
+	m_camZoom = zoom;
+	m_perspectiveNeedsUpdate = true;
+
+	UpdateCam();
 }
 
 
@@ -1568,7 +1582,7 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 	if(m_mouseDown[1])
 	{
 		// reset zoom
-		m_zoom = 1;
+		m_camZoom = 1;
 		UpdateCam();
 	}
 
@@ -1639,7 +1653,7 @@ void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 
 void PathsRenderer::ZoomCam(t_real zoom, bool update)
 {
-	m_zoom *= std::pow(2., zoom);
+	m_camZoom *= std::pow(2., zoom);
 
 	if(update)
 		UpdateCam();

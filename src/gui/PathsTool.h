@@ -52,6 +52,7 @@
 #include "ConfigSpace.h"
 #include "XtalConfigSpace.h"
 #include "GeoBrowser.h"
+#include "TextureBrowser.h"
 #include "About.h"
 #include "Licenses.h"
 #include "Settings.h"
@@ -120,6 +121,7 @@ private:
 	std::shared_ptr<LicensesDlg> m_dlgLicenses{};
 	std::shared_ptr<SettingsDlg> m_dlgSettings{};
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser{};
+	std::shared_ptr<TextureBrowser> m_dlgTextureBrowser{};
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};
 	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace{};
 
@@ -272,7 +274,8 @@ protected slots:
 	void DeleteCurrentObject();
 	void RotateCurrentObject(t_real angle);
 	void ShowCurrentObjectProperties();
-	void ShowGeometriesBrowser();
+	void ShowGeometryBrowser();
+	void ShowTextureBrowser();
 
 	void RotateObject(const std::string& id, t_real angle);
 	void DeleteObject(const std::string& id);
