@@ -113,7 +113,7 @@ void PathsRenderer::Clear()
 	m_objs.clear();
 
 	for(auto& texture : m_textures)
-		texture->destroy();
+		texture.second->destroy();
 	m_textures.clear();
 }
 
@@ -132,13 +132,45 @@ void PathsRenderer::EnableTextures(bool b)
  * add a texture image
  * TODO: use idx
  */
-bool PathsRenderer::ChangeTextureProperty(std::size_t idx, const QString& filename)
+bool PathsRenderer::ChangeTextureProperty(
+	const QString& ident, const QString& filename)
 {
 	QMutexLocker _locker{&m_mutexObj};
 
-	if(QImage image(filename); !image.isNull())
+	auto iter = m_textures.find(ident.toStdString());
+
+	// remove texture
+	if(filename == "")
 	{
-		m_textures.emplace_back(std::make_shared<QOpenGLTexture>(image));
+		if(iter != m_textures.end())
+		{
+			iter->second->destroy();
+			m_textures.erase(iter);
+
+			return true;
+		}
+	}
+
+	// add or replace texture
+	else if(QImage image(filename); !image.isNull())
+	{
+		// insert new texture
+		if(iter == m_textures.end())
+		{
+			m_textures.emplace(
+				std::make_pair(
+					ident.toStdString(),
+					std::make_shared<QOpenGLTexture>(image)));
+		}
+
+		// replace old texture
+		else
+		{
+			if(iter->second)
+				iter->second->destroy();
+			iter->second = std::make_shared<QOpenGLTexture>(image);
+		}
+
 		return true;
 	}
 
@@ -1214,10 +1246,13 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		// textures
 		std::shared_ptr<QOpenGLTexture> texture;
-		if(m_textures_active && obj.m_texture && 
-			*obj.m_texture < m_textures.size())
+		if(m_textures_active)
 		{
-			texture = m_textures[*obj.m_texture];
+			if(auto iter = m_textures.find(obj.m_texture);
+				iter!=m_textures.end())
+			{
+				texture = iter->second;
+			}
 		}
 
 		BOOST_SCOPE_EXIT(texture, pGl)
@@ -1230,15 +1265,12 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			}
 		} BOOST_SCOPE_EXIT_END
 
+		m_shaders->setUniformValue(m_uniTextureActive, !!texture);
+
 		if(texture)
 		{
-			m_shaders->setUniformValue(m_uniTextureActive, true);
 			pGl->glActiveTexture(GL_TEXTURE1);
 			texture->bind();
-		}
-		else
-		{
-			m_shaders->setUniformValue(m_uniTextureActive, false);
 		}
 
 

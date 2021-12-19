@@ -140,11 +140,11 @@ bool Geometry::Load(const pt::ptree& prop)
 			m_colour.resize(3);
 	}
 
-	// texture index
-	if(auto texture = prop.get_optional<std::size_t>("texture_index"); texture)
+	// texture
+	if(auto texture = prop.get_optional<std::size_t>("texture"); texture)
 		m_texture = *texture;
 	else
-		m_texture = std::nullopt;
+		m_texture = "";
 
 	return true;
 }
@@ -156,8 +156,7 @@ pt::ptree Geometry::Save() const
 
 	prop.put<std::string>("<xmlattr>.id", GetId());
 	prop.put<std::string>("colour", geo_vec_to_str(m_colour));
-	if(m_texture)
-		prop.put<std::size_t>("texture_index", *m_texture);
+	prop.put<std::string>("texture", m_texture);
 
 	return prop;
 }
@@ -341,17 +340,7 @@ std::vector<ObjectProperty> BoxGeometry::GetProperties() const
 	props.emplace_back(ObjectProperty{.key="height", .value=m_height});
 	props.emplace_back(ObjectProperty{.key="depth", .value=m_depth});
 	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
-
-	if(m_texture)
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(*m_texture)});
-	}
-	else
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(-1)});
-	}
+	props.emplace_back(ObjectProperty{.key="texture", .value=m_texture});
 
 	return props;
 }
@@ -374,14 +363,8 @@ void BoxGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 			m_depth = std::get<t_real>(prop.value);
 		else if(prop.key == "colour")
 			m_colour = std::get<t_vec>(prop.value);
-		else if(prop.key == "texture index")
-		{
-			t_int idx = std::get<t_int>(prop.value);
-			if(idx >= 0)
-				m_texture = idx;
-			else
-				m_texture = std::nullopt;
-		}
+		else if(prop.key == "texture")
+			m_texture  = std::get<std::string>(prop.value);
 	}
 
 	// calculate dependent parameters
@@ -510,17 +493,7 @@ std::vector<ObjectProperty> CylinderGeometry::GetProperties() const
 	props.emplace_back(ObjectProperty{.key="height", .value=m_height});
 	props.emplace_back(ObjectProperty{.key="radius", .value=m_radius});
 	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
-
-	if(m_texture)
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(*m_texture)});
-	}
-	else
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(-1)});
-	}
+	props.emplace_back(ObjectProperty{.key="texture", .value=m_texture});
 
 	return props;
 }
@@ -541,14 +514,8 @@ void CylinderGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 			m_radius = std::get<t_real>(prop.value);
 		else if(prop.key == "colour")
 			m_colour = std::get<t_vec>(prop.value);
-		else if(prop.key == "texture index")
-		{
-			t_int idx = std::get<t_int>(prop.value);
-			if(idx >= 0)
-				m_texture = idx;
-			else
-				m_texture = std::nullopt;
-		}
+		else if(prop.key == "texture")
+			m_texture = std::get<std::string>(prop.value);
 	}
 
 	m_trafo_needs_update = true;
@@ -674,17 +641,7 @@ std::vector<ObjectProperty> SphereGeometry::GetProperties() const
 	props.emplace_back(ObjectProperty{.key="position", .value=m_pos});
 	props.emplace_back(ObjectProperty{.key="radius", .value=m_radius});
 	props.emplace_back(ObjectProperty{.key="colour", .value=m_colour});
-
-	if(m_texture)
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(*m_texture)});
-	}
-	else
-	{
-		props.emplace_back(ObjectProperty{
-			.key="texture index", .value=t_int(-1)});
-	}
+	props.emplace_back(ObjectProperty{.key="texture", .value=m_texture});
 
 	return props;
 }
@@ -703,14 +660,8 @@ void SphereGeometry::SetProperties(const std::vector<ObjectProperty>& props)
 			m_radius = std::get<t_real>(prop.value);
 		else if(prop.key == "colour")
 			m_colour = std::get<t_vec>(prop.value);
-		else if(prop.key == "texture index")
-		{
-			t_int idx = std::get<t_int>(prop.value);
-			if(idx >= 0)
-				m_texture = idx;
-			else
-				m_texture = std::nullopt;
-		}
+		else if(prop.key == "texture")
+			m_texture  = std::get<std::string>(prop.value);
 	}
 
 	m_trafo_needs_update = true;

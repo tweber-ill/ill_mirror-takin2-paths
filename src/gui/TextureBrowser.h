@@ -68,7 +68,9 @@ protected:
 	virtual void accept() override;
 
 	void ListItemChanged(QListWidgetItem* cur, QListWidgetItem* prev);
+
 	void BrowseImageFiles();
+	void DeleteImageFiles();
 
 
 private:
@@ -81,7 +83,7 @@ private:
 
 signals:
 	void SignalEnableTextures(bool);
-	void SignalChangeTexture(std::size_t idx, const QString& filename);
+	void SignalChangeTexture(const QString& ident, const QString& filename);
 };
 
 

@@ -46,10 +46,12 @@ ImageWidget::ImageWidget(QWidget* parent) : QFrame(parent)
 void ImageWidget::SetImage(const QString& img)
 {
 	if(img.isEmpty())
-		return;
+		m_img = QPixmap();
 
-	if(m_img.load(img))
-		update();
+	if(!m_img.load(img))
+		m_img = QPixmap();
+
+	update();
 }
 
 
@@ -84,6 +86,7 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	m_list->setMouseTracking(true);
 
 	QPushButton *btnAddImage = new QPushButton("Add Image...", this);
+	QPushButton *btnDelImage = new QPushButton("Remove Image", this);
 
 	// list widget grid
 	QWidget *widget_list = new QWidget(this);
@@ -92,6 +95,7 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	grid_list->setContentsMargins(0,0,0,0);
 	grid_list->addWidget(m_list, 0,0,1,1);
 	grid_list->addWidget(btnAddImage, 1,0,1,1);
+	grid_list->addWidget(btnDelImage, 2,0,1,1);
 
 	// image widget
 	m_image = new ImageWidget(this);
@@ -137,6 +141,8 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 		this, &TextureBrowser::ListItemChanged);
 	connect(btnAddImage, &QAbstractButton::clicked,
 		this, &TextureBrowser::BrowseImageFiles);
+	connect(btnDelImage, &QAbstractButton::clicked,
+		this, &TextureBrowser::DeleteImageFiles);
 
 	connect(checkTextures, &QCheckBox::toggled,
 		this, &TextureBrowser::SignalEnableTextures);
@@ -154,7 +160,7 @@ TextureBrowser::~TextureBrowser()
 
 void TextureBrowser::BrowseImageFiles()
 {
-	QString dirLast = g_imgpath.c_str();;
+	QString dirLast = g_imgpath.c_str();
 	if(m_sett)
 		dirLast = m_sett->value("cur_texture_dir", dirLast).toString();
 
@@ -175,16 +181,19 @@ void TextureBrowser::BrowseImageFiles()
 	QStringList files = filedlg.selectedFiles();
 	for(const QString& file : files)
 	{
-		std::size_t idx = m_list->count();
+		// TODO: check if another file with the same
+		//       identifier is already in the list
+		QFileInfo info(file);
+		QString ident = info.baseName();
 
 		QListWidgetItem *item = new QListWidgetItem(m_list);
 		item->setText(QString("[%1] %2")
-			.arg(idx)
-			.arg(QFileInfo(file).fileName()));
+			.arg(ident)
+			.arg(info.fileName()));
 		item->setData(Qt::UserRole, file);
 		m_list->addItem(item);
 
-		emit SignalChangeTexture(idx, file);
+		emit SignalChangeTexture(ident, file);
 	}
 
 	if(m_sett && files.size())
@@ -192,9 +201,29 @@ void TextureBrowser::BrowseImageFiles()
 }
 
 
+void TextureBrowser::DeleteImageFiles()
+{
+	// if nothing is selected, clear all items
+	if(m_list->selectedItems().count() == 0)
+		m_list->clear();
+
+	for(QListWidgetItem *item : m_list->selectedItems())
+	{
+		if(!item)
+			continue;
+		delete item;
+	}
+}
+
+
 void TextureBrowser::ListItemChanged(
 	QListWidgetItem* cur, [[maybe_unused]] QListWidgetItem* prev)
 {
+	if(!cur)
+	{
+		m_image->SetImage("");
+		return;
+	}
 	m_image->SetImage(cur->data(Qt::UserRole).toString());
 }
 

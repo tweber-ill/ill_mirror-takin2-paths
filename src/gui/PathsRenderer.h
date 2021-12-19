@@ -70,7 +70,7 @@ struct PathsObj : public tl2::GlRenderObj
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
 
-	std::optional<std::size_t> m_texture;	// texture index
+	std::string m_texture = "";	// texture identifier
 };
 
 
@@ -266,8 +266,8 @@ protected:
 	// lights
 	std::vector<t_vec3_gl> m_lights{};
 
-	// textures
-	std::vector<std::shared_ptr<QOpenGLTexture>> m_textures;
+	// texture map
+	std::unordered_map<std::string, std::shared_ptr<QOpenGLTexture>> m_textures;
 
 	// cursor
 	QPointF m_posMouse{};
@@ -302,7 +302,7 @@ public slots:
 	void EnableTimer(bool enable=true);
 
 	void EnableTextures(bool b);
-	bool ChangeTextureProperty(std::size_t idx, const QString& filename);
+	bool ChangeTextureProperty(const QString& ident, const QString& filename);
 
 
 signals:

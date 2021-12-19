@@ -324,6 +324,21 @@ void GeometriesBrowser::GeoTreeCurrentItemChanged(QTreeWidgetItem *item, QTreeWi
 				new QTableWidgetItem(ostr.str().c_str()));
 		}
 
+		// string value
+		else if(std::holds_alternative<std::string>(prop.value))
+		{
+			const std::string& val = std::get<std::string>(prop.value);
+
+			// type
+			auto* itemType = new QTableWidgetItem("string");
+			itemType->setFlags(itemType->flags() & ~Qt::ItemIsEditable);
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_TYPE, itemType);
+
+			// value
+			m_geosettings->setItem(row, GEOBROWSER_SETTINGS_VALUE,
+				new QTableWidgetItem(val.c_str()));
+		}
+
 		// vector value
 		else if(std::holds_alternative<t_vec>(prop.value))
 		{
@@ -400,6 +415,12 @@ void GeometriesBrowser::GeoSettingsItemChanged(QTableWidgetItem *item)
 			if(!parser.parse(val))
 				throw std::logic_error("Could not parse integer expression.");
 			prop.value = parser.eval();
+		}
+
+		// string value
+		else if(ty == "string")
+		{
+			prop.value = val;
 		}
 
 		// vector value
