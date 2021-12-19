@@ -32,10 +32,17 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QCheckBox>
 
 
 
 // ----------------------------------------------------------------------------
+ImageWidget::ImageWidget(QWidget* parent) : QFrame(parent)
+{
+	setFrameStyle(QFrame::Panel | QFrame::Sunken);
+}
+
+
 void ImageWidget::SetImage(const QString& img)
 {
 	if(img.isEmpty())
@@ -48,13 +55,15 @@ void ImageWidget::SetImage(const QString& img)
 
 void ImageWidget::paintEvent(QPaintEvent *evt)
 {
-	QWidget::paintEvent(evt);
+	QFrame::paintEvent(evt);
 
 	if(!m_img.isNull())
 	{
 		QPainter painter{};
 		painter.begin(this);
-		painter.drawPixmap(0,0,width(), height(), m_img);
+		const int pad = 2;
+		painter.drawPixmap(pad, pad,
+			width()-2*pad, height()-2*pad, m_img);
 		painter.end();
 	}
 }
@@ -79,15 +88,17 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	// list widget grid
 	QWidget *widget_list = new QWidget(this);
 	auto grid_list = new QGridLayout(widget_list);
-	grid_list->setSpacing(2);
-	grid_list->setContentsMargins(4,4,4,4);
+	grid_list->setSpacing(4);
+	grid_list->setContentsMargins(0,0,0,0);
 	grid_list->addWidget(m_list, 0,0,1,1);
 	grid_list->addWidget(btnAddImage, 1,0,1,1);
 
 	// image widget
 	m_image = new ImageWidget(this);
 
-	// standard buttons
+	// buttons
+	QCheckBox *checkTextures = new QCheckBox("Enable Texture Mapping", this);
+	checkTextures->setChecked(false);
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);
 
@@ -102,8 +113,9 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	auto grid_dlg = new QGridLayout(this);
 	grid_dlg->setSpacing(4);
 	grid_dlg->setContentsMargins(12,12,12,12);
-	grid_dlg->addWidget(m_splitter, 0,0,1,1);
-	grid_dlg->addWidget(buttons, 1,0,1,1);
+	grid_dlg->addWidget(m_splitter, 0,0,1,2);
+	grid_dlg->addWidget(checkTextures, 1,0,1,1);
+	grid_dlg->addWidget(buttons, 1,1,1,1);
 
 	// restore settings
 	if(m_sett)
@@ -126,6 +138,8 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	connect(btnAddImage, &QAbstractButton::clicked,
 		this, &TextureBrowser::BrowseImageFiles);
 
+	connect(checkTextures, &QCheckBox::toggled,
+		this, &TextureBrowser::SignalEnableTextures);
 	connect(buttons, &QDialogButtonBox::accepted,
 		this, &TextureBrowser::accept);
 	connect(buttons, &QDialogButtonBox::rejected,
@@ -160,7 +174,18 @@ void TextureBrowser::BrowseImageFiles()
 
 	QStringList files = filedlg.selectedFiles();
 	for(const QString& file : files)
-		m_list->addItem(file);
+	{
+		std::size_t idx = m_list->count();
+
+		QListWidgetItem *item = new QListWidgetItem(m_list);
+		item->setText(QString("[%1] %2")
+			.arg(idx)
+			.arg(QFileInfo(file).fileName()));
+		item->setData(Qt::UserRole, file);
+		m_list->addItem(item);
+
+		emit SignalChangeTexture(idx, file);
+	}
 
 	if(m_sett && files.size())
 		m_sett->setValue("cur_texture_dir", QFileInfo(files[0]).path());
@@ -170,7 +195,7 @@ void TextureBrowser::BrowseImageFiles()
 void TextureBrowser::ListItemChanged(
 	QListWidgetItem* cur, [[maybe_unused]] QListWidgetItem* prev)
 {
-	m_image->SetImage(cur->text());
+	m_image->SetImage(cur->data(Qt::UserRole).toString());
 }
 
 

@@ -122,8 +122,6 @@ public:
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
 	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
 
-	void EnableTextures(bool b) { m_textures_active = b; }
-
 	void CentreCam(const std::string& obj);
 	QPoint GetMousePosition(bool global_pos = false) const;
 
@@ -302,6 +300,9 @@ public slots:
 	t_vec2_gl GetCamRotation() const;
 
 	void EnableTimer(bool enable=true);
+
+	void EnableTextures(bool b);
+	bool ChangeTextureProperty(std::size_t idx, const QString& filename);
 
 
 signals:

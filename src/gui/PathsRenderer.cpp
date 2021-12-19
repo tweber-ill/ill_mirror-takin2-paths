@@ -110,8 +110,39 @@ void PathsRenderer::Clear()
 	QMutexLocker _locker{&m_mutexObj};
 	for(auto &[obj_name, obj] : m_objs)
 		DeleteObject(obj);
-
 	m_objs.clear();
+
+	for(auto& texture : m_textures)
+		texture->destroy();
+	m_textures.clear();
+}
+
+
+/**
+ * enable or disable texture mapping
+ */
+void PathsRenderer::EnableTextures(bool b)
+{
+	m_textures_active = b;
+	update();
+}
+
+
+/**
+ * add a texture image
+ * TODO: use idx
+ */
+bool PathsRenderer::ChangeTextureProperty(std::size_t idx, const QString& filename)
+{
+	QMutexLocker _locker{&m_mutexObj};
+
+	if(QImage image(filename); !image.isNull())
+	{
+		m_textures.emplace_back(std::make_shared<QOpenGLTexture>(image));
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -203,6 +234,7 @@ void PathsRenderer::AddWall(const Geometry& wall, bool update_scene)
 	const t_mat& _mat = wall.GetTrafo();
 	t_mat_gl mat = tl2::convert<t_mat_gl>(_mat);
 	obj_iter->second.m_mat = mat;
+	obj_iter->second.m_texture = wall.GetTexture();
 
 	if(update_scene)
 		update();
@@ -777,10 +809,6 @@ void PathsRenderer::initializeGL()
 
 	SetLight(0, tl2::create<t_vec3_gl>({0, 0, 10}));
 
-	// TODO: load textures
-	//if(QImage image("/Users/t_weber/tmp/wood.jpg"); !image.isNull())
-	//	m_textures.emplace_back(std::make_shared<QOpenGLTexture>(image));
-
 	m_initialised = true;
 	emit AfterGLInitialisation();
 }
@@ -1170,7 +1198,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	m_shaders->setUniformValue(m_uniShadowMap, 0);
 
-	m_shaders->setUniformValue(m_uniTextureActive, m_textures_active);
+	//m_shaders->setUniformValue(m_uniTextureActive, m_textures_active);
 	m_shaders->setUniformValue(m_uniTexture, 1);
 
 	// cursor
@@ -1204,8 +1232,13 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		if(texture)
 		{
+			m_shaders->setUniformValue(m_uniTextureActive, true);
 			pGl->glActiveTexture(GL_TEXTURE1);
 			texture->bind();
+		}
+		else
+		{
+			m_shaders->setUniformValue(m_uniTextureActive, false);
 		}
 
 

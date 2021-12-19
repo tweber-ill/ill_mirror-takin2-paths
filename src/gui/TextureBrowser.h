@@ -37,12 +37,10 @@
 #include <memory>
 
 
-class ImageWidget : public QWidget
+class ImageWidget : public QFrame
 {
 public:
-	ImageWidget(QWidget* parent) : QWidget(parent)
-	{};
-
+	ImageWidget(QWidget* parent);
 	virtual ~ImageWidget() = default;
 
 	void SetImage(const QString& img);
@@ -57,7 +55,7 @@ private:
 
 
 class TextureBrowser : public QDialog
-{
+{ Q_OBJECT
 public:
 	TextureBrowser(QWidget* pParent = nullptr, QSettings *sett = nullptr);
 	virtual ~TextureBrowser();
@@ -73,13 +71,17 @@ protected:
 	void BrowseImageFiles();
 
 
-
 private:
 	QSettings *m_sett{nullptr};
 
 	QSplitter *m_splitter{nullptr};
 	QListWidget *m_list{nullptr};
 	ImageWidget *m_image{nullptr};
+
+
+signals:
+	void SignalEnableTextures(bool);
+	void SignalChangeTexture(std::size_t idx, const QString& filename);
 };
 
 

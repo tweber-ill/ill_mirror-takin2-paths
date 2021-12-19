@@ -2282,6 +2282,11 @@ void PathsTool::ShowTextureBrowser()
 	if(!m_dlgTextureBrowser)
 	{
 		m_dlgTextureBrowser = std::make_shared<TextureBrowser>(this, &m_sett);
+
+		connect(m_dlgTextureBrowser.get(), &TextureBrowser::SignalChangeTexture,
+			m_renderer.get(), &PathsRenderer::ChangeTextureProperty);
+		connect(m_dlgTextureBrowser.get(), &TextureBrowser::SignalEnableTextures,
+			m_renderer.get(), &PathsRenderer::EnableTextures);
 	}
 
 	m_dlgTextureBrowser->show();
