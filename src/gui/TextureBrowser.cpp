@@ -39,7 +39,7 @@
 // ----------------------------------------------------------------------------
 ImageWidget::ImageWidget(QWidget* parent) : QFrame(parent)
 {
-	setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	setFrameStyle(int(QFrame::Panel) | int(QFrame::Sunken));
 }
 
 
@@ -73,7 +73,7 @@ void ImageWidget::paintEvent(QPaintEvent *evt)
 
 
 
-// ---------------------------------------------------------------------------- 
+// ----------------------------------------------------------------------------
 TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	: QDialog{pParent}, m_sett(sett)
 {

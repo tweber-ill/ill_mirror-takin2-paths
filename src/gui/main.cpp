@@ -126,9 +126,8 @@ public:
 			std::string taspaths_subdir = "Desktop";
 
 			QDir taspathsdir(g_homepath.c_str());
-			bool taspaths_subdir_ok = false;
 
-			taspaths_subdir_ok = taspathsdir.exists(taspaths_subdir.c_str());
+			/*bool taspaths_subdir_ok =*/ taspathsdir.exists(taspaths_subdir.c_str());
 			//if(!taspaths_subdir_ok)
 			//	taspaths_subdir_ok = taspathsdir.mkdir(taspaths_subdir.c_str());
 

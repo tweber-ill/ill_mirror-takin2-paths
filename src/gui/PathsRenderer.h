@@ -267,7 +267,7 @@ protected:
 	std::vector<t_vec3_gl> m_lights{};
 
 	// texture map
-	std::unordered_map<std::string, std::shared_ptr<QOpenGLTexture>> m_textures;
+	std::unordered_map<std::string, std::shared_ptr<QOpenGLTexture>> m_textures{};
 
 	// cursor
 	QPointF m_posMouse{};
