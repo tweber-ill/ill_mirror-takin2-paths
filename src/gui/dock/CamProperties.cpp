@@ -208,10 +208,10 @@ void CamPropertiesWidget::SetViewingAngle(t_real angle)
 }
 
 
-void CamPropertiesWidget::SetZoom(t_real angle)
+void CamPropertiesWidget::SetZoom(t_real zoom)
 {
 	this->blockSignals(true);
-	m_spinZoom->setValue(angle);
+	m_spinZoom->setValue(zoom);
 	this->blockSignals(false);
 }
 

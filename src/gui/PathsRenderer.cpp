@@ -719,7 +719,7 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 			zoom_dir = 1;
 
 		t_real zoom_scale = t_real_gl(ms.count()) * g_zoom_scale;
-		ZoomCam(zoom_dir * zoom_scale);
+		ZoomCam(zoom_dir * zoom_scale, false);
 		update = true;
 	}
 
@@ -1710,7 +1710,7 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 {
 	const t_real_gl degrees = pEvt->angleDelta().y() / 8.;
-	ZoomCam(degrees * g_wheel_zoom_scale);
+	ZoomCam(degrees * g_wheel_zoom_scale, true);
 
 	pEvt->accept();
 }

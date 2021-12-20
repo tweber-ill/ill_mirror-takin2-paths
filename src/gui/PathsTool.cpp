@@ -110,9 +110,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real theta = t_real(_theta);
 
 			if(m_camProperties)
+			{
 				m_camProperties->GetWidget()->SetRotation(
 					phi*t_real{180}/tl2::pi<t_real>,
 					theta*t_real{180}/tl2::pi<t_real>);
+			}
 		});
 
 	// camera zoom
