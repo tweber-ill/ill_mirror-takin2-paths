@@ -202,18 +202,25 @@ CamPropertiesWidget::~CamPropertiesWidget()
 
 void CamPropertiesWidget::SetViewingAngle(t_real angle)
 {
+	this->blockSignals(true);
 	m_spinViewingAngle->setValue(angle);
+	this->blockSignals(false);
 }
+
 
 void CamPropertiesWidget::SetZoom(t_real angle)
 {
+	this->blockSignals(true);
 	m_spinZoom->setValue(angle);
+	this->blockSignals(false);
 }
+
 
 void CamPropertiesWidget::SetPerspectiveProj(bool proj)
 {
 	m_checkPerspectiveProj->setChecked(proj);
 }
+
 
 void CamPropertiesWidget::SetPosition(t_real x, t_real y, t_real z)
 {
@@ -223,6 +230,7 @@ void CamPropertiesWidget::SetPosition(t_real x, t_real y, t_real z)
 	if(m_spinPos[2]) m_spinPos[2]->setValue(z);
 	this->blockSignals(false);
 }
+
 
 void CamPropertiesWidget::SetRotation(t_real phi, t_real theta)
 {
