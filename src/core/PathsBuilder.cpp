@@ -1230,6 +1230,11 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 		cur_path_pos += 1.;
 	}
 
+	//std::ofstream ofstr(reverse ? "dists1.dat" : "dists0.dat");
+	//for(std::size_t i=0; i<dists.size(); ++i)
+	//	ofstr << path_pos[i] << " " << dists[i] << "\n";
+	//ofstr << std::endl;
+
 	// find local minima in the distances
 	std::vector<t_real> peaks_x, peaks_sizes, peaks_widths;
 	std::vector<bool> peaks_minima;
@@ -1241,26 +1246,61 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	// look for the largest minimum within the search radius
 	for(std::size_t peak_idx=0; peak_idx<peaks_x.size(); ++peak_idx)
 	{
-		// no minimum
-		if(!peaks_minima[peak_idx])
-			continue;
-
-		std::size_t peak_min_idx = (std::size_t)peaks_x[peak_idx];
-		if(peak_min_idx >= path_indices.size())
-			peak_min_idx = path_indices.size()-1;
-
-		// not within the search radius
-		if(dists[peak_min_idx] > max_radius)
-			continue;
-
-		if(dists[peak_min_idx] < min_dist_to_start)
+		// try to move to minimum distance
+		if(peaks_minima[peak_idx])
 		{
-			min_idx = path_indices[peak_min_idx];
-			if(min_idx >= dists.size())
-				continue;
+			std::size_t peak_min_idx = (std::size_t)peaks_x[peak_idx];
+			if(peak_min_idx >= path_indices.size())
+				peak_min_idx = path_indices.size()-1;
 
-			min_dist_to_start = dists[peak_min_idx];
-			minimum_found = true;
+			// within the search radius?
+			if(dists[peak_min_idx] <= max_radius &&
+				dists[peak_min_idx] < min_dist_to_start)
+			{
+				min_idx = path_indices[peak_min_idx];
+				if(min_idx < dists.size())
+				{
+					min_dist_to_start = dists[peak_min_idx];
+					minimum_found = true;
+				}
+			}
+		}
+
+		// try to skip over maximum
+		else
+		{
+			std::size_t peak_max_idx = (std::size_t)peaks_x[peak_idx];
+
+			std::size_t beyond_peak_idx = peak_max_idx;
+			if(!reverse /*peak_max_idx > first_pt_idx*/)
+			{
+				std::size_t delta = peak_max_idx-first_pt_idx;
+				beyond_peak_idx = first_pt_idx + 2*delta;
+			}
+			else
+			{
+				std::size_t delta = first_pt_idx-peak_max_idx;
+
+				if(2*delta <= first_pt_idx)
+					beyond_peak_idx = first_pt_idx - 2*delta;
+				else
+					beyond_peak_idx = 0;
+			}
+
+			if(beyond_peak_idx >= path_indices.size())
+				beyond_peak_idx = path_indices.size()-1;
+
+			// within the search radius?
+			if(dists[beyond_peak_idx] <= max_radius &&
+				dists[beyond_peak_idx] < min_dist_to_start)
+			{
+				min_idx = path_indices[beyond_peak_idx];
+				if(beyond_peak_idx < dists.size())
+				{
+					min_dist_to_start = dists[beyond_peak_idx];
+					minimum_found = true;
+				}
+			}
 		}
 	}
 
@@ -1271,6 +1311,8 @@ void PathsBuilder::RemovePathLoops(std::vector<t_vec2>& path_vertices, bool deg,
 	{
 		std::size_t range_start = first_pt_idx;
 		std::size_t range_end = min_idx;
+
+		//ofstr << "# minimum index: " << min_idx << std::endl;
 
 		if(reverse)
 			std::swap(range_start, range_end);
