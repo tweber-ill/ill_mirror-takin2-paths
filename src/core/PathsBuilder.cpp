@@ -852,7 +852,7 @@ PathsBuilder::FindClosestPointOnBisector(
 
 		// the query point lies on the voronoi vertex
 		if(dir_len < m_eps_angular)
-			return std::make_tuple(0, 0, true, vec);
+			return std::make_tuple(0, 0, 1, vec);
 
 		dir /= dir_len;
 
@@ -1120,24 +1120,26 @@ PathsBuilder::FindClosestBisector(
 		//std::cout << "neighbour bisector " << std::get<0>(bisector) << " " << std::get<1>(bisector)
 		//	<< " collides: " << std::boolalpha << neighbour_collides << std::endl;
 
-		if(neighbour_bisector_type != -1 && !neighbour_collides)
-		{
-			bool old_parameters_in_range = (min_param >= 0. && min_param <= 1.);
-			bool new_parameters_in_range = (neighbour_param >= 0. && neighbour_param <= 1.);
-			bool neighbour_closer = (neighbour_dist < min_dist);
+		if(neighbour_bisector_type == -1 || neighbour_collides)
+			continue;
 
-			// choose a new position on the adjacent edge if it's either
-			// closer or if the former parameters had been out of bounds
-			// and are now within [0, 1] or if the old path collides
-			if(((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
-				(new_parameters_in_range && neighbour_closer)) || collides)
-			{
-				min_dist = neighbour_dist;
-				min_param = neighbour_param;
-				min_bisector = bisector;
-				collides = neighbour_collides;
-				bisector_type = neighbour_bisector_type;
-			}
+		bool old_parameters_in_range = (min_param >= 0. && min_param <= 1.);
+		bool new_parameters_in_range = (neighbour_param >= 0. && neighbour_param <= 1.);
+		bool neighbour_closer = (neighbour_dist < min_dist);
+
+		// choose a new position on the adjacent edge if it's either
+		// closer or if the former parameters had been out of bounds
+		// and are now within [0, 1] or if the old path collides
+		if( ((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
+			(!old_parameters_in_range && new_parameters_in_range) ||
+			(new_parameters_in_range && neighbour_closer)) 
+			|| collides)
+		{
+			min_dist = neighbour_dist;
+			min_param = neighbour_param;
+			min_bisector = bisector;
+			collides = neighbour_collides;
+			bisector_type = neighbour_bisector_type;
 		}
 	}
 	//std::cout << std::endl;
