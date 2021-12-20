@@ -821,7 +821,7 @@ std::vector<std::pair<t_real, t_real>> PathsBuilder::GetPathVerticesAsPairs(
 
 
 /**
- * find the closest point on a path segment
+ * find the closest point on a bisector path segment
  * @arg vec starting position, in pixel coordinates
  * @returns [param, distance, 0:quadratic, 1:linear, -1:neither, retraction point]
  */
@@ -850,9 +850,12 @@ PathsBuilder::FindClosestPointOnBisector(
 		t_vec2 dir = vert2 - vert1;
 		t_real dir_len = tl2::norm<t_vec2>(dir);
 
-		// the query point lies on the voronoi vertex
+		// the two voronoi vertices coincide
 		if(dir_len < m_eps_angular)
-			return std::make_tuple(0, 0, 1, vec);
+		{
+			return std::make_tuple(
+				0, tl2::norm<t_vec2>(vec-vert1), 1, vec);
+		}
 
 		dir /= dir_len;
 
@@ -1117,8 +1120,6 @@ PathsBuilder::FindClosestBisector(
 		auto [neighbour_param, neighbour_dist, neighbour_bisector_type, neighbour_pt_on_segment] =
 			FindClosestPointOnBisector(std::get<0>(bisector), std::get<1>(bisector), vert);
 		bool neighbour_collides = DoesDirectPathCollidePixel(vert, neighbour_pt_on_segment, use_min_dist);
-		//std::cout << "neighbour bisector " << std::get<0>(bisector) << " " << std::get<1>(bisector)
-		//	<< " collides: " << std::boolalpha << neighbour_collides << std::endl;
 
 		if(neighbour_bisector_type == -1 || neighbour_collides)
 			continue;
@@ -1140,6 +1141,13 @@ PathsBuilder::FindClosestBisector(
 			min_bisector = bisector;
 			collides = neighbour_collides;
 			bisector_type = neighbour_bisector_type;
+
+			//std::cout << "neighbour bisector " << std::get<0>(bisector) << " " << std::get<1>(bisector)
+			//	<< ", collides: " << std::boolalpha << neighbour_collides
+			//	<< ", dist: " << neighbour_dist
+			//	<< ", vert: " << vert[0] << " " << vert[1]
+			//	<< ", point on bisector: " << neighbour_pt_on_segment[0] << " " << neighbour_pt_on_segment[1]
+			//	<< std::endl;
 		}
 	}
 	//std::cout << std::endl;
