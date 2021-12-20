@@ -482,6 +482,11 @@ InstrumentPath PathsBuilder::FindPath(
 				path.voronoi_indices.insert(path.voronoi_indices.begin(), std::get<0>(bisector_begin));
 
 				geo::remove_path_loops<std::size_t>(path.voronoi_indices);
+				if(path.voronoi_indices.size() < 2)
+				{
+					path.ok = false;
+					return path;
+				}
 			}
 		}
 
@@ -518,6 +523,11 @@ InstrumentPath PathsBuilder::FindPath(
 				path.voronoi_indices.push_back(std::get<0>(bisector_end));
 
 				geo::remove_path_loops<std::size_t>(path.voronoi_indices);
+				if(path.voronoi_indices.size() < 2)
+				{
+					path.ok = false;
+					return path;
+				}
 			}
 		}
 
