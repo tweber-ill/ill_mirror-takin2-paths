@@ -698,30 +698,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 
 	// collect garbage
-	connect(actionGarbage, &QAction::triggered, this, [this]()
-	{
-		// remove any open dialogs
-		if(this->m_dlgSettings)
-			this->m_dlgSettings.reset();
-
-		if(this->m_dlgGeoBrowser)
-			this->m_dlgGeoBrowser.reset();
-
-		if(this->m_dlgTextureBrowser)
-			this->m_dlgTextureBrowser.reset();
-
-		if(this->m_dlgConfigSpace)
-			this->m_dlgConfigSpace.reset();
-
-		if(this->m_dlgXtalConfigSpace)
-			this->m_dlgXtalConfigSpace.reset();
-
-		if(this->m_dlgAbout)
-			this->m_dlgAbout.reset();
-
-		if(this->m_dlgLicenses)
-			this->m_dlgLicenses.reset();
-	});
+	connect(actionGarbage, &QAction::triggered, this, &PathsTool::CollectGarbage);
 
 	// show settings dialog
 	connect(actionSettings, &QAction::triggered, this, [this]()
@@ -1064,6 +1041,7 @@ void PathsTool::hideEvent(QHideEvent *evt)
 void PathsTool::closeEvent(QCloseEvent *evt)
 {
 	m_stop_requested = true;
+	CollectGarbage();
 
 	// save window size, position, and state
 	m_sett.setValue("geo", saveGeometry());
@@ -1073,6 +1051,35 @@ void PathsTool::closeEvent(QCloseEvent *evt)
 	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
 
 	QMainWindow::closeEvent(evt);
+}
+
+
+/**
+ * clear all allocated objects
+ */
+void PathsTool::CollectGarbage()
+{
+	// remove any open dialogs
+	if(this->m_dlgSettings)
+		this->m_dlgSettings.reset();
+
+	if(this->m_dlgGeoBrowser)
+		this->m_dlgGeoBrowser.reset();
+
+	if(this->m_dlgTextureBrowser)
+		this->m_dlgTextureBrowser.reset();
+
+	if(this->m_dlgConfigSpace)
+		this->m_dlgConfigSpace.reset();
+
+	if(this->m_dlgXtalConfigSpace)
+		this->m_dlgXtalConfigSpace.reset();
+
+	if(this->m_dlgAbout)
+		this->m_dlgAbout.reset();
+
+	if(this->m_dlgLicenses)
+		this->m_dlgLicenses.reset();
 }
 
 

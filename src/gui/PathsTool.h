@@ -274,8 +274,11 @@ protected slots:
 	void DeleteCurrentObject();
 	void RotateCurrentObject(t_real angle);
 	void ShowCurrentObjectProperties();
+
 	void ShowGeometryBrowser();
 	void ShowTextureBrowser();
+
+	void CollectGarbage();
 
 	void RotateObject(const std::string& id, t_real angle);
 	void DeleteObject(const std::string& id);
