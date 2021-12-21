@@ -900,7 +900,7 @@ void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 		QFont font = painter->font();
 		font.setBold(true);
 
-		QString msg{"Click to place lines."};
+		QString msg{"Click to place line segments."};
 		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
 
 		QRect rectVP = viewport()->rect();
