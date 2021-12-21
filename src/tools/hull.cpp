@@ -534,6 +534,7 @@ void HullView::mousePressEvent(QMouseEvent *evt)
 	bool item_is_vertex = false;
 
 	auto& verts = m_scene->GetVertices();
+	const std::size_t num_verts_old = verts.size();
 
 	for(int itemidx=0; itemidx<items.size(); ++itemidx)
 	{
@@ -580,6 +581,12 @@ void HullView::mousePressEvent(QMouseEvent *evt)
 	}
 
 	QGraphicsView::mousePressEvent(evt);
+
+	// set or reset the background text
+	const std::size_t num_verts = verts.size();
+	if((num_verts == 0 && num_verts_old != 0) ||
+		(num_verts_old == 0 && num_verts != 0))
+		m_scene->invalidate(QRectF{}, QGraphicsScene::BackgroundLayer);
 }
 
 
@@ -615,6 +622,29 @@ void HullView::wheelEvent(QWheelEvent *evt)
 	//scale(s, s);
 	QGraphicsView::wheelEvent(evt);
 }
+
+
+void HullView::drawBackground(QPainter* painter, const QRectF& rect)
+{
+	QGraphicsView::drawBackground(painter, rect);
+
+	if(!m_scene->GetVertices().size())
+	{
+		QFont font = painter->font();
+		font.setBold(true);
+
+		QString msg{"Click to place vertices."};
+		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
+
+		QRect rectVP = viewport()->rect();
+
+		painter->setFont(font);
+		painter->drawText(
+			rectVP.width()/2 - msg_width/2,
+			rectVP.height()/2, msg);
+        }
+}
+
 // ----------------------------------------------------------------------------
 
 

@@ -83,7 +83,6 @@ public:
 	LinesScene(LinesScene&) = delete;
 	const LinesScene& operator=(const LinesScene&) const = delete;
 
-public:
 	bool GetCalculateIntersections() const { return m_calcinters; }
 	void SetCalculateIntersections(bool);
 

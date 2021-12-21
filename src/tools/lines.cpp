@@ -134,6 +134,7 @@ void LinesScene::ClearVertices()
 	setBackgroundBrush(QBrush{QColor::fromRgbF(0.95, 0.95, 0.95, 1.)});
 	if(m_elem_voro)
 		m_elem_voro->fill(backgroundBrush().color());
+
 	UpdateAll();
 }
 
@@ -225,50 +226,55 @@ void LinesScene::UpdateLines()
 		delete item;
 	}
 
+	std::size_t numLines_old = m_numLines;
+
 	// get new lines
 	m_elems_lines.clear();
 	m_lines.clear();
 	m_numLines = 0;
 
-
 	const std::size_t num_vertices = m_elems_vertices.size();
-	if(num_vertices < 2)
-		return;
-
-	m_lines.reserve(num_vertices/2);
-
-	for(std::size_t i=0; i<num_vertices-1; i+=2)
+	if(num_vertices >= 2)
 	{
-		const Vertex* _vert1 = m_elems_vertices[i];
-		const Vertex* _vert2 = m_elems_vertices[i+1];
+		m_lines.reserve(num_vertices/2);
 
-		t_vec vert1 = tl2::create<t_vec>({_vert1->x(), _vert1->y()});
-		t_vec vert2 = tl2::create<t_vec>({_vert2->x(), _vert2->y()});
+		for(std::size_t i=0; i<num_vertices-1; i+=2)
+		{
+			const Vertex* _vert1 = m_elems_vertices[i];
+			const Vertex* _vert2 = m_elems_vertices[i+1];
 
-		m_lines.emplace_back(std::make_pair(vert1, vert2));
+			t_vec vert1 = tl2::create<t_vec>({_vert1->x(), _vert1->y()});
+			t_vec vert2 = tl2::create<t_vec>({_vert2->x(), _vert2->y()});
+
+			m_lines.emplace_back(std::make_pair(vert1, vert2));
+		}
+
+
+		QPen penEdge;
+		penEdge.setStyle(Qt::SolidLine);
+		penEdge.setWidthF(2.);
+		penEdge.setColor(QColor::fromRgbF(0., 0., 1.));
+
+
+		m_elems_lines.reserve(m_lines.size());
+
+		for(const auto& line : m_lines)
+		{
+			const t_vec& vertex1 = line.first;
+			const t_vec& vertex2 = line.second;
+
+			QLineF qline{QPointF{vertex1[0], vertex1[1]}, QPointF{vertex2[0], vertex2[1]}};
+			QGraphicsItem *item = addLine(qline, penEdge);
+			m_elems_lines.push_back(item);
+		}
+
+		m_numLines = m_lines.size();
 	}
 
-
-	QPen penEdge;
-	penEdge.setStyle(Qt::SolidLine);
-	penEdge.setWidthF(2.);
-	penEdge.setColor(QColor::fromRgbF(0., 0., 1.));
-
-
-	m_elems_lines.reserve(m_lines.size());
-
-	for(const auto& line : m_lines)
-	{
-		const t_vec& vertex1 = line.first;
-		const t_vec& vertex2 = line.second;
-
-		QLineF qline{QPointF{vertex1[0], vertex1[1]}, QPointF{vertex2[0], vertex2[1]}};
-		QGraphicsItem *item = addLine(qline, penEdge);
-		m_elems_lines.push_back(item);
-	}
-
-
-	m_numLines = m_lines.size();
+	// set or reset the background text
+	if((m_numLines == 0 && numLines_old != 0) ||
+		(numLines_old == 0 && m_numLines != 0))
+		invalidate(QRectF{}, QGraphicsScene::BackgroundLayer);
 }
 
 
@@ -687,8 +693,8 @@ void LinesScene::UpdateVoro()
 
 // ----------------------------------------------------------------------------
 
-LinesView::LinesView(LinesScene *scene, QWidget *parent) : QGraphicsView(scene, parent),
-	m_scene{scene}
+LinesView::LinesView(LinesScene *scene, QWidget *parent)
+	: QGraphicsView(scene, parent), m_scene{scene}
 {
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -882,12 +888,28 @@ void LinesView::wheelEvent(QWheelEvent *evt)
 
 void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 {
+	QGraphicsView::drawBackground(painter, rect);
+
 	// hack, because the background brush is drawn with respect to scene (0,0), not vp (0,0)
 	// TODO: handle scene-viewport trafos other than translations
 	if(m_scene->GetVoroImage())
 		painter->drawImage(mapToScene(QPoint(0,0)), *m_scene->GetVoroImage());
-	else
-		QGraphicsView::drawBackground(painter, rect);
+
+	if(!m_scene->GetNumLines())
+	{
+		QFont font = painter->font();
+		font.setBold(true);
+
+		QString msg{"Click to place lines."};
+		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
+
+		QRect rectVP = viewport()->rect();
+
+		painter->setFont(font);
+		painter->drawText(
+			rectVP.width()/2 - msg_width/2,
+			rectVP.height()/2, msg);
+	}
 }
 // ----------------------------------------------------------------------------
 
