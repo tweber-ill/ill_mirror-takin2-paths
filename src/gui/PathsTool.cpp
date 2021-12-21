@@ -693,12 +693,21 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	QMenu *menuSettings = new QMenu("Settings", m_menubar);
 
 	QAction *actionGarbage = new QAction(QIcon::fromTheme("user-trash-full"), "Collect Garbage", menuSettings);
+	QAction *actionClearSettings = new QAction("Clear Settings File", menuSettings);
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Preferences...", menuSettings);
 
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 
 	// collect garbage
 	connect(actionGarbage, &QAction::triggered, this, &PathsTool::CollectGarbage);
+
+	// clear settings
+	connect(actionClearSettings, &QAction::triggered, 
+	[this]()
+	{
+		//restoreState(m_initial_state);
+		m_sett.clear();
+	});
 
 	// show settings dialog
 	connect(actionSettings, &QAction::triggered, this, [this]()
@@ -720,6 +729,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	menuSettings->addAction(actionSettings);
 	menuSettings->addSeparator();
 	menuSettings->addAction(actionGarbage);
+	menuSettings->addAction(actionClearSettings);
 
 
 
