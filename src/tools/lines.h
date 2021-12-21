@@ -126,6 +126,9 @@ public:
 	void SetIntersectionCalculationMethod(IntersectionCalculationMethod m);
 	void SetVoronoiCalculationMethod(VoronoiCalculationMethod m);
 
+	IntersectionCalculationMethod GetIntersectionCalculationMethod() const { return m_intersectioncalculationmethod; }
+	VoronoiCalculationMethod GetVoronoiCalculationMethod() const { return m_voronoicalculationmethod;}
+
 	void CreateVoroImage(int width, int height);
 	void UpdateVoroImage(const QTransform& trafoSceneToVP);
 	const QImage* GetVoroImage() const { return m_elem_voro; }
@@ -167,7 +170,7 @@ private:
 	IntersectionCalculationMethod m_intersectioncalculationmethod
 		= IntersectionCalculationMethod::SWEEP;
 	VoronoiCalculationMethod m_voronoicalculationmethod
-		= VoronoiCalculationMethod::BOOSTPOLY;
+		= VoronoiCalculationMethod::CGAL;
 	bool m_calctrapezoids = false;
 
 	// infos

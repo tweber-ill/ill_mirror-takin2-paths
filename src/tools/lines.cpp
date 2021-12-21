@@ -69,6 +69,9 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 
+//#define GEOTOOLS_SHOW_MESSAGE
+
+
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
 {
 	ClearRegions();
@@ -205,12 +208,24 @@ void LinesScene::UpdateAll()
 	// if we anyway send it in the end
 	blockSignals(true);
 
+#ifdef GEOTOOLS_SHOW_MESSAGE
+	const std::size_t numLines_old = m_numLines;
+#endif
+
 	UpdateLines();
 	UpdateIntersections();
 	UpdateTrapezoids();
 	UpdateVoro();
 
 	blockSignals(false);
+
+#ifdef GEOTOOLS_SHOW_MESSAGE
+	// set or reset the background text
+	if((m_numLines == 0 && numLines_old != 0) ||
+		(numLines_old == 0 && m_numLines != 0))
+		invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+#endif
+
 	emit CalculationFinished();
 }
 
@@ -225,8 +240,6 @@ void LinesScene::UpdateLines()
 		removeItem(item);
 		delete item;
 	}
-
-	std::size_t numLines_old = m_numLines;
 
 	// get new lines
 	m_elems_lines.clear();
@@ -270,11 +283,6 @@ void LinesScene::UpdateLines()
 
 		m_numLines = m_lines.size();
 	}
-
-	// set or reset the background text
-	if((m_numLines == 0 && numLines_old != 0) ||
-		(numLines_old == 0 && m_numLines != 0))
-		invalidate(QRectF{}, QGraphicsScene::BackgroundLayer);
 }
 
 
@@ -696,11 +704,15 @@ void LinesScene::UpdateVoro()
 LinesView::LinesView(LinesScene *scene, QWidget *parent)
 	: QGraphicsView(scene, parent), m_scene{scene}
 {
+	setCacheMode(QGraphicsView::CacheBackground);
+
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
 	setInteractive(true);
 	setMouseTracking(true);
+
+	setSceneRect(mapToScene(viewport()->rect()).boundingRect());
 }
 
 
@@ -743,6 +755,8 @@ void LinesView::resizeEvent(QResizeEvent *evt)
 
 	setSceneRect(QRectF{pt1, pt2});
 	m_scene->CreateVoroImage(widthView, heightView);
+
+	//QGraphicsView::resizeEvent(evt);
 }
 
 
@@ -895,6 +909,7 @@ void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 	if(m_scene->GetVoroImage())
 		painter->drawImage(mapToScene(QPoint(0,0)), *m_scene->GetVoroImage());
 
+#ifdef GEOTOOLS_SHOW_MESSAGE
 	if(!m_scene->GetNumLines())
 	{
 		QFont font = painter->font();
@@ -910,6 +925,7 @@ void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 			rectVP.width()/2 - msg_width/2,
 			rectVP.height()/2, msg);
 	}
+#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -1105,13 +1121,13 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	// options menu
 	QAction *actionIntersDirect = new QAction{"Direct", this};
 	actionIntersDirect->setCheckable(true);
-	actionIntersDirect->setChecked(false);
+	actionIntersDirect->setChecked(m_scene->GetIntersectionCalculationMethod() == IntersectionCalculationMethod::DIRECT);
 	connect(actionIntersDirect, &QAction::toggled, [this]()
 	{ m_scene->SetIntersectionCalculationMethod(IntersectionCalculationMethod::DIRECT); });
 
 	QAction *actionIntersSweep = new QAction{"Sweep", this};
 	actionIntersSweep->setCheckable(true);
-	actionIntersSweep->setChecked(true);
+	actionIntersSweep->setChecked(m_scene->GetIntersectionCalculationMethod() == IntersectionCalculationMethod::SWEEP);
 	connect(actionIntersSweep, &QAction::toggled, [this]()
 	{ m_scene->SetIntersectionCalculationMethod(IntersectionCalculationMethod::SWEEP); });
 
@@ -1122,13 +1138,13 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	QAction *actionVoroBoost = new QAction{"Boost.Polygon", this};
 	actionVoroBoost->setCheckable(true);
-	actionVoroBoost->setChecked(true);
+	actionVoroBoost->setChecked(m_scene->GetVoronoiCalculationMethod() == VoronoiCalculationMethod::BOOSTPOLY);
 	connect(actionVoroBoost, &QAction::toggled, [this]()
 	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::BOOSTPOLY); });
 
 	QAction *actionVoroCGAL = new QAction{"CGAL/Segment Delaunay Graph", this};
 	actionVoroCGAL->setCheckable(true);
-	actionVoroCGAL->setChecked(false);
+	actionVoroCGAL->setChecked(m_scene->GetVoronoiCalculationMethod() == VoronoiCalculationMethod::CGAL);
 	connect(actionVoroCGAL, &QAction::toggled, [this]()
 	{ m_scene->SetVoronoiCalculationMethod(VoronoiCalculationMethod::CGAL); });
 #if !defined(USE_CGAL)

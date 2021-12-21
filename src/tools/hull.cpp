@@ -66,6 +66,8 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/log.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
+//#define GEOTOOLS_SHOW_MESSAGE
+
 
 HullScene::HullScene(QWidget* parent) : QGraphicsScene(parent), m_parent{parent}
 {
@@ -159,6 +161,13 @@ void HullScene::UpdateAll()
 {
 	UpdateDelaunay();
 	UpdateHull();
+
+#ifdef GEOTOOLS_SHOW_MESSAGE
+	// set or reset the background text
+	const std::size_t num_verts = m_vertices.size();
+	if(num_verts < 3)
+		invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+#endif
 }
 
 
@@ -256,7 +265,7 @@ void HullScene::UpdateDelaunay()
 	vertices.reserve(m_vertices.size());
 	std::transform(m_vertices.begin(), m_vertices.end(), std::back_inserter(vertices),
 		[](const Vertex* vert) -> t_vec
-		{ 
+		{
 			return tl2::create<t_vec>({vert->x(), vert->y()});
 		});
 
@@ -474,6 +483,8 @@ void HullScene::UpdateDelaunay()
 HullView::HullView(HullScene *scene, QWidget *parent) : QGraphicsView(scene, parent),
 	m_scene{scene}
 {
+	setCacheMode(QGraphicsView::CacheBackground);
+
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
@@ -481,6 +492,7 @@ HullView::HullView(HullScene *scene, QWidget *parent) : QGraphicsView(scene, par
 	setMouseTracking(true);
 
 	setBackgroundBrush(QBrush{QColor::fromRgbF(0.95, 0.95, 0.95, 1.)});
+	setSceneRect(mapToScene(viewport()->rect()).boundingRect());
 }
 
 
@@ -520,6 +532,8 @@ void HullView::resizeEvent(QResizeEvent *evt)
 	}
 
 	setSceneRect(QRectF{pt1, pt2});
+
+	//QGraphicsView::resizeEvent(evt);
 }
 
 
@@ -534,7 +548,6 @@ void HullView::mousePressEvent(QMouseEvent *evt)
 	bool item_is_vertex = false;
 
 	auto& verts = m_scene->GetVertices();
-	const std::size_t num_verts_old = verts.size();
 
 	for(int itemidx=0; itemidx<items.size(); ++itemidx)
 	{
@@ -581,12 +594,6 @@ void HullView::mousePressEvent(QMouseEvent *evt)
 	}
 
 	QGraphicsView::mousePressEvent(evt);
-
-	// set or reset the background text
-	const std::size_t num_verts = verts.size();
-	if((num_verts == 0 && num_verts_old != 0) ||
-		(num_verts_old == 0 && num_verts != 0))
-		m_scene->invalidate(QRectF{}, QGraphicsScene::BackgroundLayer);
 }
 
 
@@ -628,6 +635,7 @@ void HullView::drawBackground(QPainter* painter, const QRectF& rect)
 {
 	QGraphicsView::drawBackground(painter, rect);
 
+#ifdef GEOTOOLS_SHOW_MESSAGE
 	if(!m_scene->GetVertices().size())
 	{
 		QFont font = painter->font();
@@ -643,6 +651,7 @@ void HullView::drawBackground(QPainter* painter, const QRectF& rect)
 			rectVP.width()/2 - msg_width/2,
 			rectVP.height()/2, msg);
         }
+#endif
 }
 
 // ----------------------------------------------------------------------------
