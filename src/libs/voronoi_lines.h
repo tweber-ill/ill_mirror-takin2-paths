@@ -1798,28 +1798,36 @@ std::vector<std::vector<t_vec>> convex_split(
 
 
 	// find concave corner
-	std::optional<std::size_t> idx_concave;
+	std::vector<std::tuple<std::size_t, t_real>> indices_concave;
 
 	for(std::size_t idx1=0; idx1<N; ++idx1)
 	{
-		const t_vec& vert1 = poly[idx1];
-		const t_vec& vert2 = poly[(idx1+1) % N];
-		const t_vec& vert3 = poly[(idx1+2) % N];
+		std::size_t idx2 = (idx1+1) % N;
+		std::size_t idx3 = (idx1+2) % N;
 
-		t_real angle = tl2::pi<t_real>-line_angle<t_vec>(vert1, vert2, vert2, vert3);
+		const t_vec& vert1 = poly[idx1];
+		const t_vec& vert2 = poly[idx2];
+		const t_vec& vert3 = poly[idx3];
+
+		t_real angle = tl2::pi<t_real> - line_angle<t_vec, t_real>(
+			vert1, vert2, vert2, vert3);
 		angle = tl2::mod_pos<t_real>(angle, t_real(2)*tl2::pi<t_real>);
 
-		// collinear line, vertex unnecessary
-		if(tl2::equals(angle, tl2::pi<t_real>, eps))
-			continue;
-
 		// corner angle > 180°  =>  concave corner found
-		if(angle > tl2::pi<t_real> /*+ eps*/)
-		{
-			idx_concave = idx1;
-			break;
-		}
+		if(angle > tl2::pi<t_real> + eps)
+			indices_concave.push_back(std::make_tuple(idx1, angle));
 	}
+
+	if(!indices_concave.size())
+		return split;
+
+
+	// sort by the angles
+	std::sort(indices_concave.begin(), indices_concave.end(),
+	[](const std::tuple<std::size_t, t_real>& idx1, const std::tuple<std::size_t, t_real>& idx2) -> bool
+	{
+		return std::get<1>(idx1) > std::get<1>(idx2);
+	});
 
 
 	// get all intersections of concave edge with contour
@@ -1827,21 +1835,23 @@ std::vector<std::vector<t_vec>> convex_split(
 	std::vector<t_vec> intersections;
 
 
-	// intersection to use
+	// get intersection of concave edge with contour
+	// TODO: handle int->real conversion if needed
 	t_vec inters{};
 	std::optional<std::size_t> idx_intersection;
+	std::optional<std::size_t> idx_concave;
 
-	if(idx_concave)
+	for(const auto& [idx_concave_loc, angle_loc] : indices_concave)
 	{
-		const t_vec& vert1 = poly[*idx_concave];
-		const t_vec& vert2 = poly[(*idx_concave+1) % N];
-		const t_vec& vert3 = poly[(*idx_concave+2) % N];
+		const t_vec& vert1 = poly[idx_concave_loc];
+		const t_vec& vert2 = poly[(idx_concave_loc+1) % N];
+		const t_vec& vert3 = poly[(idx_concave_loc+2) % N];
 		t_vec dir1 = vert2 - vert1;
 
 		circular_wrapper circularverts(const_cast<std::vector<t_vec>&>(poly));
 
-		auto iterBeg = circularverts.begin() + (*idx_concave + 2);
-		auto iterEnd = circularverts.begin() + (*idx_concave + N);
+		auto iterBeg = circularverts.begin() + (idx_concave_loc + 2);
+		auto iterEnd = circularverts.begin() + (idx_concave_loc + N);
 
 		for(auto iter=iterBeg; iter!=iterEnd; ++iter)
 		{
@@ -1873,98 +1883,103 @@ std::vector<std::vector<t_vec>> convex_split(
 
 		// TODO: test all intersections and filter out the case where the
 		//       intersecting line runs outside of the contour
-	}
 
 
-	// pick closest intersection
-	t_real min_dist_inters = std::numeric_limits<t_real>::max();
-	for(std::size_t i=0; i<intersections.size(); ++i)
-	{
-		const t_vec& intersection = intersections[i];
-		//const t_vec& vert1 = poly[*idx_concave];
-		const t_vec& vert2 = poly[(*idx_concave+1) % N];
-
-		t_real dist = tl2::inner<t_vec>(intersection-vert2, intersection-vert2);
-		if(dist < min_dist_inters /*&& dist > eps*/)
+		// pick closest intersection
+		t_real min_dist_inters = std::numeric_limits<t_real>::max();
+		for(std::size_t i=0; i<intersections.size(); ++i)
 		{
-			min_dist_inters = dist;
-			inters = intersections[i];
-			idx_intersection = idx_intersections[i];
+			const t_vec& intersection = intersections[i];
+			//const t_vec& vert1 = poly[idx_concave_loc];
+			const t_vec& vert2 = poly[(idx_concave_loc+1) % N];
+
+			t_real dist = tl2::inner<t_vec>(intersection-vert2, intersection-vert2);
+			if(dist < min_dist_inters /*&& dist > eps*/)
+			{
+				min_dist_inters = dist;
+				inters = intersections[i];
+				idx_intersection = idx_intersections[i];
+				idx_concave = idx_concave_loc;
+			}
 		}
+
+
+		if(idx_concave && idx_intersection)
+			break;
 	}
 
+
+	if(!idx_concave || !idx_intersection)
+		return split;
 
 	// split polygon
-	if(idx_concave && idx_intersection)
+	split.reserve(2);
+
+	circular_wrapper circularverts(const_cast<std::vector<t_vec>&>(poly));
+
+	auto iter1 = circularverts.begin() + (*idx_concave);
+	auto iter2 = circularverts.begin() + (*idx_intersection);
+
+	// split polygon along the line [idx_concave+1], intersection
+	std::vector<t_vec> poly1, poly2;
+	poly1.reserve(N);
+	poly2.reserve(N);
+
+	// sub-polygon 1
+	for(auto iter = iter2; true; ++iter)
 	{
-		split.reserve(2);
+		poly1.push_back(*iter);
+		if(iter.GetIter() == (iter1+1).GetIter())
+			break;
+	}
 
-		circular_wrapper circularverts(const_cast<std::vector<t_vec>&>(poly));
+	// sub-polygon 2
+	for(auto iter = iter1+1; true; ++iter)
+	{
+		poly2.push_back(*iter);
+		if(iter.GetIter() == (iter2).GetIter())
+			break;
+	}
 
-		auto iter1 = circularverts.begin() + (*idx_concave);
-		auto iter2 = circularverts.begin() + (*idx_intersection);
+	// split along the line [idx_concave+1], inters instead
+	// insert intersection point before [idx_intersection]
+	if(!tl2::equals<t_vec>(*poly1.begin(), inters, eps))
+		poly1.insert(poly1.begin(), inters);
 
-		// split polygon along the line [idx_concave+1], intersection
-		std::vector<t_vec> poly1, poly2;
-		poly1.reserve(N);
-		poly2.reserve(N);
+	// exchange [idx_intersection] with intersection point
+	if(!tl2::equals<t_vec>(*std::prev(poly2.end(), 2), inters, eps))
+		*std::prev(poly2.end(), 1) = inters;
+	else
+		poly2.resize(poly2.size()-1);
 
-		// sub-polygon 1
-		for(auto iter = iter2; true; ++iter)
-		{
-			poly1.push_back(*iter);
-			if(iter.GetIter() == (iter1+1).GetIter())
-				break;
-		}
+	// have to throw exception to get out of recursion
+	if(poly1.size() < 3 || poly2.size() < 3)
+		throw std::logic_error("Invalid split polygon. Intersecting edges?");
 
-		// sub-polygon 2
-		for(auto iter = iter1+1; true; ++iter)
-		{
-			poly2.push_back(*iter);
-			if(iter.GetIter() == (iter2).GetIter())
-				break;
-		}
+	// recursively split new sub-polygon 1
+	if(auto subsplit1 = convex_split<t_vec, t_real>(poly1, eps);
+		subsplit1.size())
+	{
+		for(auto&& newpoly : subsplit1)
+			split.emplace_back(std::move(newpoly));
+	}
+	else
+	{
+		// poly1 was already convex
+		split.emplace_back(std::move(poly1));
+	}
 
-		// split along the line [idx_concave+1], inters instead
-		// insert intersection point before [idx_intersection]
-		if(!tl2::equals<t_vec>(*poly1.begin(), inters, eps))
-			poly1.insert(poly1.begin(), inters);
-
-		// exchange [idx_intersection] with intersection point
-		if(!tl2::equals<t_vec>(*std::prev(poly2.end(), 2), inters, eps))
-			*std::prev(poly2.end(), 1) = inters;
-		else
-			poly2.resize(poly2.size()-1);
-
-		// have to throw exception to get out of recursion
-		if(poly1.size() < 3 || poly2.size() < 3)
-			throw std::logic_error("Invalid split polygon. Intersecting edges?");
-
-		// recursively split new sub-polygon 1
-		if(auto subsplit1 = convex_split<t_vec, t_real>(poly1, eps);
-			subsplit1.size())
-		{
-			for(auto&& newpoly : subsplit1)
-				split.emplace_back(std::move(newpoly));
-		}
-		else
-		{
-			// poly1 was already convex
-			split.emplace_back(std::move(poly1));
-		}
-
-		// recursively split new sub-polygon 2
-		if(auto subsplit2 = convex_split<t_vec, t_real>(poly2, eps);
-			subsplit2.size())
-		{
-			for(auto&& newpoly : subsplit2)
-				split.emplace_back(std::move(newpoly));
-		}
-		else
-		{
-			// poly2 was already convex
-			split.emplace_back(std::move(poly2));
-		}
+	// recursively split new sub-polygon 2
+	if(auto subsplit2 = convex_split<t_vec, t_real>(poly2, eps);
+		subsplit2.size())
+	{
+		for(auto&& newpoly : subsplit2)
+			split.emplace_back(std::move(newpoly));
+	}
+	else
+	{
+		// poly2 was already convex
+		split.emplace_back(std::move(poly2));
 	}
 
 	return split;
