@@ -1802,12 +1802,9 @@ std::vector<std::vector<t_vec>> convex_split(
 
 	for(std::size_t idx1=0; idx1<N; ++idx1)
 	{
-		std::size_t idx2 = (idx1+1) % N;
-		std::size_t idx3 = (idx1+2) % N;
-
 		const t_vec& vert1 = poly[idx1];
-		const t_vec& vert2 = poly[idx2];
-		const t_vec& vert3 = poly[idx3];
+		const t_vec& vert2 = poly[(idx1+1) % N];
+		const t_vec& vert3 = poly[(idx1+2) % N];
 
 		t_real angle = tl2::pi<t_real> - line_angle<t_vec, t_real>(
 			vert1, vert2, vert2, vert3);
