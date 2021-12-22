@@ -53,23 +53,59 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/log.h"
 
 
+#define GEOTOOLS_SHOW_MESSAGE
+
+
 // ----------------------------------------------------------------------------
 
 PolyView::PolyView(QGraphicsScene *scene, QWidget *parent) : QGraphicsView(scene, parent),
 	m_scene{scene}
 {
+	setCacheMode(QGraphicsView::CacheBackground);
+
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
 	setInteractive(true);
 	setMouseTracking(true);
 
+	//setSceneRect(mapToScene(viewport()->rect()).boundingRect());
 	setBackgroundBrush(QBrush{QColor::fromRgbF(0.95, 0.95, 0.95, 1.)});
 }
 
 
 PolyView::~PolyView()
 {
+}
+
+
+void PolyView::drawBackground(QPainter* painter, const QRectF& rect)
+{
+	QGraphicsView::drawBackground(painter, rect);
+}
+
+
+void PolyView::drawForeground(QPainter* painter, const QRectF& rect)
+{
+	QGraphicsView::drawForeground(painter, rect);
+
+#ifdef GEOTOOLS_SHOW_MESSAGE
+	if(!m_vertices.size())
+	{
+		QFont font = painter->font();
+		font.setBold(true);
+
+		QString msg{"Click to place vertices."};
+		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
+
+		QRect rectVP = viewport()->rect();
+
+		painter->setFont(font);
+		painter->drawText(
+			rectVP.width()/2 - msg_width/2,
+			rectVP.height()/2, msg);
+	}
+#endif
 }
 
 
@@ -97,7 +133,6 @@ void PolyView::resizeEvent(QResizeEvent *evt)
 
 	setSceneRect(QRectF{pt1, pt2});
 }
-
 
 
 void PolyView::AddVertex(const QPointF& pos)
@@ -227,6 +262,12 @@ void PolyView::UpdateAll()
 	UpdateEdges();
 	UpdateSplitPolygon();
 	UpdateKer();
+
+#ifdef GEOTOOLS_SHOW_MESSAGE
+	// set or reset the initial text
+	if(m_vertices.size() < 2)
+		m_scene->update();
+#endif
 }
 
 
@@ -410,7 +451,6 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 
 	m_view->SetSortVertices(
 		m_sett.value("sort_vertices", m_view->GetSortVertices()).toBool());
-
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 

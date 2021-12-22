@@ -89,6 +89,9 @@ protected:
 	virtual void mouseReleaseEvent(QMouseEvent *evt) override;
 	virtual void mouseMoveEvent(QMouseEvent *evt) override;
 
+	virtual void drawBackground(QPainter*, const QRectF&) override;
+	virtual void drawForeground(QPainter*, const QRectF&) override;
+
 	virtual void resizeEvent(QResizeEvent *evt) override;
 
 private:

@@ -163,7 +163,7 @@ void HullScene::UpdateAll()
 	UpdateHull();
 
 #ifdef GEOTOOLS_SHOW_MESSAGE
-	// set or reset the background text
+	// set or reset the initial text
 	const std::size_t num_verts = m_vertices.size();
 	if(num_verts < 3)
 		update();
@@ -492,7 +492,7 @@ HullView::HullView(HullScene *scene, QWidget *parent) : QGraphicsView(scene, par
 	setMouseTracking(true);
 
 	setBackgroundBrush(QBrush{QColor::fromRgbF(0.95, 0.95, 0.95, 1.)});
-	setSceneRect(mapToScene(viewport()->rect()).boundingRect());
+	//setSceneRect(mapToScene(viewport()->rect()).boundingRect());
 }
 
 

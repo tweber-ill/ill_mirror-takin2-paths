@@ -220,7 +220,7 @@ void LinesScene::UpdateAll()
 	blockSignals(false);
 
 #ifdef GEOTOOLS_SHOW_MESSAGE
-	// set or reset the background text
+	// set or reset the initial text
 	if((m_numLines == 0 && numLines_old != 0) ||
 		(numLines_old == 0 && m_numLines != 0))
 		update();
@@ -712,7 +712,7 @@ LinesView::LinesView(LinesScene *scene, QWidget *parent)
 	setInteractive(true);
 	setMouseTracking(true);
 
-	setSceneRect(mapToScene(viewport()->rect()).boundingRect());
+	//setSceneRect(mapToScene(viewport()->rect()).boundingRect());
 }
 
 
