@@ -646,47 +646,98 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	// tools menu
 	QMenu *menuTools = new QMenu("Tools", m_menubar);
 
+	QAction *acLinesTool = new QAction("Line Segment Voronoi Diagrams...", menuTools);
+	QAction *acHullTool = new QAction("Vertex Voronoi Diagrams and Convex Hull...", menuTools);
+	QAction *acPolyTool = new QAction("Polygons...", menuTools);
+
+#ifdef TASPATHS_TOOLS_STANDALONE
 	fs::path hullpath = fs::path(g_apppath) / fs::path("taspaths-hull" EXEC_EXTENSION);
 	fs::path linespath = fs::path(g_apppath) / fs::path("taspaths-lines" EXEC_EXTENSION);
 	fs::path polypath = fs::path(g_apppath) / fs::path("taspaths-poly" EXEC_EXTENSION);
 
-	std::size_t num_tools = 0;
 	if(fs::exists(linespath))
 	{
-		QAction *acLinesTool = new QAction("Line Segment Voronoi Diagrams...", menuTools);
-		menuTools->addAction(acLinesTool);
-		++num_tools;
-
 		connect(acLinesTool, &QAction::triggered, this, [linespath]()
 		{
 			create_process(linespath.string());
 		});
 	}
+	else
+	{
+		delete acLinesTool;
+		acLinesTool = nullptr;
+	}
 
 	if(fs::exists(hullpath))
 	{
-		QAction *acHullTool = new QAction("Vertex Voronoi Diagrams and Convex Hull...", menuTools);
-		menuTools->addAction(acHullTool);
-		++num_tools;
-
 		connect(acHullTool, &QAction::triggered, this, [hullpath]()
 		{
 			create_process(hullpath.string());
 		});
 	}
+	else
+	{
+		delete acHullTool;
+		acHullTool = nullptr;
+	}
 
 	if(fs::exists(polypath))
 	{
-		QAction *acPolyTool = new QAction("Polygons...", menuTools);
-		menuTools->addAction(acPolyTool);
-		++num_tools;
-
 		connect(acPolyTool, &QAction::triggered, this, [polypath]()
 		{
 			create_process(polypath.string());
 		});
 	}
+	else
+	{
+		delete acPolyTool;
+		acPolyTool = nullptr;
+	}
 
+#else
+	connect(acLinesTool, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_wndLines)
+			this->m_wndLines = std::make_shared<LinesWnd>(this);
+
+		// sequence to show the dialog,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
+		m_wndLines->show();
+		m_wndLines->raise();
+		m_wndLines->activateWindow();
+	});
+
+	connect(acHullTool, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_wndHull)
+			this->m_wndHull = std::make_shared<HullWnd>(this);
+
+		// sequence to show the dialog,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
+		m_wndHull->show();
+		m_wndHull->raise();
+		m_wndHull->activateWindow();
+	});
+
+	connect(acPolyTool, &QAction::triggered, this, [this]()
+	{
+		if(!this->m_wndPoly)
+			this->m_wndPoly = std::make_shared<PolyWnd>(this);
+
+		// sequence to show the dialog,
+		// see: https://doc.qt.io/qt-5/qdialog.html#code-examples
+		m_wndPoly->show();
+		m_wndPoly->raise();
+		m_wndPoly->activateWindow();
+	});
+#endif
+
+	if(acLinesTool)
+		menuTools->addAction(acLinesTool);
+	if(acHullTool)
+		menuTools->addAction(acHullTool);
+	if(acPolyTool)
+		menuTools->addAction(acPolyTool);
 
 
 	// settings menu
@@ -849,7 +900,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	m_menubar->addMenu(menuFile);
 	m_menubar->addMenu(menuGeo);
 	m_menubar->addMenu(menuCalc);
-	if(num_tools)
+	if(!menuTools->isEmpty())
 		m_menubar->addMenu(menuTools);
 	m_menubar->addMenu(menuWindow);
 	m_menubar->addMenu(menuSettings);
@@ -1070,26 +1121,26 @@ void PathsTool::closeEvent(QCloseEvent *evt)
 void PathsTool::CollectGarbage()
 {
 	// remove any open dialogs
-	if(this->m_dlgSettings)
-		this->m_dlgSettings.reset();
-
-	if(this->m_dlgGeoBrowser)
-		this->m_dlgGeoBrowser.reset();
-
-	if(this->m_dlgTextureBrowser)
-		this->m_dlgTextureBrowser.reset();
-
-	if(this->m_dlgConfigSpace)
-		this->m_dlgConfigSpace.reset();
-
-	if(this->m_dlgXtalConfigSpace)
-		this->m_dlgXtalConfigSpace.reset();
-
-	if(this->m_dlgAbout)
-		this->m_dlgAbout.reset();
-
-	if(this->m_dlgLicenses)
-		this->m_dlgLicenses.reset();
+	if(m_dlgSettings)
+		m_dlgSettings.reset();
+	if(m_dlgGeoBrowser)
+		m_dlgGeoBrowser.reset();
+	if(m_dlgTextureBrowser)
+		m_dlgTextureBrowser.reset();
+	if(m_dlgConfigSpace)
+		m_dlgConfigSpace.reset();
+	if(m_dlgXtalConfigSpace)
+		m_dlgXtalConfigSpace.reset();
+	if(m_dlgAbout)
+		m_dlgAbout.reset();
+	if(m_dlgLicenses)
+		m_dlgLicenses.reset();
+	if(m_wndLines)
+		m_wndLines.reset();
+	if(m_wndHull)
+		m_wndHull.reset();
+	if(m_wndPoly)
+		m_wndPoly.reset();
 }
 
 

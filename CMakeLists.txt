@@ -49,7 +49,7 @@ option(USE_LAPACK "use lapack" TRUE)
 option(USE_OVD "use openvoronoi" FALSE)
 option(USE_CGAL "use cgal" TRUE)
 option(USE_PY "use python scripting" FALSE)
-option(BUILD_TEST_TOOLS "build test tools" TRUE)
+option(BUILD_TEST_TOOLS "build test tools" FALSE)
 option(UNIT_TESTS "build unit tests" FALSE)
 
 
@@ -225,7 +225,7 @@ if(QT_VER EQUAL 6)
 	list(APPEND QtBaseLibraries Qt6::Core Qt6::Gui Qt6::Widgets
 		Qt6::Svg)
 	list(APPEND QtAllLibraries Qt6::Core Qt6::Gui Qt6::Widgets
-		Qt6::OpenGL Qt6::OpenGLWidgets Qt6::PrintSupport)
+		Qt6::Svg Qt6::OpenGL Qt6::OpenGLWidgets Qt6::PrintSupport)
 elseif(QT_VER EQUAL 5)
 	find_package(Qt5 REQUIRED
 		COMPONENTS Core Gui Svg Widgets OpenGL
@@ -233,7 +233,7 @@ elseif(QT_VER EQUAL 5)
 	list(APPEND QtBaseLibraries Qt5::Core Qt5::Gui Qt5::Widgets
 		Qt5::Svg)
 	list(APPEND QtAllLibraries Qt5::Core Qt5::Gui Qt5::Widgets
-		Qt5::OpenGL Qt5::PrintSupport)
+		Qt5::Svg Qt5::OpenGL Qt5::PrintSupport)
 else()
 	message(FATAL_ERROR "Unknown Qt version selected: ${QT_VER}")
 endif()
@@ -319,6 +319,13 @@ add_executable(taspaths
 	src/libs/ptree.h
 	src/libs/proc.cpp src/libs/proc.h
 
+	src/tools/hull.cpp src/tools/hull.h
+	src/tools/lines.cpp src/tools/lines.h
+	src/tools/poly.cpp src/tools/poly.h
+	src/tools/vertex.cpp src/tools/vertex.h
+	src/tools/about.cpp src/tools/about.h
+	src/tools/info.cpp src/tools/info.h
+
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 )
 
@@ -366,6 +373,10 @@ if(BUILD_TEST_TOOLS)
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
 	)
+
+	target_compile_definitions(taspaths-hull PUBLIC TASPATHS_TOOLS_STANDALONE)
+	target_compile_definitions(taspaths-lines PUBLIC TASPATHS_TOOLS_STANDALONE)
+	target_compile_definitions(taspaths-poly PUBLIC TASPATHS_TOOLS_STANDALONE)
 endif()
 
 
@@ -381,7 +392,9 @@ target_link_libraries(taspaths
 	taspaths_core
 	"${Boost_LIBRARIES}"
 	"${Lapacke_LIBRARIES}"
-	#"${Qhull_LIBRARIES}"
+	"${Qhull_LIBRARIES}"
+	"${CGAL_LIBRARIES}"
+	"${OVD_LIBRARIES}"
 	"${MINGW_WINSOCK}"
 	Threads::Threads
 	"${QtAllLibraries}"
@@ -418,8 +431,8 @@ if(BUILD_TEST_TOOLS)
 	target_link_libraries(taspaths-lines
 		"${Boost_LIBRARIES}"
 		"${Lapacke_LIBRARIES}"
-		"${OVD_LIBRARIES}"
 		"${CGAL_LIBRARIES}"
+		"${OVD_LIBRARIES}"
 		"${MINGW_WINSOCK}"
 		Threads::Threads
 		"${QtBaseLibraries}"

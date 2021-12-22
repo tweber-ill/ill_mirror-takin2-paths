@@ -29,7 +29,7 @@
 #ifndef __POLY_GUI_H__
 #define __POLY_GUI_H__
 
-#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsScene>
@@ -45,10 +45,12 @@
 
 #include "vertex.h"
 #include "about.h"
-#include "Settings.h"
 #include "src/gui/Recent.h"
 
-#define GeoSettingsDlg SettingsDlg
+#ifdef TASPATHS_TOOLS_STANDALONE
+	#include "Settings.h"
+	#define GeoSettingsDlg SettingsDlg
+#endif
 
 
 class PolyView : public QGraphicsView
@@ -115,10 +117,10 @@ signals:
 
 
 
-class PolyWnd : public QMainWindow
+class PolyWnd : public QDialog
 { Q_OBJECT
 public:
-	using QMainWindow::QMainWindow;
+	using QDialog::QDialog;
 
 	PolyWnd(QWidget* pParent = nullptr);
 	virtual ~PolyWnd();
@@ -145,8 +147,10 @@ private:
 		return this->OpenFile(filename);
 	};
 
-	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
+#ifdef TASPATHS_TOOLS_STANDALONE
 	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
+#endif
+	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 
 	std::shared_ptr<QGraphicsScene> m_scene{};
 	std::shared_ptr<PolyView> m_view{};

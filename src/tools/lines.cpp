@@ -42,6 +42,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QProgressDialog>
+#include <QtWidgets/QGridLayout>
 #include <QtSvg/QSvgGenerator>
 
 #include <locale>
@@ -940,24 +941,31 @@ void LinesView::drawForeground(QPainter* painter, const QRectF& rect)
 
 // ----------------------------------------------------------------------------
 
-LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
+LinesWnd::LinesWnd(QWidget* pParent) : QDialog{pParent},
 	m_scene{new LinesScene{this}},
 	m_view{new LinesView{m_scene.get(), this}},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
+#ifdef TASPATHS_TOOLS_STANDALONE
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
+#endif
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 
 	setWindowTitle("Line Segments");
-	setCentralWidget(m_view.get());
+
+	QGridLayout *layout = new QGridLayout(this);
+	layout->setSpacing(6);
+	layout->setContentsMargins(6, 6, 6, 6);
+	layout->addWidget(m_view.get(), 0, 0, 1, 1);
 
 	m_statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
 	QStatusBar *statusBar = new QStatusBar{this};
 	statusBar->addPermanentWidget(m_statusLabel.get(), 1);
-	setStatusBar(statusBar);
+	statusBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	layout->addWidget(statusBar, 1, 0, 1, 1);
 
 
 	// file menu
@@ -978,7 +986,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+		QString dirLast = m_sett.value("cur_image_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
 			"Export SVG", dirLast+"/untitled.svg",
@@ -996,7 +1004,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportGraph = new QAction{"Export Voronoi Graph...", this};
 	connect(actionExportGraph, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+		QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
 			"Export DOT", dirLast+"/untitled.dot",
@@ -1010,6 +1018,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", this);
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 	connect(actionSettings, &QAction::triggered, this, [this]()
@@ -1022,9 +1031,14 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		m_dlgSettings->raise();
 		m_dlgSettings->activateWindow();
 	});
+#endif
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
 	actionQuit->setMenuRole(QAction::QuitRole);
+#else
+	QAction *actionQuit = new QAction{QIcon::fromTheme("window-close"), "Close", this};
+#endif
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
 
 
@@ -1215,8 +1229,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionLoad->setShortcut(QKeySequence::Open);
 	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+#ifdef TASPATHS_TOOLS_STANDALONE
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
+#else
+	actionQuit->setShortcut(QKeySequence::Close);
+#endif
 	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
 	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
@@ -1252,8 +1270,10 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addAction(actionExportSvg);
 	menuFile->addAction(actionExportGraph);
 	menuFile->addSeparator();
+#ifdef TASPATHS_TOOLS_STANDALONE
 	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();
+#endif
 	menuFile->addAction(actionQuit);
 
 	menuView->addAction(actionZoomIn);
@@ -1300,29 +1320,24 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuOptions);
 	menuBar->addMenu(menuHelp);
-	setMenuBar(menuBar);
+	layout->setMenuBar(menuBar);
 
 
 	// ------------------------------------------------------------------------
 	// restore settings
-	if(m_sett.contains("wnd_geo"))
+	if(m_sett.contains("lines_wnd_geo"))
 	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("lines_wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
 	{
-		resize(1024, 768);
-	}
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
+		resize(800, 600);
 	}
 
 	// recent files
-	if(m_sett.contains("recent_files"))
-		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	if(m_sett.contains("lines_recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("lines_recent_files").toStringList());
 	// ------------------------------------------------------------------------
 
 
@@ -1498,7 +1513,7 @@ bool LinesWnd::OpenFile(const QString& file)
 		SetCurrentFile(file);
 		m_recent.AddRecentFile(file);
 
-		m_sett.setValue("recent_dir", QFileInfo(file).path());
+		m_sett.setValue("cur_dir", QFileInfo(file).path());
 	}
 	else
 	{
@@ -1515,7 +1530,7 @@ bool LinesWnd::OpenFile(const QString& file)
  */
 void LinesWnd::OpenFile()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getOpenFileName(this,
 		"Open Data", dirLast,
@@ -1562,7 +1577,7 @@ bool LinesWnd::SaveFile(const QString& file)
 
 	SetCurrentFile(file);
 	m_recent.AddRecentFile(file);
-	m_sett.setValue("recent_dir", QFileInfo(file).path());
+	m_sett.setValue("cur_dir", QFileInfo(file).path());
 
 	return true;
 }
@@ -1585,7 +1600,7 @@ void LinesWnd::SaveFile()
  */
 void LinesWnd::SaveFileAs()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
 		"Save Data", dirLast+"/untitled.xml",
@@ -1648,15 +1663,14 @@ void LinesWnd::UpdateInfos()
 void LinesWnd::closeEvent(QCloseEvent *e)
 {
 	// save settings
-	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
-	m_sett.setValue("wnd_geo", geo);
-	m_sett.setValue("wnd_state", state);
+	QByteArray geo{this->saveGeometry()};
+	m_sett.setValue("lines_wnd_geo", geo);
 
 	// save recent files
 	m_recent.TrimEntries();
-	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
+	m_sett.setValue("lines_recent_files", m_recent.GetRecentFiles());
 
-	QMainWindow::closeEvent(e);
+	QDialog::closeEvent(e);
 }
 
 

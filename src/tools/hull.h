@@ -30,7 +30,7 @@
 #define __HULL_GUI_H__
 
 #include <QtCore/QSettings>
-#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QLabel>
@@ -49,10 +49,12 @@
 
 #include "vertex.h"
 #include "about.h"
-#include "Settings.h"
 #include "src/gui/Recent.h"
 
-#define GeoSettingsDlg SettingsDlg
+#ifdef TASPATHS_TOOLS_STANDALONE
+	#include "Settings.h"
+	#define GeoSettingsDlg SettingsDlg
+#endif
 
 
 enum class HullCalculationMethod
@@ -223,10 +225,10 @@ private:
 /**
  * main window
  */
-class HullWnd : public QMainWindow
+class HullWnd : public QDialog
 { Q_OBJECT
 public:
-	using QMainWindow::QMainWindow;
+	using QDialog::QDialog;
 
 	HullWnd(QWidget* pParent = nullptr);
 	virtual ~HullWnd();
@@ -268,8 +270,10 @@ private:
 		return this->OpenFile(filename);
 	};
 
-	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
+#ifdef TASPATHS_TOOLS_STANDALONE
 	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
+#endif
+	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
 	std::shared_ptr<HullDlg> m_hulldlg{};
 	std::shared_ptr<HullScene> m_scene{};
 	std::shared_ptr<HullView> m_view{};

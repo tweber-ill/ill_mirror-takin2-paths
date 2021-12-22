@@ -45,6 +45,7 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QGridLayout>
 #include <QtSvg/QSvgGenerator>
 
 #include <locale>
@@ -667,38 +668,45 @@ void HullView::drawForeground(QPainter* painter, const QRectF& rect)
 
 // ----------------------------------------------------------------------------
 
-HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
+HullWnd::HullWnd(QWidget* pParent) : QDialog{pParent},
 	m_scene{new HullScene{this}},
 	m_view{new HullView{m_scene.get(), this}},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
 	// ------------------------------------------------------------------------
 	// restore settings
+#ifdef TASPATHS_TOOLS_STANDALONE
 	GeoSettingsDlg::ReadSettings(&m_sett);
+#endif
 
 	m_scene->SetCalculateHull(
-		m_sett.value("calc_hull", m_scene->GetCalculateHull()).toBool());
+		m_sett.value("hull_calc_hull", m_scene->GetCalculateHull()).toBool());
 	m_scene->SetCalculateVoronoiVertices(
-		m_sett.value("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices()).toBool());
+		m_sett.value("hull_calc_voronoivertices", m_scene->GetCalculateVoronoiVertices()).toBool());
 	m_scene->SetCalculateVoronoiRegions(
-		m_sett.value("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions()).toBool());
+		m_sett.value("hull_calc_voronoiregions", m_scene->GetCalculateVoronoiRegions()).toBool());
 	m_scene->SetCalculateDelaunay(
-		m_sett.value("calc_delaunay", m_scene->GetCalculateDelaunay()).toBool());
+		m_sett.value("hull_calc_delaunay", m_scene->GetCalculateDelaunay()).toBool());
 	m_scene->SetCalculateKruskal(
-		m_sett.value("calc_kruskal", m_scene->GetCalculateKruskal()).toBool());
+		m_sett.value("hull_calc_kruskal", m_scene->GetCalculateKruskal()).toBool());
 	// ------------------------------------------------------------------------
 
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 
 	setWindowTitle("Convex Hull");
-	setCentralWidget(m_view.get());
+
+	QGridLayout *layout = new QGridLayout(this);
+	layout->setSpacing(6);
+	layout->setContentsMargins(6, 6, 6, 6);
+	layout->addWidget(m_view.get(), 0, 0, 1, 1);
 
 	m_statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
 	QStatusBar *statusBar = new QStatusBar{this};
 	statusBar->addPermanentWidget(m_statusLabel.get(), 1);
-	setStatusBar(statusBar);
+	statusBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	layout->addWidget(statusBar, 1, 0, 1, 1);
 
 
 	// menu actions
@@ -719,7 +727,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+		QString dirLast = m_sett.value("cur_image_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(
 			this, "Export SVG", dirLast+"/untitled.svg",
@@ -734,6 +742,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", this);
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 	connect(actionSettings, &QAction::triggered, this, [this]()
@@ -746,9 +755,14 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		m_dlgSettings->raise();
 		m_dlgSettings->activateWindow();
 	});
+#endif
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
 	actionQuit->setMenuRole(QAction::QuitRole);
+#else
+	QAction *actionQuit = new QAction{QIcon::fromTheme("window-close"), "Close", this};
+#endif
 	connect(actionQuit, &QAction::triggered, [this]()
 		{ this->close(); });
 
@@ -956,8 +970,10 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
 	menuFile->addSeparator();
+#ifdef TASPATHS_TOOLS_STANDALONE
 	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();
+#endif
 	menuFile->addAction(actionQuit);
 
 	menuView->addAction(actionZoomIn);
@@ -1006,8 +1022,12 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionLoad->setShortcut(QKeySequence::Open);
 	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+#ifdef TASPATHS_TOOLS_STANDALONE
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
+#else
+	actionQuit->setShortcut(QKeySequence::Close);
+#endif
 	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
 	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
@@ -1021,29 +1041,24 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuBack);
 	menuBar->addMenu(menuTools);
 	menuBar->addMenu(menuHelp);
-	setMenuBar(menuBar);
+	layout->setMenuBar(menuBar);
 
 
 	// ------------------------------------------------------------------------
 	// restore settings
-	if(m_sett.contains("wnd_geo"))
+	if(m_sett.contains("hull_wnd_geo"))
 	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("hull_wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
 	{
-		resize(1024, 768);
-	}
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
+		resize(800, 600);
 	}
 
 	// recent files
-	if(m_sett.contains("recent_files"))
-		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	if(m_sett.contains("hull_recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("hull_recent_files").toStringList());
 	// ------------------------------------------------------------------------
 
 
@@ -1068,20 +1083,19 @@ void HullWnd::SetStatusMessage(const QString& msg)
 void HullWnd::closeEvent(QCloseEvent *e)
 {
 	// save settings
-	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
-	m_sett.setValue("wnd_geo", geo);
-	m_sett.setValue("wnd_state", state);
-	m_sett.setValue("calc_hull", m_scene->GetCalculateHull());
-	m_sett.setValue("calc_voronoivertices", m_scene->GetCalculateVoronoiVertices());
-	m_sett.setValue("calc_voronoiregions", m_scene->GetCalculateVoronoiRegions());
-	m_sett.setValue("calc_delaunay", m_scene->GetCalculateDelaunay());
-	m_sett.setValue("calc_kruskal", m_scene->GetCalculateKruskal());
+	QByteArray geo{this->saveGeometry()};
+	m_sett.setValue("hull_wnd_geo", geo);
+	m_sett.setValue("hull_calc_hull", m_scene->GetCalculateHull());
+	m_sett.setValue("hull_calc_voronoivertices", m_scene->GetCalculateVoronoiVertices());
+	m_sett.setValue("hull_calc_voronoiregions", m_scene->GetCalculateVoronoiRegions());
+	m_sett.setValue("hull_calc_delaunay", m_scene->GetCalculateDelaunay());
+	m_sett.setValue("hull_calc_kruskal", m_scene->GetCalculateKruskal());
 
 	// save recent files
 	m_recent.TrimEntries();
-	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
+	m_sett.setValue("hull_recent_files", m_recent.GetRecentFiles());
 
-	QMainWindow::closeEvent(e);
+	QDialog::closeEvent(e);
 }
 
 
@@ -1141,7 +1155,7 @@ bool HullWnd::OpenFile(const QString& file)
 
 	if(vertidx > 0)
 	{
-		m_sett.setValue("recent_dir", QFileInfo(file).path());
+		m_sett.setValue("cur_dir", QFileInfo(file).path());
 		m_scene->UpdateAll();
 
 		SetCurrentFile(file);
@@ -1162,7 +1176,7 @@ bool HullWnd::OpenFile(const QString& file)
  */
 void HullWnd::OpenFile()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getOpenFileName(this,
 		"Open Data", dirLast,
@@ -1209,7 +1223,7 @@ bool HullWnd::SaveFile(const QString& file)
 
 	SetCurrentFile(file);
 	m_recent.AddRecentFile(file);
-	m_sett.setValue("recent_dir", QFileInfo(file).path());
+	m_sett.setValue("cur_dir", QFileInfo(file).path());
 
 	return true;
 }
@@ -1232,7 +1246,7 @@ void HullWnd::SaveFile()
  */
 void HullWnd::SaveFileAs()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
 		"Save Data", dirLast+"/untitled.xml",
@@ -1268,11 +1282,13 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 {
 	// ------------------------------------------------------------------------
 	// restore settings
+#ifdef TASPATHS_TOOLS_STANDALONE
 	GeoSettingsDlg::ReadSettings(&m_sett);
+#endif
 
-	if(m_sett.contains("hullwnd_geo"))
+	if(m_sett.contains("hull_wnd_geo"))
 	{
-		QByteArray arr{m_sett.value("hullwnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("hull_wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
@@ -1401,7 +1417,7 @@ void HullDlg::accept()
 	// ------------------------------------------------------------------------
 	// save settings
 	QByteArray geo{this->saveGeometry()};
-	m_sett.setValue("hullwnd_geo", geo);
+	m_sett.setValue("hull_wnd_geo", geo);
 	// ------------------------------------------------------------------------
 
 	QDialog::accept();

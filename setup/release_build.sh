@@ -90,7 +90,7 @@ pushd build
 
 if ! ${cmake_tool} -DUSE_LAPACK=${USE_LAPACK} -DUSE_QT6=${USE_QT6} \
 	-DUSE_OVD=${USE_OVD} -DUSE_CGAL=${USE_CGAL} \
-	-DBUILD_TEST_TOOLS=True \
+	-DBUILD_TEST_TOOLS=False \
 	-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" \
 	-DCMAKE_VERBOSE_MAKEFILE=False ..
 then

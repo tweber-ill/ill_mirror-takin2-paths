@@ -31,7 +31,7 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QImage>
-#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsScene>
@@ -48,10 +48,12 @@
 #include "vertex.h"
 #include "info.h"
 #include "about.h"
-#include "Settings.h"
 #include "src/gui/Recent.h"
 
-#define GeoSettingsDlg SettingsDlg
+#ifdef TASPATHS_TOOLS_STANDALONE
+	#include "Settings.h"
+	#define GeoSettingsDlg SettingsDlg
+#endif
 
 
 enum class IntersectionCalculationMethod
@@ -224,10 +226,10 @@ signals:
 };
 
 
-class LinesWnd : public QMainWindow
+class LinesWnd : public QDialog
 { Q_OBJECT
 public:
-	using QMainWindow::QMainWindow;
+	using QDialog::QDialog;
 
 	LinesWnd(QWidget* pParent = nullptr);
 	virtual ~LinesWnd();
@@ -255,9 +257,11 @@ private:
 		return this->OpenFile(filename);
 	};
 
+#ifdef TASPATHS_TOOLS_STANDALONE
+	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
+#endif
 	std::shared_ptr<GeoInfoDlg> m_dlgInfo{};
 	std::shared_ptr<GeoAboutDlg> m_dlgAbout{};
-	std::shared_ptr<GeoSettingsDlg> m_dlgSettings{};
 
 	std::shared_ptr<LinesScene> m_scene{};
 	std::shared_ptr<LinesView> m_view{};

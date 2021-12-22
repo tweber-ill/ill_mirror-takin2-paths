@@ -44,8 +44,8 @@ GeoAboutDlg::GeoAboutDlg(QWidget* parent, QSettings *sett)
 	setSizeGripEnabled(true);
 
 	// restore dialog geometry
-	if(m_sett && m_sett->contains("about/geo"))
-		restoreGeometry(m_sett->value("about/geo").toByteArray());
+	if(m_sett && m_sett->contains("tools_about/geo"))
+		restoreGeometry(m_sett->value("tools_about/geo").toByteArray());
 
 	auto grid = new QGridLayout(this);
 	grid->setSpacing(4);
@@ -174,6 +174,6 @@ const GeoAboutDlg& GeoAboutDlg::operator=(const GeoAboutDlg&)
 void GeoAboutDlg::accept()
 {
 	if(m_sett)
-		m_sett->setValue("about/geo", saveGeometry());
+		m_sett->setValue("tools_about/geo", saveGeometry());
 	QDialog::accept();
 }

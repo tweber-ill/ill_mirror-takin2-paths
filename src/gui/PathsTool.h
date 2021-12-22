@@ -65,6 +65,10 @@
 #include "dock/PathProperties.h"
 #include "dock/CamProperties.h"
 
+#include "src/tools/lines.h"
+#include "src/tools/hull.h"
+#include "src/tools/poly.h"
+
 
 class PathsTool : public QMainWindow
 { Q_OBJECT
@@ -124,6 +128,11 @@ private:
 	std::shared_ptr<TextureBrowser> m_dlgTextureBrowser{};
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};
 	std::shared_ptr<XtalConfigSpaceDlg> m_dlgXtalConfigSpace{};
+
+	// tool programs
+	std::shared_ptr<LinesWnd> m_wndLines{};
+	std::shared_ptr<HullWnd> m_wndHull{};
+	std::shared_ptr<PolyWnd> m_wndPoly{};
 
 	// docks
 	std::shared_ptr<TASPropertiesDockWidget> m_tasProperties{};

@@ -36,6 +36,7 @@
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QGridLayout>
 #include <QtSvg/QSvgGenerator>
 
 #include <locale>
@@ -441,27 +442,34 @@ void PolyView::SetCalcKernel(bool b)
 
 // ----------------------------------------------------------------------------
 
-PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
+PolyWnd::PolyWnd(QWidget* pParent) : QDialog{pParent},
 	m_scene{new QGraphicsScene{this}},
 	m_view{new PolyView{m_scene.get(), this}},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
 	// restore settings
+#ifdef TASPATHS_TOOLS_STANDALONE
 	GeoSettingsDlg::ReadSettings(&m_sett);
+#endif
 
 	m_view->SetSortVertices(
-		m_sett.value("sort_vertices", m_view->GetSortVertices()).toBool());
+		m_sett.value("poly_sort_vertices", m_view->GetSortVertices()).toBool());
 
 	m_view->setRenderHints(QPainter::Antialiasing);
 
 	setWindowTitle("Polygons");
-	setCentralWidget(m_view.get());
+
+	QGridLayout *layout = new QGridLayout(this);
+	layout->setSpacing(6);
+	layout->setContentsMargins(6, 6, 6, 6);
+	layout->addWidget(m_view.get(), 0, 0, 1, 1);
 
 	m_statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
 	QStatusBar *statusBar = new QStatusBar{this};
 	statusBar->addPermanentWidget(m_statusLabel.get(), 1);
-	setStatusBar(statusBar);
+	statusBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	layout->addWidget(statusBar, 1, 0, 1, 1);
 
 
 	// menu actions
@@ -483,7 +491,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	QAction *actionExportSvg = new QAction{QIcon::fromTheme("image-x-generic"), "Export SVG...", this};
 	connect(actionExportSvg, &QAction::triggered, [this]()
 	{
-		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+		QString dirLast = m_sett.value("cur_image_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
 			"Export SVG", dirLast+"/untitled.svg",
@@ -498,6 +506,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 		}
 	});
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionSettings = new QAction(QIcon::fromTheme("preferences-system"), "Settings...", this);
 	actionSettings->setMenuRole(QAction::PreferencesRole);
 	connect(actionSettings, &QAction::triggered, this, [this]()
@@ -510,9 +519,14 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 		m_dlgSettings->raise();
 		m_dlgSettings->activateWindow();
 	});
+#endif
 
+#ifdef TASPATHS_TOOLS_STANDALONE
 	QAction *actionQuit = new QAction{QIcon::fromTheme("application-exit"), "Quit", this};
 	actionQuit->setMenuRole(QAction::QuitRole);
+#else
+	QAction *actionQuit = new QAction{QIcon::fromTheme("window-close"), "Close", this};
+#endif
 	connect(actionQuit, &QAction::triggered, [this]() { this->close(); });
 
 
@@ -605,8 +619,12 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	actionLoad->setShortcut(QKeySequence::Open);
 	actionSave->setShortcut(QKeySequence::Save);
 	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+#ifdef TASPATHS_TOOLS_STANDALONE
 	actionSettings->setShortcut(QKeySequence::Preferences);
 	actionQuit->setShortcut(QKeySequence::Quit);
+#else
+	actionQuit->setShortcut(QKeySequence::Close);
+#endif
 	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
 	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
@@ -638,8 +656,10 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuFile->addSeparator();
 	menuFile->addAction(actionExportSvg);
 	menuFile->addSeparator();
+#ifdef TASPATHS_TOOLS_STANDALONE
 	menuFile->addAction(actionSettings);
 	menuFile->addSeparator();
+#endif
 	menuFile->addAction(actionQuit);
 
 	menuView->addAction(actionZoomIn);
@@ -665,30 +685,24 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 	menuBar->addMenu(menuView);
 	menuBar->addMenu(menuCalc);
 	menuBar->addMenu(menuHelp);
-	setMenuBar(menuBar);
+	layout->setMenuBar(menuBar);
 
 
 	// ------------------------------------------------------------------------
 	// restore settings
-	if(m_sett.contains("wnd_geo"))
+	if(m_sett.contains("poly_wnd_geo"))
 	{
-		QByteArray arr{m_sett.value("wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("poly_wnd_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
 	{
-		resize(1024, 768);
-	}
-
-	if(m_sett.contains("wnd_state"))
-	{
-		QByteArray arr{m_sett.value("wnd_state").toByteArray()};
-		this->restoreState(arr);
+		resize(800, 600);
 	}
 
 	// recent files
-	if(m_sett.contains("recent_files"))
-		m_recent.SetRecentFiles(m_sett.value("recent_files").toStringList());
+	if(m_sett.contains("poly_recent_files"))
+		m_recent.SetRecentFiles(m_sett.value("poly_recent_files").toStringList());
 	// ------------------------------------------------------------------------
 
 
@@ -761,7 +775,7 @@ bool PolyWnd::OpenFile(const QString& file)
 		SetCurrentFile(file);
 		m_recent.AddRecentFile(file);
 
-		m_sett.setValue("recent_dir", QFileInfo(file).path());
+		m_sett.setValue("cur_dir", QFileInfo(file).path());
 	}
 	else
 	{
@@ -778,7 +792,7 @@ bool PolyWnd::OpenFile(const QString& file)
  */
 void PolyWnd::OpenFile()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getOpenFileName(this,
 		"Load Data", dirLast,
@@ -825,7 +839,7 @@ bool PolyWnd::SaveFile(const QString& file)
 
 	SetCurrentFile(file);
 	m_recent.AddRecentFile(file);
-	m_sett.setValue("recent_dir", QFileInfo(file).path());
+	m_sett.setValue("cur_dir", QFileInfo(file).path());
 
 	return true;
 }
@@ -848,7 +862,7 @@ void PolyWnd::SaveFile()
  */
 void PolyWnd::SaveFileAs()
 {
-	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
+	QString dirLast = m_sett.value("cur_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
 		"Save Data", dirLast+"/untitled.xml",
@@ -884,16 +898,15 @@ void PolyWnd::SetStatusMessage(const QString& msg)
 void PolyWnd::closeEvent(QCloseEvent *e)
 {
 	// save settings
-	QByteArray geo{this->saveGeometry()}, state{this->saveState()};
-	m_sett.setValue("wnd_geo", geo);
-	m_sett.setValue("wnd_state", state);
-	m_sett.setValue("sort_vertices", m_view->GetSortVertices());
+	QByteArray geo{this->saveGeometry()};
+	m_sett.setValue("poly_wnd_geo", geo);
+	m_sett.setValue("poly_sort_vertices", m_view->GetSortVertices());
 
 	// save recent files
 	m_recent.TrimEntries();
-	m_sett.setValue("recent_files", m_recent.GetRecentFiles());
+	m_sett.setValue("poly_recent_files", m_recent.GetRecentFiles());
 
-	QMainWindow::closeEvent(e);
+	QDialog::closeEvent(e);
 }
 
 
