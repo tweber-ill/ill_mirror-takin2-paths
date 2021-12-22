@@ -446,7 +446,7 @@ PolyWnd::PolyWnd(QWidget* pParent) : QMainWindow{pParent},
 		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
-			"Export SVG", dirLast,
+			"Export SVG", dirLast+"/untitled.svg",
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -811,7 +811,7 @@ void PolyWnd::SaveFileAs()
 	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
-		"Save Data", dirLast,
+		"Save Data", dirLast+"/untitled.xml",
 		"XML Files (*.xml);;All Files (* *.*)"); file!="")
 	{
 		SaveFile(file);

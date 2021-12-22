@@ -69,7 +69,7 @@ namespace asio = boost::asio;
 namespace ptree = boost::property_tree;
 
 
-//#define GEOTOOLS_SHOW_MESSAGE
+#define GEOTOOLS_SHOW_MESSAGE
 
 
 LinesScene::LinesScene(QWidget *parent) : QGraphicsScene(parent), m_parent{parent}
@@ -223,7 +223,7 @@ void LinesScene::UpdateAll()
 	// set or reset the background text
 	if((m_numLines == 0 && numLines_old != 0) ||
 		(numLines_old == 0 && m_numLines != 0))
-		invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+		update();
 #endif
 
 	emit CalculationFinished();
@@ -908,6 +908,13 @@ void LinesView::drawBackground(QPainter* painter, const QRectF& rect)
 	// TODO: handle scene-viewport trafos other than translations
 	if(m_scene->GetVoroImage())
 		painter->drawImage(mapToScene(QPoint(0,0)), *m_scene->GetVoroImage());
+}
+
+
+
+void LinesView::drawForeground(QPainter* painter, const QRectF& rect)
+{
+	QGraphicsView::drawForeground(painter, rect);
 
 #ifdef GEOTOOLS_SHOW_MESSAGE
 	if(!m_scene->GetNumLines())
@@ -974,7 +981,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
-			"Export SVG", dirLast,
+			"Export SVG", dirLast+"/untitled.svg",
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -992,7 +999,7 @@ LinesWnd::LinesWnd(QWidget* pParent) : QMainWindow{pParent},
 		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(this,
-			"Export DOT", dirLast,
+			"Export DOT", dirLast+"/untitled.dot",
 			"DOT Files (*.dot);;All Files (* *.*)"); file!="")
 		{
 			const auto& graph = m_scene->GetVoroGraph();
@@ -1581,7 +1588,7 @@ void LinesWnd::SaveFileAs()
 	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
-		"Save Data", dirLast,
+		"Save Data", dirLast+"/untitled.xml",
 		"XML Files (*.xml);;All Files (* *.*)"); file!="")
 	{
 		SaveFile(file);

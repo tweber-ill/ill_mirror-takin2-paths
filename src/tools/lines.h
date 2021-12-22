@@ -214,6 +214,7 @@ private:
 
 protected:
 	virtual void drawBackground(QPainter*, const QRectF&) override;
+	virtual void drawForeground(QPainter*, const QRectF&) override;
 
 signals:
 	void SignalMouseCoordinates(
@@ -238,6 +239,7 @@ public:
 
 protected:
 	virtual void closeEvent(QCloseEvent *) override;
+
 	void SetCurrentFile(const QString &file);
 
 private:

@@ -66,7 +66,7 @@ namespace ptree = boost::property_tree;
 #include "tlibs2/libs/log.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
-//#define GEOTOOLS_SHOW_MESSAGE
+#define GEOTOOLS_SHOW_MESSAGE
 
 
 HullScene::HullScene(QWidget* parent) : QGraphicsScene(parent), m_parent{parent}
@@ -166,7 +166,7 @@ void HullScene::UpdateAll()
 	// set or reset the background text
 	const std::size_t num_verts = m_vertices.size();
 	if(num_verts < 3)
-		invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+		update();
 #endif
 }
 
@@ -634,6 +634,12 @@ void HullView::wheelEvent(QWheelEvent *evt)
 void HullView::drawBackground(QPainter* painter, const QRectF& rect)
 {
 	QGraphicsView::drawBackground(painter, rect);
+}
+
+
+void HullView::drawForeground(QPainter* painter, const QRectF& rect)
+{
+	QGraphicsView::drawForeground(painter, rect);
 
 #ifdef GEOTOOLS_SHOW_MESSAGE
 	if(!m_scene->GetVertices().size())
@@ -716,7 +722,7 @@ HullWnd::HullWnd(QWidget* pParent) : QMainWindow{pParent},
 		QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 		if(QString file = QFileDialog::getSaveFileName(
-			this, "Export SVG", dirLast,
+			this, "Export SVG", dirLast+"/untitled.svg",
 			"SVG Files (*.svg);;All Files (* *.*)"); file!="")
 		{
 			QSvgGenerator svggen;
@@ -1229,7 +1235,7 @@ void HullWnd::SaveFileAs()
 	QString dirLast = m_sett.value("recent_dir", QDir::homePath()).toString();
 
 	if(QString file = QFileDialog::getSaveFileName(this,
-		"Save Data", dirLast,
+		"Save Data", dirLast+"/untitled.xml",
 		"XML Files (*.xml);;All Files (* *.*)"); file!="")
 	{
 		SaveFile(file);

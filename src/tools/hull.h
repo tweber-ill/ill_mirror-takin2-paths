@@ -159,6 +159,8 @@ protected:
 	virtual void wheelEvent(QWheelEvent *evt) override;
 
 	virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
+	virtual void drawForeground(QPainter* painter, const QRectF& rect) override;
+
 	virtual void resizeEvent(QResizeEvent *evt) override;
 
 private:
