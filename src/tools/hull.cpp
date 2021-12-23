@@ -1286,9 +1286,9 @@ HullDlg::HullDlg(QWidget* pParent) : QDialog{pParent}
 	GeoSettingsDlg::ReadSettings(&m_sett);
 #endif
 
-	if(m_sett.contains("hull_wnd_geo"))
+	if(m_sett.contains("hull_dlg_geo"))
 	{
-		QByteArray arr{m_sett.value("hull_wnd_geo").toByteArray()};
+		QByteArray arr{m_sett.value("hull_dlg_geo").toByteArray()};
 		this->restoreGeometry(arr);
 	}
 	else
@@ -1417,7 +1417,7 @@ void HullDlg::accept()
 	// ------------------------------------------------------------------------
 	// save settings
 	QByteArray geo{this->saveGeometry()};
-	m_sett.setValue("hull_wnd_geo", geo);
+	m_sett.setValue("hull_dlg_geo", geo);
 	// ------------------------------------------------------------------------
 
 	QDialog::accept();
