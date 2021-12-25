@@ -137,6 +137,7 @@ public:
 
 	void SaveShadowFramebuffer(const std::string& filename) const;
 
+	bool AreTexturesEnabled() const { return m_textures_active; }
 	const t_textures& GetTextures() const { return m_textures; }
 
 

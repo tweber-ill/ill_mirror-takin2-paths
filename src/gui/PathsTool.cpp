@@ -1196,7 +1196,7 @@ void PathsTool::NewFile()
 	if(m_dlgGeoBrowser)
 		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
 	if(m_dlgTextureBrowser)
-		m_dlgTextureBrowser->DeleteImageFiles();
+		m_dlgTextureBrowser->DeleteTextures();
 	if(m_renderer)
 		m_renderer->LoadInstrument(m_instrspace);
 }
@@ -1461,7 +1461,7 @@ bool PathsTool::OpenFile(const QString& file)
 
 		// load texture list
 		if(m_dlgTextureBrowser)
-			m_dlgTextureBrowser->DeleteImageFiles();
+			m_dlgTextureBrowser->DeleteTextures();
 
 		if(auto textures = prop.get_child_optional(FILE_BASENAME "configuration.textures"); textures)
 		{
@@ -1469,7 +1469,7 @@ bool PathsTool::OpenFile(const QString& file)
 			for(const auto &texture : *textures)
 			{
 				auto id = texture.second.get<std::string>("<xmlattr>.id", "");
-				auto filename = texture.second.get<std::string>("filename");
+				auto filename = texture.second.get<std::string>("filename", "");
 				if(id == "" || filename == "")
 					continue;
 
@@ -1482,6 +1482,12 @@ bool PathsTool::OpenFile(const QString& file)
 			}
 		}
 
+		bool textures_enabled = prop.get<bool>(
+			FILE_BASENAME "configuration.textures.<xmlattr>.enabled", false);
+		if(m_renderer)
+			m_renderer->EnableTextures(textures_enabled);
+		if(m_dlgTextureBrowser)
+			m_dlgTextureBrowser->EnableTextures(textures_enabled, false);
 
 		// update slot for instrument space (e.g. walls) changes
 		m_instrspace.AddUpdateSlot(
@@ -1626,6 +1632,7 @@ bool PathsTool::SaveFile(const QString &file)
 			prop_textures.insert(prop_textures.end(), prop_texture2.begin(), prop_texture2.end());
 		}
 
+		prop_textures.put<bool>("<xmlattr>.enabled", m_renderer->AreTexturesEnabled());
 		prop.put_child(FILE_BASENAME "configuration.textures", prop_textures);
 	}
 
@@ -1997,7 +2004,7 @@ void PathsTool::PickerIntersection([[maybe_unused]] const t_vec3_gl* pos, std::s
 /**
  * clicked on an object
  */
-void PathsTool::ObjectClicked(const std::string& obj, 
+void PathsTool::ObjectClicked(const std::string& obj,
 	[[maybe_unused]] bool left, bool middle, bool right)
 {
 	if(!m_renderer)
@@ -2406,10 +2413,12 @@ void PathsTool::ShowTextureBrowser()
 			for(const auto& pair : txts)
 			{
 				m_dlgTextureBrowser->ChangeTexture(
-					pair.first.c_str(), 
+					pair.first.c_str(),
 					pair.second.filename.c_str(),
 					false);
 			}
+
+			m_dlgTextureBrowser->EnableTextures(m_renderer->AreTexturesEnabled(), false);
 		}
 
 		connect(m_dlgTextureBrowser.get(), &TextureBrowser::SignalChangeTexture,

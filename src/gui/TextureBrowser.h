@@ -32,6 +32,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QCheckBox>
 
 #include <vector>
 #include <memory>
@@ -63,7 +64,8 @@ public:
 	TextureBrowser(const TextureBrowser&) = delete;
 	const TextureBrowser& operator=(const TextureBrowser&) = delete;
 
-	void DeleteImageFiles();
+	void DeleteTextures();
+	void EnableTextures(bool enable, bool emit_changes = true);
 	void ChangeTexture(const QString& ident, const QString& filename,
 		bool emit_changes = true);
 
@@ -72,8 +74,7 @@ protected:
 	virtual void accept() override;
 
 	void ListItemChanged(QListWidgetItem* cur, QListWidgetItem* prev);
-
-	void BrowseImageFiles();
+	void BrowseTextureFiles();
 
 
 private:
@@ -81,6 +82,7 @@ private:
 
 	QSplitter *m_splitter{nullptr};
 	QListWidget *m_list{nullptr};
+	QCheckBox *m_checkTextures{nullptr};
 	ImageWidget *m_image{nullptr};
 
 

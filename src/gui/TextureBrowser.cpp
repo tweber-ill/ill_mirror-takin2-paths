@@ -32,7 +32,6 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QDialogButtonBox>
-#include <QtWidgets/QCheckBox>
 
 
 
@@ -101,8 +100,8 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	m_image = new ImageWidget(this);
 
 	// buttons
-	QCheckBox *checkTextures = new QCheckBox("Enable Texture Mapping", this);
-	checkTextures->setChecked(false);
+	m_checkTextures = new QCheckBox("Enable Texture Mapping", this);
+	m_checkTextures->setChecked(false);
 	QDialogButtonBox *buttons = new QDialogButtonBox(this);
 	buttons->setStandardButtons(QDialogButtonBox::Ok);
 
@@ -118,7 +117,7 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	grid_dlg->setSpacing(4);
 	grid_dlg->setContentsMargins(12,12,12,12);
 	grid_dlg->addWidget(m_splitter, 0,0,1,2);
-	grid_dlg->addWidget(checkTextures, 1,0,1,1);
+	grid_dlg->addWidget(m_checkTextures, 1,0,1,1);
 	grid_dlg->addWidget(buttons, 1,1,1,1);
 
 	// restore settings
@@ -140,11 +139,11 @@ TextureBrowser::TextureBrowser(QWidget* pParent, QSettings *sett)
 	connect(m_list, &QListWidget::currentItemChanged,
 		this, &TextureBrowser::ListItemChanged);
 	connect(btnAddImage, &QAbstractButton::clicked,
-		this, &TextureBrowser::BrowseImageFiles);
+		this, &TextureBrowser::BrowseTextureFiles);
 	connect(btnDelImage, &QAbstractButton::clicked,
-		this, &TextureBrowser::DeleteImageFiles);
+		this, &TextureBrowser::DeleteTextures);
 
-	connect(checkTextures, &QCheckBox::toggled,
+	connect(m_checkTextures, &QCheckBox::toggled,
 		this, &TextureBrowser::SignalEnableTextures);
 	connect(buttons, &QDialogButtonBox::accepted,
 		this, &TextureBrowser::accept);
@@ -170,7 +169,7 @@ void TextureBrowser::ChangeTexture(
 	QListWidgetItem *item = new QListWidgetItem(m_list);
 	item->setText(QString("[%1] %2")
 		.arg(ident)
-		.arg(filename));
+		.arg(QFileInfo{filename}.fileName()));
 	item->setData(Qt::UserRole, filename);
 	m_list->addItem(item);
 
@@ -179,7 +178,16 @@ void TextureBrowser::ChangeTexture(
 }
 
 
-void TextureBrowser::BrowseImageFiles()
+void TextureBrowser::EnableTextures(bool enable, bool emit_changes)
+{
+	m_checkTextures->setChecked(enable);
+
+	if(emit_changes)
+		emit SignalEnableTextures(enable);
+}
+
+
+void TextureBrowser::BrowseTextureFiles()
 {
 	QString dirLast = g_imgpath.c_str();
 	if(m_sett)
@@ -201,19 +209,14 @@ void TextureBrowser::BrowseImageFiles()
 
 	QStringList files = filedlg.selectedFiles();
 	for(const QString& file : files)
-	{
-		QFileInfo info(file);
-		QString ident = info.baseName();
-
-		ChangeTexture(ident, info.fileName(), true);
-	}
+		ChangeTexture(QFileInfo{file}.baseName(), file, true);
 
 	if(m_sett && files.size())
 		m_sett->setValue("cur_texture_dir", QFileInfo(files[0]).path());
 }
 
 
-void TextureBrowser::DeleteImageFiles()
+void TextureBrowser::DeleteTextures()
 {
 	// if nothing is selected, clear all items
 	if(m_list->selectedItems().count() == 0)
