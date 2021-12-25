@@ -49,15 +49,17 @@
 
 #include "InstrumentStatus.h"
 #include "PathsRenderer.h"
-#include "ConfigSpace.h"
-#include "XtalConfigSpace.h"
-#include "GeoBrowser.h"
-#include "TextureBrowser.h"
-#include "About.h"
-#include "Licenses.h"
-#include "Settings.h"
 #include "Resources.h"
 #include "Recent.h"
+#include "settings_variables.h"
+
+#include "dialogs/ConfigSpace.h"
+#include "dialogs/XtalConfigSpace.h"
+#include "dialogs/GeoBrowser.h"
+#include "dialogs/TextureBrowser.h"
+#include "dialogs/About.h"
+#include "dialogs/Licenses.h"
+#include "dialogs/Settings.h"
 
 #include "dock/TASProperties.h"
 #include "dock/XtalProperties.h"
@@ -121,9 +123,10 @@ private:
 	std::string m_curContextObj{};
 
 	// dialogs
+	using t_SettingsDlg = SettingsDlg<g_settingsvariables.size(), &g_settingsvariables>;
 	std::shared_ptr<AboutDlg> m_dlgAbout{};
 	std::shared_ptr<LicensesDlg> m_dlgLicenses{};
-	std::shared_ptr<SettingsDlg> m_dlgSettings{};
+	std::shared_ptr<t_SettingsDlg> m_dlgSettings{};
 	std::shared_ptr<GeometriesBrowser> m_dlgGeoBrowser{};
 	std::shared_ptr<TextureBrowser> m_dlgTextureBrowser{};
 	std::shared_ptr<ConfigSpaceDlg> m_dlgConfigSpace{};

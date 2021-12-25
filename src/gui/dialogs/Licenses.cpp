@@ -33,9 +33,8 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QDialogButtonBox>
 
-#include "settings_variables.h"
-#include "Settings.h"
-#include "Resources.h"
+#include "src/gui/settings_variables.h"
+#include "src/gui/Resources.h"
 #include "tlibs2/libs/file.h"
 
 

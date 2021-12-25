@@ -25,7 +25,7 @@
 
 #include "About.h"
 #include "src/core/types.h"
-#include "settings_variables.h"
+#include "src/gui/settings_variables.h"
 
 #include <QtGui/QIcon>
 #include <QtWidgets/QGridLayout>

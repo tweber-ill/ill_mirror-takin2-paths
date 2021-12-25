@@ -41,7 +41,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QProgressDialog>
 
-#include "settings_variables.h"
+#include "src/gui/settings_variables.h"
 
 #include <boost/asio.hpp>
 namespace asio = boost::asio;

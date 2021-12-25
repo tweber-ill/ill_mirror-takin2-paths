@@ -47,13 +47,14 @@
 #include <unordered_set>
 #include <vector>
 
+#include "src/gui/Recent.h"
 #include "vertex.h"
 #include "about.h"
-#include "src/gui/Recent.h"
+#include "settings_variables.h"
 
 #ifdef TASPATHS_TOOLS_STANDALONE
-	#include "Settings.h"
-	#define GeoSettingsDlg SettingsDlg
+	#include "src/gui/dialogs/Settings.h"
+	#define GeoSettingsDlg SettingsDlg<g_settingsvariables_tools.size(), &g_settingsvariables_tools>
 #endif
 
 

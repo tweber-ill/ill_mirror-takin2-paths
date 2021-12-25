@@ -32,7 +32,7 @@
 #include <variant>
 
 #include "src/core/types.h"
-#include "settings_common.h"
+#include "src/gui/settings_common.h"
 
 
 
@@ -78,7 +78,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 4> g_settingsvariables
+constexpr std::array<SettingsVariable, 4> g_settingsvariables_tools
 {{
 	// epsilon
 	{

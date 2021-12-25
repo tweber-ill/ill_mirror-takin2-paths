@@ -35,7 +35,7 @@
 #include <memory>
 
 #include "src/core/PathsBuilder.h"
-#include "qcp_wrapper.h"
+#include "src/gui/qcp_wrapper.h"
 
 
 class ConfigSpaceDlg : public QDialog

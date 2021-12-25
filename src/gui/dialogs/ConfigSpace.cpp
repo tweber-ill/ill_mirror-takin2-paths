@@ -52,7 +52,7 @@
 	#include <QtWidgets/QActionGroup>
 #endif
 
-#include "settings_variables.h"
+#include "src/gui/settings_variables.h"
 
 
 ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)

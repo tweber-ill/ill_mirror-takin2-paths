@@ -295,23 +295,23 @@ target_link_libraries(taspaths_core
 add_executable(taspaths
 	src/gui/main.cpp
 	src/gui/PathsTool.cpp src/gui/PathsTool.h
-	src/gui/Settings.cpp src/gui/Settings.h
+	src/gui/dialogs/Settings.h
 	src/gui/settings_variables.cpp src/gui/settings_variables.h
 	src/gui/settings_common.h
 	src/gui/Resources.cpp src/gui/Resources.h
 	src/gui/Recent.cpp src/gui/Recent.h
-	src/gui/About.cpp src/gui/About.h
-	src/gui/Licenses.cpp src/gui/Licenses.h
+	src/gui/dialogs/About.cpp src/gui/dialogs/About.h
+	src/gui/dialogs/Licenses.cpp src/gui/dialogs/Licenses.h
 	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
 	src/gui/dock/TASProperties.cpp src/gui/dock/TASProperties.h
 	src/gui/dock/XtalProperties.cpp src/gui/dock/XtalProperties.h
 	src/gui/dock/CoordProperties.cpp src/gui/dock/CoordProperties.h
 	src/gui/dock/PathProperties.cpp src/gui/dock/PathProperties.h
 	src/gui/dock/CamProperties.cpp src/gui/dock/CamProperties.h
-	src/gui/ConfigSpace.cpp src/gui/ConfigSpace.h
-	src/gui/XtalConfigSpace.cpp src/gui/XtalConfigSpace.h
-	src/gui/GeoBrowser.cpp src/gui/GeoBrowser.h
-	src/gui/TextureBrowser.cpp src/gui/TextureBrowser.h
+	src/gui/dialogs/ConfigSpace.cpp src/gui/dialogs/ConfigSpace.h
+	src/gui/dialogs/XtalConfigSpace.cpp src/gui/dialogs/XtalConfigSpace.h
+	src/gui/dialogs/GeoBrowser.cpp src/gui/dialogs/GeoBrowser.h
+	src/gui/dialogs/TextureBrowser.cpp src/gui/dialogs/TextureBrowser.h
 
 	src/libs/lines.h src/libs/graphs.h
 	src/libs/voronoi.h src/libs/voronoi_lines.h
@@ -336,9 +336,9 @@ if(BUILD_TEST_TOOLS)
 		src/tools/hull.cpp src/tools/hull.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
-		src/tools/Settings.cpp src/tools/Settings.h
+		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/tools/settings_common.h
+		src/gui/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
@@ -351,9 +351,9 @@ if(BUILD_TEST_TOOLS)
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/info.cpp src/tools/info.h
 		src/tools/about.cpp src/tools/about.h
-		src/tools/Settings.cpp src/tools/Settings.h
+		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/tools/settings_common.h
+		src/gui/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
@@ -365,9 +365,9 @@ if(BUILD_TEST_TOOLS)
 		src/tools/poly.cpp src/tools/poly.h
 		src/tools/vertex.cpp src/tools/vertex.h
 		src/tools/about.cpp src/tools/about.h
-		src/tools/Settings.cpp src/tools/Settings.h
+		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/tools/settings_common.h
+		src/gui/settings_common.h
 		src/gui/Recent.cpp src/gui/Recent.h
 
 		src/libs/lines.h src/libs/hull.h

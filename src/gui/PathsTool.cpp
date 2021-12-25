@@ -72,7 +72,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	}
 
 	// restore settings
-	SettingsDlg::ReadSettings(&m_sett);
+	PathsTool::t_SettingsDlg::ReadSettings(&m_sett);
 
 
 	// --------------------------------------------------------------------
@@ -765,9 +765,17 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	{
 		if(!this->m_dlgSettings)
 		{
-			this->m_dlgSettings = std::make_shared<SettingsDlg>(this, &m_sett);
-			connect(&*this->m_dlgSettings, &SettingsDlg::SettingsHaveChanged,
+			this->m_dlgSettings = std::make_shared<
+				PathsTool::t_SettingsDlg>(this, &m_sett);
+
+#ifdef TASPATHS_SETTINGS_USE_QT_SIGNALS
+			connect(&*this->m_dlgSettings, 
+				&PathsTool::t_SettingsDlg::SettingsHaveChanged,
 				this, &PathsTool::InitSettings);
+#else
+			this->m_dlgSettings->AddChangedSettingsSlot(
+				[this](){ PathsTool::InitSettings(); });
+#endif
 		}
 
 		// sequence to show the dialog,

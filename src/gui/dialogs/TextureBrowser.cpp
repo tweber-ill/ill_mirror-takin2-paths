@@ -25,7 +25,7 @@
  */
 
 #include "TextureBrowser.h"
-#include "settings_variables.h"
+#include "src/gui/settings_variables.h"
 
 #include <QtGui/QPainter>
 #include <QtWidgets/QGridLayout>

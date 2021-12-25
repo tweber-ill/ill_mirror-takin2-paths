@@ -49,7 +49,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 namespace ptree = boost::property_tree;
 
-#include "settings_variables.h"
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/log.h"
 

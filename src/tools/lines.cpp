@@ -57,9 +57,7 @@
 
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/log.h"
-
 #include "src/libs/voronoi_lines.h"
-#include "settings_variables.h"
 
 #include <boost/asio.hpp>
 namespace asio = boost::asio;

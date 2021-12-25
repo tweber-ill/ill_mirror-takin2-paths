@@ -34,7 +34,7 @@
 
 #include <boost/scope_exit.hpp>
 
-#include "settings_variables.h"
+#include "src/gui/settings_variables.h"
 #include "tlibs2/libs/expr.h"
 #include "tlibs2/libs/str.h"
 
