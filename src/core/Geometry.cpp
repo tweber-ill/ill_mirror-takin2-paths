@@ -141,7 +141,7 @@ bool Geometry::Load(const pt::ptree& prop)
 	}
 
 	// texture
-	if(auto texture = prop.get_optional<std::size_t>("texture"); texture)
+	if(auto texture = prop.get_optional<std::string>("texture"); texture)
 		m_texture = *texture;
 	else
 		m_texture = "";

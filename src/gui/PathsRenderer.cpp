@@ -107,13 +107,21 @@ void PathsRenderer::Clear()
 	makeCurrent();
 	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
+	// clear objects
 	QMutexLocker _locker{&m_mutexObj};
 	for(auto &[obj_name, obj] : m_objs)
 		DeleteObject(obj);
 	m_objs.clear();
 
-	for(auto& texture : m_textures)
-		texture.second->destroy();
+	// clear textures
+	for(auto& txt : m_textures)
+	{
+		if(txt.second.texture)
+		{
+			txt.second.texture->destroy();
+			txt.second.texture = nullptr;
+		}
+	}
 	m_textures.clear();
 }
 
@@ -130,11 +138,13 @@ void PathsRenderer::EnableTextures(bool b)
 
 /**
  * add a texture image
- * TODO: use idx
  */
 bool PathsRenderer::ChangeTextureProperty(
 	const QString& ident, const QString& filename)
 {
+	makeCurrent();
+	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
+
 	QMutexLocker _locker{&m_mutexObj};
 
 	auto iter = m_textures.find(ident.toStdString());
@@ -144,7 +154,8 @@ bool PathsRenderer::ChangeTextureProperty(
 	{
 		if(iter != m_textures.end())
 		{
-			iter->second->destroy();
+			if(iter->second.texture)
+				iter->second.texture->destroy();
 			m_textures.erase(iter);
 
 			return true;
@@ -157,18 +168,23 @@ bool PathsRenderer::ChangeTextureProperty(
 		// insert new texture
 		if(iter == m_textures.end())
 		{
-			m_textures.emplace(
-				std::make_pair(
-					ident.toStdString(),
-					std::make_shared<QOpenGLTexture>(image)));
+			PathsTexture txt
+			{
+				.filename = filename.toStdString(),
+				.texture = std::make_shared<QOpenGLTexture>(image),
+			};
+
+			m_textures.emplace(std::make_pair(ident.toStdString(), txt));
 		}
 
 		// replace old texture
 		else
 		{
-			if(iter->second)
-				iter->second->destroy();
-			iter->second = std::make_shared<QOpenGLTexture>(image);
+			if(iter->second.texture)
+				iter->second.texture->destroy();
+
+			iter->second.filename = filename.toStdString();
+			iter->second.texture = std::make_shared<QOpenGLTexture>(image);
 		}
 
 		return true;
@@ -1251,7 +1267,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			if(auto iter = m_textures.find(obj.m_texture);
 				iter!=m_textures.end())
 			{
-				texture = iter->second;
+				texture = iter->second.texture;
 			}
 		}
 

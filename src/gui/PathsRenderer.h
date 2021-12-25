@@ -74,6 +74,15 @@ struct PathsObj : public tl2::GlRenderObj
 };
 
 
+/**
+ * texture descriptor
+ */ 
+struct PathsTexture
+{
+	std::string filename{};
+	std::shared_ptr<QOpenGLTexture> texture{};
+};
+
 
 /**
  * rendering widget
@@ -107,8 +116,9 @@ public:
 	void DeleteObject(const std::string& obj_name);
 	void RenameObject(const std::string& oldname, const std::string& newname);
 
-	// 3d objects
+	// 3d objects and textures
 	using t_objs = std::unordered_map<std::string, PathsObj>;
+	using t_textures = std::unordered_map<std::string, PathsTexture>;
 
 	t_objs::iterator AddTriangleObject(const std::string& obj_name,
 		const std::vector<t_vec3_gl>& triag_verts,
@@ -126,6 +136,8 @@ public:
 	QPoint GetMousePosition(bool global_pos = false) const;
 
 	void SaveShadowFramebuffer(const std::string& filename) const;
+
+	const t_textures& GetTextures() const { return m_textures; }
 
 
 protected:
@@ -267,7 +279,7 @@ protected:
 	std::vector<t_vec3_gl> m_lights{};
 
 	// texture map
-	std::unordered_map<std::string, std::shared_ptr<QOpenGLTexture>> m_textures{};
+	t_textures m_textures{};
 
 	// cursor
 	QPointF m_posMouse{};

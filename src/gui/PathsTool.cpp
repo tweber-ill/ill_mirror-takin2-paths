@@ -1195,6 +1195,8 @@ void PathsTool::NewFile()
 
 	if(m_dlgGeoBrowser)
 		m_dlgGeoBrowser->UpdateGeoTree(m_instrspace);
+	if(m_dlgTextureBrowser)
+		m_dlgTextureBrowser->DeleteImageFiles();
 	if(m_renderer)
 		m_renderer->LoadInstrument(m_instrspace);
 }
@@ -1457,6 +1459,30 @@ bool PathsTool::OpenFile(const QString& file)
 			m_renderer->LoadInstrument(m_instrspace);
 
 
+		// load texture list
+		if(m_dlgTextureBrowser)
+			m_dlgTextureBrowser->DeleteImageFiles();
+
+		if(auto textures = prop.get_child_optional(FILE_BASENAME "configuration.textures"); textures)
+		{
+			// iterate individual texture descriptors
+			for(const auto &texture : *textures)
+			{
+				auto id = texture.second.get<std::string>("<xmlattr>.id", "");
+				auto filename = texture.second.get<std::string>("filename");
+				if(id == "" || filename == "")
+					continue;
+
+				if(m_renderer)
+					m_renderer->ChangeTextureProperty(
+						id.c_str(), filename.c_str());
+				if(m_dlgTextureBrowser)
+					m_dlgTextureBrowser->ChangeTexture(
+						id.c_str(), filename.c_str(), false);
+			}
+		}
+
+
 		// update slot for instrument space (e.g. walls) changes
 		m_instrspace.AddUpdateSlot(
 			[this](const InstrumentSpace& instrspace)
@@ -1582,6 +1608,26 @@ bool PathsTool::SaveFile(const QString &file)
 	prop.put(FILE_BASENAME "ident", PROG_IDENT);
 	prop.put(FILE_BASENAME "doi", "https://doi.org/10.5281/zenodo.4625649");
 	prop.put(FILE_BASENAME "timestamp", tl2::var_to_str(tl2::epoch<t_real>()));
+
+	// save texture list
+	if(m_renderer)
+	{
+		boost::property_tree::ptree prop_textures;
+
+		const PathsRenderer::t_textures& txts = m_renderer->GetTextures();
+		for(const auto& pair : txts)
+		{
+			pt::ptree prop_texture;
+			prop_texture.put<std::string>("<xmlattr>.id", pair.first);
+			prop_texture.put<std::string>("filename", pair.second.filename);
+
+			pt::ptree prop_texture2;
+			prop_texture2.put_child("texture", prop_texture);
+			prop_textures.insert(prop_textures.end(), prop_texture2.begin(), prop_texture2.end());
+		}
+
+		prop.put_child(FILE_BASENAME "configuration.textures", prop_textures);
+	}
 
 	std::string filename = file.toStdString();
 	std::ofstream ofstr{filename};
@@ -2352,6 +2398,19 @@ void PathsTool::ShowTextureBrowser()
 	if(!m_dlgTextureBrowser)
 	{
 		m_dlgTextureBrowser = std::make_shared<TextureBrowser>(this, &m_sett);
+
+		// get current texture list from renderer
+		if(m_renderer)
+		{
+			const PathsRenderer::t_textures& txts = m_renderer->GetTextures();
+			for(const auto& pair : txts)
+			{
+				m_dlgTextureBrowser->ChangeTexture(
+					pair.first.c_str(), 
+					pair.second.filename.c_str(),
+					false);
+			}
+		}
 
 		connect(m_dlgTextureBrowser.get(), &TextureBrowser::SignalChangeTexture,
 			m_renderer.get(), &PathsRenderer::ChangeTextureProperty);

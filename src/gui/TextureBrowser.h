@@ -63,6 +63,10 @@ public:
 	TextureBrowser(const TextureBrowser&) = delete;
 	const TextureBrowser& operator=(const TextureBrowser&) = delete;
 
+	void DeleteImageFiles();
+	void ChangeTexture(const QString& ident, const QString& filename,
+		bool emit_changes = true);
+
 
 protected:
 	virtual void accept() override;
@@ -70,7 +74,6 @@ protected:
 	void ListItemChanged(QListWidgetItem* cur, QListWidgetItem* prev);
 
 	void BrowseImageFiles();
-	void DeleteImageFiles();
 
 
 private:

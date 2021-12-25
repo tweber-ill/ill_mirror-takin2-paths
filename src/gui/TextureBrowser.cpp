@@ -158,6 +158,27 @@ TextureBrowser::~TextureBrowser()
 }
 
 
+/**
+ * change or add a texture image
+ */
+void TextureBrowser::ChangeTexture(
+	const QString& ident, const QString& filename, bool emit_changes)
+{
+	// TODO: check if another file with the same
+	//       identifier is already in the list
+
+	QListWidgetItem *item = new QListWidgetItem(m_list);
+	item->setText(QString("[%1] %2")
+		.arg(ident)
+		.arg(filename));
+	item->setData(Qt::UserRole, filename);
+	m_list->addItem(item);
+
+	if(emit_changes)
+		emit SignalChangeTexture(ident, filename);
+}
+
+
 void TextureBrowser::BrowseImageFiles()
 {
 	QString dirLast = g_imgpath.c_str();
@@ -181,19 +202,10 @@ void TextureBrowser::BrowseImageFiles()
 	QStringList files = filedlg.selectedFiles();
 	for(const QString& file : files)
 	{
-		// TODO: check if another file with the same
-		//       identifier is already in the list
 		QFileInfo info(file);
 		QString ident = info.baseName();
 
-		QListWidgetItem *item = new QListWidgetItem(m_list);
-		item->setText(QString("[%1] %2")
-			.arg(ident)
-			.arg(info.fileName()));
-		item->setData(Qt::UserRole, file);
-		m_list->addItem(item);
-
-		emit SignalChangeTexture(ident, file);
+		ChangeTexture(ident, info.fileName(), true);
 	}
 
 	if(m_sett && files.size())
@@ -224,6 +236,7 @@ void TextureBrowser::ListItemChanged(
 		m_image->SetImage("");
 		return;
 	}
+
 	m_image->SetImage(cur->data(Qt::UserRole).toString());
 }
 
