@@ -1192,6 +1192,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			{
 				pGl->glActiveTexture(GL_TEXTURE0);
 				pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
+
+				// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
+				pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			}
 		}
 	}
@@ -1262,7 +1266,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		// textures
 		std::shared_ptr<QOpenGLTexture> texture;
-		if(m_textures_active)
+		if(m_textures_active && !m_shadowRenderPass)
 		{
 			if(auto iter = m_textures.find(obj.m_texture);
 				iter!=m_textures.end())
@@ -1287,6 +1291,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		{
 			pGl->glActiveTexture(GL_TEXTURE1);
 			texture->bind();
+
+			// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
+			pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 
 
