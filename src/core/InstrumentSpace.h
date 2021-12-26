@@ -65,6 +65,7 @@ public:
 
 	t_real GetFloorLenX() const { return m_floorlen[0]; }
 	t_real GetFloorLenY() const { return m_floorlen[1]; }
+	const t_vec& GetFloorColour() const { return m_floorcol; }
 
 	const std::vector<std::shared_ptr<Geometry>>& GetWalls() const { return m_walls; }
 	const Instrument& GetInstrument() const { return m_instr; }
@@ -106,6 +107,7 @@ public:
 
 private:
 	t_real m_floorlen[2] = { 10., 10. };
+	t_vec m_floorcol = tl2::create<t_vec>({0.5, 0.5, 0.5});
 
 	// wall segments
 	std::vector<std::shared_ptr<Geometry>> m_walls{};

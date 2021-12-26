@@ -63,6 +63,7 @@ const InstrumentSpace& InstrumentSpace::operator=(const InstrumentSpace& instr)
 {
 	this->m_floorlen[0] = instr.m_floorlen[0];
 	this->m_floorlen[1] = instr.m_floorlen[1];
+	this->m_floorcol = instr.m_floorcol;
 
 	this->m_walls = instr.m_walls;
 	this->m_instr = instr.m_instr;
@@ -81,6 +82,7 @@ void InstrumentSpace::Clear()
 {
 	// reset to defaults
 	m_floorlen[0] = m_floorlen[1] = 10.;
+	m_floorcol = tl2::create<t_vec>({0.5, 0.5, 0.5});
 
 	// clear
 	m_walls.clear();
@@ -105,6 +107,17 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 		m_floorlen[0] = *opt;
 	if(auto opt = prop.get_optional<t_real>("floor.len_y"); opt)
 		m_floorlen[1] = *opt;
+
+	// floor colour
+	if(auto col = prop.get_optional<std::string>("floor.colour"); col)
+	{
+		m_floorcol.clear();
+		tl2::get_tokens<t_real>(
+			tl2::trimmed(*col), std::string{" \t,;"}, m_floorcol);
+
+		if(m_floorcol.size() < 3)
+			m_floorcol.resize(3);
+	}
 
 
 	// walls
@@ -142,6 +155,7 @@ pt::ptree InstrumentSpace::Save() const
 	// floor
 	prop.put<t_real>(FILE_BASENAME "instrument_space.floor.len_x", m_floorlen[0]);
 	prop.put<t_real>(FILE_BASENAME "instrument_space.floor.len_y", m_floorlen[1]);
+	prop.put<std::string>(FILE_BASENAME "instrument_space.floor.colour", geo_vec_to_str(m_floorcol));
 
 	// walls
 	pt::ptree propwalls;

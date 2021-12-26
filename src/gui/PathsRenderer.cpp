@@ -207,8 +207,12 @@ bool PathsRenderer::LoadInstrument(const InstrumentSpace& instrspace)
 	// upper and lower floor plane
 	// the lower floor plane just serves to hide clipping artefacts
 	std::string lowerFloor = "lower " OBJNAME_FLOOR_PLANE;
-	AddFloorPlane(OBJNAME_FLOOR_PLANE, instrspace.GetFloorLenX(), instrspace.GetFloorLenY());
-	AddFloorPlane(lowerFloor, instrspace.GetFloorLenX(), instrspace.GetFloorLenY());
+	AddFloorPlane(OBJNAME_FLOOR_PLANE,
+		instrspace.GetFloorLenX(), instrspace.GetFloorLenY(),
+		instrspace.GetFloorColour());
+	AddFloorPlane(lowerFloor,
+		instrspace.GetFloorLenX(), instrspace.GetFloorLenY(),
+		instrspace.GetFloorColour());
 	m_objs[lowerFloor].m_mat(2,3) = -0.01;
 
 	// instrument
@@ -454,7 +458,8 @@ PathsRenderer::AddTriangleObject(const std::string& obj_name,
 /**
  * add the floor plane
  */
-void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, t_real_gl len_y)
+void PathsRenderer::AddFloorPlane(const std::string& obj_name,
+	t_real_gl len_x, t_real_gl len_y, const t_vec& colour)
 {
 	auto norm = tl2::create<t_vec3_gl>({0, 0, 1});
 	auto plane = tl2::create_plane<t_mat_gl, t_vec3_gl>(
@@ -462,7 +467,9 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name, t_real_gl len_x, 
 	auto [verts, norms, uvs] = tl2::subdivide_triangles<t_vec3_gl>(
 		tl2::create_triangles<t_vec3_gl>(plane), 1);
 
-	auto obj_iter = AddTriangleObject(obj_name, verts, norms, uvs, 0.5,0.5,0.5,1);
+	auto obj_iter = AddTriangleObject(
+		obj_name, verts, norms, uvs,
+		colour[0], colour[1], colour[2], 1.);
 	obj_iter->second.m_cull = false;
 }
 
@@ -630,7 +637,8 @@ void PathsRenderer::UpdatePicker()
 			if(!bInters)
 				continue;
 
-			t_vec_gl vecInters4 = tl2::create<t_vec_gl>({vecInters[0], vecInters[1], vecInters[2], 1});
+			t_vec_gl vecInters4 = tl2::create<t_vec_gl>({
+				vecInters[0], vecInters[1], vecInters[2], 1});
 
 			// intersection with floor plane
 			if(obj_name == OBJNAME_FLOOR_PLANE)
@@ -1307,7 +1315,8 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDisable(GL_CULL_FACE);
 
 		// cursor only active on base plane
-		m_shaders->setUniformValue(m_uniCursorActive, obj_name==OBJNAME_FLOOR_PLANE && m_curActive);
+		m_shaders->setUniformValue(m_uniCursorActive,
+			obj_name==OBJNAME_FLOOR_PLANE && m_curActive);
 
 		// set object matrix
 		m_shaders->setUniformValue(m_uniMatrixObj, obj.m_mat);

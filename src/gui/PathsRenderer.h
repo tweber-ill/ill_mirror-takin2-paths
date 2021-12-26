@@ -126,7 +126,9 @@ public:
 		const std::vector<t_vec3_gl>& triag_uvs,
 		t_real_gl r=0, t_real_gl g=0, t_real_gl b=0, t_real_gl a=1);
 
-	void AddFloorPlane(const std::string& obj_name, t_real_gl len_x=10, t_real_gl len_y=10);
+	void AddFloorPlane(const std::string& obj_name,
+		t_real_gl len_x, t_real_gl len_y,
+		const t_vec& colour);
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };

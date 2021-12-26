@@ -41,6 +41,8 @@ namespace pt = boost::property_tree;
 std::string geo_vec_to_str(const t_vec& vec)
 {
 	std::ostringstream ostr;
+	ostr.precision(8);
+
 	for(t_real val : vec)
 		ostr << val << " ";
 
