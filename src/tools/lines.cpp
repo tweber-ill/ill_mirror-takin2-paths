@@ -57,6 +57,7 @@
 
 #include "tlibs2/libs/helper.h"
 #include "tlibs2/libs/log.h"
+
 #include "src/libs/voronoi_lines.h"
 
 #include <boost/asio.hpp>
@@ -945,6 +946,12 @@ LinesWnd::LinesWnd(QWidget* pParent) : QDialog{pParent},
 	m_statusLabel{std::make_shared<QLabel>(this)}
 {
 #ifdef TASPATHS_TOOLS_STANDALONE
+	// set-up common gui variables
+	GeoSettingsDlg::SetGuiTheme(&g_theme);
+	GeoSettingsDlg::SetGuiFont(&g_font);
+	GeoSettingsDlg::SetGuiUseNativeMenubar(&g_use_native_menubar);
+	GeoSettingsDlg::SetGuiUseNativeDialogs(&g_use_native_dialogs);
+
 	// restore settings
 	GeoSettingsDlg::ReadSettings(&m_sett);
 #endif
@@ -1022,8 +1029,10 @@ LinesWnd::LinesWnd(QWidget* pParent) : QDialog{pParent},
 	connect(actionSettings, &QAction::triggered, this, [this]()
 	{
 		if(!this->m_dlgSettings)
+		{
 			this->m_dlgSettings = std::make_shared<GeoSettingsDlg>(
-				this, &m_sett, true);
+				this, &m_sett);
+		}
 
 		m_dlgSettings->show();
 		m_dlgSettings->raise();

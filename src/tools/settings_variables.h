@@ -32,7 +32,7 @@
 #include <variant>
 
 #include "src/core/types.h"
-#include "src/gui/settings_common.h"
+#include "src/gui/dialogs/Settings.h"
 
 
 

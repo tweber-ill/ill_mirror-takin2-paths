@@ -60,7 +60,36 @@
 #endif
 
 #include "src/core/types.h"
-#include "src/gui/settings_common.h"
+
+
+
+// ----------------------------------------------------------------------------
+// settings variable struct
+// ----------------------------------------------------------------------------
+enum class SettingsVariableEditor
+{
+	NONE,
+	YESNO,
+	COMBOBOX,
+};
+
+
+struct SettingsVariable
+{
+	using t_variant = std::variant<t_real, int, unsigned int>;
+	using t_variant_ptr = std::variant<t_real*, int*, unsigned int*>;
+
+	const char* description{};
+	const char* key{};
+
+	t_variant_ptr value{};
+	bool is_angle{false};
+
+	SettingsVariableEditor editor{SettingsVariableEditor::NONE};
+	const char* editor_config{};
+};
+// ----------------------------------------------------------------------------
+
 
 
 // ----------------------------------------------------------------------------
@@ -69,7 +98,8 @@
  */
 template<
 	std::size_t num_settingsvariables,
-	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+	const std::array<SettingsVariable, 
+		num_settingsvariables> *settingsvariables>
 class SettingsDlg : public QDialog
 {
 #ifdef TASPATHS_SETTINGS_USE_QT_SIGNALS
@@ -81,10 +111,17 @@ public:
 	 * constructor
 	 */
 	SettingsDlg(QWidget* parent = nullptr,
-		QSettings *sett = nullptr,
-		bool hide_optional_settings = false)
-		: QDialog{parent}, m_sett{sett},
-			m_hide_optional_settings{hide_optional_settings}
+		QSettings *sett = nullptr)
+		: QDialog{parent}, m_sett{sett}
+	{
+		InitGui();
+	}
+	
+
+	/**
+	 * set-up the settings dialog gui
+	 */
+	void InitGui()
 	{
 		setWindowTitle("Preferences");
 		setSizeGripEnabled(true);
@@ -161,75 +198,119 @@ public:
 		int yGui = 0;
 
 		// theme
-		QLabel *labelTheme = new QLabel("Style:", panelGui);
-		labelTheme->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-		m_comboTheme = new QComboBox(panelGui);
-		m_comboTheme->addItems(QStyleFactory::keys());
-
-		get_setting<QString>(sett, "settings/theme", &g_theme);
-		if(g_theme != "")
+		if(s_theme)
 		{
-			int idxTheme = m_comboTheme->findText(g_theme);
-			if(idxTheme >= 0 && idxTheme < m_comboTheme->count())
-				m_comboTheme->setCurrentIndex(idxTheme);
+			QLabel *labelTheme = new QLabel("Style:", panelGui);
+			labelTheme->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+			m_comboTheme = new QComboBox(panelGui);
+			m_comboTheme->addItems(QStyleFactory::keys());
+
+			get_setting<QString>(m_sett, "settings/theme", s_theme);
+			if(*s_theme != "")
+			{
+				int idxTheme = m_comboTheme->findText(*s_theme);
+				if(idxTheme >= 0 && idxTheme < m_comboTheme->count())
+					m_comboTheme->setCurrentIndex(idxTheme);
+			}
+
+			gridGui->addWidget(labelTheme, yGui,0,1,1);
+			gridGui->addWidget(m_comboTheme, yGui++,1,1,2);
 		}
 
 		// font
-		QLabel *labelFont = new QLabel("Font:", panelGui);
-		labelFont->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-		m_editFont = new QLineEdit(panelGui);
-		m_editFont->setReadOnly(true);
-		QPushButton *btnFont = new QPushButton("Select...", panelGui);
+		if(s_font)
+		{
+			QLabel *labelFont = new QLabel("Font:", panelGui);
+			labelFont->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+	
+			m_editFont = new QLineEdit(panelGui);
+			m_editFont->setReadOnly(true);
+	
+			QPushButton *btnFont = new QPushButton("Select...", panelGui);
+			connect(btnFont, &QPushButton::clicked, [this]()
+			{
+				// current font
+				QFont font = QApplication::font();
 
-		get_setting<QString>(sett, "settings/font", &g_font);
-		if(g_font == "")
-			g_font = QApplication::font().toString();
-		m_editFont->setText(g_font);
+				// select a new font
+				bool okClicked = false;
+				font = QFontDialog::getFont(&okClicked, font, this);
+				if(okClicked)
+				{
+					*s_font = font.toString();
+					if(*s_font == "")
+						*s_font = QApplication::font().toString();
+					m_editFont->setText(*s_font);
+
+					//QApplication::setFont(font);
+				}
+
+				// hack for the QFontDialog hiding the settings dialog
+				this->show();
+				this->raise();
+				this->activateWindow();
+			});
+
+			get_setting<QString>(m_sett, "settings/font", s_font);
+			if(*s_font == "")
+				*s_font = QApplication::font().toString();
+			m_editFont->setText(*s_font);
+
+			gridGui->addWidget(labelFont, yGui,0,1,1);
+			gridGui->addWidget(m_editFont, yGui,1,1,1);
+			gridGui->addWidget(btnFont, yGui++,2,1,1);
+		}
 
 		// native menubar
-		m_checkMenubar = new QCheckBox("Use native menubar.", panelGui);
-		get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
-		m_checkMenubar->setChecked(g_use_native_menubar!=0);
+		if(s_use_native_menubar)
+		{
+			m_checkMenubar = new QCheckBox("Use native menubar.", panelGui);
+			get_setting<int>(m_sett, "settings/native_menubar", s_use_native_menubar);
+			m_checkMenubar->setChecked(*s_use_native_menubar!=0);
+
+			gridGui->addWidget(m_checkMenubar, yGui++,0,1,3);
+		}
 
 		// native dialogs
-		m_checkDialogs = new QCheckBox("Use native dialogs.", panelGui);
-		get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
-		m_checkDialogs->setChecked(g_use_native_dialogs!=0);
-
-		if(!hide_optional_settings)
+		if(s_use_native_dialogs)
 		{
-			// gui animations
-			m_checkAnimations = new QCheckBox("Use animations.", panelGui);
-			get_setting<decltype(g_use_animations)>(sett, "settings/animations", &g_use_animations);
-			m_checkAnimations->setChecked(g_use_animations!=0);
-
-			// tabbed docks
-			m_checkTabbedDocks = new QCheckBox("Allow tabbed dock widgets.", panelGui);
-			get_setting<decltype(g_tabbed_docks)>(sett, "settings/tabbed_docks", &g_tabbed_docks);
-			m_checkTabbedDocks->setChecked(g_tabbed_docks!=0);
-
-			// nested docks
-			m_checkNestedDocks = new QCheckBox("Allow nested dock widgets.", panelGui);
-			get_setting<decltype(g_nested_docks)>(sett, "settings/nested_docks", &g_nested_docks);
-			m_checkNestedDocks->setChecked(g_nested_docks!=0);
+			m_checkDialogs = new QCheckBox("Use native dialogs.", panelGui);
+			get_setting<int>(m_sett, "settings/native_dialogs", s_use_native_dialogs);
+			m_checkDialogs->setChecked(*s_use_native_dialogs!=0);
+			
+			gridGui->addWidget(m_checkDialogs, yGui++,0,1,3);
 		}
 
-
-		// add widgets to layout
-		gridGui->addWidget(labelTheme, yGui,0,1,1);
-		gridGui->addWidget(m_comboTheme, yGui++,1,1,2);
-		gridGui->addWidget(labelFont, yGui,0,1,1);
-		gridGui->addWidget(m_editFont, yGui,1,1,1);
-		gridGui->addWidget(btnFont, yGui++,2,1,1);
-		gridGui->addWidget(m_checkMenubar, yGui++,0,1,3);
-		gridGui->addWidget(m_checkDialogs, yGui++,0,1,3);
-
-		if(!hide_optional_settings)
+		// gui animations
+		if(s_use_animations)
 		{
+			m_checkAnimations = new QCheckBox("Use animations.", panelGui);
+			get_setting<int>(m_sett, "settings/animations", s_use_animations);
+			m_checkAnimations->setChecked(*s_use_animations!=0);
+			
 			gridGui->addWidget(m_checkAnimations, yGui++,0,1,3);
+		}
+
+		// tabbed docks
+		if(s_tabbed_docks)
+		{
+			m_checkTabbedDocks = new QCheckBox("Allow tabbed dock widgets.", panelGui);
+			get_setting<int>(m_sett, "settings/tabbed_docks", s_tabbed_docks);
+			m_checkTabbedDocks->setChecked(*s_tabbed_docks!=0);
+			
 			gridGui->addWidget(m_checkTabbedDocks, yGui++,0,1,3);
+		}
+
+		// nested docks
+		if(s_nested_docks)
+		{
+			m_checkNestedDocks = new QCheckBox("Allow nested dock widgets.", panelGui);
+			get_setting<int>(m_sett, "settings/nested_docks", s_nested_docks);
+			m_checkNestedDocks->setChecked(*s_nested_docks!=0);
+
 			gridGui->addWidget(m_checkNestedDocks, yGui++,0,1,3);
 		}
+
 
 		QSpacerItem *spacer_end = new QSpacerItem(1, 1,
 			QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -257,30 +338,6 @@ public:
 
 
 		// connections
-		connect(btnFont, &QPushButton::clicked, [this]()
-		{
-			// current font
-			QFont font = QApplication::font();
-
-			// select a new font
-			bool okClicked = false;
-			font = QFontDialog::getFont(&okClicked, font, this);
-			if(okClicked)
-			{
-				g_font = font.toString();
-				if(g_font == "")
-					g_font = QApplication::font().toString();
-				m_editFont->setText(g_font);
-
-				//QApplication::setFont(font);
-			}
-
-			// hack for the QFontDialog hiding the settings dialog
-			this->show();
-			this->raise();
-			this->activateWindow();
-		});
-
 		connect(buttons, &QDialogButtonBox::accepted, this, &SettingsDlg::accept);
 		connect(buttons, &QDialogButtonBox::rejected, this, &SettingsDlg::reject);
 		connect(buttons, &QDialogButtonBox::clicked, [this, buttons](QAbstractButton* btn)
@@ -335,8 +392,8 @@ public:
 
 
 	/**
-	* read the settings and set the global variables
-	*/
+	 * read the settings and set the global variables
+	 */
 	static void ReadSettings(QSettings* sett)
 	{
 		// save the initial values as default settings
@@ -353,16 +410,26 @@ public:
 		auto seq = std::make_index_sequence<num_settingsvariables>();
 		get_settings_loop(seq, sett);
 
-		get_setting<decltype(g_theme)>(sett, "settings/theme", &g_theme);
-		get_setting<decltype(g_font)>(sett, "settings/font", &g_font);
-		get_setting<decltype(g_use_native_menubar)>(sett, "settings/native_menubar", &g_use_native_menubar);
-		get_setting<decltype(g_use_native_dialogs)>(sett, "settings/native_dialogs", &g_use_native_dialogs);
-		get_setting<decltype(g_use_animations)>(sett, "settings/animations", &g_use_animations);
-		get_setting<decltype(g_tabbed_docks)>(sett, "settings/tabbed_docks", &g_tabbed_docks);
-		get_setting<decltype(g_nested_docks)>(sett, "settings/nested_docks", &g_nested_docks);
+		get_setting<QString>(sett, "settings/theme", s_theme);
+		get_setting<QString>(sett, "settings/font", s_font);
+		get_setting<int>(sett, "settings/native_menubar", s_use_native_menubar);
+		get_setting<int>(sett, "settings/native_dialogs", s_use_native_dialogs);
+		get_setting<int>(sett, "settings/animations", s_use_animations);
+		get_setting<int>(sett, "settings/tabbed_docks", s_tabbed_docks);
+		get_setting<int>(sett, "settings/nested_docks", s_nested_docks);
 
 		ApplyGuiSettings();
 	}
+
+
+	// common gui settings	
+	static void SetGuiTheme(QString* str) { s_theme = str; }
+	static void SetGuiFont(QString* str) { s_font = str; }
+	static void SetGuiUseNativeMenubar(int *i) { s_use_native_menubar = i; }
+	static void SetGuiUseNativeDialogs(int *i) { s_use_native_dialogs = i; }
+	static void SetGuiUseAnimations(int *i) { s_use_animations = i; }
+	static void SetGuiTabbedDocks(int *i) { s_tabbed_docks = i; }
+	static void SetGuiNestedDocks(int *i) { s_nested_docks = i; }
 
 
 	/**
@@ -415,9 +482,12 @@ protected:
 		// set value field editable
 		for(int row=0; row<m_table->rowCount(); ++row)
 		{
-			m_table->item(row, 0)->setFlags(m_table->item(row, 0)->flags() & ~Qt::ItemIsEditable);
-			m_table->item(row, 1)->setFlags(m_table->item(row, 1)->flags() & ~Qt::ItemIsEditable);
-			m_table->item(row, 2)->setFlags(m_table->item(row, 2)->flags() | Qt::ItemIsEditable);
+			m_table->item(row, 0)->setFlags(
+				m_table->item(row, 0)->flags() & ~Qt::ItemIsEditable);
+			m_table->item(row, 1)->setFlags(
+				m_table->item(row, 1)->flags() & ~Qt::ItemIsEditable);
+			m_table->item(row, 2)->setFlags(
+				m_table->item(row, 2)->flags() | Qt::ItemIsEditable);
 		}
 	}
 
@@ -436,40 +506,53 @@ protected:
 
 
 	/**
-	* 'Apply' was clicked, write the settings from the global variables
-	*/
+	 * 'Apply' was clicked, write the settings from the global variables
+	 */
 	void ApplySettings()
 	{
 		auto seq = std::make_index_sequence<num_settingsvariables>();
 		apply_settings_loop(seq, m_table, m_sett);
 
 		// set the global variables
-		g_theme = m_comboTheme->currentText();
-		g_font = m_editFont->text();
-		g_use_native_menubar = m_checkMenubar->isChecked();
-		g_use_native_dialogs = m_checkDialogs->isChecked();
+		if(s_theme)
+			*s_theme = m_comboTheme->currentText();
+		if(s_font)
+			*s_font = m_editFont->text();
+		if(s_use_native_menubar)
+			*s_use_native_menubar = m_checkMenubar->isChecked();
+		if(s_use_native_dialogs)
+			*s_use_native_dialogs = m_checkDialogs->isChecked();
 
-		if(!m_hide_optional_settings)
-		{
-			g_use_animations = m_checkAnimations->isChecked();
-			g_tabbed_docks = m_checkTabbedDocks->isChecked();
-			g_nested_docks = m_checkNestedDocks->isChecked();
-		}
+		if(s_use_animations)
+			*s_use_animations = m_checkAnimations->isChecked();
+		if(s_tabbed_docks)
+			*s_tabbed_docks = m_checkTabbedDocks->isChecked();
+		if(s_nested_docks)
+			*s_nested_docks = m_checkNestedDocks->isChecked();
 
 		// write out the settings
 		if(m_sett)
 		{
-			m_sett->setValue("settings/theme", g_theme);
-			m_sett->setValue("settings/font", g_font);
-			m_sett->setValue("settings/native_menubar", g_use_native_menubar);
-			m_sett->setValue("settings/native_dialogs", g_use_native_dialogs);
+			if(s_theme)
+				m_sett->setValue("settings/theme", *s_theme);
+			if(s_font)
+				m_sett->setValue("settings/font", *s_font);
+			if(s_use_native_menubar)
+				m_sett->setValue("settings/native_menubar",
+					*s_use_native_menubar);
+			if(s_use_native_dialogs)
+				m_sett->setValue("settings/native_dialogs",
+					*s_use_native_dialogs);
 
-			if(!m_hide_optional_settings)
-			{
-				m_sett->setValue("settings/animations", g_use_animations);
-				m_sett->setValue("settings/tabbed_docks", g_tabbed_docks);
-				m_sett->setValue("settings/nested_docks", g_nested_docks);
-			}
+			if(s_use_animations)
+				m_sett->setValue("settings/animations",
+					*s_use_animations);
+			if(s_tabbed_docks)
+				m_sett->setValue("settings/tabbed_docks",
+					*s_tabbed_docks);
+			if(s_nested_docks)
+				m_sett->setValue("settings/nested_docks",
+					*s_nested_docks);
 		}
 
 		ApplyGuiSettings();
@@ -485,23 +568,27 @@ protected:
 	static void ApplyGuiSettings()
 	{
 		// set gui theme
-		if(g_theme != "")
+		if(s_theme && *s_theme != "")
 		{
-			if(QStyle* theme = QStyleFactory::create(g_theme); theme)
+			if(QStyle* theme = QStyleFactory::create(*s_theme); theme)
 				QApplication::setStyle(theme);
 		}
 
 		// set gui font
-		if(g_font != "")
+		if(s_font && *s_font != "")
 		{
 			QFont font;
-			if(font.fromString(g_font))
+			if(font.fromString(*s_font))
 				QApplication::setFont(font);
 		}
 
 		// set native menubar and dialogs
-		QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, !g_use_native_menubar);
-		QApplication::setAttribute(Qt::AA_DontUseNativeDialogs, !g_use_native_dialogs);
+		if(s_use_native_menubar)
+			QApplication::setAttribute(
+				Qt::AA_DontUseNativeMenuBar, !*s_use_native_menubar);
+		if(s_use_native_dialogs)
+			QApplication::setAttribute(
+				Qt::AA_DontUseNativeDialogs, !*s_use_native_dialogs);
 	}
 
 
@@ -734,7 +821,6 @@ protected:
 
 private:
 	QSettings *m_sett{nullptr};
-	bool m_hide_optional_settings{false};
 	QTableWidget *m_table{nullptr};
 
 	QComboBox *m_comboTheme{nullptr};
@@ -744,6 +830,15 @@ private:
 	QCheckBox *m_checkAnimations{nullptr};
 	QCheckBox *m_checkTabbedDocks{nullptr};
 	QCheckBox *m_checkNestedDocks{nullptr};
+
+	// common gui settings
+	static QString *s_theme;           // gui theme
+	static QString *s_font;            // gui font
+	static int *s_use_native_menubar;  // use native menubar?
+	static int *s_use_native_dialogs;  // use native dialogs?
+	static int *s_use_animations;      // use gui animations?
+	static int *s_tabbed_docks;        // allow tabbed dock widgets?
+	static int *s_nested_docks;        // allow nested dock widgets?
 
 	// default setting values
 	static std::unordered_map<std::string, SettingsVariable::t_variant> s_defaults;
@@ -768,12 +863,51 @@ public:
 };
 
 
+
 // initialise static variable holding defaults
 template<
 	std::size_t num_settingsvariables,
 	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
 std::unordered_map<std::string, SettingsVariable::t_variant>
 SettingsDlg<num_settingsvariables, settingsvariables>::s_defaults{};
+
+
+// initialise static variables for common gui settings
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+QString *SettingsDlg<num_settingsvariables, settingsvariables>::s_theme{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+QString *SettingsDlg<num_settingsvariables, settingsvariables>::s_font{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+int *SettingsDlg<num_settingsvariables, settingsvariables>::s_use_native_menubar{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+int *SettingsDlg<num_settingsvariables, settingsvariables>::s_use_native_dialogs{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+int *SettingsDlg<num_settingsvariables, settingsvariables>::s_use_animations{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+int *SettingsDlg<num_settingsvariables, settingsvariables>::s_tabbed_docks{nullptr};
+
+template<
+	std::size_t num_settingsvariables,
+	const std::array<SettingsVariable, num_settingsvariables> *settingsvariables>
+int *SettingsDlg<num_settingsvariables, settingsvariables>::s_nested_docks{nullptr};
+
 // ----------------------------------------------------------------------------
 
 #endif

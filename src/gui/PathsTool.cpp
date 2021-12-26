@@ -39,7 +39,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 namespace pt = boost::property_tree;
 
-#include "settings_variables.h"
 #include "src/libs/proc.h"
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/str.h"
@@ -70,6 +69,15 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		QIcon icon{icon_file.c_str()};
 		setWindowIcon(icon);
 	}
+
+	// set-up common gui variables
+	PathsTool::t_SettingsDlg::SetGuiTheme(&g_theme);
+	PathsTool::t_SettingsDlg::SetGuiFont(&g_font);
+	PathsTool::t_SettingsDlg::SetGuiUseNativeMenubar(&g_use_native_menubar);
+	PathsTool::t_SettingsDlg::SetGuiUseNativeDialogs(&g_use_native_dialogs);
+	PathsTool::t_SettingsDlg::SetGuiUseAnimations(&g_use_animations);
+	PathsTool::t_SettingsDlg::SetGuiTabbedDocks(&g_tabbed_docks);
+	PathsTool::t_SettingsDlg::SetGuiNestedDocks(&g_nested_docks);
 
 	// restore settings
 	PathsTool::t_SettingsDlg::ReadSettings(&m_sett);

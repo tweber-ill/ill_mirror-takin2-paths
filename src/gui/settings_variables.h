@@ -35,9 +35,8 @@
 
 #include "Resources.h"
 #include "src/core/types.h"
+#include "src/gui/dialogs/Settings.h"
 #include "tlibs2/libs/qt/gl.h"
-
-#include "settings_common.h"
 
 
 
@@ -226,6 +225,7 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 		.key = "settings/maxnum_threads",
 		.value = &g_maxnum_threads,
 	},
+
 	// file options
 	{
 		.description = "Maximum number of recent files.",
