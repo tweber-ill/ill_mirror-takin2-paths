@@ -76,8 +76,8 @@ enum class SettingsVariableEditor
 
 struct SettingsVariable
 {
-	using t_variant = std::variant<t_real, int, unsigned int>;
-	using t_variant_ptr = std::variant<t_real*, int*, unsigned int*>;
+	using t_variant = std::variant<t_real, int, unsigned int, std::string>;
+	using t_variant_ptr = std::variant<t_real*, int*, unsigned int*, std::string*>;
 
 	const char* description{};
 	const char* key{};
@@ -437,8 +437,25 @@ public:
 	 */
 	static void SaveDefaultSettings()
 	{
+		// general program settings
 		auto seq = std::make_index_sequence<num_settingsvariables>();
 		save_default_values_loop(seq, s_defaults);
+
+		// gui settings
+		if(s_theme)
+			s_defaults.insert_or_assign("<theme>", s_theme->toStdString());
+		if(s_font)
+			s_defaults.insert_or_assign("<font>", s_font->toStdString());
+		if(s_use_native_menubar)
+			s_defaults.insert_or_assign("<native_menubar>", *s_use_native_menubar);
+		if(s_use_native_dialogs)
+			s_defaults.insert_or_assign("<native_dialogs>", *s_use_native_dialogs);
+		if(s_use_animations)
+			s_defaults.insert_or_assign("<animations>", *s_use_animations);
+		if(s_tabbed_docks)
+			s_defaults.insert_or_assign("<tabbed_docks>", *s_tabbed_docks);
+		if(s_nested_docks)
+			s_defaults.insert_or_assign("<nested_docks>", *s_nested_docks);
 	}
 
 
@@ -497,11 +514,88 @@ protected:
 	 */
 	void RestoreDefaultSettings()
 	{
+		// general program settings
 		auto seq = std::make_index_sequence<num_settingsvariables>();
 		restore_default_values_loop(seq, s_defaults);
 
-		// re-populte the settings table
+		// re-populate the settings table
 		PopulateSettingsTable();
+
+		// gui settings
+		if(s_theme)
+		{
+			if(auto iter = s_defaults.find(std::string{"<theme>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<std::string>(iter->second))
+					*s_theme = std::get<std::string>(iter->second).c_str();
+				if(m_comboTheme && *s_theme!="")
+				{
+					int idxTheme = m_comboTheme->findText(*s_theme);
+					if(idxTheme >= 0 && idxTheme < m_comboTheme->count())
+						m_comboTheme->setCurrentIndex(idxTheme);
+				}
+			}
+		}
+		if(s_font)
+		{
+			if(auto iter = s_defaults.find(std::string{"<font>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<std::string>(iter->second))
+					*s_font = std::get<std::string>(iter->second).c_str();
+				if(m_editFont && *s_font!="")
+					m_editFont->setText(*s_font);
+			}
+		}
+		if(s_use_native_menubar)
+		{
+			if(auto iter = s_defaults.find(std::string{"<native_menubar>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<int>(iter->second))
+					*s_use_native_menubar = std::get<int>(iter->second);
+				if(m_checkMenubar)
+					m_checkMenubar->setChecked(*s_use_native_menubar!=0);
+			}
+		}
+		if(s_use_native_dialogs)
+		{
+			if(auto iter = s_defaults.find(std::string{"<native_dialogs>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<int>(iter->second))
+					*s_use_native_dialogs = std::get<int>(iter->second);
+				if(m_checkDialogs)
+					m_checkDialogs->setChecked(*s_use_native_dialogs!=0);
+			}
+		}
+		if(s_use_animations)
+		{
+			if(auto iter = s_defaults.find(std::string{"<animations>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<int>(iter->second))
+					*s_use_animations = std::get<int>(iter->second);
+				if(m_checkAnimations)
+					m_checkAnimations->setChecked(*s_use_animations!=0);
+			}
+		}
+		if(s_tabbed_docks)
+		{
+			if(auto iter = s_defaults.find(std::string{"<tabbed_docks>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<int>(iter->second))
+					*s_tabbed_docks = std::get<int>(iter->second);
+				if(m_checkTabbedDocks)
+					m_checkTabbedDocks->setChecked(*s_tabbed_docks!=0);
+			}
+		}
+		if(s_nested_docks)
+		{
+			if(auto iter = s_defaults.find(std::string{"<nested_docks>"}); iter!=s_defaults.end())
+			{
+				if(std::holds_alternative<int>(iter->second))
+					*s_nested_docks = std::get<int>(iter->second);
+				if(m_checkNestedDocks)
+					m_checkNestedDocks->setChecked(*s_nested_docks!=0);
+			}
+		}
 	}
 
 
