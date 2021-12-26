@@ -546,54 +546,46 @@ protected:
 					m_editFont->setText(*s_font);
 			}
 		}
-		if(s_use_native_menubar)
+		
+		int* vars[] =
 		{
-			if(auto iter = s_defaults.find(std::string{"<native_menubar>"}); iter!=s_defaults.end())
+			s_use_native_menubar,
+			s_use_native_dialogs,
+			s_use_animations,
+			s_tabbed_docks,
+			s_nested_docks,
+		};
+		
+		std::string idents[] =
+		{
+			"<native_menubar>",
+			"<native_dialogs>",
+			"<animations>",
+			"<tabbed_docks>",
+			"<nested_docks>",
+		};
+		
+		QCheckBox* checks[] =
+		{
+			m_checkMenubar,
+			m_checkDialogs,
+			m_checkAnimations,
+			m_checkTabbedDocks,
+			m_checkNestedDocks,
+		};
+
+		for(std::size_t idx=0; idx<sizeof(vars)/sizeof(*vars); ++idx)
+		{
+			if(!vars[idx])
+				continue;
+
+			if(auto iter = s_defaults.find(idents[idx]);
+			   iter != s_defaults.end())
 			{
 				if(std::holds_alternative<int>(iter->second))
-					*s_use_native_menubar = std::get<int>(iter->second);
-				if(m_checkMenubar)
-					m_checkMenubar->setChecked(*s_use_native_menubar!=0);
-			}
-		}
-		if(s_use_native_dialogs)
-		{
-			if(auto iter = s_defaults.find(std::string{"<native_dialogs>"}); iter!=s_defaults.end())
-			{
-				if(std::holds_alternative<int>(iter->second))
-					*s_use_native_dialogs = std::get<int>(iter->second);
-				if(m_checkDialogs)
-					m_checkDialogs->setChecked(*s_use_native_dialogs!=0);
-			}
-		}
-		if(s_use_animations)
-		{
-			if(auto iter = s_defaults.find(std::string{"<animations>"}); iter!=s_defaults.end())
-			{
-				if(std::holds_alternative<int>(iter->second))
-					*s_use_animations = std::get<int>(iter->second);
-				if(m_checkAnimations)
-					m_checkAnimations->setChecked(*s_use_animations!=0);
-			}
-		}
-		if(s_tabbed_docks)
-		{
-			if(auto iter = s_defaults.find(std::string{"<tabbed_docks>"}); iter!=s_defaults.end())
-			{
-				if(std::holds_alternative<int>(iter->second))
-					*s_tabbed_docks = std::get<int>(iter->second);
-				if(m_checkTabbedDocks)
-					m_checkTabbedDocks->setChecked(*s_tabbed_docks!=0);
-			}
-		}
-		if(s_nested_docks)
-		{
-			if(auto iter = s_defaults.find(std::string{"<nested_docks>"}); iter!=s_defaults.end())
-			{
-				if(std::holds_alternative<int>(iter->second))
-					*s_nested_docks = std::get<int>(iter->second);
-				if(m_checkNestedDocks)
-					m_checkNestedDocks->setChecked(*s_nested_docks!=0);
+					*vars[idx] = std::get<int>(iter->second);
+				if(checks[idx])
+					checks[idx]->setChecked(*vars[idx]!=0);
 			}
 		}
 	}
