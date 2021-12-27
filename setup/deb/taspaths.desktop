@@ -2,9 +2,9 @@
 	Name=TAS-Paths
 	GenericName=TAS-Paths
 	Comment=Triple-Axis Pathfinding Software
-	Exec=/usr/local/bin/taspaths
+	Exec=/usr/bin/env LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH} /usr/local/bin/taspaths
 	Type=Application
 	Terminal=false
 	StartupNotify=false
-	Categories=Science
+	Categories=Education;Science;Application
 	Icon=/usr/local/share/taspaths/res/taspaths.svg
