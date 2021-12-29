@@ -108,7 +108,7 @@ t_real g_min_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;
 
 // path-tracker and renderer FPS
 unsigned int g_pathtracker_fps = 30;
-unsigned int g_timer_fps = 30;
+unsigned int g_timer_fps = 60;
 
 
 // renderer options

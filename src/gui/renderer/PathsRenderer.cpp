@@ -471,20 +471,6 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name,
 }
 
 
-void PathsRenderer::UpdateCam()
-{
-	m_cam.UpdateTransformation();
-	m_pickerNeedsUpdate = true;
-
-	t_vec3_gl pos = m_cam.GetPosition();
-	auto [phi, theta] = m_cam.GetRotation();
-
-	emit CamPositionChanged(pos[0], pos[1], pos[2]);
-	emit CamRotationChanged(phi, theta);
-	emit CamZoomChanged(m_cam.GetZoom());
-}
-
-
 /**
  * centre camera around a given object
  */
@@ -710,6 +696,27 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 		ZoomCam(zoom_dir * zoom_scale);
 	}
 
+	if(m_cam.TransformationNeedsUpdate())
+	{
+		m_cam.UpdateTransformation();
+		m_pickerNeedsUpdate = true;
+
+		// emit changed camera position and rotation
+		t_vec3_gl pos = m_cam.GetPosition();
+		auto [phi, theta] = m_cam.GetRotation();
+
+		emit CamPositionChanged(pos[0], pos[1], pos[2]);
+		emit CamRotationChanged(phi, theta);
+		emit CamZoomChanged(m_cam.GetZoom());
+	}
+
+	if(m_cam.PerspectiveNeedsUpdate())
+	{
+		m_cam.UpdatePerspective();
+		m_perspectiveNeedsUpdate = true;
+		m_pickerNeedsUpdate = true;
+	}
+
 	// render frame
 	update();
 }
@@ -861,28 +868,6 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
 	if(auto *pContext = ((QOpenGLWidget*)this)->context(); !pContext)
 		return nullptr;
 	return tl2::get_gl_functions(this);
-}
-
-
-void PathsRenderer::UpdatePerspective()
-{
-	m_cam.UpdatePerspective();
-
-	auto *pGl = GetGlFunctions();
-	if(!pGl)
-		return;
-
-	// bind shaders
-	BOOST_SCOPE_EXIT(m_shaders)
-	{
-		m_shaders->release();
-	} BOOST_SCOPE_EXIT_END
-	m_shaders->bind();
-	LOGGLERR(pGl);
-
-	// set matrices
-	m_shaders->setUniformValue(m_uniMatrixProj, m_cam.GetPerspective());
-	LOGGLERR(pGl);
 }
 
 
@@ -1124,10 +1109,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	pGl->glEnable(GL_DEPTH_TEST);
 
-	if(m_cam.TransformationNeedsUpdate())
-		UpdateCam();
-	if(m_cam.PerspectiveNeedsUpdate())
-		UpdatePerspective();
 	if(m_viewportNeedsUpdate)
 		UpdateViewport();
 	if(m_lightsNeedUpdate)
@@ -1144,10 +1125,20 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	m_shaders->setUniformValue(m_uniShadowRenderingEnabled, m_shadowRenderingEnabled);
 	m_shaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
 
-	// set cam and light matrices
-	m_shaders->setUniformValue(m_uniMatrixCam, m_cam.GetTransformation());
-	m_shaders->setUniformValue(m_uniMatrixCamInv, m_cam.GetInverseTransformation());
+	// set camera transformation matrix
+	m_shaders->setUniformValue(
+		m_uniMatrixCam, m_cam.GetTransformation());
+	m_shaders->setUniformValue(
+		m_uniMatrixCamInv, m_cam.GetInverseTransformation());
 
+	// set perspective matrix
+	if(m_perspectiveNeedsUpdate)
+	{
+		m_shaders->setUniformValue(m_uniMatrixProj, m_cam.GetPerspective());
+		m_perspectiveNeedsUpdate = false;
+	}
+
+	// set light matrix
 	m_shaders->setUniformValue(m_uniMatrixLight, m_matLight);
 	m_shaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
 

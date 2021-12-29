@@ -167,10 +167,8 @@ protected:
 
 	qgl_funcs* GetGlFunctions();
 
-	void UpdateCam();
 	void UpdatePicker();
 	void UpdateLights();
-	void UpdatePerspective();
 	void UpdateLightPerspective();
 	void UpdateViewport();
 	void UpdateShadowFramebuffer();
@@ -266,6 +264,7 @@ protected:
 	std::atomic<bool> m_pickerEnabled = true;
 	std::atomic<bool> m_pickerNeedsUpdate = false;
 	std::atomic<bool> m_lightsNeedUpdate = false;
+	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
 	std::atomic<bool> m_shadowFramebufferNeedsUpdate = false;
 	std::atomic<bool> m_shadowRenderingEnabled = true;
