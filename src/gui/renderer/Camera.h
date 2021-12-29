@@ -49,37 +49,6 @@ public:
 
 
 	/**
-	 * update camera matrices
-	 */
-	void Update()
-	{
-		t_mat matCamTrans = m_matTrans;
-		matCamTrans(2,3) = 0.;
-		t_mat matCamTrans_inv = matCamTrans;
-		matCamTrans_inv(0,3) = -matCamTrans(0,3);
-		matCamTrans_inv(1,3) = -matCamTrans(1,3);
-		matCamTrans_inv(2,3) = -matCamTrans(2,3);
-
-		const t_vec vecCamDir[2] =
-		{
-			tl2::create<t_vec>({1., 0., 0.}),
-			tl2::create<t_vec>({0. ,0., 1.})
-		};
-
-		m_matRot = tl2::hom_rotation<t_mat, t_vec>(
-			vecCamDir[0], m_theta, 0);
-		m_matRot *= tl2::hom_rotation<t_mat, t_vec>(
-			vecCamDir[1], m_phi, 0);
-
-		m_mat = tl2::unit<t_mat>();
-		m_mat *= m_matTrans;
-		m_mat(2,3) /= m_zoom;
-		m_mat *= matCamTrans_inv * m_matRot * matCamTrans;
-		std::tie(m_mat_inv, std::ignore) = tl2::inv<t_mat>(m_mat);
-	}
-
-
-	/**
 	 * centre camera on object matrix
 	 */
 	void Centre(const t_mat& objmat)
@@ -87,6 +56,8 @@ public:
 		m_matTrans(0,3) = -objmat(0,3);
 		m_matTrans(1,3) = -objmat(1,3);
 		//m_matTrans(2,3) = -objmat(2,3);
+
+		m_trafo_needs_update = true;
 	}
 
 
@@ -96,6 +67,7 @@ public:
 	void SetFOV(t_real angle)
 	{
 		m_FOV = angle;
+		m_persp_needs_update = true;
 	}
 
 
@@ -114,6 +86,7 @@ public:
 	void SetZoom(t_real zoom)
 	{
 		m_zoom = zoom;
+		m_trafo_needs_update = true;
 	}
 
 
@@ -127,6 +100,26 @@ public:
 
 
 	/**
+	 * set the camera frustum's near plane
+	 */
+	void SetNearPlane(t_real z)
+	{
+		m_nearPlane = z;
+		m_persp_needs_update = true;
+	}
+
+
+	/**
+	 * set the camera frustum's near plane
+	 */
+	void SetFarPlane(t_real z)
+	{
+		m_farPlane = z;
+		m_persp_needs_update = true;
+	}
+
+
+	/**
 	 * set the camera position
 	 */
 	void SetPosition(const t_vec& pos)
@@ -134,6 +127,8 @@ public:
 		m_matTrans(0, 3) = pos[0];
 		m_matTrans(1, 3) = pos[1];
 		m_matTrans(2, 3) = pos[2];
+
+		m_trafo_needs_update = true;
 	}
 
 
@@ -158,6 +153,8 @@ public:
 	{
 		m_phi_saved = m_phi = phi;
 		m_theta_saved = m_theta = theta;
+
+		m_trafo_needs_update = true;
 	}
 
 
@@ -195,6 +192,8 @@ public:
 		// restrict theta angle
 		m_theta = tl2::clamp<t_real>(
 			theta_new, -tl2::pi<t_real>*t_real(0.5), 0);
+
+		m_trafo_needs_update = true;
 	}
 
 
@@ -214,6 +213,8 @@ public:
 		m_matTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
 		m_matTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
 		m_matTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
+
+		m_trafo_needs_update = true;
 	}
 
 
@@ -223,14 +224,18 @@ public:
 	void Zoom(t_real zoom)
 	{
 		m_zoom *= std::pow(t_real(2), zoom);
+
+		m_trafo_needs_update = true;
 	}
 
 
 	/**
 	 * get the camera's full transformation matrix
 	 */
-	const t_mat& GetMatrix() const
+	const t_mat& GetTransformation() const
 	{
+		//if(m_trafo_needs_update)
+		//	UpdateTransformation();
 		return m_mat;
 	}
 
@@ -238,14 +243,134 @@ public:
 	/**
 	 * get the camera's inverse transformation matrix
 	 */
-	const t_mat& GetInverseMatrix() const
+	const t_mat& GetInverseTransformation() const
 	{
+		//if(m_trafo_needs_update)
+		//	UpdateTransformation();
 		return m_mat_inv;
 	}
 
 
+	/**
+	 * get the camera's full transformation matrix
+	 */
+	const t_mat& GetPerspective() const
+	{
+		//if(m_persp_needs_update)
+		//	UpdatePerspective();
+		return m_matPerspective;
+	}
+
+
+	/**
+	 * get the camera's inverse transformation matrix
+	 */
+	const t_mat& GetInversePerspective() const
+	{
+		//if(m_persp_needs_update)
+		//	UpdatePerspective();
+		return m_matPerspective_inv;
+	}
+
+
+	/**
+	 * sets perspective or parallel projection
+	 */
+	void SetPerspectiveProjection(bool proj)
+	{
+		m_persp_proj = proj;
+		m_persp_needs_update = true;
+	}
+
+
+	bool GetPerspectiveProjection() const
+	{
+		return m_persp_proj;
+	}
+
+
+	/**
+	 * sets scree aspect ratio, height/width
+	 */
+	void SetAspectRatio(t_real aspect)
+	{
+		m_aspect = aspect;
+		m_persp_needs_update = true;
+	}
+
+
+	bool TransformationNeedsUpdate() const
+	{
+		return m_trafo_needs_update;
+	}
+
+
+	bool PerspectiveNeedsUpdate() const
+	{
+		return m_persp_needs_update;
+	}
+
+
+//protected:
+	/**
+	 * update camera matrices
+	 */
+	void UpdateTransformation()
+	{
+		t_mat matCamTrans = m_matTrans;
+		matCamTrans(2,3) = 0.;
+		t_mat matCamTrans_inv = matCamTrans;
+		matCamTrans_inv(0,3) = -matCamTrans(0,3);
+		matCamTrans_inv(1,3) = -matCamTrans(1,3);
+		matCamTrans_inv(2,3) = -matCamTrans(2,3);
+
+		const t_vec vecCamDir[2] =
+		{
+			tl2::create<t_vec>({1., 0., 0.}),
+			tl2::create<t_vec>({0. ,0., 1.})
+		};
+
+		m_matRot = tl2::hom_rotation<t_mat, t_vec>(
+			vecCamDir[0], m_theta, 0);
+		m_matRot *= tl2::hom_rotation<t_mat, t_vec>(
+			vecCamDir[1], m_phi, 0);
+
+		m_mat = tl2::unit<t_mat>();
+		m_mat *= m_matTrans;
+		m_mat(2,3) /= m_zoom;
+		m_mat *= matCamTrans_inv * m_matRot * matCamTrans;
+		std::tie(m_mat_inv, std::ignore) = tl2::inv<t_mat>(m_mat);
+
+		m_trafo_needs_update = false;
+	}
+
+
+	/**
+	 * update camera perspective matrices
+	 */
+	void UpdatePerspective()
+	{
+		// projection
+		if(m_persp_proj)
+		{
+			m_matPerspective = tl2::hom_perspective<t_mat, t_real>(
+				m_nearPlane, m_farPlane, m_FOV, m_aspect);
+		}
+		else
+		{
+			m_matPerspective = tl2::hom_ortho_sym<t_mat, t_real>(
+				m_nearPlane, m_farPlane, 20., 20.);
+		}
+
+		std::tie(m_matPerspective_inv, std::ignore) =
+			tl2::inv<t_mat>(m_matPerspective);
+
+		m_persp_needs_update = false;
+	}
+
+
 private:
-	// full transformation matrix and inverse
+	// full transformation matrix and its inverse
 	t_mat m_mat = tl2::unit<t_mat>();
 	t_mat m_mat_inv = tl2::unit<t_mat>();
 
@@ -257,12 +382,32 @@ private:
 	// field of view
 	t_real m_FOV = tl2::pi<t_real>*t_real(0.5);
 
+	// camera frustum near and far planes
+	t_real m_nearPlane = 0.1;
+	t_real m_farPlane = 1000.;
+
+	// perspective matrix and its inverse
+	t_mat m_matPerspective = tl2::unit<t_mat>();
+	t_mat m_matPerspective_inv = tl2::unit<t_mat>();
+
 	// camera rotation
 	t_real m_phi = 0, m_theta = 0;
 	t_real m_phi_saved = 0, m_theta_saved = 0;
 
 	// camera zoom
 	t_real m_zoom = 1.;
+
+	// perspective or parallel projection?
+	bool m_persp_proj = true;
+
+	// screen aspect ratio
+	t_real m_aspect = 1.;
+
+	// does the transformation matrix need an update?
+	bool m_trafo_needs_update = true;
+
+	// does the perspective matrix need an update?
+	bool m_persp_needs_update = true;
 };
 
 

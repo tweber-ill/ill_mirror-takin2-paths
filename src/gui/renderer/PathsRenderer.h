@@ -108,7 +108,7 @@ public:
 
 	void Clear();
 	bool LoadInstrument(const InstrumentSpace& instr);
-	void AddWall(const Geometry& geo, bool update_scene=true);
+	void AddWall(const Geometry& geo);
 
 	// receivers for instrument (space) update signals
 	void UpdateInstrumentSpace(const InstrumentSpace& instr);
@@ -139,7 +139,8 @@ public:
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
 	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
 
-	const t_cam& GetCamera() const{ return m_cam; }
+	const t_cam& GetCamera() const { return m_cam; }
+	t_cam& GetCamera() { return m_cam; }
 	void CentreCam(const std::string& obj);
 
 	QPoint GetMousePosition(bool global_pos = false) const;
@@ -174,7 +175,7 @@ protected:
 	void UpdateViewport();
 	void UpdateShadowFramebuffer();
 
-	void ZoomCam(t_real zoom, bool update = true);
+	void ZoomCam(t_real zoom);
 
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);
@@ -191,7 +192,6 @@ private:
 
 	bool m_mouseMovedBetweenDownAndUp = false;
 	bool m_mouseDown[3] = { 0, 0, 0 };
-	bool m_perspectiveProjection = true;
 	bool m_arrowDown[4] = { 0, 0, 0, 0 };	// l, r, u, d
 	bool m_pageDown[2] = { 0, 0 };
 	bool m_bracketDown[2] = { 0, 0 };
@@ -237,7 +237,8 @@ protected:
 	// ------------------------------------------------------------------------
 
 	// version identifiers
-	std::string m_strGlVer{}, m_strGlShaderVer{}, m_strGlVendor{}, m_strGlRenderer{};
+	std::string m_strGlVer{}, m_strGlShaderVer{},
+		m_strGlVendor{}, m_strGlRenderer{};
 
 	// cursor uv coordinates and object under cursor
 	GLfloat m_cursorUV[2] = {0., 0.};
@@ -254,8 +255,6 @@ protected:
 	t_cam m_cam{};
 
 	// matrices
-	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matLightPerspective = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matLightPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
@@ -267,7 +266,6 @@ protected:
 	std::atomic<bool> m_pickerEnabled = true;
 	std::atomic<bool> m_pickerNeedsUpdate = false;
 	std::atomic<bool> m_lightsNeedUpdate = false;
-	std::atomic<bool> m_perspectiveNeedsUpdate = false;
 	std::atomic<bool> m_viewportNeedsUpdate = false;
 	std::atomic<bool> m_shadowFramebufferNeedsUpdate = false;
 	std::atomic<bool> m_shadowRenderingEnabled = true;
@@ -303,14 +301,6 @@ protected slots:
 public slots:
 	void EnablePicker(bool b);
 	void EnableTimer(bool enable=true);
-
-	void SetPerspectiveProjection(bool b);
-	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
-
-	void SetCamViewingAngle(t_real_gl angle);
-	void SetCamZoom(t_real_gl zoom);
-	void SetCamPosition(const t_vec3_gl& pos);
-	void SetCamRotation(const t_vec2_gl& rot);
 
 	void EnableTextures(bool b);
 	bool ChangeTextureProperty(const QString& ident, const QString& filename);

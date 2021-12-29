@@ -261,8 +261,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real angle) -> void
 		{
 			if(m_renderer)
-				m_renderer->SetCamViewingAngle(
+			{
+				m_renderer->GetCamera().SetFOV(
 					angle/t_real{180}*tl2::pi<t_real>);
+			}
 		});
 
 	// camera zoom
@@ -270,7 +272,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](t_real zoom) -> void
 		{
 			if(m_renderer)
-				m_renderer->SetCamZoom(zoom);
+			{
+				m_renderer->GetCamera().SetZoom(zoom);
+			}
 		});
 
 	// camera projection
@@ -278,7 +282,9 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 		[this](bool persp) -> void
 		{
 			if(m_renderer)
-				m_renderer->SetPerspectiveProjection(persp);
+			{
+				m_renderer->GetCamera().SetPerspectiveProjection(persp);
+			}
 		});
 
 	// camera position
@@ -290,8 +296,10 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real_gl z = t_real_gl(_z);
 
 			if(m_renderer)
-				m_renderer->SetCamPosition(
+			{
+				m_renderer->GetCamera().SetPosition(
 					tl2::create<t_vec3_gl>({x, y, z}));
+			}
 		});
 
 	// camera rotation
@@ -302,9 +310,11 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			t_real_gl theta = t_real_gl(_theta);
 
 			if(m_renderer)
-				m_renderer->SetCamRotation(tl2::create<t_vec2_gl>(
-					{phi/t_real_gl{180}*tl2::pi<t_real_gl>,
-					theta/t_real_gl{180}*tl2::pi<t_real_gl>}));
+			{
+				m_renderer->GetCamera().SetRotation(
+					phi/t_real_gl{180}*tl2::pi<t_real_gl>,
+					theta/t_real_gl{180}*tl2::pi<t_real_gl>);
+			}
 		});
 
 	// lattice constants and angles
@@ -1946,14 +1956,23 @@ void PathsTool::AfterGLInitialisation()
 	std::tie(m_gl_ver, m_gl_shader_ver, m_gl_vendor, m_gl_renderer)
 		= m_renderer->GetGlDescr();
 
-	// get viewing angle and zoom
-	t_real viewingAngle = m_renderer ? m_renderer->GetCamera().GetFOV() : tl2::pi<t_real>*0.5;
-	t_real zoom = m_renderer ? m_renderer->GetCamera().GetZoom() : 1.;
-	m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
+	// get camera fov
+	t_real viewingAngle = tl2::pi<t_real>*0.5;
+	if(m_renderer)
+		viewingAngle = m_renderer->GetCamera().GetFOV();
+	m_camProperties->GetWidget()->SetViewingAngle(
+		viewingAngle*t_real{180}/tl2::pi<t_real>);
+
+	// get camera zoom
+	t_real zoom = 1.;
+	if(m_renderer)
+		zoom = m_renderer->GetCamera().GetZoom();
 	m_camProperties->GetWidget()->SetZoom(zoom);
 
 	// get perspective projection flag
-	bool persp = m_renderer ? m_renderer->GetPerspectiveProjection() : true;
+	bool persp = true;
+	if(m_renderer)
+		persp = m_renderer->GetCamera().GetPerspectiveProjection();
 	m_camProperties->GetWidget()->SetPerspectiveProj(persp);
 
 	// get camera position
@@ -2266,7 +2285,7 @@ void PathsTool::AddWall()
 
 	// add a 3d representation of the wall
 	if(m_renderer)
-		m_renderer->AddWall(*wall, true);
+		m_renderer->AddWall(*wall);
 }
 
 
@@ -2297,7 +2316,7 @@ void PathsTool::AddPillar()
 
 	// add a 3d representation of the pillar
 	if(m_renderer)
-		m_renderer->AddWall(*wall, true);
+		m_renderer->AddWall(*wall);
 }
 
 
@@ -2375,7 +2394,7 @@ void PathsTool::RotateObject(const std::string& objname, t_real angle)
 		if(m_renderer && objgeo)
 		{
 			m_renderer->DeleteObject(objname);
-			m_renderer->AddWall(*objgeo, true);
+			m_renderer->AddWall(*objgeo);
 		}
 	}
 	else
@@ -2511,7 +2530,7 @@ void PathsTool::ChangeObjectProperty(const std::string& objname, const ObjectPro
 		if(m_renderer && objgeo)
 		{
 			m_renderer->DeleteObject(objname);
-			m_renderer->AddWall(*objgeo, true);
+			m_renderer->AddWall(*objgeo);
 		}
 	}
 	else
