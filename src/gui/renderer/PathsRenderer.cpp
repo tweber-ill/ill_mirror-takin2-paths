@@ -697,9 +697,18 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 			zoom_dir = 1;
 
 		t_real zoom_scale = t_real_gl(ms.count()) * g_zoom_scale;
-		ZoomCam(zoom_dir * zoom_scale);
+		m_cam.Zoom(zoom_dir * zoom_scale);
 	}
 
+	UpdateCam();
+
+	// render frame
+	update();
+}
+
+
+void PathsRenderer::UpdateCam()
+{
 	if(m_cam.TransformationNeedsUpdate())
 	{
 		m_cam.UpdateTransformation();
@@ -726,9 +735,6 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 		m_cam.UpdateViewport();
 		m_viewportNeedsUpdate = true;
 	}
-
-	// render frame
-	update();
 }
 
 
@@ -1499,8 +1505,11 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 
 	if(m_inRotation)
 	{
-		auto diff = (m_posMouse - m_posMouseRotationStart) * g_rotation_scale;
+		auto diff = (m_posMouse - m_posMouseRotationStart)
+			* g_rotation_scale;
+
 		m_cam.Rotate(diff.x(), diff.y());
+		UpdateCam();
 	}
 
 	UpdatePicker();
@@ -1514,6 +1523,10 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	}
 
 	m_mouseMovedBetweenDownAndUp = true;
+
+	// additional updates needed for some systems
+	update();
+
 	pEvt->accept();
 }
 
@@ -1612,15 +1625,13 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 {
 	const t_real_gl degrees = pEvt->angleDelta().y() / 8.;
-	ZoomCam(degrees * g_wheel_zoom_scale);
+	m_cam.Zoom(degrees * g_wheel_zoom_scale);
+	UpdateCam();
+
+	// additional updates needed for some systems
+	update();
 
 	pEvt->accept();
-}
-
-
-void PathsRenderer::ZoomCam(t_real zoom)
-{
-	m_cam.Zoom(zoom);
 }
 
 

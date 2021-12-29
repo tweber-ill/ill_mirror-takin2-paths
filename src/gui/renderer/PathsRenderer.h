@@ -172,7 +172,7 @@ protected:
 	void UpdateLightPerspective();
 	void UpdateShadowFramebuffer();
 
-	void ZoomCam(t_real zoom);
+	void UpdateCam();
 
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);

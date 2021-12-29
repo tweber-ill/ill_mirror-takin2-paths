@@ -87,6 +87,7 @@ public:
 	void SetZoom(t_real zoom)
 	{
 		m_zoom = zoom;
+
 		m_trafo_needs_update = true;
 	}
 
