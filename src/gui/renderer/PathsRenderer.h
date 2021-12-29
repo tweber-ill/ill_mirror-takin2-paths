@@ -170,7 +170,6 @@ protected:
 	void UpdatePicker();
 	void UpdateLights();
 	void UpdateLightPerspective();
-	void UpdateViewport();
 	void UpdateShadowFramebuffer();
 
 	void ZoomCam(t_real zoom);
@@ -249,16 +248,11 @@ protected:
 	// textures active?
 	bool m_textures_active = false;
 	
-	// camera
+	// main camera
 	t_cam m_cam{};
 
-	// matrices
-	t_mat_gl m_matLightPerspective = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matLightPerspective_inv = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matViewport_inv = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matLight = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matLight_inv = tl2::unit<t_mat_gl>();
+	// camera at light position
+	t_cam m_lightcam{};
 
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;
@@ -269,8 +263,6 @@ protected:
 	std::atomic<bool> m_shadowFramebufferNeedsUpdate = false;
 	std::atomic<bool> m_shadowRenderingEnabled = true;
 	std::atomic<bool> m_shadowRenderPass = false;
-
-	std::atomic<int> m_screenDims[2] = { 800, 600 };
 
 	// 3d objects
 	t_objs m_objs{};

@@ -364,13 +364,15 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) co
 	auto [ vecPersp, vec ] =
 		tl2::hom_to_screen_coords<t_mat_gl, t_vec_gl>(
 			vec4, m_cam.GetTransformation(), m_cam.GetPerspective(),
-			m_matViewport, true);
+			m_cam.GetViewport(), true);
 
 	// position not visible -> return a point outside the viewport
 	if(vecPersp[2] > 1.)
 	{
 		if(pVisible) *pVisible = false;
-		return QPointF(-1*m_screenDims[0], -1*m_screenDims[1]);
+		return QPointF(
+			-1 * m_cam.GetScreenDimensions()[0], 
+			-1 * m_cam.GetScreenDimensions()[1]);
 	}
 
 	if(pVisible) *pVisible = true;
@@ -492,14 +494,15 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 	m_lights[idx] = pos;
 	m_lightsNeedUpdate = true;
 
+	// target vector
 	//t_vec3_gl target = tl2::create<t_vec3_gl>({0, 0, 0});
 	t_vec3_gl target = pos;
 	target[2] = 0;
 
+	// up vector
 	t_vec3_gl up = tl2::create<t_vec3_gl>({0, 1, 0});
-	m_matLight = tl2::hom_lookat<t_mat_gl, t_vec3_gl>(pos, target, up);
 
-	std::tie(m_matLight_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matLight);
+	m_lightcam.SetLookAt(pos, target, up);
 }
 
 
@@ -551,7 +554,8 @@ void PathsRenderer::UpdatePicker()
 		m_posMouse.x(), m_posMouse.y(), 0., 1., 
 		m_cam.GetInverseTransformation(),
 		m_cam.GetInversePerspective(), 
-		m_matViewport_inv, &m_matViewport, true);
+		m_cam.GetInverseViewport(),
+		&m_cam.GetViewport(), true);
 	t_vec3_gl org3 = tl2::create<t_vec3_gl>({org[0], org[1], org[2]});
 	t_vec3_gl dir3 = tl2::create<t_vec3_gl>({dir[0], dir[1], dir[2]});
 
@@ -717,6 +721,12 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 		m_pickerNeedsUpdate = true;
 	}
 
+	if(m_cam.ViewportNeedsUpdate())
+	{
+		m_cam.UpdateViewport();
+		m_viewportNeedsUpdate = true;
+	}
+
 	// render frame
 	update();
 }
@@ -848,10 +858,7 @@ void PathsRenderer::initializeGL()
  */
 void PathsRenderer::resizeGL(int w, int h)
 {
-	m_screenDims[0] = w;
-	m_screenDims[1] = h;
-
-	m_cam.SetAspectRatio(t_real(h)/t_real(w));
+	m_cam.SetScreenDimensions(w, h);
 
 	m_viewportNeedsUpdate = true;
 	m_shadowFramebufferNeedsUpdate = true;
@@ -877,10 +884,6 @@ void PathsRenderer::UpdateLightPerspective()
 	if(!pGl)
 		return;
 
-	// projection
-	const t_real_gl nearPlane = 0.1;
-	const t_real_gl farPlane = 1000.;
-
 	t_real ratio = 1;
 	if(m_fboshadow)
 	{
@@ -888,22 +891,20 @@ void PathsRenderer::UpdateLightPerspective()
 			t_real_gl(m_fboshadow->width());
 	}
 
-	if(m_cam.GetPerspectiveProjection())
+	bool persp_proj = m_cam.GetPerspectiveProjection();
+	m_lightcam.SetPerspectiveProjection(persp_proj);
+
+	if(persp_proj)
 	{
 		// viewing angle has to be large enough so that the
 		// shadow map covers the entire scene
-		t_real_gl viewingangle = tl2::pi<t_real_gl> * 0.75;
-		m_matLightPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, viewingangle, ratio);
-	}
-	else
-	{
-		m_matLightPerspective = tl2::hom_ortho_sym<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, 20., 20.);
+		m_lightcam.SetFOV(tl2::pi<t_real_gl> * 0.75);
+		m_lightcam.SetPerspectiveProjection(true);
+		m_lightcam.SetAspectRatio(ratio);
+		m_lightcam.UpdatePerspective();
 	}
 
-	std::tie(m_matLightPerspective_inv, std::ignore) =
-		tl2::inv<t_mat_gl>(m_matLightPerspective);
+	m_lightcam.UpdatePerspective();
 
 	// bind shaders
 	BOOST_SCOPE_EXIT(m_shaders)
@@ -914,33 +915,9 @@ void PathsRenderer::UpdateLightPerspective()
 	LOGGLERR(pGl);
 
 	// set matrices
-	m_shaders->setUniformValue(m_uniMatrixLightProj, m_matLightPerspective);
+	m_shaders->setUniformValue(
+		m_uniMatrixLightProj, m_lightcam.GetPerspective());
 	LOGGLERR(pGl);
-}
-
-
-void PathsRenderer::UpdateViewport()
-{
-	auto *pGl = GetGlFunctions();
-	if(!pGl)
-		return;
-
-	// viewport
-	const t_real z_near{0}, z_far{1};
-
-	int w = m_screenDims[0];
-	int h = m_screenDims[1];
-
-	m_matViewport = tl2::hom_viewport<t_mat_gl, t_real_gl>(
-		w, h, z_near, z_far);
-	std::tie(m_matViewport_inv, std::ignore) =
-		tl2::inv<t_mat_gl>(m_matViewport);
-
-	pGl->glViewport(0, 0, w, h);
-	pGl->glDepthRange(z_near, z_far);
-	LOGGLERR(pGl);
-
-	m_viewportNeedsUpdate = false;
 }
 
 
@@ -955,8 +932,8 @@ void PathsRenderer::UpdateShadowFramebuffer()
 		return;
 
 	t_real scale = devicePixelRatioF();
-	int w = m_screenDims[0] * scale;
-	int h = m_screenDims[1] * scale;
+	int w = m_cam.GetScreenDimensions()[0] * scale;
+	int h = m_cam.GetScreenDimensions()[1] * scale;
 
 	QOpenGLFramebufferObjectFormat fbformat;
 	fbformat.setTextureTarget(GL_TEXTURE_2D);
@@ -1110,7 +1087,16 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	pGl->glEnable(GL_DEPTH_TEST);
 
 	if(m_viewportNeedsUpdate)
-		UpdateViewport();
+	{
+		const auto& dims = m_cam.GetScreenDimensions();
+		auto [z_near, z_far] = m_cam.GetDepthRange();
+
+		pGl->glViewport(0, 0, dims[0], dims[1]);
+		pGl->glDepthRange(z_near, z_far);
+		LOGGLERR(pGl);
+
+		m_viewportNeedsUpdate = false;
+	}
 	if(m_lightsNeedUpdate)
 		UpdateLights();
 
@@ -1139,8 +1125,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	}
 
 	// set light matrix
-	m_shaders->setUniformValue(m_uniMatrixLight, m_matLight);
-	m_shaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
+	m_shaders->setUniformValue(
+		m_uniMatrixLight, m_lightcam.GetTransformation());
+	m_shaders->setUniformValue(
+		m_uniMatrixLightInv, m_lightcam.GetInverseTransformation());
 
 	m_shaders->setUniformValue(m_uniShadowMap, 0);
 

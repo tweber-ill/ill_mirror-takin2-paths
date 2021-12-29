@@ -35,6 +35,7 @@
 #define __PATHS_RENDERER_CAM_H__
 
 #include <tuple>
+#include <array>
 
 #include "tlibs2/libs/maths.h"
 
@@ -178,6 +179,23 @@ public:
 
 
 	/**
+	 * set transformation matrix to look from "pos" to "target"
+	 */
+	void SetLookAt(const t_vec& pos, const t_vec& target, const t_vec& up)
+	{
+		m_mat = tl2::hom_lookat<t_mat, t_vec>(
+			pos, target, up);
+
+		std::tie(m_mat_inv, std::ignore)
+			= tl2::inv<t_mat>(m_mat);
+
+		m_trafo_needs_update = false;
+
+		// TODO: extract position and angles corresponding to this matrix
+	}
+
+
+	/**
 	 * rotate the camera by the given delta angles
 	 */
 	void Rotate(t_real dphi, t_real dtheta)
@@ -274,6 +292,28 @@ public:
 
 
 	/**
+	 * get the camera's full transformation matrix
+	 */
+	const t_mat& GetViewport() const
+	{
+		//if(m_viewport_needs_update)
+		//	UpdateViewport();
+		return m_matViewport;
+	}
+
+
+	/**
+	 * get the camera's inverse transformation matrix
+	 */
+	const t_mat& GetInverseViewport() const
+	{
+		//if(m_viewport_needs_update)
+		//	UpdateViewport();
+		return m_matViewport_inv;
+	}
+
+
+	/**
 	 * sets perspective or parallel projection
 	 */
 	void SetPerspectiveProjection(bool proj)
@@ -283,6 +323,9 @@ public:
 	}
 
 
+	/**
+	 * is the perspective projection active
+	 */
 	bool GetPerspectiveProjection() const
 	{
 		return m_persp_proj;
@@ -299,15 +342,62 @@ public:
 	}
 
 
+	/**
+	 * set the screen width and height
+	 */
+	void SetScreenDimensions(int w, int h)
+	{
+		m_screenDims[0] = w;
+		m_screenDims[1] = h;
+
+		m_viewport_needs_update = true;
+
+		SetAspectRatio(t_real(h)/t_real(w));
+	}
+
+
+	/**
+	 * get the screen width and height
+	 */
+	const std::array<int, 2>& GetScreenDimensions() const
+	{
+		return m_screenDims;
+	}
+
+
+	/**
+	 * get the z buffer depth range
+	 */
+	std::tuple<t_real, t_real> GetDepthRange() const
+	{
+		return std::make_tuple(m_z_near, m_z_far);
+	}
+
+
+	/**
+	 * is the transformation matrix outdated?
+	 */
 	bool TransformationNeedsUpdate() const
 	{
 		return m_trafo_needs_update;
 	}
 
 
+	/**
+	 * is the perspective matrix outdated?
+	 */
 	bool PerspectiveNeedsUpdate() const
 	{
 		return m_persp_needs_update;
+	}
+
+
+	/**
+	 * is the viewport matrix outdated?
+	 */
+	bool ViewportNeedsUpdate() const
+	{
+		return m_viewport_needs_update;
 	}
 
 
@@ -369,6 +459,22 @@ public:
 	}
 
 
+	/**
+	 * update camera perspective matrices
+	 */
+	void UpdateViewport()
+	{
+		// viewport
+		m_matViewport = tl2::hom_viewport<t_mat, t_real>(
+			m_screenDims[0], m_screenDims[1],
+			m_z_near, m_z_far);
+		std::tie(m_matViewport_inv, std::ignore) =
+			tl2::inv<t_mat>(m_matViewport);
+
+		m_viewport_needs_update = false;
+	}
+
+
 private:
 	// full transformation matrix and its inverse
 	t_mat m_mat = tl2::unit<t_mat>();
@@ -386,10 +492,6 @@ private:
 	t_real m_nearPlane = 0.1;
 	t_real m_farPlane = 1000.;
 
-	// perspective matrix and its inverse
-	t_mat m_matPerspective = tl2::unit<t_mat>();
-	t_mat m_matPerspective_inv = tl2::unit<t_mat>();
-
 	// camera rotation
 	t_real m_phi = 0, m_theta = 0;
 	t_real m_phi_saved = 0, m_theta_saved = 0;
@@ -397,18 +499,34 @@ private:
 	// camera zoom
 	t_real m_zoom = 1.;
 
+	// perspective matrix and its inverse
+	t_mat m_matPerspective = tl2::unit<t_mat>();
+	t_mat m_matPerspective_inv = tl2::unit<t_mat>();
+
 	// perspective or parallel projection?
 	bool m_persp_proj = true;
 
 	// screen aspect ratio
 	t_real m_aspect = 1.;
 
+	// screen viewport
+	t_mat m_matViewport = tl2::unit<t_mat>();
+	t_mat m_matViewport_inv = tl2::unit<t_mat>();
+
+	// z buffer range
+	t_real m_z_near{0}, m_z_far{1};
+
+	// screen dimensions
+	std::array<int, 2> m_screenDims = {800, 600};
+
 	// does the transformation matrix need an update?
 	bool m_trafo_needs_update = true;
 
 	// does the perspective matrix need an update?
 	bool m_persp_needs_update = true;
-};
 
+	// does the perspective matrix need an update?
+	bool m_viewport_needs_update = true;
+};
 
 #endif
