@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "src/gui/qcp_wrapper.h"
+#include "qcp_wrapper.h"
 
 #include "src/libs/img.h"
 #include "src/core/InstrumentSpace.h"

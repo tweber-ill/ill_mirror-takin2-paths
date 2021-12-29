@@ -301,7 +301,8 @@ add_executable(taspaths
 	src/gui/Recent.cpp src/gui/Recent.h
 	src/gui/dialogs/About.cpp src/gui/dialogs/About.h
 	src/gui/dialogs/Licenses.cpp src/gui/dialogs/Licenses.h
-	src/gui/PathsRenderer.cpp src/gui/PathsRenderer.h
+	src/gui/renderer/PathsRenderer.cpp src/gui/renderer/PathsRenderer.h
+	src/gui/renderer/Camera.h
 	src/gui/dock/TASProperties.cpp src/gui/dock/TASProperties.h
 	src/gui/dock/XtalProperties.cpp src/gui/dock/XtalProperties.h
 	src/gui/dock/CoordProperties.cpp src/gui/dock/CoordProperties.h

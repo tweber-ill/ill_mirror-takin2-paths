@@ -32,8 +32,8 @@
  */
 
 #include "PathsRenderer.h"
-#include "Resources.h"
-#include "settings_variables.h"
+#include "src/gui/Resources.h"
+#include "src/gui/settings_variables.h"
 
 #include <QtCore/QtGlobal>
 #include <QtCore/QThread>
@@ -104,8 +104,11 @@ PathsRenderer::GetGlDescr() const
  */
 void PathsRenderer::Clear()
 {
+	BOOST_SCOPE_EXIT(this_)
+	{
+		this_->doneCurrent();
+	} BOOST_SCOPE_EXIT_END
 	makeCurrent();
-	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
 	// clear objects
 	QMutexLocker _locker{&m_mutexObj};
@@ -142,8 +145,11 @@ void PathsRenderer::EnableTextures(bool b)
 bool PathsRenderer::ChangeTextureProperty(
 	const QString& ident, const QString& filename)
 {
+	BOOST_SCOPE_EXIT(this_)
+	{
+		this_->doneCurrent();
+	} BOOST_SCOPE_EXIT_END
 	makeCurrent();
-	BOOST_SCOPE_EXIT(this_) { this_->doneCurrent(); } BOOST_SCOPE_EXIT_END
 
 	QMutexLocker _locker{&m_mutexObj};
 
@@ -367,7 +373,7 @@ QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) co
 {
 	auto [ vecPersp, vec ] =
 		tl2::hom_to_screen_coords<t_mat_gl, t_vec_gl>
-			(vec4, m_matCam, m_matPerspective, m_matViewport, true);
+			(vec4, m_cam.GetMatrix(), m_matPerspective, m_matViewport, true);
 
 	// position not visible -> return a point outside the viewport
 	if(vecPersp[2] > 1.)
@@ -476,32 +482,15 @@ void PathsRenderer::AddFloorPlane(const std::string& obj_name,
 
 void PathsRenderer::UpdateCam()
 {
-	t_mat_gl matCamTrans = m_matCamTrans;
-	matCamTrans(2,3) = 0.;
-	t_mat_gl matCamTrans_inv = matCamTrans;
-	matCamTrans_inv(0,3) = -matCamTrans(0,3);
-	matCamTrans_inv(1,3) = -matCamTrans(1,3);
-	matCamTrans_inv(2,3) = -matCamTrans(2,3);
-
-	const t_vec_gl vecCamDir[2] =
-	{
-		tl2::create<t_vec_gl>({1., 0., 0., 0.}),
-		tl2::create<t_vec_gl>({0. ,0., 1., 0.})
-	};
-
-	m_matCamRot = tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[0], m_theta, 0);
-	m_matCamRot *= tl2::hom_rotation<t_mat_gl, t_vec_gl>(vecCamDir[1], m_phi, 0);
-
-	m_matCam = tl2::unit<t_mat_gl>();
-	m_matCam *= m_matCamTrans;
-	m_matCam(2,3) /= m_camZoom;
-	m_matCam *= matCamTrans_inv * m_matCamRot * matCamTrans;
-	std::tie(m_matCam_inv, std::ignore) = tl2::inv<t_mat_gl>(m_matCam);
-
+	m_cam.Update();
 	m_pickerNeedsUpdate = true;
-	emit CamPositionChanged(m_matCamTrans(0,3), m_matCamTrans(1,3), m_matCamTrans(2,3));
-	emit CamRotationChanged(m_phi, m_theta);
-	emit CamZoomChanged(m_camZoom);
+
+	t_vec3_gl pos = m_cam.GetPosition();
+	auto [phi, theta] = m_cam.GetRotation();
+
+	emit CamPositionChanged(pos[0], pos[1], pos[2]);
+	emit CamRotationChanged(phi, theta);
+	emit CamZoomChanged(m_cam.GetZoom());
 
 	update();
 }
@@ -515,10 +504,7 @@ void PathsRenderer::CentreCam(const std::string& objid)
 	if(auto iter = m_objs.find(objid); iter!=m_objs.end())
 	{
 		PathsObj& obj = iter->second;
-		m_matCamTrans(0,3) = -obj.m_mat(0,3);
-		m_matCamTrans(1,3) = -obj.m_mat(1,3);
-		//m_matCamTrans(2,3) = -bj.m_mat(2,3);
-
+		m_cam.Centre(obj.m_mat);
 		UpdateCam();
 	}
 }
@@ -560,8 +546,11 @@ void PathsRenderer::UpdateLights()
 	}
 
 	// bind shaders
+	BOOST_SCOPE_EXIT(m_shaders)
+	{
+		m_shaders->release();
+	} BOOST_SCOPE_EXIT_END
 	m_shaders->bind();
-	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	m_shaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
@@ -585,7 +574,7 @@ void PathsRenderer::UpdatePicker()
 
 	// picker ray
 	auto [org, dir] = tl2::hom_line_from_screen_coords<t_mat_gl, t_vec_gl>(
-		m_posMouse.x(), m_posMouse.y(), 0., 1., m_matCam_inv,
+		m_posMouse.x(), m_posMouse.y(), 0., 1., m_cam.GetInverseMatrix(),
 		m_matPerspective_inv, m_matViewport_inv, &m_matViewport, true);
 	t_vec3_gl org3 = tl2::create<t_vec3_gl>({org[0], org[1], org[2]});
 	t_vec3_gl dir3 = tl2::create<t_vec3_gl>({dir[0], dir[1], dir[2]});
@@ -673,8 +662,8 @@ void PathsRenderer::UpdatePicker()
 			}
 			else
 			{	// test if next intersection is closer...
-				t_vec_gl oldPosTrafo = m_matCam * vecClosestInters;
-				t_vec_gl newPosTrafo = m_matCam * vecInters4;
+				t_vec_gl oldPosTrafo = m_cam.GetMatrix() * vecClosestInters;
+				t_vec_gl newPosTrafo = m_cam.GetMatrix() * vecInters4;
 
 				if(tl2::norm(newPosTrafo) < tl2::norm(oldPosTrafo))
 				{	// ...it is closer
@@ -717,20 +706,10 @@ void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 	{
 		t_real_gl move_scale = t_real_gl(ms.count()) * g_move_scale;
 
-		t_vec_gl xdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 0);
-		t_vec_gl ydir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 1);
-		t_vec_gl zdir = tl2::row<t_mat_gl, t_vec_gl>(m_matCamRot, 2);
-
-		t_vec_gl xinc = xdir * move_scale *
-			(t_real_gl(m_arrowDown[0]) - t_real_gl(m_arrowDown[1]));
-		t_vec_gl yinc = ydir * move_scale *
-			(t_real_gl(m_pageDown[0]) - t_real_gl(m_pageDown[1]));
-		t_vec_gl zinc = zdir * move_scale *
-			(t_real_gl(m_arrowDown[2]) - t_real_gl(m_arrowDown[3]));
-
-		m_matCamTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
-		m_matCamTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
-		m_matCamTrans(2,3) += xinc[2] + yinc[2] + zinc[2];
+		m_cam.Translate(
+			move_scale * (t_real(m_arrowDown[0]) - t_real(m_arrowDown[1])),
+			move_scale * (t_real(m_pageDown[0]) - t_real(m_pageDown[1])),
+			move_scale * (t_real(m_arrowDown[2]) - t_real(m_arrowDown[3])));
 
 		update = true;
 	}
@@ -798,8 +777,11 @@ void PathsRenderer::initializeGL()
 
 
 	static QMutex shadermutex;
+	BOOST_SCOPE_EXIT(&shadermutex)
+	{
+		shadermutex.unlock();
+	} BOOST_SCOPE_EXIT_END
 	shadermutex.lock();
-	BOOST_SCOPE_EXIT(&shadermutex) { shadermutex.unlock(); } BOOST_SCOPE_EXIT_END
 
 	// shader compiler/linker error handler
 	auto shader_err = [this](const char* err) -> void
@@ -901,7 +883,7 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
  */
 void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
 {
-	m_camViewingAngle = angle;
+	m_cam.SetFOV(angle);
 	m_perspectiveNeedsUpdate = true;
 
 	update();
@@ -913,7 +895,7 @@ void PathsRenderer::SetCamViewingAngle(t_real_gl angle)
  */
 void PathsRenderer::SetCamZoom(t_real_gl zoom)
 {
-	m_camZoom = zoom;
+	m_cam.SetZoom(zoom);
 	m_perspectiveNeedsUpdate = true;
 
 	UpdateCam();
@@ -925,24 +907,8 @@ void PathsRenderer::SetCamZoom(t_real_gl zoom)
  */
 void PathsRenderer::SetCamPosition(const t_vec3_gl& pos)
 {
-	m_matCamTrans(0,3) = pos[0];
-	m_matCamTrans(1,3) = pos[1];
-	m_matCamTrans(2,3) = pos[2];
-
+	m_cam.SetPosition(pos);
 	UpdateCam();
-}
-
-
-/**
- * get the camera's position
- */
-t_vec3_gl PathsRenderer::GetCamPosition() const
-{
-	return tl2::create<t_vec3_gl>({
-		m_matCamTrans(0,3),
-		m_matCamTrans(1,3),
-		m_matCamTrans(2,3),
-	});
 }
 
 
@@ -951,19 +917,8 @@ t_vec3_gl PathsRenderer::GetCamPosition() const
  */
 void PathsRenderer::SetCamRotation(const t_vec2_gl& rot)
 {
-	m_phi_saved = m_phi = rot[0];
-	m_theta_saved = m_theta = rot[1];
-
+	m_cam.SetRotation(rot[0], rot[1]);
 	UpdateCam();
-}
-
-
-/**
- * get the camera's position
- */
-t_vec2_gl PathsRenderer::GetCamRotation() const
-{
-	return tl2::create<t_vec2_gl>({ m_phi, m_theta });
 }
 
 
@@ -988,7 +943,7 @@ void PathsRenderer::UpdatePerspective()
 	if(m_perspectiveProjection)
 	{
 		m_matPerspective = tl2::hom_perspective<t_mat_gl, t_real_gl>(
-			nearPlane, farPlane, m_camViewingAngle,
+			nearPlane, farPlane, m_cam.GetFOV(),
 			t_real_gl(m_screenDims[1])/t_real_gl(m_screenDims[0]));
 	}
 	else
@@ -1001,8 +956,11 @@ void PathsRenderer::UpdatePerspective()
 		tl2::inv<t_mat_gl>(m_matPerspective);
 
 	// bind shaders
+	BOOST_SCOPE_EXIT(m_shaders)
+	{
+		m_shaders->release();
+	} BOOST_SCOPE_EXIT_END
 	m_shaders->bind();
-	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	// set matrices
@@ -1048,8 +1006,11 @@ void PathsRenderer::UpdateLightPerspective()
 		tl2::inv<t_mat_gl>(m_matLightPerspective);
 
 	// bind shaders
+	BOOST_SCOPE_EXIT(m_shaders)
+	{
+		m_shaders->release();
+	} BOOST_SCOPE_EXIT_END
 	m_shaders->bind();
-	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	// set matrices
@@ -1093,34 +1054,44 @@ void PathsRenderer::UpdateShadowFramebuffer()
 	if(!pGl)
 		return;
 
-	t_real scale = devicePixelRatio();
+	t_real scale = devicePixelRatioF();
 	int w = m_screenDims[0] * scale;
 	int h = m_screenDims[1] * scale;
+
 	QOpenGLFramebufferObjectFormat fbformat;
 	fbformat.setTextureTarget(GL_TEXTURE_2D);
 	fbformat.setInternalTextureFormat(GL_RGBA32F);
-	fbformat.setAttachment(QOpenGLFramebufferObject::Depth /*NoAttachment*/);
+	fbformat.setAttachment(QOpenGLFramebufferObject::Depth);
 	m_fboshadow = std::make_shared<QOpenGLFramebufferObject>(
 		w, h, fbformat);
+	LOGGLERR(pGl);
 
 	BOOST_SCOPE_EXIT(pGl, m_fboshadow)
 	{
 		pGl->glActiveTexture(GL_TEXTURE0);
 		pGl->glBindTexture(GL_TEXTURE_2D, 0);
-		m_fboshadow->release();
+		if(m_fboshadow)
+			m_fboshadow->release();
 	} BOOST_SCOPE_EXIT_END
 
-	pGl->glActiveTexture(GL_TEXTURE0);
-	m_fboshadow->bind();
-	pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
+	if(m_fboshadow)
+	{
+		pGl->glActiveTexture(GL_TEXTURE0);
 
-	// shadow texture parameters
-	// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
-	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		m_fboshadow->bind();
+		LOGGLERR(pGl);
 
-	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
+		LOGGLERR(pGl);
+
+		// shadow texture parameters
+		// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
+		pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	}
 
 	m_shadowFramebufferNeedsUpdate = false;
 }
@@ -1155,7 +1126,10 @@ void PathsRenderer::paintGL()
 		if(m_pickerNeedsUpdate)
 			UpdatePicker();
 
-		BOOST_SCOPE_EXIT(&painter) { painter.endNativePainting(); } BOOST_SCOPE_EXIT_END
+		BOOST_SCOPE_EXIT(&painter)
+		{
+			painter.endNativePainting();
+		} BOOST_SCOPE_EXIT_END
 		painter.beginNativePainting();
 
 		DoPaintGL(pGl);
@@ -1200,6 +1174,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			{
 				pGl->glActiveTexture(GL_TEXTURE0);
 				pGl->glBindTexture(GL_TEXTURE_2D, m_fboshadow->texture());
+				LOGGLERR(pGl);
 
 				// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
 				pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1242,16 +1217,19 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		UpdateLights();
 
 	// bind shaders
+	BOOST_SCOPE_EXIT(m_shaders)
+	{
+		m_shaders->release();
+	} BOOST_SCOPE_EXIT_END
 	m_shaders->bind();
-	BOOST_SCOPE_EXIT(m_shaders) { m_shaders->release(); } BOOST_SCOPE_EXIT_END
 	LOGGLERR(pGl);
 
 	m_shaders->setUniformValue(m_uniShadowRenderingEnabled, m_shadowRenderingEnabled);
 	m_shaders->setUniformValue(m_uniShadowRenderPass, m_shadowRenderPass);
 
 	// set cam and light matrices
-	m_shaders->setUniformValue(m_uniMatrixCam, m_matCam);
-	m_shaders->setUniformValue(m_uniMatrixCamInv, m_matCam_inv);
+	m_shaders->setUniformValue(m_uniMatrixCam, m_cam.GetMatrix());
+	m_shaders->setUniformValue(m_uniMatrixCamInv, m_cam.GetInverseMatrix());
 
 	m_shaders->setUniformValue(m_uniMatrixLight, m_matLight);
 	m_shaders->setUniformValue(m_uniMatrixLightInv, m_matLight_inv);
@@ -1280,6 +1258,11 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 				iter!=m_textures.end())
 			{
 				texture = iter->second.texture;
+				/*if(texture)
+				{
+					texture->setMinMagFilters(
+						QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+				}*/
 			}
 		}
 
@@ -1299,6 +1282,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		{
 			pGl->glActiveTexture(GL_TEXTURE1);
 			texture->bind();
+			LOGGLERR(pGl);
 
 			// see: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml
 			pGl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1325,13 +1309,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		obj.m_pvertexarr->bind();
 
 
-		pGl->glEnableVertexAttribArray(m_attrVertex);
-		if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
-		{
-			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
-			pGl->glEnableVertexAttribArray(m_attrTexCoords);
-		}
-		pGl->glEnableVertexAttribArray(m_attrVertexCol);
 		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
 		{
 			pGl->glDisableVertexAttribArray(m_attrTexCoords);
@@ -1340,6 +1317,14 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDisableVertexAttribArray(m_attrVertex);
 		}
 		BOOST_SCOPE_EXIT_END
+
+		pGl->glEnableVertexAttribArray(m_attrVertex);
+		if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
+		{
+			pGl->glEnableVertexAttribArray(m_attrVertexNorm);
+			pGl->glEnableVertexAttribArray(m_attrTexCoords);
+		}
+		pGl->glEnableVertexAttribArray(m_attrVertexCol);
 		LOGGLERR(pGl);
 
 
@@ -1349,7 +1334,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			pGl->glDrawArrays(GL_LINES, 0, obj.m_vertices.size());
 		else
 			std::cerr << "Unknown plot object type." << std::endl;
-
 		LOGGLERR(pGl);
 	}
 
@@ -1620,15 +1604,7 @@ void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 	if(m_inRotation)
 	{
 		auto diff = (m_posMouse - m_posMouseRotationStart) * g_rotation_scale;
-		m_phi = diff.x() + m_phi_saved;
-		t_real theta_new = diff.y() + m_theta_saved;
-
-		// wrap around phi angle
-		m_phi = tl2::mod_pos<t_real>(m_phi, t_real(2)*tl2::pi<t_real>);
-
-		// restrict theta angle
-		m_theta = tl2::clamp<t_real>(theta_new, -tl2::pi<t_real>*t_real(0.5), 0);
-
+		m_cam.Rotate(diff.x(), diff.y());
 		UpdateCam();
 	}
 
@@ -1680,7 +1656,7 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 	if(m_mouseDown[1])
 	{
 		// reset zoom
-		m_camZoom = 1;
+		m_cam.SetZoom(1);
 		UpdateCam();
 	}
 
@@ -1719,8 +1695,7 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 		// end rotation
 		if(m_inRotation)
 		{
-			m_phi_saved = m_phi;
-			m_theta_saved = m_theta;
+			m_cam.SaveRotation();
 			m_inRotation = false;
 		}
 	}
@@ -1751,7 +1726,7 @@ void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 
 void PathsRenderer::ZoomCam(t_real zoom, bool update)
 {
-	m_camZoom *= std::pow(2., zoom);
+	m_cam.Zoom(zoom);
 
 	if(update)
 		UpdateCam();

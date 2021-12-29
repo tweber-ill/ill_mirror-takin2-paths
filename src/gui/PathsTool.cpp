@@ -1947,8 +1947,8 @@ void PathsTool::AfterGLInitialisation()
 		= m_renderer->GetGlDescr();
 
 	// get viewing angle and zoom
-	t_real viewingAngle = m_renderer ? m_renderer->GetCamViewingAngle() : tl2::pi<t_real>*0.5;
-	t_real zoom = m_renderer ? m_renderer->GetCamZoom() : 1.;
+	t_real viewingAngle = m_renderer ? m_renderer->GetCamera().GetFOV() : tl2::pi<t_real>*0.5;
+	t_real zoom = m_renderer ? m_renderer->GetCamera().GetZoom() : 1.;
 	m_camProperties->GetWidget()->SetViewingAngle(viewingAngle*t_real{180}/tl2::pi<t_real>);
 	m_camProperties->GetWidget()->SetZoom(zoom);
 
@@ -1957,17 +1957,29 @@ void PathsTool::AfterGLInitialisation()
 	m_camProperties->GetWidget()->SetPerspectiveProj(persp);
 
 	// get camera position
-	t_vec3_gl campos = m_renderer ? m_renderer->GetCamPosition() : tl2::zero<t_vec3_gl>(3);
+	t_vec3_gl campos;
+	if(m_renderer)
+		campos = m_renderer->GetCamera().GetPosition();
+	else
+		campos = tl2::zero<t_vec3_gl>(3);
 	m_camProperties->GetWidget()->SetPosition(t_real(campos[0]), t_real(campos[1]), t_real(campos[2]));
 
 	// get camera rotation
-	t_vec2_gl camrot = m_renderer ? m_renderer->GetCamRotation() : tl2::zero<t_vec2_gl>(2);
+	t_vec2_gl camrot;
+	if(m_renderer)
+	{
+		auto [phi, theta] = m_renderer->GetCamera().GetRotation();
+		camrot = tl2::create<t_vec2_gl>({phi, theta});
+	}
+	else
+	{
+		camrot = tl2::zero<t_vec2_gl>(2);
+	}
 	m_camProperties->GetWidget()->SetRotation(
 		t_real(camrot[0])*t_real{180}/tl2::pi<t_real>,
 		t_real(camrot[1])*t_real{180}/tl2::pi<t_real>);
 
 	m_renderer->SetInstrumentStatus(&m_instrstatus);
-
 	LoadInitialInstrumentFile();
 }
 

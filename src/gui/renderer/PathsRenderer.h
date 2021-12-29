@@ -43,9 +43,10 @@
 
 #include "tlibs2/libs/maths.h"
 #include "tlibs2/libs/qt/gl.h"
+#include "Camera.h"
 
 #include "src/core/InstrumentSpace.h"
-#include "InstrumentStatus.h"
+#include "src/gui/InstrumentStatus.h"
 
 
 using t_real_gl = tl2::t_real_gl;
@@ -89,6 +90,14 @@ struct PathsTexture
  */
 class PathsRenderer : public QOpenGLWidget
 { Q_OBJECT
+public:
+	// camera type
+	using t_cam = Camera<t_mat_gl, t_vec3_gl, t_real_gl>;
+
+	// 3d object and texture types
+	using t_objs = std::unordered_map<std::string, PathsObj>;
+	using t_textures = std::unordered_map<std::string, PathsTexture>;
+
 
 public:
 	PathsRenderer(QWidget *pParent = nullptr);
@@ -116,10 +125,6 @@ public:
 	void DeleteObject(const std::string& obj_name);
 	void RenameObject(const std::string& oldname, const std::string& newname);
 
-	// 3d objects and textures
-	using t_objs = std::unordered_map<std::string, PathsObj>;
-	using t_textures = std::unordered_map<std::string, PathsTexture>;
-
 	t_objs::iterator AddTriangleObject(const std::string& obj_name,
 		const std::vector<t_vec3_gl>& triag_verts,
 		const std::vector<t_vec3_gl>& triag_norms,
@@ -134,7 +139,9 @@ public:
 	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
 	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
 
+	const t_cam& GetCamera() const{ return m_cam; }
 	void CentreCam(const std::string& obj);
+
 	QPoint GetMousePosition(bool global_pos = false) const;
 
 	void SaveShadowFramebuffer(const std::string& filename) const;
@@ -242,6 +249,9 @@ protected:
 
 	// textures active?
 	bool m_textures_active = false;
+	
+	// camera
+	t_cam m_cam{};
 
 	// matrices
 	t_mat_gl m_matPerspective = tl2::unit<t_mat_gl>();
@@ -250,18 +260,8 @@ protected:
 	t_mat_gl m_matLightPerspective_inv = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matViewport_inv = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCam = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCam_inv = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCamRot = tl2::unit<t_mat_gl>();
-	t_mat_gl m_matCamTrans = tl2::create<t_mat_gl>
-		({ 1,0,0,0, 0,1,0,0, 0,0,1,-15, 0,0,0,1 });
 	t_mat_gl m_matLight = tl2::unit<t_mat_gl>();
 	t_mat_gl m_matLight_inv = tl2::unit<t_mat_gl>();
-
-	t_real_gl m_camViewingAngle = tl2::pi<t_real_gl>*t_real_gl(0.5);
-	t_real_gl m_phi = 0, m_theta = 0;
-	t_real_gl m_phi_saved = 0, m_theta_saved = 0;
-	t_real_gl m_camZoom = 1.;
 
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;
@@ -302,19 +302,15 @@ protected slots:
 
 public slots:
 	void EnablePicker(bool b);
+	void EnableTimer(bool enable=true);
+
 	void SetPerspectiveProjection(bool b);
+	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
+
 	void SetCamViewingAngle(t_real_gl angle);
 	void SetCamZoom(t_real_gl zoom);
 	void SetCamPosition(const t_vec3_gl& pos);
 	void SetCamRotation(const t_vec2_gl& rot);
-
-	t_real_gl GetCamViewingAngle() const { return m_camViewingAngle; }
-	t_real_gl GetCamZoom() const { return m_camZoom; }
-	bool GetPerspectiveProjection() const { return m_perspectiveProjection; }
-	t_vec3_gl GetCamPosition() const;
-	t_vec2_gl GetCamRotation() const;
-
-	void EnableTimer(bool enable=true);
 
 	void EnableTextures(bool b);
 	bool ChangeTextureProperty(const QString& ident, const QString& filename);
