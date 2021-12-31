@@ -119,8 +119,6 @@ public:
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
 	bool IsInitialised() const { return m_initialised; }
 
-	QPointF GlToScreenCoords(const t_vec_gl& vec, bool *pVisible=nullptr) const;
-
 	void DeleteObject(PathsObj& obj);
 	void DeleteObject(const std::string& obj_name);
 	void RenameObject(const std::string& oldname, const std::string& newname);

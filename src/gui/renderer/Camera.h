@@ -402,6 +402,37 @@ public:
 	}
 
 
+	/**
+	 * convert a vector into screen coordinates
+	 */
+	t_vec GlToScreenCoords(
+		const t_vec& vec4, bool *visible = nullptr) const
+	{
+		auto [ persp, vec ] =
+			tl2::hom_to_screen_coords<t_mat, t_vec>(
+				vec4, GetTransformation(), GetPerspective(),
+				GetViewport(), true);
+
+		// position not visible -> return a point outside the viewport
+		if(persp[2] > 1.)
+		{
+			if(visible)
+				*visible = false;
+
+			return tl2::create<t_vec>(
+			{
+				-1. * GetScreenDimensions()[0],
+				-1. * GetScreenDimensions()[1]
+			});
+		}
+
+	if(visible)
+		*visible = true;
+
+	return vec;
+}
+
+
 //protected:
 	/**
 	 * update camera matrices

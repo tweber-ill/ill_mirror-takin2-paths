@@ -357,30 +357,6 @@ void PathsRenderer::SetInstrumentStatus(const InstrumentStatus *status)
 
 
 /**
- * convert a vector into screen coordinates
- */
-QPointF PathsRenderer::GlToScreenCoords(const t_vec_gl& vec4, bool *pVisible) const
-{
-	auto [ vecPersp, vec ] =
-		tl2::hom_to_screen_coords<t_mat_gl, t_vec_gl>(
-			vec4, m_cam.GetTransformation(), m_cam.GetPerspective(),
-			m_cam.GetViewport(), true);
-
-	// position not visible -> return a point outside the viewport
-	if(vecPersp[2] > 1.)
-	{
-		if(pVisible) *pVisible = false;
-		return QPointF(
-			-1 * m_cam.GetScreenDimensions()[0], 
-			-1 * m_cam.GetScreenDimensions()[1]);
-	}
-
-	if(pVisible) *pVisible = true;
-	return QPointF(vec[0], vec[1]);
-}
-
-
-/**
  * delete an object
  */
 void PathsRenderer::DeleteObject(PathsObj& obj)
@@ -928,7 +904,7 @@ void PathsRenderer::UpdateLightPerspective()
 
 
 /**
- * frambuffer for shadow rendering
+ * framebuffer for shadow rendering
  * @see (Sellers 2014) pp. 534-540
  */
 void PathsRenderer::UpdateShadowFramebuffer()
@@ -1261,8 +1237,6 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 		if(obj.m_visible)
 		{
 			QString label = curObj->first.c_str();
-			//t_vec3_gl posLabel3d = obj.m_mat * obj.m_labelPos;
-			//auto posLabel2d = GlToScreenCoords(tl2::create<t_vec_gl>({posLabel3d[0], posLabel3d[1], posLabel3d[2], 1.}));
 
 			QFont fontLabel = fontOrig;
 			QPen penLabel = penOrig;
