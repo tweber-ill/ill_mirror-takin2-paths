@@ -449,6 +449,7 @@ public:
 		//t_vec vec = tl2::create<t_vec>(
 		//	{_vec[0], _vec[1], _vec[2], t_real(1.)});
 
+		// projected vector
 		t_vec vec_trafo = m_matPerspective * m_mat * vec;
 		vec_trafo /= vec_trafo[3];
 
@@ -476,8 +477,8 @@ public:
 	/**
 	 * test if bounding box is outside frustum
 	 */
-	bool IsBoundingBoxOutsideFrustum(
-		const t_mat& matObj, const std::vector<t_vec>& bbox) const
+	bool IsBoundingBoxOutsideFrustum(const t_mat& matObj,
+		const std::vector<t_vec>& bbox) const
 	{
 		bool first_vec = true;
 		std::unordered_set<int> set_inters;
@@ -512,6 +513,35 @@ public:
 
 		// all outside the same frustum plane?
 		return set_inters.size() != 0;
+	}
+
+
+	/**
+	 * get a projected bounding rectangle from the bounding box
+	 */
+	std::vector<t_vec> GetBoundingRect(const t_mat& matObj,
+		const std::vector<t_vec>& bbox) const
+	{
+		std::vector<t_vec> brect;
+		brect.reserve(bbox.size());
+
+		for(const t_vec& _vec : bbox)
+		{
+			// projected vector
+			t_vec vec = m_matPerspective * m_mat * matObj * _vec;
+			vec /= vec[3];
+
+			brect.emplace_back(std::move(vec));
+		}
+
+		auto [min, max] = tl2::bounding_box(brect);
+
+		return std::vector<t_vec>{{
+			tl2::create<t_vec>({min[0], min[1]}),
+			tl2::create<t_vec>({min[0], max[1]}),
+			tl2::create<t_vec>({max[0], min[1]}),
+			tl2::create<t_vec>({max[0], max[1]}),
+		}};
 	}
 
 

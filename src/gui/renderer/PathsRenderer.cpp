@@ -1153,6 +1153,10 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			if(m_cam.IsBoundingBoxOutsideFrustum(
 				obj.m_mat, obj.m_boundingBox))
 				continue;
+
+			// TODO: draw bounding rect for highlighted object
+			//auto boundingRect = m_cam.GetBoundingRect(
+			//	obj.m_mat, obj.m_boundingBox);
 		}
 
 		// textures
