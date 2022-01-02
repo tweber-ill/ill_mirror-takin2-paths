@@ -40,8 +40,8 @@
 #include "tlibs2/libs/maths.h"
 
 
-template<class t_mat, class t_vec, class t_real>
-requires tl2::is_mat<t_mat> && tl2::is_vec<t_vec>
+template<class t_mat, class t_vec, class t_vec3, class t_real>
+requires tl2::is_mat<t_mat> && tl2::is_vec<t_vec> && tl2::is_vec<t_vec3>
 class Camera
 {
 public:
@@ -124,7 +124,7 @@ public:
 	/**
 	 * set the camera position
 	 */
-	void SetPosition(const t_vec& pos)
+	void SetPosition(const t_vec3& pos)
 	{
 		m_matTrans(0, 3) = pos[0];
 		m_matTrans(1, 3) = pos[1];
@@ -137,9 +137,9 @@ public:
 	/**
 	 * get the camera position
 	 */
-	t_vec GetPosition() const
+	t_vec3 GetPosition() const
 	{
-		return tl2::create<t_vec>(
+		return tl2::create<t_vec3>(
 		{
 			m_matTrans(0, 3),
 			m_matTrans(1, 3),
@@ -182,9 +182,9 @@ public:
 	/**
 	 * set transformation matrix to look from "pos" to "target"
 	 */
-	void SetLookAt(const t_vec& pos, const t_vec& target, const t_vec& up)
+	void SetLookAt(const t_vec3& pos, const t_vec3& target, const t_vec3& up)
 	{
-		m_mat = tl2::hom_lookat<t_mat, t_vec>(
+		m_mat = tl2::hom_lookat<t_mat, t_vec3>(
 			pos, target, up);
 
 		std::tie(m_mat_inv, std::ignore)
@@ -221,13 +221,13 @@ public:
 	 */
 	void Translate(t_real dx, t_real dy, t_real dz)
 	{
-		t_vec xdir = tl2::row<t_mat, t_vec>(m_matRot, 0);
-		t_vec ydir = tl2::row<t_mat, t_vec>(m_matRot, 1);
-		t_vec zdir = tl2::row<t_mat, t_vec>(m_matRot, 2);
+		t_vec3 xdir = tl2::row<t_mat, t_vec3>(m_matRot, 0);
+		t_vec3 ydir = tl2::row<t_mat, t_vec3>(m_matRot, 1);
+		t_vec3 zdir = tl2::row<t_mat, t_vec3>(m_matRot, 2);
 
-		t_vec xinc = xdir * dx;
-		t_vec yinc = ydir * dy;
-		t_vec zinc = zdir * dz;
+		t_vec3 xinc = xdir * dx;
+		t_vec3 yinc = ydir * dy;
+		t_vec3 zinc = zdir * dz;
 
 		m_matTrans(0,3) += xinc[0] + yinc[0] + zinc[0];
 		m_matTrans(1,3) += xinc[1] + yinc[1] + zinc[1];
@@ -405,7 +405,7 @@ public:
 	/**
 	 * convert a vector into screen coordinates
 	 */
-	t_vec GlToScreenCoords(
+	t_vec ToScreenCoords(
 		const t_vec& vec4, bool *visible = nullptr) const
 	{
 		auto [ persp, vec ] =
@@ -426,11 +426,101 @@ public:
 			});
 		}
 
-	if(visible)
-		*visible = true;
+		if(visible)
+			*visible = true;
 
-	return vec;
-}
+		return vec;
+	}
+
+
+	/**
+	 * get position of object relative to the camera frustum
+	 *  0: in frustum
+	 * -1: left of camera frustum
+	 * +1: right of camera frustum
+	 * -2: below camera frustum
+	 * +2: above of camera frustum
+	 */
+	int GetFrustumSide(const t_vec3& _vec) const
+	{
+		t_vec vec = tl2::create<t_vec>(
+			{_vec[0], _vec[1], _vec[2], t_real(1.)});
+
+		t_vec vec_trafo = m_matPerspective * m_mat * vec;
+		vec_trafo /= vec_trafo[3];
+
+		if(vec_trafo[0] < t_real(-1.))
+			return -1;
+		else if(vec_trafo[0] > t_real(1.))
+			return 1;
+		else if(vec_trafo[1] < t_real(-1.))
+			return -2;
+		else if(vec_trafo[1] > t_real(1.))
+			return 2;
+
+		return 0;
+	}
+
+
+	/**
+	 * test if bounding box is outside frustum
+	 */
+	bool IsBoundingBoxOutsideFrustum(
+		const t_vec3& min, const t_vec3& max) const
+	{
+		// bounding box vertices
+		t_vec3 vecs[] =
+		{
+			min,
+			tl2::create<t_vec3>({min[0], min[1], max[2]}),
+			tl2::create<t_vec3>({min[0], max[1], min[2]}),
+			tl2::create<t_vec3>({min[0], max[1], max[2]}),
+			tl2::create<t_vec3>({max[0], min[1], min[2]}),
+			tl2::create<t_vec3>({max[0], min[1], max[2]}),
+			tl2::create<t_vec3>({max[0], max[1], min[2]}),
+			max,
+		};
+
+		int last_side = 0;
+
+		for(const t_vec3& vec : vecs)
+		{
+			int side = GetFrustumSide(vec);
+
+			// inside the frustum?
+			if(side == 0)
+				return false;
+
+			if(last_side == 0)
+				last_side = side;
+
+			// outside the same frustum plane?
+			if(side != last_side)
+				return false;
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * get a ray from screen coordinates
+	 */
+	std::tuple<t_vec3, t_vec3> GetPickerRay(t_real mouseX, t_real mouseY) const
+	{
+		// picker ray
+		auto [org, dir] = tl2::hom_line_from_screen_coords<t_mat, t_vec>(
+			mouseX, mouseY, 0., 1.,
+			GetInverseTransformation(),
+			GetInversePerspective(), 
+			GetInverseViewport(),
+			&GetViewport(), true);
+
+		t_vec3 org3 = tl2::create<t_vec3>({org[0], org[1], org[2]});
+		t_vec3 dir3 = tl2::create<t_vec3>({dir[0], dir[1], dir[2]});
+
+		return std::make_tuple(std::move(org3), std::move(dir3));
+	}
 
 
 //protected:
@@ -446,15 +536,15 @@ public:
 		matCamTrans_inv(1,3) = -matCamTrans(1,3);
 		matCamTrans_inv(2,3) = -matCamTrans(2,3);
 
-		const t_vec vecCamDir[2] =
+		const t_vec3 vecCamDir[2] =
 		{
-			tl2::create<t_vec>({1., 0., 0.}),
-			tl2::create<t_vec>({0. ,0., 1.})
+			tl2::create<t_vec3>({1., 0., 0.}),
+			tl2::create<t_vec3>({0. ,0., 1.})
 		};
 
-		m_matRot = tl2::hom_rotation<t_mat, t_vec>(
+		m_matRot = tl2::hom_rotation<t_mat, t_vec3>(
 			vecCamDir[0], m_theta, 0);
-		m_matRot *= tl2::hom_rotation<t_mat, t_vec>(
+		m_matRot *= tl2::hom_rotation<t_mat, t_vec3>(
 			vecCamDir[1], m_phi, 0);
 
 		m_mat = tl2::unit<t_mat>();

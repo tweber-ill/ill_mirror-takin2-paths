@@ -86,7 +86,9 @@ uniform bool shadow_renderpass = false;
 
 
 /**
- * for shadow rendering, see (Sellers 2014), pp. 534-540
+ * for shadow rendering, see (Sellers 2014), pp. 534-540.
+ * for perspective transformation and divide, see
+ *	https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluProject.xml
  */
 void main()
 {

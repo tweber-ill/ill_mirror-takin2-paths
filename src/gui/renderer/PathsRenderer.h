@@ -71,6 +71,9 @@ struct PathsObj : public tl2::GlRenderObj
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
 
+	t_vec3_gl m_boundingBoxMin = tl2::create<t_vec3_gl>({0., 0., 0.});
+	t_vec3_gl m_boundingBoxMax = tl2::create<t_vec3_gl>({0., 0., 0.});
+
 	std::string m_texture = "";	// texture identifier
 };
 
@@ -92,7 +95,7 @@ class PathsRenderer : public QOpenGLWidget
 { Q_OBJECT
 public:
 	// camera type
-	using t_cam = Camera<t_mat_gl, t_vec3_gl, t_real_gl>;
+	using t_cam = Camera<t_mat_gl, t_vec_gl, t_vec3_gl, t_real_gl>;
 
 	// 3d object and texture types
 	using t_objs = std::unordered_map<std::string, PathsObj>;

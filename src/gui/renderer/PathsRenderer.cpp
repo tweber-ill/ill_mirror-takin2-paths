@@ -403,14 +403,22 @@ void PathsRenderer::RenameObject(const std::string& oldname, const std::string& 
  * add a polygon-based object
  */
 PathsRenderer::t_objs::iterator 
-PathsRenderer::AddTriangleObject(const std::string& obj_name,
+PathsRenderer::AddTriangleObject(
+	const std::string& obj_name,
 	const std::vector<t_vec3_gl>& triag_verts,
 	const std::vector<t_vec3_gl>& triag_norms,
 	const std::vector<t_vec3_gl>& triag_uvs,
 	t_real_gl r, t_real_gl g, t_real_gl b, t_real_gl a)
 {
+	// bounding sphere
 	auto [boundingSpherePos, boundingSphereRad] =
 		tl2::bounding_sphere<t_vec3_gl>(triag_verts);
+
+	// bounding box
+	auto [boundingBoxMin, boundingBoxMax] =
+		tl2::bounding_box<t_vec3_gl>(triag_verts);
+
+	// colour
 	auto col = tl2::create<t_vec_gl>({r,g,b,a});
 
 	QMutexLocker _locker{&m_mutexObj};
@@ -425,6 +433,8 @@ PathsRenderer::AddTriangleObject(const std::string& obj_name,
 	obj.m_mat = tl2::hom_translation<t_mat_gl, t_real_gl>(0., 0., 0.);
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
+	obj.m_boundingBoxMin = std::move(boundingBoxMin);
+	obj.m_boundingBoxMax = std::move(boundingBoxMax);
 
 	return m_objs.emplace(std::make_pair(obj_name, std::move(obj))).first;
 }
@@ -526,14 +536,7 @@ void PathsRenderer::UpdatePicker()
 		return;
 
 	// picker ray
-	auto [org, dir] = tl2::hom_line_from_screen_coords<t_mat_gl, t_vec_gl>(
-		m_posMouse.x(), m_posMouse.y(), 0., 1., 
-		m_cam.GetInverseTransformation(),
-		m_cam.GetInversePerspective(), 
-		m_cam.GetInverseViewport(),
-		&m_cam.GetViewport(), true);
-	t_vec3_gl org3 = tl2::create<t_vec3_gl>({org[0], org[1], org[2]});
-	t_vec3_gl dir3 = tl2::create<t_vec3_gl>({dir[0], dir[1], dir[2]});
+	auto [org3, dir3] = m_cam.GetPickerRay(m_posMouse.x(), m_posMouse.y());
 
 	// intersection with geometry
 	bool hasInters = false;
@@ -555,8 +558,10 @@ void PathsRenderer::UpdatePicker()
 
 		// intersection with bounding sphere?
 		auto boundingInters =
-			tl2::intersect_line_sphere<t_vec3_gl, std::vector>(org3, dir3,
-				matTrafo * obj.m_boundingSpherePos, scale*obj.m_boundingSphereRad);
+			tl2::intersect_line_sphere<t_vec3_gl, std::vector>(
+				org3, dir3,
+				matTrafo * obj.m_boundingSpherePos, 
+				scale * obj.m_boundingSphereRad);
 		if(boundingInters.size() == 0)
 			continue;
 
@@ -577,7 +582,8 @@ void PathsRenderer::UpdatePicker()
 			} };
 
 			auto [vecInters, bInters, lamInters] =
-				tl2::intersect_line_poly<t_vec3_gl, t_mat_gl>(org3, dir3, poly, matTrafo);
+				tl2::intersect_line_poly<t_vec3_gl, t_mat_gl>(
+					org3, dir3, poly, matTrafo);
 
 			if(!bInters)
 				continue;
@@ -1126,6 +1132,11 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 	for(const auto& [obj_name, obj] : m_objs)
 	{
 		if(!obj.m_visible)
+			continue;
+
+		if(m_cam.IsBoundingBoxOutsideFrustum(
+			obj.m_mat * obj.m_boundingBoxMin,
+			obj.m_mat * obj.m_boundingBoxMax))
 			continue;
 
 		// textures
