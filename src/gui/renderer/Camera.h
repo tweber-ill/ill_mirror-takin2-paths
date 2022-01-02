@@ -36,6 +36,8 @@
 
 #include <tuple>
 #include <array>
+#include <unordered_set>
+#include <algorithm>
 
 #include "tlibs2/libs/maths.h"
 
@@ -435,13 +437,14 @@ public:
 
 	/**
 	 * get position of object relative to the camera frustum
-	 *  0: in frustum
 	 * -1: left of camera frustum
 	 * +1: right of camera frustum
 	 * -2: below camera frustum
 	 * +2: above of camera frustum
+	 * -3: in front of near plane
+	 * +3: beyond far plane
 	 */
-	int GetFrustumSide(const t_vec3& _vec) const
+	std::unordered_set<int> GetFrustumSides(const t_vec3& _vec) const
 	{
 		t_vec vec = tl2::create<t_vec>(
 			{_vec[0], _vec[1], _vec[2], t_real(1.)});
@@ -449,16 +452,24 @@ public:
 		t_vec vec_trafo = m_matPerspective * m_mat * vec;
 		vec_trafo /= vec_trafo[3];
 
-		if(vec_trafo[0] < t_real(-1.))
-			return -1;
-		else if(vec_trafo[0] > t_real(1.))
-			return 1;
-		else if(vec_trafo[1] < t_real(-1.))
-			return -2;
-		else if(vec_trafo[1] > t_real(1.))
-			return 2;
+		std::unordered_set<int> sides;
 
-		return 0;
+		if(vec_trafo[0] < t_real(-1.))
+			sides.insert(-1);
+		else if(vec_trafo[0] > t_real(1.))
+			sides.insert(1);
+
+		if(vec_trafo[1] < t_real(-1.))
+			sides.insert(-2);
+		else if(vec_trafo[1] > t_real(1.))
+			sides.insert(2);
+
+		if(vec_trafo[2] < t_real(-1.))
+			sides.insert(-3);
+		else if(vec_trafo[2] > t_real(1.))
+			sides.insert(3);
+
+		return sides;
 	}
 
 
@@ -481,25 +492,38 @@ public:
 			max,
 		};
 
-		int last_side = 0;
+		bool first_vec = true;
+		std::unordered_set<int> set_inters;
 
 		for(const t_vec3& vec : vecs)
 		{
-			int side = GetFrustumSide(vec);
+			std::unordered_set<int> sides = GetFrustumSides(vec);
 
 			// inside the frustum?
-			if(side == 0)
+			if(sides.size() == 0)
 				return false;
 
-			if(last_side == 0)
-				last_side = side;
+			if(first_vec)
+			{
+				set_inters = sides;
+				first_vec = false;
+			}
+			else
+			{
+				std::unordered_set<int> new_inters;
+				std::set_intersection(
+					sides.begin(), sides.end(),
+					set_inters.begin(), set_inters.end(),
+					std::inserter(new_inters, new_inters.begin()));
+				set_inters = std::move(new_inters);
 
-			// outside the same frustum plane?
-			if(side != last_side)
-				return false;
+				if(set_inters.size() == 0)
+					return false;
+			}
 		}
 
-		return true;
+		// all outside the same frustum plane?
+		return set_inters.size() != 0;
 	}
 
 
