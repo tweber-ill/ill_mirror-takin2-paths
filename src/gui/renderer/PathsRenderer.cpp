@@ -143,6 +143,9 @@ void PathsRenderer::EnableTextures(bool b)
 bool PathsRenderer::ChangeTextureProperty(
 	const QString& ident, const QString& filename)
 {
+	if(!m_initialised)
+		return false;
+
 	BOOST_SCOPE_EXIT(this_)
 	{
 		this_->doneCurrent();
@@ -298,9 +301,6 @@ void PathsRenderer::AddWall(const Geometry& wall)
  */
 void PathsRenderer::UpdateInstrumentSpace(const InstrumentSpace& instr)
 {
-	if(!m_initialised)
-		return;
-
 	// update wall matrices
 	for(const auto& wall : instr.GetWalls())
 	{
@@ -314,9 +314,6 @@ void PathsRenderer::UpdateInstrumentSpace(const InstrumentSpace& instr)
  */
 void PathsRenderer::UpdateInstrument(const Instrument& instr)
 {
-	if(!m_initialised)
-		return;
-
 	// instrument axes
 	const auto& mono = instr.GetMonochromator();
 	const auto& sample = instr.GetSample();
@@ -415,7 +412,7 @@ PathsRenderer::AddTriangleObject(
 		tl2::bounding_sphere<t_vec3_gl>(triag_verts);
 
 	// bounding box
-	auto [boundingBoxMin, boundingBoxMax] =
+	auto [bbMin, bbMax] =
 		tl2::bounding_box<t_vec3_gl>(triag_verts);
 
 	// colour
@@ -430,11 +427,23 @@ PathsRenderer::AddTriangleObject(
 		false, m_attrVertex, m_attrVertexNorm,
 		m_attrVertexCol, m_attrTexCoords);
 
+	// object transformation matrix
 	obj.m_mat = tl2::hom_translation<t_mat_gl, t_real_gl>(0., 0., 0.);
+
+	// object bounding spherer
 	obj.m_boundingSpherePos = std::move(boundingSpherePos);
 	obj.m_boundingSphereRad = boundingSphereRad;
-	obj.m_boundingBoxMin = std::move(boundingBoxMin);
-	obj.m_boundingBoxMax = std::move(boundingBoxMax);
+
+	// object bounding box
+	obj.m_boundingBox.resize(8);
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMin[1], bbMin[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMin[1], bbMax[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMax[1], bbMin[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMax[1], bbMax[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMax[0], bbMin[1], bbMin[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMax[0], bbMin[1], bbMax[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMax[0], bbMax[1], bbMin[2], 1.}));
+	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMax[0], bbMax[1], bbMax[2], 1.}));
 
 	return m_objs.emplace(std::make_pair(obj_name, std::move(obj))).first;
 }
@@ -494,6 +503,9 @@ void PathsRenderer::SetLight(std::size_t idx, const t_vec3_gl& pos)
 
 void PathsRenderer::UpdateLights()
 {
+	if(!m_initialised)
+		return;
+
 	auto *pGl = GetGlFunctions();
 	if(!pGl)
 		return;
@@ -519,7 +531,36 @@ void PathsRenderer::UpdateLights()
 	m_shaders->setUniformValueArray(m_uniLightPos, pos, num_lights, 3);
 	m_shaders->setUniformValue(m_uniNumActiveLights, num_lights);
 
-	UpdateLightPerspective();
+
+	// update light perspective
+	t_real ratio = 1;
+	if(m_fboshadow)
+	{
+		ratio = t_real_gl(m_fboshadow->height()) /
+			t_real_gl(m_fboshadow->width());
+	}
+
+	bool persp_proj = m_cam.GetPerspectiveProjection();
+	m_lightcam.SetPerspectiveProjection(persp_proj);
+
+	if(persp_proj)
+	{
+		// viewing angle has to be large enough so that the
+		// shadow map covers the entire scene
+		m_lightcam.SetFOV(tl2::pi<t_real_gl> * 0.75);
+		m_lightcam.SetPerspectiveProjection(true);
+		m_lightcam.SetAspectRatio(ratio);
+		m_lightcam.UpdatePerspective();
+	}
+
+	m_lightcam.UpdatePerspective();
+
+	// set matrices
+	m_shaders->setUniformValue(
+		m_uniMatrixLightProj, m_lightcam.GetPerspective());
+	LOGGLERR(pGl);
+
+
 	m_lightsNeedUpdate = false;
 }
 
@@ -659,6 +700,9 @@ void PathsRenderer::tick()
 
 void PathsRenderer::tick(const std::chrono::milliseconds& ms)
 {
+	if(!m_initialised)
+		return;
+
 	// if a key is pressed, move and update the camera
 	if(m_arrowDown[0] || m_arrowDown[1] || m_arrowDown[2] || m_arrowDown[3]
 		|| m_pageDown[0] || m_pageDown[1])
@@ -852,6 +896,7 @@ void PathsRenderer::resizeGL(int w, int h)
 	m_shadowFramebufferNeedsUpdate = true;
 	m_lightsNeedUpdate = true;
 
+	UpdateCam();
 	//update();
 }
 
@@ -866,55 +911,15 @@ qgl_funcs* PathsRenderer::GetGlFunctions()
 }
 
 
-void PathsRenderer::UpdateLightPerspective()
-{
-	auto *pGl = GetGlFunctions();
-	if(!pGl)
-		return;
-
-	t_real ratio = 1;
-	if(m_fboshadow)
-	{
-		ratio = t_real_gl(m_fboshadow->height()) /
-			t_real_gl(m_fboshadow->width());
-	}
-
-	bool persp_proj = m_cam.GetPerspectiveProjection();
-	m_lightcam.SetPerspectiveProjection(persp_proj);
-
-	if(persp_proj)
-	{
-		// viewing angle has to be large enough so that the
-		// shadow map covers the entire scene
-		m_lightcam.SetFOV(tl2::pi<t_real_gl> * 0.75);
-		m_lightcam.SetPerspectiveProjection(true);
-		m_lightcam.SetAspectRatio(ratio);
-		m_lightcam.UpdatePerspective();
-	}
-
-	m_lightcam.UpdatePerspective();
-
-	// bind shaders
-	BOOST_SCOPE_EXIT(m_shaders)
-	{
-		m_shaders->release();
-	} BOOST_SCOPE_EXIT_END
-	m_shaders->bind();
-	LOGGLERR(pGl);
-
-	// set matrices
-	m_shaders->setUniformValue(
-		m_uniMatrixLightProj, m_lightcam.GetPerspective());
-	LOGGLERR(pGl);
-}
-
-
 /**
  * framebuffer for shadow rendering
  * @see (Sellers 2014) pp. 534-540
  */
 void PathsRenderer::UpdateShadowFramebuffer()
 {
+	if(!m_initialised)
+		return;
+
 	auto *pGl = GetGlFunctions();
 	if(!pGl)
 		return;
@@ -1085,6 +1090,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 		m_viewportNeedsUpdate = false;
 	}
+
 	if(m_lightsNeedUpdate)
 		UpdateLights();
 
@@ -1128,16 +1134,26 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 
 	auto colOverride = tl2::create<t_vec_gl>({1,1,1,1});
 
+
 	// render triangle geometry
 	for(const auto& [obj_name, obj] : m_objs)
 	{
 		if(!obj.m_visible)
 			continue;
 
-		if(m_cam.IsBoundingBoxOutsideFrustum(
-			obj.m_mat * obj.m_boundingBoxMin,
-			obj.m_mat * obj.m_boundingBoxMax))
-			continue;
+		// check if object is in camera frustum
+		if(m_shadowRenderPass)
+		{
+			if(m_lightcam.IsBoundingBoxOutsideFrustum(
+				obj.m_mat, obj.m_boundingBox))
+				continue;
+		}
+		else
+		{
+			if(m_cam.IsBoundingBoxOutsideFrustum(
+				obj.m_mat, obj.m_boundingBox))
+				continue;
+		}
 
 		// textures
 		std::shared_ptr<QOpenGLTexture> texture;
@@ -1194,15 +1210,19 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		// set object matrix
 		m_shaders->setUniformValue(m_uniMatrixObj, obj.m_mat);
 
+
 		// main vertex array object
 		obj.m_pvertexarr->bind();
 
-
-		BOOST_SCOPE_EXIT(pGl, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
+		// bind vertex attribute arrays
+		BOOST_SCOPE_EXIT(pGl, &obj, &m_attrVertex, &m_attrVertexNorm, &m_attrVertexCol, &m_attrTexCoords)
 		{
-			pGl->glDisableVertexAttribArray(m_attrTexCoords);
 			pGl->glDisableVertexAttribArray(m_attrVertexCol);
-			pGl->glDisableVertexAttribArray(m_attrVertexNorm);
+			if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
+			{
+				pGl->glDisableVertexAttribArray(m_attrTexCoords);
+				pGl->glDisableVertexAttribArray(m_attrVertexNorm);
+			}
 			pGl->glDisableVertexAttribArray(m_attrVertex);
 		}
 		BOOST_SCOPE_EXIT_END
@@ -1217,6 +1237,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		LOGGLERR(pGl);
 
 
+		// render the object
 		if(obj.m_type == tl2::GlRenderObjType::TRIANGLES)
 			pGl->glDrawArrays(GL_TRIANGLES, 0, obj.m_triangles.size());
 		else if(obj.m_type == tl2::GlRenderObjType::LINES)

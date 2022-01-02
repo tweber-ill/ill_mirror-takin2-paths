@@ -65,14 +65,12 @@ struct PathsObj : public tl2::GlRenderObj
 	t_mat_gl m_mat = tl2::unit<t_mat_gl>();
 
 	bool m_visible = true;		// object shown?
-	bool m_highlighted = false;	// object highlighted?
 	bool m_cull = true;		// object faces culled?
 
 	t_vec3_gl m_boundingSpherePos = tl2::create<t_vec3_gl>({ 0., 0., 0. });
 	t_real_gl m_boundingSphereRad = 0.;
 
-	t_vec3_gl m_boundingBoxMin = tl2::create<t_vec3_gl>({0., 0., 0.});
-	t_vec3_gl m_boundingBoxMax = tl2::create<t_vec3_gl>({0., 0., 0.});
+	std::vector<t_vec_gl> m_boundingBox = {};
 
 	std::string m_texture = "";	// texture identifier
 };
@@ -170,7 +168,6 @@ protected:
 
 	void UpdatePicker();
 	void UpdateLights();
-	void UpdateLightPerspective();
 	void UpdateShadowFramebuffer();
 
 	void UpdateCam();
@@ -258,9 +255,9 @@ protected:
 	std::atomic<bool> m_initialised = false;
 	std::atomic<bool> m_pickerEnabled = true;
 	std::atomic<bool> m_pickerNeedsUpdate = false;
-	std::atomic<bool> m_lightsNeedUpdate = false;
-	std::atomic<bool> m_perspectiveNeedsUpdate = false;
-	std::atomic<bool> m_viewportNeedsUpdate = false;
+	std::atomic<bool> m_lightsNeedUpdate = true;
+	std::atomic<bool> m_perspectiveNeedsUpdate = true;
+	std::atomic<bool> m_viewportNeedsUpdate = true;
 	std::atomic<bool> m_shadowFramebufferNeedsUpdate = false;
 	std::atomic<bool> m_shadowRenderingEnabled = true;
 	std::atomic<bool> m_shadowRenderPass = false;

@@ -444,10 +444,10 @@ public:
 	 * -3: in front of near plane
 	 * +3: beyond far plane
 	 */
-	std::unordered_set<int> GetFrustumSides(const t_vec3& _vec) const
+	std::unordered_set<int> GetFrustumSides(const t_vec& vec) const
 	{
-		t_vec vec = tl2::create<t_vec>(
-			{_vec[0], _vec[1], _vec[2], t_real(1.)});
+		//t_vec vec = tl2::create<t_vec>(
+		//	{_vec[0], _vec[1], _vec[2], t_real(1.)});
 
 		t_vec vec_trafo = m_matPerspective * m_mat * vec;
 		vec_trafo /= vec_trafo[3];
@@ -477,26 +477,14 @@ public:
 	 * test if bounding box is outside frustum
 	 */
 	bool IsBoundingBoxOutsideFrustum(
-		const t_vec3& min, const t_vec3& max) const
+		const t_mat& matObj, const std::vector<t_vec>& bbox) const
 	{
-		// bounding box vertices
-		t_vec3 vecs[] =
-		{
-			min,
-			tl2::create<t_vec3>({min[0], min[1], max[2]}),
-			tl2::create<t_vec3>({min[0], max[1], min[2]}),
-			tl2::create<t_vec3>({min[0], max[1], max[2]}),
-			tl2::create<t_vec3>({max[0], min[1], min[2]}),
-			tl2::create<t_vec3>({max[0], min[1], max[2]}),
-			tl2::create<t_vec3>({max[0], max[1], min[2]}),
-			max,
-		};
-
 		bool first_vec = true;
 		std::unordered_set<int> set_inters;
 
-		for(const t_vec3& vec : vecs)
+		for(const t_vec& _vec : bbox)
 		{
+			t_vec vec = matObj * _vec;
 			std::unordered_set<int> sides = GetFrustumSides(vec);
 
 			// inside the frustum?
