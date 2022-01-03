@@ -133,6 +133,8 @@ extern unsigned int g_timer_fps;
 extern int g_light_follows_cursor;
 extern int g_enable_shadow_rendering;
 
+extern int g_draw_bounding_rectangles;
+
 // screenshots
 extern int g_combined_screenshots;
 extern int g_automatic_screenshots;
@@ -178,7 +180,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 28> g_settingsvariables
+constexpr std::array<SettingsVariable, 29> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -341,6 +343,12 @@ constexpr std::array<SettingsVariable, 28> g_settingsvariables
 		.description = "Enable shadow rendering.",
 		.key = "settings/enable_shadow_rendering",
 		.value = &g_enable_shadow_rendering,
+		.editor = SettingsVariableEditor::YESNO,
+	},
+	{
+		.description = "Draw bounding rectangles.",
+		.key = "settings/draw_bounding_rectangles",
+		.value = &g_draw_bounding_rectangles,
 		.editor = SettingsVariableEditor::YESNO,
 	},
 	/*{

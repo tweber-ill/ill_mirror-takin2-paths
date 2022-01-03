@@ -537,10 +537,10 @@ public:
 		auto [min, max] = tl2::bounding_box(brect);
 
 		return std::vector<t_vec>{{
-			tl2::create<t_vec>({min[0], min[1]}),
-			tl2::create<t_vec>({min[0], max[1]}),
-			tl2::create<t_vec>({max[0], min[1]}),
-			tl2::create<t_vec>({max[0], max[1]}),
+			tl2::create<t_vec>({min[0], min[1], 0., 1.}),
+			tl2::create<t_vec>({min[0], max[1], 0., 1.}),
+			tl2::create<t_vec>({max[0], max[1], 0., 1.}),
+			tl2::create<t_vec>({max[0], min[1], 0., 1.}),
 		}};
 	}
 

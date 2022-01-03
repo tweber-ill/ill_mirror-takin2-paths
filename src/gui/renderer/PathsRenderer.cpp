@@ -1153,10 +1153,6 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 			if(m_cam.IsBoundingBoxOutsideFrustum(
 				obj.m_mat, obj.m_boundingBox))
 				continue;
-
-			// TODO: draw bounding rect for highlighted object
-			//auto boundingRect = m_cam.GetBoundingRect(
-			//	obj.m_mat, obj.m_boundingBox);
 		}
 
 		// textures
@@ -1251,6 +1247,7 @@ void PathsRenderer::DoPaintGL(qgl_funcs *pGl)
 		LOGGLERR(pGl);
 	}
 
+
 	pGl->glDisable(GL_CULL_FACE);
 	pGl->glDisable(GL_DEPTH_TEST);
 }
@@ -1265,13 +1262,40 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 	QPen penOrig = painter.pen();
 	QBrush brushOrig = painter.brush();
 
-	// draw tooltip
+	// draw tooltips and bounding rectangles
 	if(auto curObj = m_objs.find(m_curObj); curObj != m_objs.end())
 	{
 		const auto& obj = curObj->second;
 
-		if(obj.m_visible)
+		if(obj.m_visible && obj.m_type == tl2::GlRenderObjType::TRIANGLES)
 		{
+			// draw a bounding rectangle over the currently selected item
+			if(g_draw_bounding_rectangles)
+			{
+				auto boundingRect = m_cam.GetBoundingRect(
+					obj.m_mat, obj.m_boundingBox);
+
+				QPolygonF polyBounds;
+				for(const t_vec_gl& _vertex : boundingRect)
+				{
+					const t_mat_gl& matViewport = m_cam.GetViewport();
+					t_vec_gl vertex = matViewport * _vertex;
+					vertex[1] = matViewport(1,1)*2. - vertex[1];
+					polyBounds << QPointF(vertex[0], vertex[1]);
+				}
+
+				QPen penBounds = penOrig;
+				penBounds.setColor(QColor(0xff, 0xff, 0xff, 0xe0));
+				penBounds.setWidth(4.);
+				painter.setPen(penBounds);
+				painter.drawPolygon(polyBounds);
+				penBounds.setColor(QColor(0x00, 0x00, 0x00, 0xe0));
+				penBounds.setWidth(2.);
+				painter.setPen(penBounds);
+				painter.drawPolygon(polyBounds);
+			}
+
+			// draw tooltip
 			QString label = curObj->first.c_str();
 
 			QFont fontLabel = fontOrig;
@@ -1283,20 +1307,20 @@ void PathsRenderer::DoPaintQt(QPainter &painter)
 					QFont::PreferAntialias |
 					QFont::PreferQuality));
 			fontLabel.setWeight(QFont::Normal);
-			penLabel.setColor(QColor(0, 0, 0, 255));
-			brushLabel.setColor(QColor(255, 255, 255, 127));
+			penLabel.setColor(QColor(0, 0, 0, 0xff));
+			brushLabel.setColor(QColor(0xff, 0xff, 0xff, 0x7f));
 			brushLabel.setStyle(Qt::SolidPattern);
 			painter.setFont(fontLabel);
 			painter.setPen(penLabel);
 			painter.setBrush(brushLabel);
 
-			QRect boundingRect = painter.fontMetrics().boundingRect(label);
-			boundingRect.setWidth(boundingRect.width() * 1.5);
-			boundingRect.setHeight(boundingRect.height() * 2);
-			boundingRect.translate(m_posMouse.x()+16, m_posMouse.y()+24);
+			QRect textBoundingRect = painter.fontMetrics().boundingRect(label);
+			textBoundingRect.setWidth(textBoundingRect.width() * 1.5);
+			textBoundingRect.setHeight(textBoundingRect.height() * 2);
+			textBoundingRect.translate(m_posMouse.x()+16, m_posMouse.y()+24);
 
-			painter.drawRoundedRect(boundingRect, 8., 8.);
-			painter.drawText(boundingRect,
+			painter.drawRoundedRect(textBoundingRect, 8., 8.);
+			painter.drawText(textBoundingRect,
 				Qt::AlignCenter | Qt::AlignVCenter,
 				label);
 		}
