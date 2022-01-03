@@ -89,7 +89,6 @@ public:
 	void SetZoom(t_real zoom)
 	{
 		m_zoom = zoom;
-
 		m_trafo_needs_update = true;
 	}
 
@@ -245,7 +244,6 @@ public:
 	void Zoom(t_real zoom)
 	{
 		m_zoom *= std::pow(t_real(2), zoom);
-
 		m_trafo_needs_update = true;
 	}
 

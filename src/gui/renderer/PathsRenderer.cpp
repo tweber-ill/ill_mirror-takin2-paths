@@ -1529,6 +1529,9 @@ void PathsRenderer::keyReleaseEvent(QKeyEvent *pEvt)
 }
 
 
+/**
+ * the mouse cursor is being moved
+ */
 void PathsRenderer::mouseMoveEvent(QMouseEvent *pEvt)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -1574,6 +1577,9 @@ QPoint PathsRenderer::GetMousePosition(bool global_pos) const
 }
 
 
+/**
+ * mouse button is being pressed
+ */
 void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 {
 	m_mouseMovedBetweenDownAndUp = false;
@@ -1616,6 +1622,9 @@ void PathsRenderer::mousePressEvent(QMouseEvent *pEvt)
 }
 
 
+/**
+ * release of mouse button
+ */
 void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 {
 	bool mouseDownOld[] = { m_mouseDown[0], m_mouseDown[1], m_mouseDown[2] };
@@ -1656,9 +1665,18 @@ void PathsRenderer::mouseReleaseEvent(QMouseEvent *pEvt)
 }
 
 
+/**
+ * mouse wheel movement
+ */
 void PathsRenderer::wheelEvent(QWheelEvent *pEvt)
 {
 	const t_real_gl degrees = pEvt->angleDelta().y() / 8.;
+	if(tl2::equals_0<t_real_gl>(degrees, t_real_gl(g_eps)))
+	{
+		pEvt->ignore();
+		return;
+	}
+
 	m_cam.Zoom(degrees * g_wheel_zoom_scale);
 	UpdateCam();
 
