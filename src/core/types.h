@@ -34,7 +34,7 @@
 #define TASPATHS_TITLE "TAS-Paths"
 
 // version number of this software
-#define TASPATHS_VERSION "1.3.8"
+#define TASPATHS_VERSION "1.3.9"
 
 
 /**
