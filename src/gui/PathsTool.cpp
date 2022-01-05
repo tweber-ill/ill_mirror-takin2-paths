@@ -264,6 +264,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			{
 				m_renderer->GetCamera().SetFOV(
 					angle/t_real{180}*tl2::pi<t_real>);
+				m_renderer->UpdateCam();
 			}
 		});
 
@@ -274,6 +275,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(m_renderer)
 			{
 				m_renderer->GetCamera().SetZoom(zoom);
+				m_renderer->UpdateCam();
 			}
 		});
 
@@ -284,6 +286,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			if(m_renderer)
 			{
 				m_renderer->GetCamera().SetPerspectiveProjection(persp);
+				m_renderer->UpdateCam();
 			}
 		});
 
@@ -299,6 +302,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 			{
 				m_renderer->GetCamera().SetPosition(
 					tl2::create<t_vec3_gl>({x, y, z}));
+				m_renderer->UpdateCam();
 			}
 		});
 
@@ -314,6 +318,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 				m_renderer->GetCamera().SetRotation(
 					phi/t_real_gl{180}*tl2::pi<t_real_gl>,
 					theta/t_real_gl{180}*tl2::pi<t_real_gl>);
+				m_renderer->UpdateCam();
 			}
 		});
 
@@ -771,7 +776,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	connect(actionGarbage, &QAction::triggered, this, &PathsTool::CollectGarbage);
 
 	// clear settings
-	connect(actionClearSettings, &QAction::triggered, 
+	connect(actionClearSettings, &QAction::triggered,
 	[this]()
 	{
 		//restoreState(m_initial_state);
@@ -787,7 +792,7 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 				PathsTool::t_SettingsDlg>(this, &m_sett);
 
 #ifdef TASPATHS_SETTINGS_USE_QT_SIGNALS
-			connect(&*this->m_dlgSettings, 
+			connect(&*this->m_dlgSettings,
 				&PathsTool::t_SettingsDlg::SettingsHaveChanged,
 				this, &PathsTool::InitSettings);
 #else
@@ -2349,10 +2354,7 @@ void PathsTool::DeleteObject(const std::string& obj)
 
 		// remove 3d representation of object
 		if(m_renderer)
-		{
 			m_renderer->DeleteObject(obj);
-			m_renderer->update();
-		}
 	}
 	else
 	{
@@ -2499,10 +2501,7 @@ void PathsTool::RenameObject(const std::string& oldid, const std::string& newid)
 
 		// remove 3d representation of object
 		if(m_renderer)
-		{
 			m_renderer->RenameObject(oldid, newid);
-			m_renderer->update();
-		}
 	}
 }
 

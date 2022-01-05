@@ -78,7 +78,7 @@ struct PathsObj : public tl2::GlRenderObj
 
 /**
  * texture descriptor
- */ 
+ */
 struct PathsTexture
 {
 	std::string filename{};
@@ -120,7 +120,6 @@ public:
 	std::tuple<std::string, std::string, std::string, std::string> GetGlDescr() const;
 	bool IsInitialised() const { return m_initialised; }
 
-	void DeleteObject(PathsObj& obj);
 	void DeleteObject(const std::string& obj_name);
 	void RenameObject(const std::string& oldname, const std::string& newname);
 
@@ -135,8 +134,8 @@ public:
 		const t_vec& colour);
 
 	void SetLight(std::size_t idx, const t_vec3_gl& pos);
-	void SetLightFollowsCursor(bool b) { m_light_follows_cursor = b; };
-	void EnableShadowRendering(bool b) { m_shadowRenderingEnabled = b; }
+	void SetLightFollowsCursor(bool b);
+	void EnableShadowRendering(bool b);
 
 	const t_cam& GetCamera() const { return m_cam; }
 	t_cam& GetCamera() { return m_cam; }
@@ -148,6 +147,8 @@ public:
 
 	bool AreTexturesEnabled() const { return m_textures_active; }
 	const t_textures& GetTextures() const { return m_textures; }
+
+	void UpdateCam(bool update_frame = true);
 
 
 protected:
@@ -163,14 +164,11 @@ protected:
 	virtual void keyPressEvent(QKeyEvent *pEvt) override;
 	virtual void keyReleaseEvent(QKeyEvent *pEvt) override;
 
-
 	qgl_funcs* GetGlFunctions();
 
 	void UpdatePicker();
 	void UpdateLights();
 	void UpdateShadowFramebuffer();
-
-	void UpdateCam();
 
 	void DoPaintGL(qgl_funcs *pGL);
 	void DoPaintQt(QPainter &painter);
@@ -245,7 +243,7 @@ protected:
 
 	// textures active?
 	bool m_textures_active = false;
-	
+
 	// main camera
 	t_cam m_cam{};
 
@@ -281,10 +279,6 @@ protected:
 
 	// instrument status
 	const InstrumentStatus *m_instrstatus = nullptr;
-
-
-protected slots:
-	void tick();
 
 
 public slots:

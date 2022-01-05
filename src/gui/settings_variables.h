@@ -127,8 +127,8 @@ extern t_real g_min_dist_to_walls;
 // path tracker fps
 extern unsigned int g_pathtracker_fps;
 
-// renderer fps
-extern unsigned int g_timer_fps;
+// render timer ticks per second
+extern unsigned int g_timer_tps;
 
 extern int g_light_follows_cursor;
 extern int g_enable_shadow_rendering;
@@ -315,7 +315,7 @@ constexpr std::array<SettingsVariable, 29> g_settingsvariables
 		.value = &g_num_closest_voronoi_vertices,
 	},
 	{
-		.description = "Path tracker FPS.",
+		.description = "Path tracker frames per second.",
 		.key = "settings/pathtracker_fps",
 		.value = &g_pathtracker_fps,
 	},
@@ -329,9 +329,9 @@ constexpr std::array<SettingsVariable, 29> g_settingsvariables
 
 	// renderer options
 	{
-		.description = "Renderer FPS.",
-		.key = "settings/renderer_fps",
-		.value = &g_timer_fps,
+		.description = "Timer ticks per second.",
+		.key = "settings/timer_tps",
+		.value = &g_timer_tps,
 	},
 	{
 		.description = "Light follows cursor.",
