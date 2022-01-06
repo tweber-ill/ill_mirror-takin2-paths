@@ -242,7 +242,7 @@ if [ $create_appdir -ne 0 ]; then
 	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/platforms/libqoffscreen.dylib
 	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/platforms/libqwebgl.dylib
 
-	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/imageformats/libq[^s][^v][^g]*.dylib
+	rm -fv ${APPDIRNAME}/Contents/Libraries/Qt_Plugins/imageformats/libq[^sj][^vp][^g]*.dylib
 	echo -e "--------------------------------------------------------------------------------"
 
 
