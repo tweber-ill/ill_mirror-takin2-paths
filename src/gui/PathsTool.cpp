@@ -48,6 +48,11 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/log.h"
 
 
+// instantiate the settings dialog class
+template class SettingsDlg<g_settingsvariables.size(), &g_settingsvariables>;
+using t_SettingsDlg = SettingsDlg<g_settingsvariables.size(), &g_settingsvariables>;
+
+
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	#define EXEC_EXTENSION ".exe"
 #else
@@ -71,16 +76,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	}
 
 	// set-up common gui variables
-	PathsTool::t_SettingsDlg::SetGuiTheme(&g_theme);
-	PathsTool::t_SettingsDlg::SetGuiFont(&g_font);
-	PathsTool::t_SettingsDlg::SetGuiUseNativeMenubar(&g_use_native_menubar);
-	PathsTool::t_SettingsDlg::SetGuiUseNativeDialogs(&g_use_native_dialogs);
-	PathsTool::t_SettingsDlg::SetGuiUseAnimations(&g_use_animations);
-	PathsTool::t_SettingsDlg::SetGuiTabbedDocks(&g_tabbed_docks);
-	PathsTool::t_SettingsDlg::SetGuiNestedDocks(&g_nested_docks);
+	t_SettingsDlg::SetGuiTheme(&g_theme);
+	t_SettingsDlg::SetGuiFont(&g_font);
+	t_SettingsDlg::SetGuiUseNativeMenubar(&g_use_native_menubar);
+	t_SettingsDlg::SetGuiUseNativeDialogs(&g_use_native_dialogs);
+	t_SettingsDlg::SetGuiUseAnimations(&g_use_animations);
+	t_SettingsDlg::SetGuiTabbedDocks(&g_tabbed_docks);
+	t_SettingsDlg::SetGuiNestedDocks(&g_nested_docks);
 
 	// restore settings
-	PathsTool::t_SettingsDlg::ReadSettings(&m_sett);
+	t_SettingsDlg::ReadSettings(&m_sett);
 
 
 	// --------------------------------------------------------------------
@@ -788,15 +793,16 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 	{
 		if(!this->m_dlgSettings)
 		{
-			this->m_dlgSettings = std::make_shared<
-				PathsTool::t_SettingsDlg>(this, &m_sett);
+			auto settingsDlg = std::make_shared<
+				t_SettingsDlg>(this, &m_sett);
+			this->m_dlgSettings = settingsDlg;
 
 #ifdef TASPATHS_SETTINGS_USE_QT_SIGNALS
-			connect(&*this->m_dlgSettings,
-				&PathsTool::t_SettingsDlg::SettingsHaveChanged,
+			connect(&*settingsDlg,
+				&t_SettingsDlg::SettingsHaveChanged,
 				this, &PathsTool::InitSettings);
 #else
-			this->m_dlgSettings->AddChangedSettingsSlot(
+			settingsDlg->AddChangedSettingsSlot(
 				[this](){ PathsTool::InitSettings(); });
 #endif
 		}

@@ -96,8 +96,7 @@ struct SettingsVariable
 /**
  * settings dialog
  */
-template<
-	std::size_t num_settingsvariables,
+template<std::size_t num_settingsvariables,
 	const std::array<SettingsVariable, 
 		num_settingsvariables> *settingsvariables>
 class SettingsDlg : public QDialog

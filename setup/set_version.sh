@@ -26,7 +26,7 @@
 #
 
 # version to set
-TASPATHS_VERSION="1.3.9"
+TASPATHS_VERSION="1.4.0"
 
 
 # sed tool
