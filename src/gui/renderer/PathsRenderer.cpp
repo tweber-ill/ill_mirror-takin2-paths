@@ -2,7 +2,8 @@
  * paths rendering widget
  * @author Tobias Weber <tweber@ill.fr>
  * @date feb-2021
- * @note initially forked from my tlibs2 library: https://code.ill.fr/scientific-software/takin/tlibs2/-/blob/master/libs/qt/glplot.cpp
+ * @note Initially forked from my tlibs2 library (https://code.ill.fr/scientific-software/takin/tlibs2/-/blob/master/libs/qt/glplot.cpp).
+ * @note Further code forked from my privately developed "misc" project (https://github.com/t-weber/misc).
  * @license GPLv3, see 'LICENSE' file
  *
  * References:
@@ -14,8 +15,10 @@
  *
  * ----------------------------------------------------------------------------
  * TAS-Paths (part of the Takin software suite)
- * Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
- *                     Grenoble, France).
+ * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
+ *                          Grenoble, France).
+ * "misc" project 
+ * Copyright (C) 2017-2021  Tobias WEBER (privately developed).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
