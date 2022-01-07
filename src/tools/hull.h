@@ -47,7 +47,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "src/gui/Recent.h"
+#include "src/gui/common/Recent.h"
 #include "vertex.h"
 #include "about.h"
 #include "settings_variables.h"

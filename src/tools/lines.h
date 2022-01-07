@@ -45,7 +45,7 @@
 #include "src/libs/graphs.h"
 #include "src/libs/trapezoid.h"
 
-#include "src/gui/Recent.h"
+#include "src/gui/common/Recent.h"
 #include "vertex.h"
 #include "info.h"
 #include "about.h"

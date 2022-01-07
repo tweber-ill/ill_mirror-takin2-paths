@@ -33,9 +33,9 @@
 #include <variant>
 #include <optional>
 
-#include "Resources.h"
+#include "common/Resources.h"
 #include "src/core/types.h"
-#include "src/gui/dialogs/Settings.h"
+#include "dialogs/Settings.h"
 #include "tlibs2/libs/qt/gl.h"
 
 

@@ -35,7 +35,7 @@
  */
 
 #include "PathsRenderer.h"
-#include "src/gui/Resources.h"
+#include "src/gui/common/Resources.h"
 #include "src/gui/settings_variables.h"
 
 #include <QtCore/QtGlobal>

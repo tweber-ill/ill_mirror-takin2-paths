@@ -48,10 +48,10 @@
 #include "src/core/TasCalculator.h"
 
 #include "InstrumentStatus.h"
-#include "Resources.h"
-#include "Recent.h"
+#include "common/Resources.h"
+#include "common/Recent.h"
 #include "settings_variables.h"
-#include "src/gui/renderer/PathsRenderer.h"
+#include "renderer/PathsRenderer.h"
 
 #include "dialogs/ConfigSpace.h"
 #include "dialogs/XtalConfigSpace.h"
