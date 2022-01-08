@@ -7,6 +7,7 @@
 	{
 		"telemetry.enableCrashReporter": false,
 		"telemetry.enableTelemetry": false,
+		"telemetry.telemetryLevel": "off",
 		"workbench.enableExperiments": false,
 		"workbench.settings.enableNaturalLanguageSearch": false,
 		"C_Cpp.default.cppStandard": "c++20",
@@ -88,6 +89,7 @@
 			"__split_buffer": "cpp",
 			"qgraphicsview": "cpp",
 			"unordered_set": "cpp"
-		}
+		},
+		"npm.fetchOnlinePackageInfo": false
 	}
 }

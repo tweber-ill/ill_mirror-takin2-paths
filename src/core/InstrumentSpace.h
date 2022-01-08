@@ -35,10 +35,6 @@
 #include "Instrument.h"
 
 
-#define FILE_BASENAME "taspaths."
-#define PROG_IDENT "takin_taspaths"
-
-
 
 // ----------------------------------------------------------------------------
 // instrument space
