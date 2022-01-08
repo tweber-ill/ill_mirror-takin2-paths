@@ -457,7 +457,7 @@ PathsRenderer::AddTriangleObject(
 	obj.m_boundingSphereRad = boundingSphereRad;
 
 	// object bounding box
-	obj.m_boundingBox.resize(8);
+	obj.m_boundingBox.reserve(8);
 	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMin[1], bbMin[2], 1.}));
 	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMin[1], bbMax[2], 1.}));
 	obj.m_boundingBox.push_back(tl2::create<t_vec_gl>({bbMin[0], bbMax[1], bbMin[2], 1.}));
