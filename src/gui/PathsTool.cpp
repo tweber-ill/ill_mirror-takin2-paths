@@ -2060,16 +2060,16 @@ void PathsTool::PickerIntersection([[maybe_unused]] const t_vec3_gl* pos, std::s
 
 
 /**
- * clicked on an object
+ * clicked on an object in instrument space
  */
 void PathsTool::ObjectClicked(const std::string& obj,
 	[[maybe_unused]] bool left, bool middle, bool right)
 {
-	if(!m_renderer)
+	if(!m_renderer || obj == "")
 		return;
 
 	// show context menu for object
-	if(right && obj != "")
+	if(right)
 	{
 		m_curContextObj = obj;
 
