@@ -45,8 +45,9 @@
 #include <QtGui/QMouseEvent>
 
 #include "tlibs2/libs/maths.h"
-#include "tlibs2/libs/cam.h"
 #include "tlibs2/libs/qt/gl.h"
+//#include "tlibs2/libs/cam.h"
+#include "Camera.h"
 
 #include "src/core/InstrumentSpace.h"
 #include "src/gui/InstrumentStatus.h"
