@@ -289,7 +289,7 @@ void BoxGeometry::UpdateTrafo() const
 	//std::cout << vecFrom << " -> " << vecTo << std::endl;
 
 	m_trafo = tl2::get_arrow_matrix<t_vec, t_mat, t_real>(
-		vecTo, 1., postTranslate, vecFrom, 1., preTranslate, upDir);
+		vecTo, 1., postTranslate, vecFrom, 1., preTranslate, &upDir);
 
 	//std::cout << tl2::det<t_mat>(m_trafo) << std::endl;
 }
