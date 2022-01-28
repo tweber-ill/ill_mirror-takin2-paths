@@ -25,8 +25,10 @@
 # -----------------------------------------------------------------------------
 #
 
+
 # version to set
-TASPATHS_VERSION="1.4.0"
+TASPATHS_VERSION="1.4.1"
+TASPATHS_BUNDLE_VERSION="1410"
 
 
 # sed tool
@@ -37,9 +39,15 @@ fi
 
 
 ${SED} -i "s/TASPATHS_VERSION \"[0-9].[0-9].[0-9]\"/TASPATHS_VERSION \"${TASPATHS_VERSION}\"/g" src/core/types.h
-${SED} -i "s/Version: [0-9].[0-9].[0-9]/Version: ${TASPATHS_VERSION}/g" setup/deb/mk.sh 
+${SED} -i "s/Version: [0-9].[0-9].[0-9]/Version: ${TASPATHS_VERSION}/g" setup/deb/mk.sh
 
-${SED} -i "s/<string>[0-9].[0-9].[0-9]<\/string>/<string>${TASPATHS_VERSION}<\/string>/g" setup/osx/Info.plist
-${SED} -i "s/<string>[0-9].[0-9].[0-9]<\/string>/<string>${TASPATHS_VERSION}<\/string>/g" setup/osx/hull.plist
-${SED} -i "s/<string>[0-9].[0-9].[0-9]<\/string>/<string>${TASPATHS_VERSION}<\/string>/g" setup/osx/lines.plist
-${SED} -i "s/<string>[0-9].[0-9].[0-9]<\/string>/<string>${TASPATHS_VERSION}<\/string>/g" setup/osx/poly.plist
+
+# plist files
+declare -a PLIST_FILES=(setup/osx/Info.plist setup/osx/hull.plist setup/osx/lines.plist setup/osx/poly.plist setup/osx/Info.plist)
+
+for (( fileidx=0; fileidx<${#PLIST_FILES[@]}; ++fileidx )); do
+	PLIST_FILE=${PLIST_FILES[$fileidx]}
+
+	${SED} -i "s/<string>[0-9].[0-9].[0-9]<\/string>/<string>${TASPATHS_VERSION}<\/string>/g" ${PLIST_FILE}
+	${SED} -i "s/<string>[0-9][0-9][0-9][0-9]<\/string>/<string>${TASPATHS_BUNDLE_VERSION}<\/string>/g" ${PLIST_FILE}
+done

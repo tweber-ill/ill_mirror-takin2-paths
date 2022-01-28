@@ -37,7 +37,7 @@
 #define TASPATHS_TITLE "TAS-Paths"
 
 // version number of this software
-#define TASPATHS_VERSION "1.4.0"
+#define TASPATHS_VERSION "1.4.1"
 
 // main section name in configuration files
 #define FILE_BASENAME "taspaths."
