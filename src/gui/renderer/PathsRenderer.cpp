@@ -17,7 +17,7 @@
  * TAS-Paths (part of the Takin software suite)
  * Copyright (C) 2021       Tobias WEBER (Institut Laue-Langevin (ILL),
  *                          Grenoble, France).
- * "misc" project 
+ * "misc" project
  * Copyright (C) 2017-2021  Tobias WEBER (privately developed).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -53,7 +53,6 @@
 #include "tlibs2/libs/file.h"
 
 
-#define OBJNAME_COORD_CROSS  "coord_cross"
 #define OBJNAME_FLOOR_PLANE  "floor"
 #define MAX_LIGHTS           4  // max. number allowed in shader
 
