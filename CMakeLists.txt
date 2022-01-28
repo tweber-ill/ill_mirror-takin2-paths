@@ -122,7 +122,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 	add_compile_options(-mmacosx-version-min=11.0)
 endif()
 
-include_directories("${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/externals")
+include_directories("${PROJECT_SOURCE_DIR}")
+include_directories(SYSTEM "${PROJECT_SOURCE_DIR}/externals")
 
 if(QT_VER EQUAL 6)
 	include_directories("${Qt6Core_INCLUDE_DIRS}/..")
