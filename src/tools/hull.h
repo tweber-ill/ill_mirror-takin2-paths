@@ -47,7 +47,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "src/gui/common/Recent.h"
+#include "tlibs2/libs/qt/recent.h"
+
 #include "vertex.h"
 #include "about.h"
 #include "settings_variables.h"
@@ -263,7 +264,7 @@ private:
 
 	// recently opened files
 	QMenu *m_menuOpenRecent{ nullptr };
-	RecentFiles m_recent{};
+	tl2::RecentFiles m_recent{};
 	// function to call for the recent file menu items
 	std::function<bool(const QString& filename)> m_open_func
 		= [this](const QString& filename) -> bool

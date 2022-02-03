@@ -42,6 +42,8 @@
 #include <functional>
 
 #include "tlibs2/libs/maths.h"
+#include "tlibs2/libs/qt/recent.h"
+
 #include "src/core/types.h"
 #include "src/core/PathsBuilder.h"
 #include "src/core/InstrumentSpace.h"
@@ -49,7 +51,6 @@
 
 #include "InstrumentStatus.h"
 #include "common/Resources.h"
-#include "common/Recent.h"
 #include "settings_variables.h"
 #include "renderer/PathsRenderer.h"
 
@@ -150,7 +151,7 @@ private:
 	bool m_initialInstrFileModified = false;
 
 	// recently opened files
-	RecentFiles m_recent{};
+	tl2::RecentFiles m_recent{};
 
 	// function to call for the recent file menu items
 	std::function<bool(const QString& filename)> m_open_func

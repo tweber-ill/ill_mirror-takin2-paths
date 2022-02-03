@@ -316,7 +316,6 @@ add_executable(taspaths
 	src/gui/dialogs/Settings.h
 
 	src/gui/common/Resources.cpp src/gui/common/Resources.h
-	src/gui/common/Recent.cpp src/gui/common/Recent.h
 
 	src/libs/lines.h src/libs/graphs.h
 	src/libs/voronoi.h src/libs/voronoi_lines.h
@@ -331,6 +330,7 @@ add_executable(taspaths
 	src/tools/about.cpp src/tools/about.h
 	src/tools/info.cpp src/tools/info.h
 
+	tlibs2/libs/qt/recent.cpp tlibs2/libs/qt/recent.h
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 	tlibs2/libs/maths.h #tlibs2/libs/cam.h
 )
@@ -344,10 +344,11 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/gui/common/Recent.cpp src/gui/common/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi.h
+
+		tlibs2/libs/qt/recent.cpp tlibs2/libs/qt/recent.h
 	)
 
 	add_executable(taspaths-lines
@@ -358,10 +359,11 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/gui/common/Recent.cpp src/gui/common/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
+
+		tlibs2/libs/qt/recent.cpp tlibs2/libs/qt/recent.h
 	)
 
 	add_executable(taspaths-poly
@@ -371,10 +373,11 @@ if(BUILD_TEST_TOOLS)
 		src/tools/about.cpp src/tools/about.h
 		src/gui/dialogs/Settings.h
 		src/tools/settings_variables.cpp src/tools/settings_variables.h
-		src/gui/common/Recent.cpp src/gui/common/Recent.h
 
 		src/libs/lines.h src/libs/hull.h
 		src/libs/voronoi_lines.h
+
+		src/gui/common/Recent.cpp src/gui/common/Recent.h
 	)
 
 	target_compile_definitions(taspaths-hull PUBLIC TASPATHS_TOOLS_STANDALONE)
