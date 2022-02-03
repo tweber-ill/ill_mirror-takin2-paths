@@ -1482,7 +1482,7 @@ void HullDlg::CalculateHull()
 
 			for(int col=0; col<dim; ++col)
 			{
-				auto widget = dynamic_cast<NumericTableWidgetItem<t_real>*>(
+				auto widget = dynamic_cast<tl2::NumericTableWidgetItem<t_real>*>(
 					m_tab->item(row, col));
 				vertex[col] = widget->GetValue();
 			}
@@ -1585,7 +1585,7 @@ void HullDlg::AddTabItem(int row)
 	m_tab->insertRow(row);
 
 	for(int col=0; col<m_tab->columnCount(); ++col)
-		m_tab->setItem(row, col, new NumericTableWidgetItem<t_real>(0, g_prec));
+		m_tab->setItem(row, col, new tl2::NumericTableWidgetItem<t_real>(0, g_prec));
 
 	m_tab->scrollToItem(m_tab->item(row, 0));
 	m_tab->setCurrentCell(row, 0);

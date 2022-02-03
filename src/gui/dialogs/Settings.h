@@ -115,7 +115,7 @@ public:
 	{
 		InitGui();
 	}
-	
+
 
 	/**
 	 * set-up the settings dialog gui
@@ -224,7 +224,7 @@ public:
 	
 			m_editFont = new QLineEdit(panelGui);
 			m_editFont->setReadOnly(true);
-	
+
 			QPushButton *btnFont = new QPushButton("Select...", panelGui);
 			connect(btnFont, &QPushButton::clicked, [this]()
 			{
@@ -276,7 +276,7 @@ public:
 			m_checkDialogs = new QCheckBox("Use native dialogs.", panelGui);
 			get_setting<int>(m_sett, "settings/native_dialogs", s_use_native_dialogs);
 			m_checkDialogs->setChecked(*s_use_native_dialogs!=0);
-			
+
 			gridGui->addWidget(m_checkDialogs, yGui++,0,1,3);
 		}
 
@@ -286,7 +286,7 @@ public:
 			m_checkAnimations = new QCheckBox("Use animations.", panelGui);
 			get_setting<int>(m_sett, "settings/animations", s_use_animations);
 			m_checkAnimations->setChecked(*s_use_animations!=0);
-			
+
 			gridGui->addWidget(m_checkAnimations, yGui++,0,1,3);
 		}
 
@@ -296,7 +296,7 @@ public:
 			m_checkTabbedDocks = new QCheckBox("Allow tabbed dock widgets.", panelGui);
 			get_setting<int>(m_sett, "settings/tabbed_docks", s_tabbed_docks);
 			m_checkTabbedDocks->setChecked(*s_tabbed_docks!=0);
-			
+
 			gridGui->addWidget(m_checkTabbedDocks, yGui++,0,1,3);
 		}
 
@@ -545,7 +545,7 @@ protected:
 					m_editFont->setText(*s_font);
 			}
 		}
-		
+
 		int* vars[] =
 		{
 			s_use_native_menubar,
@@ -554,7 +554,7 @@ protected:
 			s_tabbed_docks,
 			s_nested_docks,
 		};
-		
+
 		std::string idents[] =
 		{
 			"<native_menubar>",
@@ -563,7 +563,7 @@ protected:
 			"<tabbed_docks>",
 			"<nested_docks>",
 		};
-		
+
 		QCheckBox* checks[] =
 		{
 			m_checkMenubar,
@@ -711,7 +711,7 @@ protected:
 		if(var.is_angle)
 			finalval = finalval / tl2::pi<t_real>*180;
 
-		QTableWidgetItem *item = new NumericTableWidgetItem<t_value>(finalval, 10);
+		QTableWidgetItem *item = new tl2::NumericTableWidgetItem<t_value>(finalval, 10);
 		table->setItem((int)idx, 0, new QTableWidgetItem{var.description});
 		table->setItem((int)idx, 1, new QTableWidgetItem{get_type_str<t_value>()});
 		table->setItem((int)idx, 2, item);
@@ -867,7 +867,7 @@ protected:
 		constexpr auto* value = std::get<var.value.index()>(var.value);
 		using t_value = std::decay_t<decltype(*value)>;
 
-		t_value finalval = dynamic_cast<NumericTableWidgetItem<t_value>*>(
+		t_value finalval = dynamic_cast<tl2::NumericTableWidgetItem<t_value>*>(
 			table->item((int)idx, 2))->GetValue();
 		if(var.is_angle)
 			finalval = finalval / 180.*tl2::pi<t_real>;
