@@ -38,7 +38,7 @@ APPICON="res/taspaths.svg"
 APPICON_ICNS="${APPICON%\.svg}.icns"
 
 
-declare -a QT_LIBS=(QtCore QtGui QtWidgets QtOpenGL QtDBus QtPrintSupport QtSvg)
+declare -a QT_LIBS=(QtCore QtGui QtWidgets QtDBus QtPrintSupport QtSvg)
 
 
 COL_ERR="\033[1;31m"

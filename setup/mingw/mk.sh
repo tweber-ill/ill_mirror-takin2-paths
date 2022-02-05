@@ -34,7 +34,7 @@ APPICON_ICO="${APPICON%\.svg}.ico"
 
 # third-party libraries
 EXT_LIBS=( \
-	Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll Qt5OpenGL.dll \
+	Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll \
 	Qt5DBus.dll Qt5PrintSupport.dll Qt5Svg.dll \
 	libboost_system-x64.dll libboost_filesystem-x64.dll \
 	libqcustomplot.dll \

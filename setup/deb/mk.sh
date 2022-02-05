@@ -64,7 +64,6 @@ if [ $create_appdir -ne 0 ]; then
 		"libqt5core5a (>=5.12.0),"\
 		"libqt5gui5 (>=5.12.0),"\
 		"libqt5widgets5 (>=5.12.0),"\
-		"libqt5opengl5 (>=5.12.0),"\
 		"libqt5svg5 (>=5.12.0),"\
 		"libqt5printsupport5 (>=5.12.0),"\
 		"libopengl0 (>=1.3.0)\n" \
