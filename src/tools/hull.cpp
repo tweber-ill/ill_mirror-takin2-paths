@@ -62,7 +62,7 @@ namespace ptree = boost::property_tree;
 #include "src/libs/voronoi.h"
 #include "src/libs/graphs.h"
 
-#include "tlibs2/libs/helper.h"
+#include "tlibs2/libs/algos.h"
 #include "tlibs2/libs/log.h"
 #include "tlibs2/libs/qt/numerictablewidgetitem.h"
 
