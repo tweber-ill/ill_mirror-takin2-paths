@@ -217,7 +217,7 @@
 
 				<geometry_out>
 					<box id="detector">
-						<pos1> 0 0 </pos1>
+						<pos1> 0.5 0 </pos1>
 						<pos2> 2.5 0 </pos2>
 						<height> 1.5 </height>
 						<depth> 0.5 </depth>

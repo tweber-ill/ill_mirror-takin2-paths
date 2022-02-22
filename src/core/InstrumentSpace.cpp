@@ -650,7 +650,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	std::vector<std::vector<t_vec>>
 		monoPolys, monoPolysIn, monoPolysIntOut,
 		samplePolys, samplePolysIn,
-		anaPolys;
+		anaPolys, anaPolysOut;
 
 	get_circles(mono, monoCircles);
 	get_circles(mono, monoCirclesIntOut, false, true, true);
@@ -663,6 +663,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	get_polys(sample, samplePolys);
 	get_polys(sample, samplePolysIn, true, false, false);
 	get_polys(ana, anaPolys);
+	get_polys(ana, anaPolysOut, false, false, true);
 
 
 	// convert to fixed 2d vectors for efficiency
@@ -677,6 +678,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	auto samplePolys2d = convert_polys_2d(samplePolys);
 	auto samplePolysIn2d = convert_polys_2d(samplePolysIn);
 	auto anaPolys2d = convert_polys_2d(anaPolys);
+	auto anaPolysOut2d = convert_polys_2d(anaPolysOut);
 
 
 	// get bounding boxes
@@ -686,6 +688,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	auto sampleBB = tl2::bounding_box<t_vec2, std::vector>(samplePolys2d, 2);
 	auto sampleInBB = tl2::bounding_box<t_vec2, std::vector>(samplePolysIn2d, 2);
 	auto anaBB = tl2::bounding_box<t_vec2, std::vector>(anaPolys2d, 2);
+	auto anaOutBB = tl2::bounding_box<t_vec2, std::vector>(anaPolysOut2d, 2);
 
 	auto monoCircleBB = tl2::sphere_bounding_box<t_vec2, std::vector>(monoCircles2d, 2);
 	auto monoCircleIntOutBB = tl2::sphere_bounding_box<t_vec2, std::vector>(monoCirclesIntOut2d, 2);
@@ -758,6 +761,7 @@ bool InstrumentSpace::CheckCollision2D() const
 
 
 	// check for instrument self-collisions
+	// circle-circle
 	if(check_collision_circle_circle(monoCircles2d, sampleCircles2d))
 		return true;
 	if(check_collision_circle_circle(sampleCircles2d, anaCircles2d))
@@ -765,6 +769,7 @@ bool InstrumentSpace::CheckCollision2D() const
 	if(check_collision_circle_circle(monoCircles2d, anaCircles2d))
 		return true;
 
+	// circle-polygon
 	if(check_collision_circle_poly(monoCircles2d, anaPolys2d, monoCircleBB, anaBB))
 		return true;
 	if(check_collision_circle_poly(monoCircles2d, samplePolys2d, monoCircleBB, sampleBB))
@@ -778,7 +783,10 @@ bool InstrumentSpace::CheckCollision2D() const
 	if(check_collision_circle_poly(anaCircles2d, samplePolysIn2d, anaCircleBB, sampleInBB))
 		return true;
 
+	// polygon-polygon
 	if(check_collision_poly_poly(anaPolys2d, monoPolys2d, anaBB, monoBB))
+		return true;
+	if(check_collision_poly_poly(samplePolys2d, anaPolysOut2d, sampleBB, anaOutBB))
 		return true;
 
 	return false;
