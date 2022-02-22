@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <taspaths>
-	<timestamp>1614257982.440783</timestamp>
+	<timestamp>1645508457.121884</timestamp>
 	<ident>takin_taspaths</ident>
 
 
@@ -43,11 +43,11 @@
 		<instrument>
 			<monochromator>
 				<pos> mono_x mono_y </pos>
-				<angle_in> 0 </angle_in>
-				<angle_internal> 45 </angle_internal>
-				<angle_out> 90 </angle_out>
+				<angle_in> 180 </angle_in>
+				<angle_internal> -45 </angle_internal>
+				<angle_out> -90 </angle_out>
 
-				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_lower_limit> -180 </angle_out_lower_limit>
 				<angle_out_upper_limit> 180 </angle_out_upper_limit>
 
 				<angle_out_speed> 1 </angle_out_speed>
@@ -103,7 +103,7 @@
 				<pos> mono_radius+shielding_length+shielding_gap+sample_length*0.5 0 </pos>
 				<angle_in> 0 </angle_in>
 				<angle_internal> 45 </angle_internal>
-				<angle_out> -90 </angle_out>
+				<angle_out> 90 </angle_out>
 
 				<angle_out_lower_limit> -180 </angle_out_lower_limit>
 				<angle_out_upper_limit> 180 </angle_out_upper_limit>
@@ -152,10 +152,10 @@
 			<analyser>
 				<pos> 0.5*sample_length+sample_gap+ana_length*0.5 0 </pos>
 				<angle_in> 0 </angle_in>
-				<angle_internal> 45 </angle_internal>
-				<angle_out> 90 </angle_out>
+				<angle_internal> -45 </angle_internal>
+				<angle_out> -90 </angle_out>
 
-				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_lower_limit> -180 </angle_out_lower_limit>
 				<angle_out_upper_limit> 180 </angle_out_upper_limit>
 
 				<angle_out_speed> 1 </angle_out_speed>
@@ -212,8 +212,23 @@
 
 	<configuration>
 		<path>
-			<target_2thM>90</target_2thM>
-			<target_2thS>90</target_2thS>
+			<target_2thM> -90 </target_2thM>
+			<target_2thS> -90 </target_2thS>
 		</path>
+
+		<tas>
+			<sense_mono> 0 </sense_mono>
+			<sense_sample> 1 </sense_sample>
+			<sense_ana> 0 </sense_ana>
+			<dM> 3.355 </dM>
+			<dA> 3.355 </dA>
+
+			<2thM> -90 </2thM>
+			<2thS> 90 </2thS>
+			<2thA> -90 </2thA>
+			<thM> -45 </thM>
+			<thS> 45 </thS>
+			<thA> -45 </thA>
+		</tas>
 	</configuration>
 </paths>
