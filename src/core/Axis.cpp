@@ -277,7 +277,8 @@ bool Axis::Load(const pt::ptree& prop)
 	{
 		m_pos.clear();
 
-		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		tl2::parse_tokens<t_real>(
+			tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
 		if(m_pos.size() < 3)
 			m_pos.resize(3);
 	}

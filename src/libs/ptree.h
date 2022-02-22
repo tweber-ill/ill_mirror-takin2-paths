@@ -34,7 +34,12 @@
 #define __PTREE_ALGOS_H__
 
 #include <string>
+#include <optional>
+
 #include <boost/algorithm/string.hpp>
+
+#include "tlibs2/libs/expr.h"
+#include "tlibs2/libs/str.h"
 
 
 /**
@@ -60,6 +65,39 @@ void replace_ptree_values(t_prop& prop, const t_map& map)
 		}
 
 		replace_ptree_values(node.second, map);
+	}
+}
+
+
+/**
+ * @brief parse an expression string from a property tree
+ */
+template<class t_var, class t_prop>
+std::optional<t_var> parse_ptree_value(
+	const t_prop& prop,
+	const std::string& key,
+	const std::optional<std::string>& default_value = std::nullopt)
+{
+	try
+	{
+		auto optVal = prop.template get_optional<std::string>(key);
+		if(!optVal)
+		{
+			if(default_value)
+				optVal = *default_value;
+			else
+				return std::nullopt;
+		}
+
+		tl2::ExprParser<t_var> parser;
+		if(!parser.parse(*optVal))
+			return std::nullopt;
+
+		return parser.eval();
+	}
+	catch(const std::exception& ex)
+	{
+		return std::nullopt;
 	}
 }
 

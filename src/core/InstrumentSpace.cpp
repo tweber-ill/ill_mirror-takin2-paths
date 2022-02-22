@@ -112,7 +112,7 @@ bool InstrumentSpace::Load(const pt::ptree& prop)
 	if(auto col = prop.get_optional<std::string>("floor.colour"); col)
 	{
 		m_floorcol.clear();
-		tl2::get_tokens<t_real>(
+		tl2::parse_tokens<t_real>(
 			tl2::trimmed(*col), std::string{" \t,;"}, m_floorcol);
 
 		if(m_floorcol.size() < 3)

@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<taspaths>
+	<timestamp>1614257982.440783</timestamp>
+	<ident>takin_taspaths</ident>
+
+
+	<variables>
+		<guide_height value="1.525" />
+		<guide_depth value="0.57" />
+
+		<mono_x value="0" />
+		<mono_y value="-4" />
+		<mono_radius value="0.635" />
+	</variables>
+
+
+	<instrument_space>
+		<floor>
+			<len_x> 10 </len_x>
+			<len_y> 10 </len_y>
+			<colour> 0.5 0.5 0.5 </colour>
+		</floor>
+
+
+		<walls>
+		</walls>
+
+
+		<instrument>
+			<monochromator>
+				<pos> mono_x mono_y </pos>
+				<angle_in> 0 </angle_in>
+				<angle_internal> 45 </angle_internal>
+				<angle_out> 90 </angle_out>
+
+				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
+
+				<angle_out_speed> 1 </angle_out_speed>
+
+				<geometry_in>
+					<box id="neutron guide">
+						<pos1> -5 0 </pos1>
+						<pos2> 5 0 </pos2>
+						<height> guide_height </height>
+						<depth> guide_depth </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+				</geometry_in>
+
+				<geometry_internal>
+					<cylinder>
+						<pos> 0 0 </pos>
+						<height> 1.6 </height>
+						<radius> mono_radius </radius>
+						<colour> 0 0 1 </colour>
+					</cylinder>
+
+					<box id="monochromator crystal angle">
+						<pos1> -0.5 0 </pos1>
+						<pos2> 0.5 0 </pos2>
+						<height> 1.7 </height>
+						<depth> 0.1 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
+				</geometry_internal>
+
+				<geometry_out>
+					<box id="shielding table">
+						<pos1> mono_radius 0 </pos1>
+						<pos2> mono_radius+0.6 0 </pos2>
+						<height> 1.97 </height>
+						<depth> 0.75 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+
+					<box id="shielding table coupling">
+						<pos1> mono_radius+0.6 </pos1>
+						<pos2> mono_radius+0.6+0.75 0 </pos2>
+						<height> 0.25 </height>
+						<depth> 0.25 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+				</geometry_out>
+			</monochromator>
+
+
+			<sample>
+				<pos> mono_radius+0.6+0.75+0.61 0 </pos>
+				<angle_in> 0 </angle_in>
+				<angle_internal> 45 </angle_internal>
+				<angle_out> -90 </angle_out>
+
+				<angle_out_lower_limit> -180 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
+
+				<angle_out_speed> 1 </angle_out_speed>
+
+				<geometry_in>
+					<box id="sample table">
+						<pos1> -1.22*0.5 0 </pos1>
+						<pos2> 1.22*0.5 0 </pos2>
+						<height> 1.715 </height>
+						<depth> 0.85+2*0.15 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+				</geometry_in>
+
+				<geometry_internal>
+					<cylinder id="cryostat">
+						<pos> 0 0 </pos>
+						<height> 2 </height>
+						<radius> 0.2 </radius>
+						<colour> 0 0 1 </colour>
+					</cylinder>
+
+					<box id="sample crystal angle">
+						<pos1> -0.15 0 </pos1>
+						<pos2> 0.15 0 </pos2>
+						<height> 2.25 </height>
+						<depth> 0.05 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
+				</geometry_internal>
+
+				<geometry_out>
+					<box id="sample-analyser coupling">
+						<pos1> 0 0 </pos1>
+						<pos2> 0.5*1.22+0.19 0 </pos2>
+						<height> 0.25 </height>
+						<depth> 0.25 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+				</geometry_out>
+			</sample>
+
+
+			<analyser>
+				<pos> 0.5*1.22+0.19+0.757*0.5 0 </pos>
+				<angle_in> 0 </angle_in>
+				<angle_internal> 45 </angle_internal>
+				<angle_out> 90 </angle_out>
+
+				<angle_out_lower_limit> 0 </angle_out_lower_limit>
+				<angle_out_upper_limit> 180 </angle_out_upper_limit>
+
+				<angle_out_speed> 1 </angle_out_speed>
+
+				<geometry_in>
+					<box id="analyser table">
+						<pos1> -0.755*0.5 0 </pos1>
+						<pos2> 0.755*0.5 0 </pos2>
+						<height> 0.82 </height>
+						<depth> 0.645+2*0.2 </depth>
+						<colour> 0 1 1 </colour>
+					</box>
+				</geometry_in>
+
+				<geometry_internal>
+					<cylinder>
+						<pos> 0 0 </pos>
+						<height> 1.63 </height>
+						<radius> 0.28 </radius>
+						<colour> 0 0 1 </colour>
+					</cylinder>
+
+					<box id="analyser crystal angle">
+						<pos1> -0.15 0 </pos1>
+						<pos2> 0.15 0 </pos2>
+						<height> 1.8 </height>
+						<depth> 0.05 </depth>
+						<colour> 1 0.5 0.5 </colour>
+					</box>
+				</geometry_internal>
+
+				<geometry_out>
+					<box id="analyser-detector coupling">
+						<pos1> 0.755*0.5 0 </pos1>
+						<pos2> 0.755*0.5+0.22 0 </pos2>
+						<height> 0.25 </height>
+						<depth> 0.25 </depth>
+						<colour> 1 1 0 </colour>
+					</box>
+
+					<box id="detector">
+						<pos1> 0.755*0.5+0.22 0 </pos1>
+						<pos2> 0.755*0.5+0.22+0.7 0 </pos2>
+						<height> 1.575 </height>
+						<depth> 0.665+2*0.04 </depth>
+						<colour> 1 1 0 </colour>
+					</box>
+				</geometry_out>
+			</analyser>
+		</instrument>
+
+	</instrument_space>
+
+
+	<configuration>
+		<path>
+			<target_2thM>90</target_2thM>
+			<target_2thS>90</target_2thS>
+		</path>
+	</configuration>
+</paths>

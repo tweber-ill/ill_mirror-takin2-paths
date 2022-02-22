@@ -24,6 +24,7 @@
  */
 
 #include "Geometry.h"
+#include "src/libs/ptree.h"
 #include "tlibs2/libs/str.h"
 
 #include <iostream>
@@ -135,9 +136,8 @@ bool Geometry::Load(const pt::ptree& prop)
 	if(auto col = prop.get_optional<std::string>("colour"); col)
 	{
 		m_colour.clear();
-		tl2::get_tokens<t_real>(
+		tl2::parse_tokens<t_real>(
 			tl2::trimmed(*col), std::string{" \t,;"}, m_colour);
-
 		if(m_colour.size() < 3)
 			m_colour.resize(3);
 	}
@@ -236,7 +236,8 @@ bool BoxGeometry::Load(const pt::ptree& prop)
 	{
 		m_pos1.clear();
 
-		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos1);
+		tl2::parse_tokens<t_real>(
+			tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos1);
 		if(m_pos1.size() < 3)
 			m_pos1.resize(3);
 	}
@@ -245,13 +246,14 @@ bool BoxGeometry::Load(const pt::ptree& prop)
 	{
 		m_pos2.clear();
 
-		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos2);
+		tl2::parse_tokens<t_real>(
+			tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos2);
 		if(m_pos2.size() < 3)
 			m_pos2.resize(3);
 	}
 
-	m_height = prop.get<t_real>("height", 1.);
-	m_depth = prop.get<t_real>("depth", 0.1);
+	m_height = *parse_ptree_value<t_real>(prop, "height", "1.");
+	m_depth = *parse_ptree_value<t_real>(prop, "depth", "0.1");
 	m_length = tl2::norm<t_vec>(m_pos1 - m_pos2);
 
 	m_trafo_needs_update = true;
@@ -432,13 +434,14 @@ bool CylinderGeometry::Load(const pt::ptree& prop)
 	{
 		m_pos.clear();
 
-		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		tl2::parse_tokens<t_real>(
+			tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
 		if(m_pos.size() < 3)
 			m_pos.resize(3);
 	}
 
-	m_height = prop.get<t_real>("height", 1.);
-	m_radius = prop.get<t_real>("radius", 0.1);
+	m_height = *parse_ptree_value<t_real>(prop, "height", "1.");
+	m_radius = *parse_ptree_value<t_real>(prop, "radius", "0.1");
 
 	m_trafo_needs_update = true;
 	return true;
@@ -580,12 +583,13 @@ bool SphereGeometry::Load(const pt::ptree& prop)
 	{
 		m_pos.clear();
 
-		tl2::get_tokens<t_real>(tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
+		tl2::parse_tokens<t_real>(
+			tl2::trimmed(*optPos), std::string{" \t,;"}, m_pos);
 		if(m_pos.size() < 3)
 			m_pos.resize(3);
 	}
 
-	m_radius = prop.get<t_real>("radius", 0.1);
+	m_radius = *parse_ptree_value<t_real>(prop, "radius", "0.1");
 
 	m_trafo_needs_update = true;
 	return true;
