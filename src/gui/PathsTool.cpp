@@ -1776,6 +1776,8 @@ void PathsTool::SetKfConstMode(bool kf_const)
 	if(old_kf_const != kf_const)
 	{
 		m_tascalc.SetKfix(kf_const);
+		if(m_coordProperties)
+			m_coordProperties->GetWidget()->SetKfConstMode(kf_const);
 		ValidatePathMesh(false);
 	}
 }

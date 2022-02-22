@@ -298,7 +298,7 @@ bool CoordPropertiesWidget::Load(const boost::property_tree::ptree& prop)
 
 	// fixed wave vector
 	if(auto opt = prop.get_optional<int>("kf_fixed"); opt)
-		m_checkKfFixed->setChecked(*opt != 0);
+		kf_fixed = (*opt != 0);
 
 	// set new coordinates
 	SetCoordinates(h, k, l, ki, kf);

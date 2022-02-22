@@ -48,7 +48,7 @@
 				<angle_out> -90 </angle_out>
 
 				<angle_out_lower_limit> -180 </angle_out_lower_limit>
-				<angle_out_upper_limit> 180 </angle_out_upper_limit>
+				<angle_out_upper_limit> 0 </angle_out_upper_limit>
 
 				<angle_out_speed> 1 </angle_out_speed>
 
@@ -230,5 +230,9 @@
 			<thS> 45 </thS>
 			<thA> -45 </thA>
 		</tas>
+
+		<coordinates>
+			<kf_fixed> 0 </kf_fixed>
+		</coordinates>
 	</configuration>
 </paths>

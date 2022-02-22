@@ -649,7 +649,11 @@ void HullView::drawForeground(QPainter* painter, const QRectF& rect)
 		font.setBold(true);
 
 		QString msg{"Click to place vertices."};
+#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 1)
 		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
+#else
+		int msg_width = QFontMetrics{font}.width(msg);
+#endif
 
 		QRect rectVP = viewport()->rect();
 
