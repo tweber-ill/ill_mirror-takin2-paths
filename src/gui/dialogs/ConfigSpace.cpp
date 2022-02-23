@@ -745,8 +745,18 @@ void ConfigSpaceDlg::accept()
 
 void ConfigSpaceDlg::UpdatePlotRanges()
 {
+	bool kf_fixed = true;
+	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
+	{
+		// move monochromator if kf=fixed and analyser otherwise
+		if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
+			kf_fixed = false;
+	}
+
 	if(m_plot)
 	{
+		m_plot->yAxis->setLabel(kf_fixed ? "2θ_M (deg)" : "2θ_A (deg)");
+
 		m_plot->xAxis->setRange(
 			m_starta4/tl2::pi<t_real>*180.,
 			m_enda4/tl2::pi<t_real>*180.);
@@ -759,8 +769,10 @@ void ConfigSpaceDlg::UpdatePlotRanges()
 	if(m_colourMap)
 	{
 		m_colourMap->data()->setRange(
-			QCPRange{m_starta4/tl2::pi<t_real>*180., m_enda4/tl2::pi<t_real>*180.},
-			QCPRange{m_starta2/tl2::pi<t_real>*180., m_enda2/tl2::pi<t_real>*180.});
+			QCPRange{m_starta4/tl2::pi<t_real>*180.,
+				m_enda4/tl2::pi<t_real>*180.},
+			QCPRange{m_starta2/tl2::pi<t_real>*180.,
+				m_enda2/tl2::pi<t_real>*180.});
 	}
 }
 
@@ -880,6 +892,62 @@ void ConfigSpaceDlg::EmitGotoAngles(std::optional<t_real> a1,
 
 
 /**
+ * set the plot ranges from the instrument
+ */
+void ConfigSpaceDlg::SetPlotRanges()
+{
+	if(!m_pathsbuilder || !m_pathsbuilder->GetInstrumentSpace())
+		return;
+
+	const Instrument& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
+	const TasCalculator *tas = m_pathsbuilder->GetTasCalculator();
+	const t_real *senses = nullptr;
+
+	bool kf_fixed = true;
+	if(tas)
+	{
+		// move monochromator if kf=fixed and analyser otherwise
+		if(!std::get<1>(tas->GetKfix()))
+			kf_fixed = false;
+
+		senses = tas->GetScatteringSenses();
+	}
+
+	// get the angular limits from the instrument model
+	if(kf_fixed)
+	{
+		m_starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+		m_enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+
+		if(senses)
+		{
+			m_starta2 *= senses[0];
+			m_enda2 *= senses[0];
+		}
+	}
+	else
+	{
+		m_starta2 = instr.GetAnalyser().GetAxisAngleOutLowerLimit();
+		m_enda2 = instr.GetAnalyser().GetAxisAngleOutUpperLimit();
+
+		if(senses)
+		{
+			m_starta2 *= senses[2];
+			m_enda2 *= senses[2];
+		}
+	}
+
+	m_starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
+	m_enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
+
+	if(m_enda2 < m_starta2)
+		std::swap(m_starta2, m_enda2);
+	if(m_enda4 < m_starta4)
+		std::swap(m_starta4, m_enda4);
+}
+
+
+/**
  * calculate the mesh of possible instrument paths
  */
 void ConfigSpaceDlg::CalculatePathMesh()
@@ -890,33 +958,11 @@ void ConfigSpaceDlg::CalculatePathMesh()
 		return;
 
 	m_pathsbuilder->StartPathMeshWorkflow();
-	const Instrument& instr = m_pathsbuilder->GetInstrumentSpace()->GetInstrument();
-
-	bool kf_fixed = true;
-	if(m_pathsbuilder && m_pathsbuilder->GetTasCalculator())
-	{
-		// move monochromator if kf=fixed and analyser otherwise
-		if(!std::get<1>(m_pathsbuilder->GetTasCalculator()->GetKfix()))
-			kf_fixed = false;
-	}
+	SetPlotRanges();
 
 	// plot angular steps
 	t_real da2 = m_spinDelta2ThM->value() / 180. * tl2::pi<t_real>;
 	t_real da4 = m_spinDelta2ThS->value() / 180. * tl2::pi<t_real>;
-
-	// get the angular limits from the instrument model
-	if(kf_fixed)
-	{
-		m_starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
-		m_enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
-	}
-	else
-	{
-		m_starta2 = instr.GetAnalyser().GetAxisAngleOutLowerLimit();
-		m_enda2 = instr.GetAnalyser().GetAxisAngleOutUpperLimit();
-	}
-	m_starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
-	m_enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
 
 	// angular padding
 	t_real padding = 4;
@@ -1264,7 +1310,9 @@ void ConfigSpaceDlg::RedrawPathPlot()
 /**
  * display a progress dialog
  */
-bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progress, const std::string& message)
+bool ConfigSpaceDlg::PathsBuilderProgress(
+	CalculationState state, t_real progress, 
+	const std::string& message)
 {
 	bool ok = true;
 	bool hidden = isHidden();
@@ -1300,6 +1348,9 @@ bool ConfigSpaceDlg::PathsBuilderProgress(CalculationState state, t_real progres
 			m_progress->setValue(0);
 			m_progress->setAutoReset(false);
 			m_progress->setMinimumDuration(1000);
+
+			SetPlotRanges();
+			UpdatePlotRanges();
 		}
 
 		m_progress->setValue(int(progress*max_progress));

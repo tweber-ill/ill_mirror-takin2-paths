@@ -267,6 +267,14 @@ bool PathsBuilder::CalculateConfigSpace(
 		}
 	}
 
+	/*if(kf_fixed)
+		std::cout << "a2 range: ";
+	else
+		std::cout << "a6 range: ";
+	std::cout << starta2/tl2::pi<t_real>*180. 
+		<< " .. " << enda2/tl2::pi<t_real>*180.
+		<< std::endl;*/
+
 	const Instrument& instr = m_instrspace->GetInstrument();
 
 	// analyser angle (alternatively monochromator angle if kf is not fixed)

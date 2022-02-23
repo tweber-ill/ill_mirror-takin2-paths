@@ -53,6 +53,7 @@ public:
 	void CalculatePathMesh();
 	void CalculatePath();
 
+	void SetPlotRanges();
 	void UpdatePlotRanges();
 
 	// receivers for instrument (space) and target position update signals

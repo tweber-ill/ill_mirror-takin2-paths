@@ -2604,12 +2604,45 @@ bool PathsTool::CalculatePathMesh()
 			}
 
 		const Instrument& instr = m_instrspace.GetInstrument();
+		const t_real *sensesCCW = m_tascalc.GetScatteringSenses();
+
+		bool kf_fixed = true;
+		if(!std::get<1>(m_tascalc.GetKfix()))
+			kf_fixed = false;
 
 		// get the angular limits from the instrument model
-		t_real starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
-		t_real enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+		t_real starta2, enda2;
+
+		if(kf_fixed)
+		{
+			starta2 = instr.GetMonochromator().GetAxisAngleOutLowerLimit();
+			enda2 = instr.GetMonochromator().GetAxisAngleOutUpperLimit();
+
+			if(sensesCCW)
+			{
+				starta2 *= sensesCCW[0];
+				enda2 *= sensesCCW[0];
+			}
+		}
+		else
+		{
+			starta2 = instr.GetAnalyser().GetAxisAngleOutLowerLimit();
+			enda2 = instr.GetAnalyser().GetAxisAngleOutUpperLimit();
+
+			if(sensesCCW)
+			{
+				starta2 *= sensesCCW[2];
+				enda2 *= sensesCCW[2];
+			}
+		}
+
 		t_real starta4 = instr.GetSample().GetAxisAngleOutLowerLimit();
 		t_real enda4 = instr.GetSample().GetAxisAngleOutUpperLimit();
+
+		if(enda2 < starta2)
+			std::swap(starta2, enda2);
+		if(enda4 < starta4)
+			std::swap(starta4, enda4);
 
 		// angular padding
 		t_real padding = 4;
