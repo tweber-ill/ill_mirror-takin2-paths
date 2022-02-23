@@ -41,8 +41,8 @@
 				<geometry>
 					<box>
 						<colour> 1 0 0 </colour>
-						<pos1> 2.689+0.85*0.5 0.013154745 0 </pos1>
-						<pos2> 2.689+0.85*0.5 -0.98684525 0 </pos2>
+						<pos1> 2.689+0.85*0.5 -3.7 0 </pos1>
+						<pos2> 2.689+0.85*0.5 1.118+0.756 0 </pos2>
 						<height> 1.79 </height>
 						<depth> 0.1 </depth>
 					</box>
@@ -53,8 +53,8 @@
 				<geometry>
 					<box>
 						<colour> 1 0 0 </colour>
-						<pos1> -2.545-0.85*0.5 0.013154745 0 </pos1>
-						<pos2> -2.545-0.85*0.5 -0.98684525 0 </pos2>
+						<pos1> -2.545-0.85*0.5 -3.7 0 </pos1>
+						<pos2> -2.545-0.85*0.5 1.118+0.756 0 </pos2>
 						<height> 1.79 </height>
 						<depth> 0.1 </depth>
 					</box>
@@ -65,8 +65,8 @@
 				<geometry>
 					<box>
 						<colour>1 0 0 </colour>
-						<pos1>-0.40679821 1.1178679+0.756 0 </pos1>
-						<pos2>0.59320178 1.1178679+0.756 0 </pos2>
+						<pos1>-2.545-0.85*0.5 1.118+0.756 0 </pos1>
+						<pos2>2.689+0.85*0.5 1.118+0.756 0 </pos2>
 						<height>1.79</height>
 						<depth>0.1</depth>
 					</box>
@@ -124,8 +124,8 @@
 					</box>
 
 					<box id="shielding table coupling">
-						<pos1> mono_radius+shielding_length </pos1>
-						<pos2> mono_radius+shielding_length+shielding_gap 0 </pos2>
+						<pos1> mono_radius+shielding_length 0 0.5 </pos1>
+						<pos2> mono_radius+shielding_length+shielding_gap 0 0.5 </pos2>
 						<height> 0.25 </height>
 						<depth> 0.25 </depth>
 						<colour> 0 1 1 </colour>
@@ -174,8 +174,8 @@
 
 				<geometry_out>
 					<box id="sample-analyser coupling">
-						<pos1> 0 0 </pos1>
-						<pos2> 0.5*sample_length+sample_gap 0 </pos2>
+						<pos1> 0 0 0.5 </pos1>
+						<pos2> 0.5*sample_length+sample_gap 0 0.5 </pos2>
 						<height> 0.25 </height>
 						<depth> 0.25 </depth>
 						<colour> 0 1 1 </colour>
@@ -224,11 +224,11 @@
 
 				<geometry_out>
 					<box id="analyser-detector coupling">
-						<pos1> ana_length*0.5 0 </pos1>
-						<pos2> ana_length*0.5+ana_gap 0 </pos2>
+						<pos1> ana_length*0.5 0 0.5 </pos1>
+						<pos2> ana_length*0.5+ana_gap 0 0.5 </pos2>
 						<height> 0.25 </height>
 						<depth> 0.25 </depth>
-						<colour> 1 1 0 </colour>
+						<colour> 0 1 1 </colour>
 					</box>
 
 					<box id="detector">
