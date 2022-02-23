@@ -330,6 +330,8 @@ add_executable(taspaths
 	tlibs2/libs/qt/recent.cpp tlibs2/libs/qt/recent.h
 	tlibs2/libs/qt/gl.cpp tlibs2/libs/qt/gl.h
 	tlibs2/libs/maths.h #tlibs2/libs/cam.h
+
+	#externals/qcustomplot/qcustomplot.cpp externals/qcustomplot/qcustomplot.h
 )
 
 

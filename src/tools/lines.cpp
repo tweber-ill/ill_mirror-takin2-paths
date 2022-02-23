@@ -923,7 +923,7 @@ void LinesView::drawForeground(QPainter* painter, const QRectF& rect)
 		font.setBold(true);
 
 		QString msg{"Click to place line segments."};
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 1)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
 		int msg_width = QFontMetrics{font}.horizontalAdvance(msg);
 #else
 		int msg_width = QFontMetrics{font}.width(msg);

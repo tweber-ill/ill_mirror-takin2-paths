@@ -150,19 +150,44 @@ bool PathsExporterNicos::Export(const PathsBuilder* builder,
 
 	// set-up tas properties
 	const TasCalculator* tascalc = builder->GetTasCalculator();
+	bool kf_fix = true;
+	const t_real* sensesCCW = nullptr;
+
 	if(tascalc)
 	{
-		auto kfix = tascalc->GetKfix();
+		t_real kfix = std::get<0>(tascalc->GetKfix());
+		kf_fix = std::get<1>(tascalc->GetKfix());
+		sensesCCW = tascalc->GetScatteringSenses();
 
-		if(std::get<1>(kfix))
-			ofstr << "kf(" << std::get<0>(kfix) << ")\n";
+		if(kf_fix)
+			ofstr << "kf(" << kfix << ")\n";
 		else
-			ofstr << "ki(" << std::get<0>(kfix) << ")\n";
+			ofstr << "ki(" << kfix << ")\n";
+	}
 
-		ofstr << "\n";
+	ofstr << "\n# turn on air for entire path\n";
+	ofstr << "move(\"air_sample\", 1)\n";
+	if(kf_fix)
+		ofstr << "move(\"air_mono\", 1)\n";
+	else
+		ofstr << "move(\"air_ana\", 1)\n";
+
+	ofstr << "\n# disable motor backlash correction\n";
+	ofstr << "stt_maxtries = stt.maxtries\n";
+	ofstr << "stt.maxtries = 0\n";
+	if(kf_fix)
+	{
+		ofstr << "mtt_maxtries = mtt.maxtries\n";
+		ofstr << "mtt.maxtries = 0\n";
+	}
+	else
+	{
+		ofstr << "att_maxtries = att.maxtries\n";
+		ofstr << "att.maxtries = 0\n";
 	}
 
 	// output motor drive commands
+	ofstr << "\n# path vertices\n";
 	for(const auto& vec : path)
 	{
 		t_real a4 = vec[0];
@@ -174,9 +199,40 @@ bool PathsExporterNicos::Export(const PathsBuilder* builder,
 			a2 = a2 / tl2::pi<t_real> * t_real(180);
 		}
 
-		ofstr << "stt(" << a4 << "); ";
-		ofstr << "mtt(" << a2 << ");\n";
+		t_real sample_sense = 1.;
+		if(sensesCCW)
+			sample_sense = sensesCCW[1];
+		ofstr << "maw(stt, " << a4*sample_sense << ", ";
+
+		if(kf_fix)
+		{
+			t_real sense = 1.;
+			if(sensesCCW)
+				sense = sensesCCW[0];
+			ofstr << "mtt, " << a2*sense << ")\n";
+		}
+		else
+		{
+			t_real sense = 1.;
+			if(sensesCCW)
+				sense = sensesCCW[2];
+			ofstr << "att, " << a2*sense << ")\n";
+		}
 	}
+
+	ofstr << "\n# turn off air\n";
+	ofstr << "move(\"air_sample\", 0)\n";
+	if(kf_fix)
+		ofstr << "move(\"air_mono\", 0)\n";
+	else
+		ofstr << "move(\"air_ana\", 0)\n";
+
+	ofstr << "\n# restore motor backlash correction\n";
+	ofstr << "stt.maxtries = stt_maxtries\n";
+	if(kf_fix)
+		ofstr << "mtt.maxtries = mtt_maxtries\n";
+	else
+		ofstr << "att.maxtries = att_maxtries\n";
 
 	ofstr.flush();
 	return true;
