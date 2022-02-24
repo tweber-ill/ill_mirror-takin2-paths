@@ -629,6 +629,8 @@ PathsTool::PathsTool(QWidget* pParent) : QMainWindow{pParent}
 				this, &PathsTool::ExternalPathAvailable);
 
 			// set instrument and target positions
+			this->m_dlgConfigSpace->SetPlotRanges();
+			this->m_dlgConfigSpace->UpdatePlotRanges();
 			this->m_dlgConfigSpace->UpdateInstrument(
 				m_instrspace.GetInstrument(),
 				m_tascalc.GetScatteringSenses());
