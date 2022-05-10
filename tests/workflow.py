@@ -6,7 +6,7 @@
 #
 # -----------------------------------------------------------------------------
 # TAS-Paths (part of the Takin software suite)
-# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL), 
+# Copyright (C) 2021  Tobias WEBER (Institut Laue-Langevin (ILL),
 #                     Grenoble, France).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -81,7 +81,7 @@ tascalc = tas.TasCalculator()
 tascalc.SetScatteringSenses(True, False, True)
 tascalc.SetSampleLatticeConstants(5, 5, 5)
 tascalc.SetSampleLatticeAngles(90, 90, 90, True)
-tascalc.SetSampleScatteringPlane(1.,0.,0., 0., 1., 0.)
+tascalc.SetSampleScatteringPlane(1.,0.,0., 0.,1.,0.)
 tascalc.UpdateB()
 tascalc.UpdateUB()
 # -----------------------------------------------------------------------------
@@ -92,18 +92,10 @@ tascalc.UpdateUB()
 # -----------------------------------------------------------------------------
 print("Building path mesh...")
 
-# set instrument scattering senses
-#mem = tas.MemManager()
-#senses = mem.NewRealArray(3)
-#mem.SetRealArray(senses, 0, 1)
-#mem.SetRealArray(senses, 1, -1)
-#mem.SetRealArray(senses, 2, 1)
-
 # create the paths builder object
 builder = tas.PathsBuilder()
 builder.AddConsoleProgressHandler()
 builder.SetInstrumentSpace(instrspace)
-#builder.SetScatteringSenses(senses)
 builder.SetTasCalculator(tascalc)
 print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
@@ -143,6 +135,7 @@ print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
 print("Calculating path...")
 
+# fixed-kf mode at kf = 1.4/A
 tascalc.SetKf(1.4)
 start_angles = tascalc.GetAngles(0.5, 0., 0., 1.)
 target_angles = tascalc.GetAngles(1.5, -0.5, 0., 2.5)
@@ -172,12 +165,10 @@ print("Target angles: a1 = %.2f deg, a5 = %.2f deg, a3 = %.2f deg, a4 = %.2f deg
 # -----------------------------------------------------------------------------
 # find path
 # -----------------------------------------------------------------------------
-#path = builder.FindPath(40./180.*m.pi, -80./180.*m.pi, 120./180.*m.pi, 105./180.*m.pi)
-
 path = builder.FindPath(
-		start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
-		target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle,
-		tas.PathStrategy_PENALISE_WALLS)
+	start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
+	target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle,
+	tas.PathStrategy_PENALISE_WALLS)
 if not path.ok:
 	error("No path could be found.")
 
