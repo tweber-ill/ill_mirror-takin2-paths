@@ -81,6 +81,7 @@ tascalc = tas.TasCalculator()
 tascalc.SetScatteringSenses(True, False, True)
 tascalc.SetSampleLatticeConstants(5, 5, 5)
 tascalc.SetSampleLatticeAngles(90, 90, 90, True)
+tascalc.SetSampleScatteringPlane(1.,0.,0., 0., 1., 0.)
 tascalc.UpdateB()
 tascalc.UpdateUB()
 # -----------------------------------------------------------------------------
