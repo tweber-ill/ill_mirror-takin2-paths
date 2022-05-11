@@ -83,6 +83,7 @@ tascalc.SetScatteringSenses(senses[0]>=0., senses[1]>=0., senses[2]>=0.)
 tascalc.SetSampleLatticeConstants(5, 5, 5)
 tascalc.SetSampleLatticeAngles(90, 90, 90, True)
 tascalc.SetSampleScatteringPlane(1.,0.,0., 0.,1.,0.)
+tascalc.SetSampleAngleOffset(90./180.*m.pi)  # depending on a3 convention
 tascalc.UpdateB()
 tascalc.UpdateUB()
 # -----------------------------------------------------------------------------
