@@ -52,7 +52,7 @@ def warning(msg):
 write_pathmesh = False
 write_path = False
 show_plot = True
-file_name = "../res/instrument.taspaths"
+file_name = "../res/mira.taspaths"
 # -----------------------------------------------------------------------------
 
 
@@ -78,7 +78,7 @@ print("Instrument definition loaded.\n")
 # set-up a sample single-crystal
 # -----------------------------------------------------------------------------
 tascalc = tas.TasCalculator()
-senses = [ 1., -1., 1. ]
+senses = [ -1., 1., -1. ]
 tascalc.SetScatteringSenses(senses[0]>=0., senses[1]>=0., senses[2]>=0.)
 tascalc.SetSampleLatticeConstants(5, 5, 5)
 tascalc.SetSampleLatticeAngles(90, 90, 90, True)
@@ -93,16 +93,16 @@ tascalc.UpdateUB()
 # -----------------------------------------------------------------------------
 print("Calculating path endpoints...")
 
-# fixed-kf mode at kf = 1.4/A
-tascalc.SetKf(1.4)
-start_angles = tascalc.GetAngles(0.5, 0., 0., 1.)
-target_angles = tascalc.GetAngles(1.5, -0.5, 0., 2.5)
+# fixed-ki mode at ki = 1.4/A
+tascalc.SetKi(1.4)
+start_angles = tascalc.GetAngles(1.,0.,0., 1.3)
+target_angles = tascalc.GetAngles(1.,1.,0., 1.2)
 
 # take absolute angles
-start_angles.monoXtalAngle = start_angles.monoXtalAngle * senses[0]
+start_angles.anaXtalAngle = start_angles.anaXtalAngle * senses[2]
 start_angles.sampleXtalAngle = start_angles.sampleXtalAngle * senses[1]
 start_angles.sampleScatteringAngle = start_angles.sampleScatteringAngle * senses[1]
-target_angles.monoXtalAngle = target_angles.monoXtalAngle * senses[0]
+target_angles.anaXtalAngle = target_angles.anaXtalAngle * senses[2]
 target_angles.sampleXtalAngle = target_angles.sampleXtalAngle * senses[1]
 target_angles.sampleScatteringAngle = target_angles.sampleScatteringAngle * senses[1]
 
@@ -133,19 +133,16 @@ builder.SetTasCalculator(tascalc)
 print("Path builder uses %d threads." % builder.GetMaxNumThreads())
 
 # angular ranges to probe
-angle_padding = 4.
-a2_delta = 1./180.*m.pi
-a4_delta = 2./180.*m.pi
-a2_begin = 0. - angle_padding*a2_delta
-a2_end = m.pi + angle_padding*a2_delta
-a4_begin = -m.pi - angle_padding*a4_delta
-a4_end = m.pi + angle_padding*a4_delta
+a6_delta = 4./180.*m.pi
+a4_delta = 4./180.*m.pi
+a6_begin = -m.pi; a6_end = m.pi
+a4_begin = -m.pi; a4_end = m.pi
 
 builder.StartPathMeshWorkflow()
 
 if not builder.CalculateConfigSpace(
-	a2_delta, a4_delta,
-	a2_begin, a2_end,
+	a6_delta, a4_delta,
+	a6_begin, a6_end,
 	a4_begin, a4_end):
 	error("Angular configuration space could not be calculated.")
 
@@ -169,8 +166,8 @@ print("Finished building path mesh.\n")
 print("Calculating path...")
 
 path = builder.FindPath(
-	start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
-	target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle,
+	start_angles.anaXtalAngle * 2., start_angles.sampleScatteringAngle,
+	target_angles.anaXtalAngle * 2., target_angles.sampleScatteringAngle,
 	tas.PathStrategy_PENALISE_WALLS)
 if not path.ok:
 	error("No path could be found.")
@@ -213,7 +210,7 @@ if show_plot:
 	# plot path
 	x, y = zip(*vertices)
 	plt.xlabel("Sample Scattering Angle 2\u03b8_S (deg)")
-	plt.ylabel("Monochromator Scattering Angle 2\u03b8_M (deg)")
+	plt.ylabel("Analyser Scattering Angle 2\u03b8_A (deg)")
 	plt.plot(x, y, "-", linewidth=2)
 
 	plt.show()
