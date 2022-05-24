@@ -156,6 +156,9 @@ if not builder.CalculateLineSegments(False):
 if not builder.CalculateVoronoi(False, tas.VoronoiBackend_BOOST, True):
 	error("Voronoi diagram could not be calculated.")
 
+if not builder.CalculateWallsIndexTree():
+	error("Obstacle index tree could not be calculated.")
+
 builder.FinishPathMeshWorkflow(True)
 print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------

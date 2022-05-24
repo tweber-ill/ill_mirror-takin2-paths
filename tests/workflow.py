@@ -98,6 +98,13 @@ tascalc.SetKf(1.4)
 start_angles = tascalc.GetAngles(0.5, 0., 0., 1.)
 target_angles = tascalc.GetAngles(1.5, -0.5, 0., 2.5)
 
+#start_angles.monoScatteringAngle = 100. / 180. * m.pi
+#start_angles.monoXtalAngle = start_angles.monoScatteringAngle * 0.5
+#start_angles.sampleScatteringAngle = -75. / 180. * m.pi
+#target_angles.monoScatteringAngle = 40. / 180. * m.pi
+#target_angles.monoXtalAngle = target_angles.monoScatteringAngle * 0.5
+#target_angles.sampleScatteringAngle = 25. / 180. * m.pi
+
 # take absolute angles
 start_angles.monoXtalAngle = start_angles.monoXtalAngle * senses[0]
 start_angles.sampleXtalAngle = start_angles.sampleXtalAngle * senses[1]
@@ -158,6 +165,9 @@ if not builder.CalculateLineSegments(False):
 if not builder.CalculateVoronoi(False, tas.VoronoiBackend_BOOST, True):
 	error("Voronoi diagram could not be calculated.")
 
+if not builder.CalculateWallsIndexTree():
+	error("Obstacle index tree could not be calculated.")
+
 builder.FinishPathMeshWorkflow(True)
 print("Finished building path mesh.\n")
 # -----------------------------------------------------------------------------
@@ -171,7 +181,9 @@ print("Calculating path...")
 path = builder.FindPath(
 	start_angles.monoXtalAngle * 2., start_angles.sampleScatteringAngle,
 	target_angles.monoXtalAngle * 2., target_angles.sampleScatteringAngle,
-	tas.PathStrategy_PENALISE_WALLS)
+#	tas.PathStrategy_PENALISE_WALLS
+	tas.PathStrategy_SHORTEST
+)
 if not path.ok:
 	error("No path could be found.")
 

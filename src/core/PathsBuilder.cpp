@@ -340,7 +340,6 @@ InstrumentPath PathsBuilder::FindPath(
 
 	using t_weight = typename t_graph::t_weight;
 
-
 	// callback function with which the graph's edge weights can be modified
 	auto weight_func = [this, &voro_graph, &voro_vertices, pathstrategy](
 		std::size_t idx1, std::size_t idx2) -> std::optional<t_weight>
