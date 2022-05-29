@@ -717,6 +717,7 @@ requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 	if(rot_to_001)
 	{
 		t_vec norm = tl2::cross(verts[2] - verts[0], verts[1] - verts[0]);
+		//norm /= tl2::norm<t_vec>(norm);
 
 		// rotate the vertices so that their normal points to [001]
 		t_vec dir001 = tl2::create<t_vec>({ 0, 0, 1 });
@@ -736,9 +737,9 @@ requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 	// rotate back
 	if(rot_to_001)
 	{
-		rot001 = tl2::inv<t_quat>(rot001);
+		t_quat invrot001 = tl2::inv<t_quat>(rot001);
 		for(t_vec& vert : verts)
-			vert = tl2::quat_vec_prod<t_quat, t_vec>(rot001, vert);
+			vert = tl2::quat_vec_prod<t_quat, t_vec>(invrot001, vert);
 	}
 
 	return std::make_tuple(verts, mean);
