@@ -720,7 +720,7 @@ requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 
 		// rotate the vertices so that their normal points to [001]
 		t_vec dir001 = tl2::create<t_vec>({ 0, 0, 1 });
-		t_quat rot001 = tl2::rotation_quat<t_vec, t_quat>(norm, dir001);
+		rot001 = tl2::rotation_quat<t_vec, t_quat>(norm, dir001);
 
 		for(t_vec& vert : verts)
 			vert = tl2::quat_vec_prod<t_quat, t_vec>(rot001, vert);
