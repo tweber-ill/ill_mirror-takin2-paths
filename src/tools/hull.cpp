@@ -198,7 +198,7 @@ void HullScene::UpdateHull()
 	{
 		case HullCalculationMethod::QHULL:
 			std::tie(std::ignore, hull, std::ignore)
-				= geo::calc_delaunay<t_vec>(2, vertices, true);
+				= geo::calc_delaunay<t_vec>(2, vertices, true, false);
 			break;
 		case HullCalculationMethod::CONTOUR:
 			hull.emplace_back(geo::calc_hull_contour<t_vec>(vertices, g_eps));

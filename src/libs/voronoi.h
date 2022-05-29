@@ -45,6 +45,7 @@
 #include <libqhullcpp/QhullVertexSet.h>
 
 #include <boost/math/quaternion.hpp>
+#include <optional>
 
 #include "tlibs2/libs/maths.h"
 #include "hull.h"
@@ -72,7 +73,9 @@ namespace geo {
 template<class t_vec, class t_quat = boost::math::quaternion<typename t_vec::value_type>>
 requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 std::tuple<std::vector<t_vec>, std::vector<std::vector<t_vec>>, std::vector<std::set<std::size_t>>>
-calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
+calc_delaunay(int dim, const std::vector<t_vec>& verts,
+	bool only_hull, bool triangulate = true,
+	std::optional<std::size_t> onlysite_idx = std::nullopt)
 {
 	using namespace tl2_ops;
 	namespace qh = orgQhull;
@@ -80,6 +83,7 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 	using t_real = typename t_vec::value_type;
 	using t_real_qhull = coordT;
 
+	const t_real eps = 1e-5;
 	std::vector<t_vec> voronoi;			// voronoi vertices
 	std::vector<std::vector<t_vec>> triags;		// delaunay triangles
 	std::vector<std::set<std::size_t>> neighbours;	// neighbour triangle indices
@@ -92,17 +96,22 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 			for(int i=0; i<dim; ++i)
 				_verts.push_back(t_real_qhull{vert[i]});
 
-		qh::Qhull qh{"triag", dim, int(_verts.size()/dim), _verts.data(),
-			only_hull ? "Qt" : "v Qu QJ" };
+		std::ostringstream options;
+		if(only_hull)
+			options << "Qt";
+		else
+			options << "v Qu Qbb";
+		if(triangulate)
+			options << " QJ";
+
+		qh::Qhull qh{"triag", dim, int(_verts.size()/dim),
+			_verts.data(), options.str().c_str() };
 		if(qh.hasQhullMessage())
 			std::cout << qh.qhullMessage() << std::endl;
 
 
 		qh::QhullFacetList facets{qh.facetList()};
-		qh::QhullVertexList hull_vertices{qh.vertexList()};
-
 		std::vector<void*> facetHandles{};
-
 		facetHandles.reserve(facets.size());
 		voronoi.reserve(facets.size());
 		triags.reserve(facets.size());
@@ -112,6 +121,7 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 		// use "voronoi" array for hull vertices, if not needed otherwise
 		if(only_hull)
 		{
+			qh::QhullVertexList hull_vertices{qh.vertexList()};
 			for(auto iterVert=hull_vertices.begin(); iterVert!=hull_vertices.end(); ++iterVert)
 			{
 				qh::QhullPoint pt = iterVert->point();
@@ -137,19 +147,8 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 		{
 			if(iterFacet->isUpperDelaunay())
 				continue;
-			facetHandles.push_back(iterFacet->getBaseT());
 
-			if(!only_hull)
-			{
-				qh::QhullPoint pt = iterFacet->voronoiVertex();
-
-				t_vec vec = tl2::create<t_vec>(dim);
-				for(int i=0; i<dim; ++i)
-					vec[i] = t_real{pt[i]};
-
-				voronoi.emplace_back(std::move(vec));
-			}
-
+			// get triangle vertices
 			std::vector<t_vec> thetriag;
 			qh::QhullVertexSet vertices = iterFacet->vertices();
 
@@ -164,12 +163,47 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 				thetriag.emplace_back(std::move(vec));
 			}
 
+			// limit to the voronoi region of only one site?
+			if(onlysite_idx)
+			{
+				const t_vec& site = verts[*onlysite_idx];
+
+				// does the delaunay triangle contain this site?
+				bool found_site = false;
+				for(const t_vec& vec : thetriag)
+				{
+					if(tl2::equals<t_vec>(site, vec, eps))
+					{
+						found_site = true;
+						break;
+					}
+				}
+
+				if(!found_site)
+					continue;
+			}
+
+			// get voronoi vertices
+			if(!only_hull)
+			{
+				qh::QhullPoint pt = iterFacet->voronoiVertex();
+
+				t_vec vec = tl2::create<t_vec>(dim);
+				for(int i=0; i<dim; ++i)
+					vec[i] = t_real{pt[i]};
+
+				voronoi.emplace_back(std::move(vec));
+			}
+
+			// sort triangle vertices
 			if(dim == 2 || dim == 3)
 			{
 				std::tie(thetriag, std::ignore)
 					= sort_vertices_by_angle<t_vec, t_real, t_vec, t_quat>(
 						thetriag);
 			}
+
+			facetHandles.push_back(iterFacet->getBaseT());
 			triags.emplace_back(std::move(thetriag));
 		}
 
