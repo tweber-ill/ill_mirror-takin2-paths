@@ -44,6 +44,8 @@
 #include <libqhullcpp/QhullFacetSet.h>
 #include <libqhullcpp/QhullVertexSet.h>
 
+#include <boost/math/quaternion.hpp>
+
 #include "tlibs2/libs/maths.h"
 #include "hull.h"
 #include "lines.h"
@@ -67,7 +69,8 @@ namespace geo {
  * @see https://github.com/qhull/qhull/tree/master/src/libqhullcpp
  * @see https://github.com/qhull/qhull/blob/master/src/qhulltest/Qhull_test.cpp
  */
-template<class t_vec> requires tl2::is_vec<t_vec>
+template<class t_vec, class t_quat = boost::math::quaternion<typename t_vec::value_type>>
+requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 std::tuple<std::vector<t_vec>, std::vector<std::vector<t_vec>>, std::vector<std::set<std::size_t>>>
 calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 {
@@ -120,10 +123,11 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 				voronoi.emplace_back(std::move(vec));
 			}
 
-			if(dim == 2)
+			if(dim == 2 || dim == 3)
 			{
 				std::tie(voronoi, std::ignore)
-					= sort_vertices_by_angle<t_vec>(voronoi);
+					= sort_vertices_by_angle<t_vec, t_real, t_vec, t_quat>(
+						voronoi);
 			}
 		}
 
@@ -160,10 +164,11 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts, bool only_hull)
 				thetriag.emplace_back(std::move(vec));
 			}
 
-			if(dim == 2)
+			if(dim == 2 || dim == 3)
 			{
 				std::tie(thetriag, std::ignore)
-					= sort_vertices_by_angle<t_vec>(thetriag);
+					= sort_vertices_by_angle<t_vec, t_real, t_vec, t_quat>(
+						thetriag);
 			}
 			triags.emplace_back(std::move(thetriag));
 		}

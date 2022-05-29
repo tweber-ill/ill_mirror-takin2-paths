@@ -44,6 +44,8 @@
 #include <limits>
 #include <iostream>
 
+#include <boost/math/quaternion.hpp>
+
 #include "graphs.h"
 #include "trees.h"
 #include "tlibs2/libs/maths.h"
@@ -692,16 +694,37 @@ requires tl2::is_vec<t_vec>
  */
 template<class t_vec,
 	class t_real = typename t_vec::value_type,
-	class t_vec_real = tl2::vec<t_real, std::vector>>
+	class t_vec_real = tl2::vec<t_real, std::vector>,
+	class t_quat = boost::math::quaternion<t_real>>
 std::tuple<std::vector<t_vec>, t_vec_real>
 sort_vertices_by_angle(const std::vector<t_vec>& _verts)
-requires tl2::is_vec<t_vec>
+requires tl2::is_vec<t_vec> && tl2::is_quat<t_quat>
 {
+	if(_verts.size() == 0)
+		return std::make_tuple(_verts, t_vec());
+
 	std::vector<t_vec> verts = _verts;
+	std::size_t dim = verts[0].size();
 
 	// sort by angle
-	t_vec_real mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(2));
+	t_vec_real mean = std::accumulate(verts.begin(), verts.end(), tl2::zero<t_vec>(dim));
+	if(_verts.size() < 2)
+		return std::make_tuple(verts, mean);
 	mean /= t_real(verts.size());
+
+	t_quat rot001 = tl2::unit_quat<t_quat>();
+	bool rot_to_001 = (dim == 3 && verts.size() >= 3);
+	if(rot_to_001)
+	{
+		t_vec norm = tl2::cross(verts[2] - verts[0], verts[1] - verts[0]);
+
+		// rotate the vertices so that their normal points to [001]
+		t_vec dir001 = tl2::create<t_vec>({ 0, 0, 1 });
+		t_quat rot001 = tl2::rotation_quat<t_vec, t_quat>(norm, dir001);
+
+		for(t_vec& vert : verts)
+			vert = tl2::quat_vec_prod<t_quat, t_vec>(rot001, vert);
+	}
 
 	std::stable_sort(verts.begin(), verts.end(),
 		[&mean](const t_vec& vec1, const t_vec& vec2)->bool
@@ -709,6 +732,14 @@ requires tl2::is_vec<t_vec>
 			return line_angle<t_vec_real, t_real>(mean, vec1)
 				< line_angle<t_vec_real, t_real>(mean, vec2);
 		});
+
+	// rotate back
+	if(rot_to_001)
+	{
+		rot001 = tl2::inv<t_quat>(rot001);
+		for(t_vec& vert : verts)
+			vert = tl2::quat_vec_prod<t_quat, t_vec>(rot001, vert);
+	}
 
 	return std::make_tuple(verts, mean);
 }
