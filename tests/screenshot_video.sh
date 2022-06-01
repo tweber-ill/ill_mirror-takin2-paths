@@ -46,7 +46,7 @@ if [ $convert_pdfs -ne 0 ]; then
 
 		echo -e "${filename_in} -> ${filename_out}"
 
-		convert ${filename_in} ${filename_out}
+		convert -density 80 ${filename_in} ${filename_out}
 	done
 
 	echo -e "-------------------------------------------------------------------------------"
@@ -97,7 +97,7 @@ if [ $join_images -ne 0 ]; then
 
 		echo -e "${filename_1} + ${filename_2} -> ${filename_out}"
 
-		convert +append ${filename_1} ${filename_2} ${filename_out}
+		convert -background none +append ${filename_1} ${filename_2} ${filename_out}
 	done
 
 	echo -e "-------------------------------------------------------------------------------"
