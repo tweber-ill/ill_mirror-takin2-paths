@@ -2554,6 +2554,7 @@ void PathsTool::ExternalPathAvailable(const InstrumentPath& path)
 	{
 		// get the vertices on the path
 		m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
+		InterpolatePath(m_pathvertices);
 		ValidatePath(m_pathvertices.size() != 0);
 
 		std::ostringstream ostrMsg;
@@ -2792,6 +2793,7 @@ bool PathsTool::CalculatePath()
 	// get the vertices on the path
 	SetTmpStatus("Retrieving path vertices.");
 	m_pathvertices = m_pathsbuilder.GetPathVertices(path, true, false);
+	InterpolatePath(m_pathvertices);
 	ValidatePath(m_pathvertices.size() != 0);
 
 	if(!m_instrstatus.pathvalid)
@@ -2866,5 +2868,30 @@ void PathsTool::TrackPath(std::size_t idx)
 			SaveCombinedScreenshot(ostrfilename.str().c_str());
 		else
 			SaveScreenshot(ostrfilename.str().c_str());
+	}
+}
+
+
+/**
+ * increase the number of frames by interpolating the path vertices
+ * (this is only cosmetic, e.g. for video output)
+ */
+void PathsTool::InterpolatePath(std::vector<t_vec2>& vertices)
+{
+	for(unsigned int i=0; i<g_pathtracker_interpolation; ++i)
+	{
+		std::vector<t_vec2> vertices_new;
+		vertices_new.reserve(vertices.size() * 2);
+
+		for(unsigned int vert_idx_1=0; vert_idx_1<vertices.size(); ++vert_idx_1)
+		{
+			unsigned int vert_idx_2 = vert_idx_1 + 1;
+
+			vertices_new.push_back(vertices[vert_idx_1]);
+			if(vert_idx_2 < vertices.size())
+				vertices_new.push_back((vertices[vert_idx_2] + vertices[vert_idx_1]) * 0.5);
+		}
+
+		vertices = std::move(vertices_new);
 	}
 }

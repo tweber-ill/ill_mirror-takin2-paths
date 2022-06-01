@@ -110,6 +110,9 @@ t_real g_min_dist_to_walls = 5. / t_real(180.) * tl2::pi<t_real>;
 unsigned int g_pathtracker_fps = 30;
 unsigned int g_timer_tps = 30;
 
+// path-tracker interpolation factor
+unsigned int g_pathtracker_interpolation = 1;
+
 
 // renderer options
 tl2::t_real_gl g_move_scale = tl2::t_real_gl(1./75.);

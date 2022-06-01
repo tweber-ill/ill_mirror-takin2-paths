@@ -127,6 +127,9 @@ extern t_real g_min_dist_to_walls;
 // path tracker fps
 extern unsigned int g_pathtracker_fps;
 
+// path-tracker interpolation factor
+extern unsigned int g_pathtracker_interpolation;
+
 // render timer ticks per second
 extern unsigned int g_timer_tps;
 
@@ -180,7 +183,7 @@ extern int g_nested_docks;
 // ----------------------------------------------------------------------------
 // variables register
 // ----------------------------------------------------------------------------
-constexpr std::array<SettingsVariable, 29> g_settingsvariables
+constexpr std::array<SettingsVariable, 30> g_settingsvariables
 {{
 	// epsilons and precisions
 	{
@@ -318,6 +321,11 @@ constexpr std::array<SettingsVariable, 29> g_settingsvariables
 		.description = "Path tracker frames per second.",
 		.key = "settings/pathtracker_fps",
 		.value = &g_pathtracker_fps,
+	},
+	{
+		.description = "Path tracker interpolation factor.",
+		.key = "settings/pathtracker_interpolation",
+		.value = &g_pathtracker_interpolation,
 	},
 	{
 		.description = "Minimum angular distance to walls.",

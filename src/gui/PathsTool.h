@@ -209,6 +209,8 @@ protected:
 	void ValidatePathMesh(bool valid = true);
 	// (in)validates the path
 	void ValidatePath(bool valid = true);
+	// increases the amount of frames
+	void InterpolatePath(std::vector<t_vec2>& vertices);
 
 
 protected slots:
