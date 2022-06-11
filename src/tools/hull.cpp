@@ -58,6 +58,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 namespace ptree = boost::property_tree;
 
+#define USE_BOOST_GRAPH
 #include "src/libs/hull.h"
 #include "src/libs/voronoi.h"
 #include "src/libs/graphs.h"

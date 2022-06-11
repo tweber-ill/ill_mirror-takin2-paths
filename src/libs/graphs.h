@@ -51,8 +51,10 @@
 #include <algorithm>
 #include <iostream>
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
+#ifdef USE_BOOST_GRAPH
+	#include <boost/graph/adjacency_list.hpp>
+	#include <boost/graph/kruskal_min_spanning_tree.hpp>
+#endif
 
 #include "tlibs2/libs/maths.h"
 
@@ -310,6 +312,7 @@ public:
 	{
 		std::vector<std::size_t> neighbours;
 		const std::size_t N = GetNumVertices();
+		neighbours.reserve(2*N);
 
 		// neighbour vertices on outgoing edges
 		if(outgoing_edges)
@@ -344,6 +347,7 @@ public:
 
 		std::vector<std::string> neighbours;
 		const std::size_t N = GetNumVertices();
+		neighbours.reserve(2*N);
 
 		// neighbour vertices on outgoing edges
 		if(outgoing_edges)
@@ -1142,8 +1146,9 @@ t_mat floyd(const t_graph& graph)
 /**
  * removes the first N elements of a edge tuple
  */
-template<std::size_t N, class... t_args, std::size_t... indices>
-auto _tuple_tail(const std::tuple<t_args...>& tup, std::index_sequence<indices...>)
+template<std::size_t N, class... t_args, std::size_t... indices,
+	template<class ...> class t_tup = std::tuple>
+auto _tuple_tail(const t_tup<t_args...>& tup, std::index_sequence<indices...>)
 {
 	return std::make_tuple( std::get<indices + N>(tup) ... );
 }
@@ -1152,8 +1157,9 @@ auto _tuple_tail(const std::tuple<t_args...>& tup, std::index_sequence<indices..
 /**
  * removes the first N elements of a edge tuple
  */
-template<std::size_t N, class... t_args>
-auto tuple_tail(const std::tuple<t_args...>& tup)
+template<std::size_t N, class... t_args,
+	template<class ...> class t_tup = std::tuple>
+auto tuple_tail(const t_tup<t_args...>& tup)
 {
 	return _tuple_tail<N, t_args...>(
 		tup, std::make_index_sequence<sizeof...(t_args) - N>());
@@ -1163,8 +1169,9 @@ auto tuple_tail(const std::tuple<t_args...>& tup)
 /**
  * gets the tuple elements specified in the index sequence
  */
-template<class... t_args, std::size_t... indices>
-auto _tuple_elems(const std::tuple<t_args...>& tup, std::index_sequence<indices...>)
+template<class... t_args, std::size_t... indices,
+	template<class ...> class t_tup = std::tuple>
+auto _tuple_elems(const t_tup<t_args...>& tup, std::index_sequence<indices...>)
 {
 	return std::make_tuple( std::get<indices>(tup) ... );
 }
@@ -1173,18 +1180,20 @@ auto _tuple_elems(const std::tuple<t_args...>& tup, std::index_sequence<indices.
 /**
  * keeps the first N elements of a edge tuple
  */
-template<std::size_t N, class... t_args>
-auto tuple_head(const std::tuple<t_args...>& tup)
+template<std::size_t N, class... t_args,
+	template<class ...> class t_tup = std::tuple>
+auto tuple_head(const t_tup<t_args...>& tup)
 {
 	return _tuple_elems<t_args...>(tup, std::make_index_sequence<N>());
 }
 
 
 /**
- * converts a tuple to a pair
+ * converts the first two elements of a tuple to a pair
  */
-template<class t_1, class t_2>
-std::pair<t_1, t_2> to_pair(const std::tuple<t_1, t_2>& tup)
+template<class t_1, class t_2,
+	template<class ...> class t_tup = std::tuple>
+std::pair<t_1, t_2> to_pair(const t_tup<t_1, t_2>& tup)
 {
 	return std::make_pair(std::get<0>(tup), std::get<1>(tup));
 }
@@ -1238,14 +1247,18 @@ bool has_loops(
 			// forward direction
 			if(std::get<0>(*iter) == vertto)
 			{
-				auto tup = std::tuple_cat(std::make_tuple(std::get<0>(*iter), std::get<1>(*iter)), resttup);
+				auto tup = std::tuple_cat(std::make_tuple(
+					std::get<0>(*iter), std::get<1>(*iter)),
+					resttup);
 				tovisit.emplace(std::move(tup));
 			}
 
 			// backward direction
 			if(std::get<1>(*iter) == vertto)
 			{
-				auto tup = std::tuple_cat(std::make_tuple(std::get<1>(*iter), std::get<0>(*iter)), resttup);
+				auto tup = std::tuple_cat(std::make_tuple(
+					std::get<1>(*iter), std::get<0>(*iter)),
+					resttup);
 				tovisit.emplace(std::move(tup));
 			}
 		}
@@ -1265,10 +1278,11 @@ std::vector<t_edge> calc_min_spantree(const std::vector<t_edge>& _edges)
 {
 	// sort edges by weight
 	std::vector<t_edge> edges = _edges;
-	std::stable_sort(edges.begin(), edges.end(), [](const t_edge& edge1, const t_edge& edge2) -> bool
-	{
-		return std::get<2>(edge1) >= std::get<2>(edge2);
-	});
+	std::stable_sort(edges.begin(), edges.end(),
+		[](const t_edge& edge1, const t_edge& edge2) -> bool
+		{
+			return std::get<2>(edge1) >= std::get<2>(edge2);
+		});
 
 	std::vector<t_edge> span;
 	span.reserve(edges.size());
@@ -1299,7 +1313,10 @@ std::vector<t_edge> calc_min_spantree(
 requires tl2::is_vec<t_vec>
 {
 	using t_real = typename t_vec::value_type;
-	using t_weighted_edge = std::tuple<typename t_edge::first_type, typename t_edge::second_type, t_real>;
+	using t_weighted_edge = std::tuple<
+		typename t_edge::first_type,
+		typename t_edge::second_type,
+		t_real>;
 
 	// get weights from edge lengths
 	std::vector<t_weighted_edge> edges;
@@ -1329,15 +1346,17 @@ requires tl2::is_vec<t_vec>
 }
 
 
+#ifdef USE_BOOST_GRAPH
 /**
  * minimum spanning tree using boost.graph for comparison
+ * @see http://www.boost.org/doc/libs/1_65_1/libs/graph/doc/table_of_contents.html
+ * @see https://github.com/boostorg/graph/tree/develop/example
  */
 template<class t_vec, class t_edge = std::pair<std::size_t, std::size_t>>
 std::vector<t_edge> calc_min_spantree_boost(const std::vector<t_vec>& verts)
 requires tl2::is_vec<t_vec>
 {
 	using t_real = typename t_vec::value_type;
-
 	struct t_edge_weight
 	{
 		t_edge_weight() = default;
@@ -1346,7 +1365,8 @@ requires tl2::is_vec<t_vec>
 		t_real weight{1};
 	};
 
-	using t_graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, t_vec, t_edge_weight>;
+	using t_graph = boost::adjacency_list<
+		boost::vecS, boost::vecS, boost::undirectedS, t_vec, t_edge_weight>;
 	using t_edge_descr = typename boost::graph_traits<t_graph>::edge_descriptor;
 
 	t_graph graph;
@@ -1361,15 +1381,23 @@ requires tl2::is_vec<t_vec>
 		for(std::size_t j=i+1; j<verts.size(); ++j)
 		{
 			const t_vec& vert2 = verts[j];
-			t_real dist = tl2::norm(vert2-vert1);
-			boost::add_edge(boost::vertex(i, graph), boost::vertex(j, graph), t_edge_weight{dist}, graph);
+			t_real dist = tl2::norm(vert2 - vert1);
+
+			boost::add_edge(
+				boost::vertex(i, graph),
+				boost::vertex(j, graph),
+				t_edge_weight{dist},
+				graph);
 		}
 	}
 
 	std::vector<t_edge_descr> spanning_edges;
-	boost::kruskal_minimum_spanning_tree(graph, std::back_inserter(spanning_edges), boost::weight_map(weight));
+	boost::kruskal_minimum_spanning_tree(graph,
+		std::back_inserter(spanning_edges),
+		boost::weight_map(weight));
 
 	std::vector<t_edge> span;
+	span.reserve(spanning_edges.end() - spanning_edges.begin());
 	for(auto iter=spanning_edges.begin(); iter!=spanning_edges.end(); ++iter)
 	{
 		std::size_t idx1 = boost::source(*iter, graph);
@@ -1379,7 +1407,9 @@ requires tl2::is_vec<t_vec>
 
 	return span;
 }
+#endif
 // ----------------------------------------------------------------------------
+
 
 }
 #endif

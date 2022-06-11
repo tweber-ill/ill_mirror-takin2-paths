@@ -29,19 +29,16 @@
 #ifndef __GEO_CIRC_ITER__
 #define __GEO_CIRC_ITER__
 
-#include <iterator>
 
-
-template<class t_cont>
-class circular_iterator : public std::iterator<
-	typename std::iterator_traits<typename t_cont::iterator>::iterator_category,
-	typename t_cont::value_type,
-	typename t_cont::difference_type,
-	typename t_cont::pointer,
-	typename t_cont::reference>
+template<class t_cont> class circular_iterator
 {
 public:
+	using iterator_category = typename std::iterator_traits<typename t_cont::iterator>::iterator_category;
 	using t_iter = typename t_cont::iterator;
+	using value_type = typename t_cont::value_type;
+	using difference_type = typename t_cont::difference_type;
+	using pointer = typename t_cont::pointer;
+	using reference = typename t_cont::reference;
 
 public:
 	circular_iterator(t_cont* cont, t_iter iter, int round=0)

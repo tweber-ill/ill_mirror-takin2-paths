@@ -1109,6 +1109,8 @@ protected:
 		std::vector<std::shared_ptr<t_vec>> left{};
 		std::vector<std::shared_ptr<t_vec>> right{};
 
+		// find the half-spaces of the points and sort them
+		// into the respective vectors
 		for(const auto& vec : vecs)
 		{
 			if((*vec)[node->split_idx] <= node->split_value)
@@ -1117,6 +1119,7 @@ protected:
 				right.push_back(vec);
 		}
 
+		// create the left and right child nodes
 		if(left.size())
 		{
 			node->left = new t_node{};
@@ -1165,7 +1168,7 @@ protected:
 
 
 	/**
-	 * create the tree from a collection of points
+	 * look for the closest node
 	 * @see https://en.wikipedia.org/wiki/K-d_tree#Nearest_neighbour_search
 	 */
 	static void get_closest(const t_node* node, const t_vec& vec,
@@ -1176,6 +1179,7 @@ protected:
 		// at leaf node?
 		if(node->vec)
 		{
+			// get leaf node closest to query point so far
 			t_scalar dist_sq = tl2::inner<t_vec>(vec-*node->vec, vec-*node->vec);
 			if(dist_sq < *closest_dist_sq)
 			{
@@ -1184,16 +1188,20 @@ protected:
 			}
 		}
 
-		t_scalar dist = vec[node->split_idx] - node->split_value;
-		if(dist*dist < *closest_dist_sq)
-		{
+		t_scalar dist_node_plane = vec[node->split_idx] - node->split_value;
+		if(*closest_dist_sq >= dist_node_plane*dist_node_plane)
+		{ // the distance between the query point and the node is greater
+		  // than the distance between the node and the splitting plane
+		  //   => need to continue looking on both sides
 			get_closest(node->left, vec, closest_node, closest_dist_sq);
-			if(dist*dist < *closest_dist_sq)
+			if(dist_node_plane*dist_node_plane < *closest_dist_sq)
 				get_closest(node->right, vec, closest_node, closest_dist_sq);
 		}
 		else
-		{
-			if(vec[node->split_idx] <= node->split_value)
+		{ // the distance between the query point and the node is less
+		  // than the distance between the node and the splitting plane
+		  //   => only need to continue on one side
+			if(dist_node_plane <= 0.) // only continue on one side of the plane
 				get_closest(node->left, vec, closest_node, closest_dist_sq);
 			else
 				get_closest(node->right, vec, closest_node, closest_dist_sq);

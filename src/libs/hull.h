@@ -55,7 +55,6 @@
 
 namespace geo {
 
-
 // ----------------------------------------------------------------------------
 // convex hull algorithms
 // @see (Klein 2005), ch. 4.1, pp. 155f
@@ -214,37 +213,39 @@ template<class t_vec> requires tl2::is_vec<t_vec>
 std::tuple<bool, std::size_t, std::size_t> is_vert_in_hull(
 	const std::vector<t_vec>& hull,
 	const t_vec& newvert,
-	const t_vec *vert_in_hull = nullptr)
+	const t_vec *vert_in_hull /*= nullptr*/,
+	bool check_vert_segment /*= true*/)
 {
 	using t_real = typename t_vec::value_type;
 
 	// get a point inside the hull if none given
 	t_vec mean;
-	if(!vert_in_hull)
+	if(!vert_in_hull && check_vert_segment)
 	{
 		mean = std::accumulate(hull.begin(), hull.end(), tl2::zero<t_vec>(2));
 		mean /= t_real(hull.size());
 		vert_in_hull = &mean;
 	}
 
+	// iterate vertices
 	for(std::size_t hullvertidx1=0; hullvertidx1<hull.size(); ++hullvertidx1)
 	{
-		std::size_t hullvertidx2 = hullvertidx1+1;
-		if(hullvertidx2 >= hull.size())
-			hullvertidx2 = 0;
+		std::size_t hullvertidx2 = (hullvertidx1+1) % hull.size();
 
 		const t_vec& hullvert1 = hull[hullvertidx1];
 		const t_vec& hullvert2 = hull[hullvertidx2];
 
-		// new vertex is between these two points
-		if(side_of_line<t_vec>(*vert_in_hull, hullvert1, newvert) > 0. &&
-			side_of_line<t_vec>(*vert_in_hull, hullvert2, newvert) <= 0.)
-		{
-			// outside hull?
-			if(side_of_line<t_vec>(hullvert1, hullvert2, newvert) < 0.)
-				return std::make_tuple(false, hullvertidx1, hullvertidx2);
-		}
+		// is the vertex between these two points?
+		if(check_vert_segment &&
+			side_of_line<t_vec>(*vert_in_hull, hullvert1, newvert) <= 0. &&
+			side_of_line<t_vec>(*vert_in_hull, hullvert2, newvert) > 0.)
+			continue;
+
+		// outside hull?
+		if(side_of_line<t_vec>(hullvert1, hullvert2, newvert) < 0.)
+			return std::make_tuple(false, hullvertidx1, hullvertidx2);
 	}
+
 	return std::make_tuple(true, 0, 0);
 };
 
@@ -606,7 +607,8 @@ requires tl2::is_vec<t_vec>
 				continue;
 
 			auto [intersects, intersection] =
-				intersect_lines<t_vec_real, t_real>(vert1, vert3, cont_vert1, cont_vert2, true, eps, false);
+				intersect_lines<t_vec_real, t_real>(
+					vert1, vert3, cont_vert1, cont_vert2, true, eps, false);
 			if(intersects)
 			{
 				//std::cout << "intersection" << std::endl;

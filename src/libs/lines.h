@@ -48,10 +48,21 @@
 
 #include "graphs.h"
 #include "trees.h"
+//#include "hull.h"
 #include "tlibs2/libs/maths.h"
 
 
 namespace geo {
+
+// from hull.h
+template<class t_vec> requires tl2::is_vec<t_vec>
+std::tuple<bool, std::size_t, std::size_t> is_vert_in_hull(
+	const std::vector<t_vec>& hull,
+	const t_vec& newvert,
+	const t_vec *vert_in_hull = nullptr,
+	bool check_vert_segment = true);
+
+
 
 // ----------------------------------------------------------------------------
 // helper functions
@@ -386,9 +397,9 @@ requires tl2::is_vec<t_vec>
 
 
 /**
- * check if the given point is inside hull
+ * check if the given point is inside the hull
  */
-template<class t_vec> requires tl2::is_vec<t_vec>
+/*template<class t_vec> requires tl2::is_vec<t_vec>
 bool pt_inside_hull(const std::vector<t_vec>& hull, const t_vec& pt)
 {
 	// iterate vertices
@@ -405,7 +416,7 @@ bool pt_inside_hull(const std::vector<t_vec>& hull, const t_vec& pt)
 	}
 
 	return true;
-}
+}*/
 
 
 /**
@@ -1386,7 +1397,8 @@ requires tl2::is_vec<t_vec>
 		polyInner.begin(), polyInner.end(),
 		[&polyOuter](const t_vec& vec) -> bool
 	{
-		return pt_inside_hull<t_vec>(polyOuter, vec);
+		return std::get<0>(is_vert_in_hull<t_vec>(
+			polyOuter, vec, nullptr, false));
 	});
 
 	return all_inside;
@@ -1550,6 +1562,7 @@ t_cont<t_vec> subdivide_lines(
 requires tl2::is_vec<t_vec>
 {
 	t_cont<t_vec> newverts;
+	newverts.reserve(vertices.size() * 25); // some guess
 
 	for(std::size_t idx0 = 0; idx0 < vertices.size(); ++idx0)
 	{

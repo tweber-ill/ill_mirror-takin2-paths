@@ -509,7 +509,9 @@ public:
 	// container type mapping voronoi vertex indices to their respective quadratic bisectors
 	using t_edgemap_quadr =
 		std::unordered_map<
-			t_vert_indices, std::vector<t_vec>, t_bisector_hash<t_vert_indices>, t_bisector_equ<t_vert_indices>>;
+			t_vert_indices, std::vector<t_vec>,
+			t_bisector_hash<t_vert_indices>,
+			t_bisector_equ<t_vert_indices>>;
 
 	using t_edgevec_lin =
 		std::vector<std::tuple<t_line,

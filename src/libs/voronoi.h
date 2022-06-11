@@ -622,7 +622,7 @@ template<class t_vec,
 std::vector<t_edge> get_edges(
 	const std::vector<t_vec>& verts,
 	const std::vector<std::vector<t_vec>>& triags,
-	t_real eps)
+	t_real eps = 1e-5)
 {
 	auto get_vert_idx = [&verts, eps](const t_vec& vert) -> std::optional<std::size_t>
 	{
