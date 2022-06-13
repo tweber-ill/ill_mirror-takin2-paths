@@ -28,6 +28,7 @@
 
 #include "InstrumentSpace.h"
 #include "src/libs/lines.h"
+#include "src/libs/hull.h"
 #include "src/libs/ptree.h"
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/str.h"
