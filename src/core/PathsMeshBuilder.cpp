@@ -271,7 +271,7 @@ bool PathsBuilder::CalculateConfigSpace(
 		std::cout << "a2 range: ";
 	else
 		std::cout << "a6 range: ";
-	std::cout << starta2/tl2::pi<t_real>*180. 
+	std::cout << starta2/tl2::pi<t_real>*180.
 		<< " .. " << enda2/tl2::pi<t_real>*180.
 		<< std::endl;*/
 
