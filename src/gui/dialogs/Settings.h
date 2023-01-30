@@ -221,7 +221,7 @@ public:
 		{
 			QLabel *labelFont = new QLabel("Font:", panelGui);
 			labelFont->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-	
+
 			m_editFont = new QLineEdit(panelGui);
 			m_editFont->setReadOnly(true);
 
