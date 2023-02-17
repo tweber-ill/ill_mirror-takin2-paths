@@ -1357,10 +1357,15 @@ requires tl2::is_vec<t_vec>
 	auto vecs = intersect_circle_polylines<t_vec, t_cont>(
 		circleOrg, circleRad, poly, true);
 
+	// intersecting
 	if(vecs.size())
 		return true;
 
-	// check cases when one object is completely contained in the other
+	// check case when the cirlce is completely inside the polygon
+	if(pt_inside_poly<t_vec>(poly, circleOrg))
+		return true;
+
+	// check case when the polygon is completely inside the circle
 	std::size_t num_inside = 0;
 	std::size_t num_outside = 0;
 
@@ -1375,9 +1380,10 @@ requires tl2::is_vec<t_vec>
 			++num_outside;
 	}
 
-	if(num_inside==0 || num_outside==0)
-		return false;
-	return true;
+	if(num_outside == 0 && num_inside != 0)
+		return true;
+
+	return false;
 }
 
 

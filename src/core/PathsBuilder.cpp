@@ -1142,8 +1142,7 @@ PathsBuilder::FindClosestBisector(
 		// and are now within [0, 1] or if the old path collides
 		if( ((!old_parameters_in_range && !new_parameters_in_range && neighbour_closer) ||
 			(!old_parameters_in_range && new_parameters_in_range) ||
-			(new_parameters_in_range && neighbour_closer)) 
-			|| collides)
+			(new_parameters_in_range && neighbour_closer)) || collides)
 		{
 			min_dist = neighbour_dist;
 			min_param = neighbour_param;
