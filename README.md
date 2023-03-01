@@ -11,8 +11,7 @@ The software's website can be found under [www.ill.eu/tas-paths](http://www.ill.
 
 ### Demonstration Videos
 Basic tutorial videos are available here:
-- [Simplified pathfinding workflow in version 1.3.3](https://youtu.be/xs2BLuppQPQ).
-- [Basic pathfinding workflow](https://youtu.be/iFnPrxYqipk).
+- [Basic pathfinding workflow](https://youtu.be/xs2BLuppQPQ).
 - [Visualising the instrument's angular configuration space](https://youtu.be/WPUCVzMDKDc).
 
 
