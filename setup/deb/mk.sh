@@ -69,6 +69,12 @@ if [ $create_appdir -ne 0 ]; then
 		"libopengl0 (>=1.3.0)\n" \
 			>> ${APPDIRNAME}/DEBIAN/control
 
+# new versions of dependent libraries
+#		"libboost-system1.74.0 (>=1.74.0),"\
+#		"libboost-filesystem1.74.0 (>=1.74.0),"\
+#		"libqhull-r8 (>=2020.2),"\
+#		"libqcustomplot2.0 (>=2.0.0),"\
+
 	# binaries
 	cp -v build/taspaths		${APPDIRNAME}/usr/local/bin
 	cp -v build/taspaths-lines	${APPDIRNAME}/usr/local/bin
