@@ -74,6 +74,9 @@ if [ $create_appdir -ne 0 ]; then
 			"libopengl0 (>=1.3.0)\n" \
 				>> ${APPDIRNAME}/DEBIAN/control
 	else
+		# old versions of dependent libraries
+		# qcustomplot dependency is not needed if it's
+		# anyway installed in externals
 		echo -e "Depends:"\
 			"libstdc++6 (>=10.0.0),"\
 			"libboost-system1.71.0 (>=1.71.0),"\
@@ -85,6 +88,7 @@ if [ $create_appdir -ne 0 ]; then
 			"libqt5widgets5 (>=5.12.0),"\
 			"libqt5svg5 (>=5.12.0),"\
 			"libqt5printsupport5 (>=5.12.0),"\
+			"libqcustomplot2.0 (>=2.0.0),"\
 			"libopengl0 (>=1.3.0)\n" \
 				>> ${APPDIRNAME}/DEBIAN/control
 	fi
