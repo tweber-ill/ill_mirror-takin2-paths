@@ -29,6 +29,7 @@ Steps to try out the pathfinding functionality:
 - Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
 - Go to the repository's root directory: `cd paths`.
 - Get the external dependencies: `./setup/get_libs.sh`.
+- Optionally rebuild the external libraries with compile errors (see below): `./setup/rebuild_libs.sh`.
 - Get the external licenses (for a release package): `./setup/get_3rdparty_licenses.sh`.
 - Build the binaries using: `./setup/release_build.sh`.
 - Optionally create a package using either `./setup/deb/mk.sh`, `./setup/osx/mk.sh`, or `./setup/mingw/mk.sh`, depending on the system.
