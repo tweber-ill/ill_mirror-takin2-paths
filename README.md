@@ -5,7 +5,7 @@ Pathfinding software for triple-axis spectrometers.
 
 
 ## Online Resources
-- *TAS-Path's* website can be found under [www.ill.eu/tas-paths](http://www.ill.eu/tas-paths).
+- *TAS-Paths'* website can be found under [www.ill.eu/tas-paths](http://www.ill.eu/tas-paths).
 - The documentation is available [here](https://github.com/ILLGrenoble/taspaths/wiki).
 
 

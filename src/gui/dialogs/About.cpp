@@ -120,8 +120,8 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	labUrl1->setFont(fontLabel1);
 	grid->addWidget(labUrl1, y,0,1,1);
 	QLabel *labUrl2 = new QLabel(
-		"<a href=\"https://code.ill.fr/scientific-software/takin/paths\">Main</a>, "
-		"<a href=\"https://github.com/tweber-ill/ill_mirror-takin2-paths\">Mirror</a>.",
+		"<a href=\"https://code.ill.fr/scientific-software/takin/paths\">Development</a>, "
+		"<a href=\"https://github.com/ILLGrenoble/taspaths\">Release</a>.",
 		this);
 	labUrl2->setOpenExternalLinks(1);
 	grid->addWidget(labUrl2, y++,1,1,1);
