@@ -154,9 +154,14 @@ if(Qhull_FOUND)
 endif()
 
 
-find_package(QCP)
-if(QCP_FOUND)
-	include_directories("${QCP_INCLUDE_DIRS}")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	# hard-code the library path for mingw
+	set(QCP_LIBRARIES "./externals/qcustomplot/qcustomplot_local.dll.a"))
+else()
+	find_package(QCP)
+	if(QCP_FOUND)
+		include_directories("${QCP_INCLUDE_DIRS}")
+	endif()
 endif()
 
 

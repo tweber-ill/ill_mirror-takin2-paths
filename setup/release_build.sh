@@ -25,6 +25,18 @@
 
 
 # -----------------------------------------------------------------------------
+# options
+# -----------------------------------------------------------------------------
+USE_LAPACK=False
+USE_QT6=False
+USE_CGAL=True
+USE_OVD=False
+USE_PY=True
+BUILD_EXTERNALS=1
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
 # tools
 # -----------------------------------------------------------------------------
 cmake_tool=cmake
@@ -34,20 +46,13 @@ if [ "$1" == "mingw" ]; then
 	cmake_tool=mingw64-cmake
 	make_tool=mingw64-make
 
+	USE_CGAL=False
+	USE_PY=False
+
 	echo -e "Building using mingw."
 fi
 # -----------------------------------------------------------------------------
 
-
-# -----------------------------------------------------------------------------
-# options
-# -----------------------------------------------------------------------------
-USE_LAPACK=False
-USE_QT6=False
-USE_CGAL=True
-USE_OVD=False
-BUILD_EXTERNALS=1
-# -----------------------------------------------------------------------------
 
 
 if [ $BUILD_EXTERNALS -ne 0 ]; then
@@ -69,8 +74,8 @@ if [ $BUILD_EXTERNALS -ne 0 ]; then
 		exit -1
 	fi
 
-	if ! ${cmake_tool} --build . --parallel 4; then
-	#if ! ${make_tool} -j4; then
+	#if ! ${cmake_tool} --build . --parallel 4; then
+	if ! ${make_tool} -j4; then
 		echo -e "make failed (external libraries)."
 		exit -1
 	fi
@@ -102,6 +107,7 @@ pushd build
 
 if ! ${cmake_tool} -DUSE_LAPACK=${USE_LAPACK} -DUSE_QT6=${USE_QT6} \
 	-DUSE_OVD=${USE_OVD} -DUSE_CGAL=${USE_CGAL} \
+	-DUSE_PY=${USE_PY} \
 	-DBUILD_TEST_TOOLS=False \
 	-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" \
 	-DCMAKE_VERBOSE_MAKEFILE=False ..
@@ -110,8 +116,8 @@ then
 	exit -1
 fi
 
-if ! ${cmake_tool} --build . --parallel 4; then
-#if ! ${make_tool} -j4; then
+#if ! ${cmake_tool} --build . --parallel 4; then
+if ! ${make_tool} -j4; then
 	echo -e "make failed."
 	exit -1
 fi

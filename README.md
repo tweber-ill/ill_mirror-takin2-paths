@@ -29,7 +29,9 @@ Steps to try out the pathfinding functionality:
 - Rebuild the latest versions of libraries with possible C++20 issues (see below): `./setup/rebuild_libs.sh`.
 - Get the external licenses (for a release package): `./setup/get_3rdparty_licenses.sh`.
 - Build *TAS-Paths* using: `./setup/release_build.sh`.
-- Optionally create a package on *Ubuntu* using `./setup/deb/mk.sh`.
+- Optionally create a package on *Ubuntu* using:
+  - `./setup/deb/mk.sh jammy` for *Ubuntu 22.04* or
+  - `./setup/deb/mk.sh focal` for *Ubuntu 20.04*.
 - The application can be started via `./build/taspaths`.
 
 ### On *Mac*
@@ -44,9 +46,15 @@ Steps to try out the pathfinding functionality:
 - Optionally create a package using `./setup/osx/mk.sh`.
 - The application can be started via `./build/taspaths`.
 
-### For *MinGW* using *Fedora*
+### For *MinGW* using *Fedora* (experimental)
 - Install all required software for building: `dnf install mingw64-gcc mingw64-gcc-c++ mingw64-boost mingw64-qt5-qtbase-devel mingw64-qt5-qtsvg mingw64-python3`.
-- TODO
+- Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
+- Go to the repository's root directory: `cd paths`.
+- Get the external dependencies: `./setup/get_libs.sh`.
+- Rebuild the latest versions of libraries with possible C++20 issues (see below): `./setup/rebuild_libs.sh mingw`.
+- Get the external licenses (for a release package): `./setup/get_3rdparty_licenses.sh`.
+- Build *TAS-Paths* using: `./setup/release_build.sh mingw`.
+- Optionally create a package on *Ubuntu* using `./setup/mingw/mk.sh`.
 
 ### Possible Compile Errors
 Because *TAS-Paths* uses the still relatively new C++20 standard, there may be compatibility issues with older versions of some libraries.
