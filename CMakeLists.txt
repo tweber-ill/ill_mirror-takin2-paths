@@ -156,7 +156,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# hard-code the library path for mingw
-	set(QCP_LIBRARIES "./externals/qcustomplot/qcustomplot_local.dll.a"))
+	set(QCP_LIBRARIES "./externals/qcustomplot/libqcustomplot_local.dll.a"))
 else()
 	find_package(QCP)
 	if(QCP_FOUND)
