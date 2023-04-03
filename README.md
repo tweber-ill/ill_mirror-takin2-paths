@@ -47,7 +47,7 @@ Steps to try out the pathfinding functionality:
 - The application can be started via `./build/taspaths`.
 
 ### For *MinGW* using *Fedora* (experimental)
-- Install all required software for building: `dnf install mingw64-gcc mingw64-gcc-c++ mingw64-boost mingw64-qt5-qtbase-devel mingw64-qt5-qtsvg mingw64-python3`.
+- Install all required software for building: `sudo dnf install mingw64-gcc mingw64-gcc-c++ mingw64-boost mingw64-qt5-qtbase-devel mingw64-qt5-qtsvg mingw64-python3`.
 - Clone the source repository: `git clone https://code.ill.fr/scientific-software/takin/paths`.
 - Go to the repository's root directory: `cd paths`.
 - Get the external dependencies: `./setup/get_libs.sh`.
