@@ -59,9 +59,10 @@ declare -a LOCAL_LIBS=(
 	libboost_filesystem-mt.dylib libboost_atomic-mt.dylib
 	libqhull_r.8.0.dylib
 	libpcre2-8.0.dylib libpcre2-16.0.dylib
-	libglib-2.0.0.dylib libgthread-2.0.0.dylib libgmp.10.dylib
-	libzstd.1.dylib libpng16.16.dylib
-	libintl.8.dylib
+	libglib-2.0.0.dylib libgthread-2.0.0.dylib libintl.8.dylib
+	libgmp.10.dylib
+	libzstd.1.dylib
+	libpng16.16.dylib
 	libfreetype.6.dylib
 )
 
