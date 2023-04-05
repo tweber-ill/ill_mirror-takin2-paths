@@ -71,7 +71,8 @@ if ! wget https://raw.githubusercontent.com/qhull/qhull/master/COPYING.txt -O ${
 fi
 
 # qt
-if ! wget https://raw.githubusercontent.com/qt/qt5/dev/LICENSE.QT-LICENSE-AGREEMENT -O ${LICDIR}/Qt_license.txt; then
+#if ! wget https://raw.githubusercontent.com/qt/qt5/dev/LICENSE.QT-LICENSE-AGREEMENT -O ${LICDIR}/Qt_license.txt; then
+if ! wget https://raw.githubusercontent.com/qt/qt5/dev/LICENSE.GPL3 -O ${LICDIR}/Qt_license.txt; then
 	echo -e "Error: Cannot download Qt license.";
 	exit -1
 fi
