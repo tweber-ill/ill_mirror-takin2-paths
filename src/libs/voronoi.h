@@ -126,7 +126,7 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts,
 			std::fclose(ferr);
 
 		if(qh.hasQhullMessage())
-			std::cout << qh.qhullMessage() << std::endl;
+			std::cerr << qh.qhullMessage() << std::endl;
 
 
 		qh::QhullFacetList facets{qh.facetList()};
@@ -555,7 +555,7 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 			std::fclose(ferr);
 
 		if(qh.hasQhullMessage())
-			std::cout << qh.qhullMessage() << std::endl;
+			std::cerr << qh.qhullMessage() << std::endl;
 
 
 		qh::QhullFacetList facets{qh.facetList()};
