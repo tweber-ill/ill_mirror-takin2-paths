@@ -112,7 +112,9 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts,
 
 		// workaround because qhull seems to call the qh_fprintf function
 		// in libqhull_r instead of the correct one in libqhullcpp
-		std::FILE *ferr = /*stderr*/ std::fopen("/dev/null", "w");
+		std::FILE *ferr = std::fopen("/dev/null", "w");
+		if(!ferr)
+			ferr = stderr;
 		qh.qh()->ferr = ferr;
 		qh.setOutputStream(nullptr);
 		qh.setErrorStream(nullptr);
@@ -120,7 +122,8 @@ calc_delaunay(int dim, const std::vector<t_vec>& verts,
 
 		qh.runQhull("triag", dim, int(_verts.size()/dim),
 			_verts.data(), options.str().c_str());
-		std::fclose(ferr);
+		if(ferr && ferr != stderr)
+			std::fclose(ferr);
 
 		if(qh.hasQhullMessage())
 			std::cout << qh.qhullMessage() << std::endl;
@@ -540,13 +543,16 @@ calc_delaunay_parabolic(const std::vector<t_vec>& verts)
 		qh::Qhull qh{};
 		// workaround because qhull seems to call the qh_fprintf function
 		// in libqhull_r instead of the correct one in libqhullcpp
-		std::FILE *ferr = /*stderr*/ std::fopen("/dev/null", "w");
+		std::FILE *ferr = std::fopen("/dev/null", "w");
+		if(!ferr)
+			ferr = stderr;
 		qh.qh()->ferr = ferr;
 		qh.setOutputStream(nullptr);
 		qh.setErrorStream(nullptr);
 		//qh.setFactorEpsilon(eps);
 		qh.runQhull("triag", dim+1, int(_verts.size()/(dim+1)), _verts.data(), "Qt");
-		std::fclose(ferr);
+		if(ferr && ferr != stderr)
+			std::fclose(ferr);
 
 		if(qh.hasQhullMessage())
 			std::cout << qh.qhullMessage() << std::endl;
