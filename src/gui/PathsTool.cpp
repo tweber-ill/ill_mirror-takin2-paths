@@ -44,7 +44,6 @@ namespace pt = boost::property_tree;
 #include "tlibs2/libs/str.h"
 #include "tlibs2/libs/file.h"
 #include "tlibs2/libs/algos.h"
-#include "tlibs2/libs/log.h"
 
 
 // instantiate the settings dialog class
@@ -2691,8 +2690,15 @@ bool PathsTool::CalculatePathMesh()
 
 		CHECK_STOP
 
+		// contour backend
+		ContourBackend contour_backend{ContourBackend::INTERNAL};
+#ifdef USE_OCV
+		if(g_contour_backend == 1)
+			contour_backend = ContourBackend::OCV;
+#endif
+
 		SetTmpStatus("Calculating obstacle contour lines.", 0);
-		if(!m_pathsbuilder.CalculateWallContours(true, false))
+		if(!m_pathsbuilder.CalculateWallContours(true, false, contour_backend))
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Obstacle contour lines calculation failed.");
@@ -2714,11 +2720,11 @@ bool PathsTool::CalculatePathMesh()
 		SetTmpStatus("Calculating Voronoi regions.", 0);
 
 		// voronoi backend
-		VoronoiBackend backend{VoronoiBackend::BOOST};
+		VoronoiBackend voro_backend{VoronoiBackend::BOOST};
 		if(g_voronoi_backend == 1)
-			backend = VoronoiBackend::CGAL;
+			voro_backend = VoronoiBackend::CGAL;
 
-		if(!m_pathsbuilder.CalculateVoronoi(false, backend, g_use_region_function!=0))
+		if(!m_pathsbuilder.CalculateVoronoi(false, voro_backend, g_use_region_function!=0))
 		{
 			m_pathsbuilder.FinishPathMeshWorkflow(false);
 			SetTmpStatus("Error: Voronoi regions calculation failed.");

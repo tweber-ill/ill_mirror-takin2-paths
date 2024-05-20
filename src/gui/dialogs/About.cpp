@@ -103,7 +103,7 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 	QSpacerItem *spacerBelowSubtitle2 = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
 	grid->addItem(spacerBelowSubtitle2, y++,0,1,2);
 
-	QLabel *labDOI1 = new QLabel("DOI: ", this);
+	QLabel *labDOI1 = new QLabel("Software DOI: ", this);
 	QFont fontLabel1 = labDOI1->font();
 	fontLabel1.setWeight(QFont::Bold);
 	labDOI1->setFont(fontLabel1);
@@ -112,18 +112,27 @@ AboutDlg::AboutDlg(QWidget* parent, QSettings *sett)
 		"<a href=\"https://doi.org/10.5281/zenodo.4625649\">"
 		"10.5281/zenodo.4625649</a>.",
 		this);
-	labDOI2->setOpenExternalLinks(1);
+	labDOI2->setOpenExternalLinks(true);
 	grid->addWidget(labDOI2, y++,1,1,1);
 
-	QLabel *labUrl1 = new QLabel("Repositories: ", this);
+	QLabel *labDOI3 = new QLabel("Paper DOI: ", this);
+	labDOI3->setFont(fontLabel1);
+	grid->addWidget(labDOI3, y,0,1,1);
+	QLabel *labDOI4 = new QLabel(
+		"<a href=\"https://doi.org/10.1016/j.softx.2023.101455\">"
+		"10.1016/j.softx.2023.101455</a>.",
+		this);
+	labDOI4->setOpenExternalLinks(true);
+	grid->addWidget(labDOI4, y++,1,1,1);
+
+	QLabel *labUrl1 = new QLabel("Repository: ", this);
 	fontLabel1.setWeight(QFont::Bold);
 	labUrl1->setFont(fontLabel1);
 	grid->addWidget(labUrl1, y,0,1,1);
 	QLabel *labUrl2 = new QLabel(
-		"<a href=\"https://code.ill.fr/scientific-software/takin/paths\">Development</a>, "
-		"<a href=\"https://github.com/ILLGrenoble/taspaths\">Release</a>.",
+		"<a href=\"https://github.com/ILLGrenoble/taspaths\">https://github.com/ILLGrenoble/taspaths</a>.",
 		this);
-	labUrl2->setOpenExternalLinks(1);
+	labUrl2->setOpenExternalLinks(true);
 	grid->addWidget(labUrl2, y++,1,1,1);
 
 	QLabel *labVersion1 = new QLabel("Version: ", this);

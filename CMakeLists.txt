@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 #
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(taspaths)
 enable_language(CXX)
@@ -48,6 +48,7 @@ option(USE_QT6 "use qt 6" FALSE)
 option(USE_LAPACK "use lapack" TRUE)
 option(USE_OVD "use openvoronoi" FALSE)
 option(USE_CGAL "use cgal" TRUE)
+option(USE_OCV "use opencv" FALSE)
 option(USE_PY "use python scripting" TRUE)
 option(BUILD_TEST_TOOLS "build test tools" FALSE)
 option(UNIT_TESTS "build unit tests" FALSE)
@@ -156,7 +157,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# hard-code the library path for mingw
-	set(QCP_LIBRARIES "${PROJECT_SOURCE_DIR}/externals/qcustomplot/libqcustomplot_local.dll")
+	set(QCP_LIBRARIES "${PROJECT_SOURCE_DIR}/externals/qcustomplot/libqcustomplot.dll")
 else()
 	find_package(QCP)
 	if(QCP_FOUND)
@@ -174,6 +175,19 @@ if(USE_OVD)
 	else()
 		message("Openvoronoi disabled.")
 		set(OVD_LIBRARIES "")
+	endif()
+endif()
+
+
+if(USE_OCV)
+	find_package(OpenCV REQUIRED COMPONENTS core imgproc)
+
+	if(OpenCV_FOUND)
+		message("OpenCV enabled.")
+		add_definitions(-DUSE_OCV)
+		include_directories("${OpenCV_INCLUDE_DIRS}")
+	else()
+		message("OpenCV disabled.")
 	endif()
 endif()
 
@@ -290,6 +304,7 @@ target_link_libraries(taspaths_core
 	"${Lapacke_LIBRARIES}"
 	#"${Qhull_LIBRARIES}"
 	"${CGAL_LIBRARIES}"
+	"${OpenCV_LIBRARIES}"
 	Threads::Threads
 )
 # -----------------------------------------------------------------------------
@@ -407,6 +422,7 @@ target_link_libraries(taspaths
 	"${Lapacke_LIBRARIES}"
 	"${Qhull_LIBRARIES}"
 	"${CGAL_LIBRARIES}"
+	"${OpenCV_LIBRARIES}"
 	"${OVD_LIBRARIES}"
 	"${MINGW_WINSOCK}"
 	Threads::Threads

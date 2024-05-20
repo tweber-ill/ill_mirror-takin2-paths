@@ -71,10 +71,24 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	else
 		resize(800, 600);
 
+	// set contour calculation backend
+	switch(g_contour_backend)
+	{
+		default:
+		case 0:
+			m_contourbackend = ContourBackend::INTERNAL;
+			break;
+#ifdef USE_OCV
+		case 1:
+			m_contourbackend = ContourBackend::OCV;
+			break;
+#endif
+	}
 
 	// set voronoi calculation backend
 	switch(g_voronoi_backend)
 	{
+		default:
 		case 0:
 			m_voronoibackend = VoronoiBackend::BOOST;
 			break;
@@ -86,6 +100,7 @@ ConfigSpaceDlg::ConfigSpaceDlg(QWidget* parent, QSettings *sett)
 	// get global path finding strategy
 	switch(g_pathstrategy)
 	{
+		default:
 		case 0:
 			m_pathstrategy = PathStrategy::SHORTEST;
 			break;
@@ -994,7 +1009,7 @@ void ConfigSpaceDlg::CalculatePathMesh()
 	}
 
 	m_status->setText("Calculating obstacle contour lines.");
-	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour, m_splitcontour))
+	if(!m_pathsbuilder->CalculateWallContours(m_simplifycontour, m_splitcontour, m_contourbackend))
 	{
 		m_status->setText("Error: Obstacle contour lines calculation failed.");
 		m_pathsbuilder->FinishPathMeshWorkflow(false);
